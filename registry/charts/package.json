@@ -1,0 +1,62 @@
+{
+  "name": "@foldkit-visuals/charts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Native Foldkit port of Bklit TanStack Charts using checked Blocks, Bindings and Effect Layers.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles.css",
+    "./bar": "./src/bar/index.ts",
+    "./pie": "./src/pie/index.ts",
+    "./ring": "./src/ring/index.ts",
+    "./line": "./src/cartesian/index.ts",
+    "./area": "./src/cartesian/index.ts",
+    "./sunburst": "./src/sunburst/index.ts",
+    "./sankey": "./src/sankey/index.ts",
+    "./choropleth": "./src/choropleth/index.ts",
+    "./radar": "./src/radar/index.ts",
+    "./funnel": "./src/funnel/index.ts",
+    "./gauge": "./src/gauge/index.ts",
+    "./stat-flow": "./src/stat-flow/index.ts",
+    "./series-point-marker": "./src/series-point-marker/index.ts",
+    "./legend": "./src/legend/index.ts",
+    "./brush": "./src/brush/index.ts",
+    "./tooltip-box": "./src/cartesian/tooltip-box-index.ts",
+    "./heatmap": "./src/heatmap/index.ts",
+    "./live-line": "./src/live-line/index.ts",
+    "./candlestick": "./src/candlestick/index.ts",
+    "./scatter": "./src/scatter/index.ts",
+    "./composed": "./src/composed/index.ts",
+    "./bar-skeleton": "./src/kit/loading/bar-skeleton.ts"
+  },
+  "scripts": {
+    "typecheck": "effect-tsrs diagnostics --project tsconfig.json --strict --type-check",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tanstack/charts": "1.1.0",
+    "@types/d3-geo": "3.1.0",
+    "@types/d3-sankey": "0.12.4",
+    "@types/d3-shape": "3.1.8",
+    "@types/geojson": "7946.0.16",
+    "clsx": "2.1.1",
+    "d3-geo": "3.1.1",
+    "d3-sankey": "0.12.3",
+    "d3-scale": "4.0.2",
+    "d3-shape": "3.2.0",
+    "motion-dom": "12.43.0",
+    "number-flow": "0.5.12",
+    "tailwind-merge": "3.4.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.1.18",
+    "@types/d3-scale": "4.0.9",
+    "tailwindcss": "4.1.18"
+  },
+  "peerDependencies": {
+    "effect": "4.1.2",
+    "foldkit": "0.170.0-canary.54f8bcd443b4"
+  }
+}

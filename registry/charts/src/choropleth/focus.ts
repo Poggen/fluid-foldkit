@@ -1,0 +1,370 @@
+import type { ChoroplethFeature } from './types'
+// Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT.
+// Pointer-in-feature focus for geoShape (centroid points only, docs/reference/marks/geo.md): hit-tests the projected path topmost first, as the browser does for bklit's paths.
+// Keyboard order (bklit has none): west to east by spherical centroid longitude (north first on a tie); only features spanning >= 2 screen px when zoomed are stops.
+
+import { geoCentroid, geoClipRectangle, geoPath } from 'd3-geo'
+import type { GeoPermissibleObjects, GeoProjection } from 'd3-geo'
+import type { ChartFocusStrategy, ChartPoint } from '@tanstack/charts'
+
+// The projection is the fixed base (identity zoom); pan/zoom lives in `transform`, applied by CSS to the marks layer, so hit testing
+// maps the pointer back into base space instead of rebuilding paths.
+interface ZoomTransformState {
+  k: number
+  x: number
+  y: number
+}
+
+interface ProjectionHolder {
+  projection: GeoProjection | undefined
+  /** Chart area and options the projection was built for. */
+  projectionKey?: string
+  /** Chart area of the last projection build (scene px), the visible window the zoom transform maps into. */
+  chart?: {
+    readonly x: number
+    readonly y: number
+    readonly width: number
+    readonly height: number
+  }
+  transform: ZoomTransformState
+  /** Points of the last rendered scene (set in onRender): the settled geoShape points, which the presented points lack while the fade enters. */
+  renderedPoints?: ReadonlyArray<ChartPoint<ChoroplethFeature, number, number>>
+}
+
+const STROKE_HIT_WIDTH = 0.5
+
+/** Axis-aligned box `[x0, y0, x1, y1]` in base (unzoomed) projection space. */
+type Box = readonly [number, number, number, number]
+
+const centroidOf = (datum: GeoPermissibleObjects): readonly [number, number] => {
+  return geoCentroid(datum)
+}
+
+const westToEast = (left: GeoPermissibleObjects, right: GeoPermissibleObjects): number => {
+  const [leftLon, leftLat] = centroidOf(left)
+  const [rightLon, rightLat] = centroidOf(right)
+
+  return leftLon - rightLon || rightLat - leftLat
+}
+
+// A piece counts as visible when the feature's drawn shape, clipped to the visible area, spans at least this many screen px each way
+// (a sliver at the edge is no country a sighted user can see or hover).
+const MIN_VISIBLE_PX = 2
+
+/** Whether two boxes overlap by at least `min` in both directions. */
+const overlaps = (ring: Box, area: Box, min: number): boolean =>
+  Math.min(ring[2], area[2]) - Math.max(ring[0], area[0]) >= min &&
+  Math.min(ring[3], area[3]) - Math.max(ring[1], area[1]) >= min
+
+interface BoxContext {
+  readonly beginPath: () => void
+  readonly arc: () => void
+  readonly closePath: () => void
+  readonly lineTo: (x: number, y: number) => void
+  readonly moveTo: (x: number, y: number) => void
+}
+
+// Projected path events reduced to one box per ring (moveTo starts a ring).
+const boxContext = (boxes: Array<[number, number, number, number]>): BoxContext => {
+  let box: [number, number, number, number] | undefined = undefined
+
+  return {
+    beginPath: (): void => undefined,
+    arc: (): void => undefined,
+    closePath: (): void => undefined,
+    lineTo: (x: number, y: number): void => {
+      if (box === undefined) {
+        return
+      }
+
+      box[0] = Math.min(box[0], x)
+      box[1] = Math.min(box[1], y)
+      box[2] = Math.max(box[2], x)
+      box[3] = Math.max(box[3], y)
+    },
+    moveTo: (x: number, y: number): void => {
+      box = [x, y, x, y]
+      boxes.push(box)
+    },
+  }
+}
+
+// One stream pass per feature: the projected outline goes straight into a Path2D (hit tests) and one box per ring is kept, taken after d3's
+// antimeridian clipping (Russia's Chukotka, Fiji, the Aleutians yield separate boxes per map edge instead of one spanning the whole map).
+const projectOnce = (
+  projection: GeoProjection,
+  datum: GeoPermissibleObjects,
+): { readonly path: Path2D | null; readonly rings: Array<Box> } => {
+  const boxes: Array<[number, number, number, number]> = []
+  // A server render has no Path2D (hit tests only run on the client): the stream still yields the ring boxes.
+  const path = typeof Path2D === 'undefined' ? null : new Path2D()
+  const rings = boxContext(boxes)
+  geoPath(projection, {
+    beginPath: (): void => undefined,
+    arc: (x: number, y: number, r: number, start: number, end: number): void => {
+      path?.arc(x, y, r, start, end)
+    },
+    closePath: (): void => {
+      path?.closePath()
+    },
+    lineTo: (x: number, y: number): void => {
+      path?.lineTo(x, y)
+      rings.lineTo(x, y)
+    },
+    moveTo: (x: number, y: number): void => {
+      path?.moveTo(x, y)
+      rings.moveTo(x, y)
+    },
+  })(datum)
+
+  return {
+    path: boxes.length === 0 ? null : path,
+    rings: boxes.filter((ring) => ring.every(Number.isFinite)),
+  }
+}
+
+const boundsOf = (rings: ReadonlyArray<Box>): Box => {
+  let [x0, y0, x1, y1] = [Infinity, Infinity, -Infinity, -Infinity]
+
+  for (const ring of rings) {
+    x0 = Math.min(x0, ring[0])
+    y0 = Math.min(y0, ring[1])
+    x1 = Math.max(x1, ring[2])
+    y1 = Math.max(y1, ring[3])
+  }
+
+  return [x0, y0, x1, y1]
+}
+
+// The drawn pieces inside `area`: the projected polygon clipped to the rectangle by d3's own geoClipRectangle, one box per clipped ring.
+// A ring box can overlap the area while the shape itself misses it (Venezuela's box corner in the Europe view), so boxes only pre-filter.
+const clippedBoxes = (
+  projection: GeoProjection,
+  area: Box,
+  datum: GeoPermissibleObjects,
+): Array<Box> => {
+  const clip = geoClipRectangle(area[0], area[1], area[2], area[3])
+  const boxes: Array<[number, number, number, number]> = []
+  geoPath({ stream: (output) => projection.stream(clip(output)) }, boxContext(boxes))(datum)
+
+  return boxes.filter((ring) => ring.every(Number.isFinite))
+}
+
+interface FeatureGeometry {
+  readonly bounds: Box
+  readonly rings: ReadonlyArray<Box>
+  /** The projected outline as a canvas path for hit tests (null when the feature projects to nothing). */
+  readonly path: Path2D | null
+}
+
+/** Per-feature projected geometry, computed once per base projection (rebuilt on resize, never on pan/zoom or keypress); shared by the focus strategy and the tooltip anchor. */
+interface GeoGeometry {
+  /** Feature geometry in base projection space, or undefined before the first projection build. */
+  readonly of: (datum: GeoPermissibleObjects) => FeatureGeometry | undefined
+  /** Computes every feature's geometry for the current projection, so the first hover sweep does no lazy per-feature work. */
+  readonly warm: (data: ReadonlyArray<GeoPermissibleObjects>) => void
+  /** Visible chart area mapped back into base projection space (the whole chart area when unzoomed). */
+  readonly view: () => Box | undefined
+  /** Whether the feature's drawn shape, clipped to the visible area, spans at least MIN_VISIBLE_PX screen px each way. */
+  readonly visible: (datum: GeoPermissibleObjects) => boolean
+  /** Centre of the box of the feature's largest visible piece (its shape clipped to the visible area), in base projection space. */
+  readonly visibleCenter: (datum: GeoPermissibleObjects) => readonly [number, number] | undefined
+}
+
+const createGeoGeometry = (holder: Readonly<ProjectionHolder>): GeoGeometry => {
+  let cachedFor: GeoProjection | undefined = undefined
+  const cache = new Map<GeoPermissibleObjects, FeatureGeometry>()
+
+  const of = (datum: GeoPermissibleObjects): FeatureGeometry | undefined => {
+    const { projection } = holder
+
+    if (!projection) {
+      return undefined
+    }
+
+    if (cachedFor !== projection) {
+      cache.clear()
+      cachedFor = projection
+    }
+
+    let found = cache.get(datum)
+
+    if (found === undefined) {
+      const { path, rings } = projectOnce(projection, datum)
+      found = { bounds: boundsOf(rings), path, rings }
+      cache.set(datum, found)
+    }
+
+    return found
+  }
+
+  const view = (): Box | undefined => {
+    const {
+      chart,
+      transform: { k, x, y },
+    } = holder
+
+    if (!chart) {
+      return undefined
+    }
+
+    return [
+      (chart.x - x) / k,
+      (chart.y - y) / k,
+      (chart.x + chart.width - x) / k,
+      (chart.y + chart.height - y) / k,
+    ]
+  }
+
+  // Clipped pieces per feature for the current view, recomputed when the projection or the zoom transform changes (a keypress walks
+  // every feature once per view; a held focus re-checks one feature per zoom frame).
+  let piecesFor = ''
+  let piecesProjection: GeoProjection | undefined = undefined
+  const pieceCache = new Map<GeoPermissibleObjects, ReadonlyArray<Box>>()
+
+  const pieces = (datum: GeoPermissibleObjects): ReadonlyArray<Box> => {
+    const geometry = of(datum)
+    const area = view()
+
+    const {
+      projection,
+      transform: { k },
+    } = holder
+
+    if (!geometry || !area || !projection) {
+      return []
+    }
+
+    const key = area.join(',')
+
+    if (piecesFor !== key || piecesProjection !== projection) {
+      pieceCache.clear()
+      piecesFor = key
+      piecesProjection = projection
+    }
+
+    let found = pieceCache.get(datum)
+
+    if (found === undefined) {
+      const min = MIN_VISIBLE_PX / k
+      found = geometry.rings.some((ring) => overlaps(ring, area, min))
+        ? clippedBoxes(projection, area, datum).filter(
+            (piece) => piece[2] - piece[0] >= min && piece[3] - piece[1] >= min,
+          )
+        : []
+      pieceCache.set(datum, found)
+    }
+
+    return found
+  }
+
+  const visible = (datum: GeoPermissibleObjects): boolean => pieces(datum).length > 0
+
+  const visibleCenter = (datum: GeoPermissibleObjects): readonly [number, number] | undefined => {
+    let best: readonly [number, number] | undefined = undefined
+    let bestArea = -1
+
+    for (const [x0, y0, x1, y1] of pieces(datum)) {
+      const size = (x1 - x0) * (y1 - y0)
+
+      if (size > bestArea) {
+        bestArea = size
+        best = [(x0 + x1) / 2, (y0 + y1) / 2]
+      }
+    }
+
+    return best
+  }
+
+  const warm = (data: ReadonlyArray<GeoPermissibleObjects>): void => {
+    for (const datum of data) {
+      of(datum)
+    }
+  }
+
+  return { of, view, visible, visibleCenter, warm }
+}
+
+const createGeoContainmentFocus = (
+  markId: string,
+  holder: Readonly<ProjectionHolder>,
+  geometry: GeoGeometry,
+): ChartFocusStrategy<ChoroplethFeature, number, number> => {
+  // Hit testing on the projected path (canvas fill/stroke test), matching SVG pointer-events on the painted path.
+  const probe =
+    typeof document === 'undefined' ? null : document.createElement('canvas').getContext('2d')
+
+  // `resolve` runs on every pointer move over one rendered list, so the filtered list is kept per list.
+  const owned = new WeakMap<object, Array<ChartPoint<ChoroplethFeature, number, number>>>()
+
+  const own = (
+    points: ReadonlyArray<ChartPoint<ChoroplethFeature, number, number>>,
+  ): Array<ChartPoint<ChoroplethFeature, number, number>> => {
+    let found = owned.get(points)
+
+    if (found === undefined) {
+      found = points.filter((point) => point.markId === markId)
+      owned.set(points, found)
+    }
+
+    return found
+  }
+
+  return {
+    group: (_points, context) => [context.point],
+    // Stops: the features with a projected piece inside the visible area (every drawn feature when unzoomed), west to east.
+    navigation: (points) =>
+      own(points)
+        .filter((point) => geometry.visible(point.datum))
+        .toSorted((left, right) => westToEast(left.datum, right.datum)),
+    resolve: (points, position) => {
+      const { projection, transform } = holder
+      const x = (position.x - transform.x) / transform.k
+      const y = (position.y - transform.y) / transform.k
+      const lonLat = projection?.invert?.([x, y])
+
+      if (!projection || !lonLat || !Number.isFinite(lonLat[0]) || !Number.isFinite(lonLat[1])) {
+        return []
+      }
+
+      // The rendered scene's points, not the presented ones: a parked pointer must open the tooltip once the entrance ends (choropleth-feature.tsx:201).
+      // SAFETY: renderedPoints is the renderer's presented list of this chart's own points.
+      const rendered = ():
+        | ReadonlyArray<ChartPoint<ChoroplethFeature, number, number>>
+        | undefined => holder.renderedPoints
+
+      const hits = (point: ChartPoint<ChoroplethFeature, number, number>): boolean => {
+        const feature = geometry.of(point.datum)
+
+        if (feature === undefined) {
+          return false
+        }
+
+        const [x0, y0, x1, y1] = feature.bounds
+
+        if (x < x0 || x > x1 || y < y0 || y > y1) {
+          return false
+        }
+
+        const { path } = feature
+
+        if (path === null || probe === null) {
+          return false
+        }
+
+        probe.lineWidth = STROKE_HIT_WIDTH
+
+        return probe.isPointInPath(path, x, y) || probe.isPointInStroke(path, x, y)
+      }
+
+      // Topmost first: the last painted feature wins, as the browser picks for overlapping SVG paths.
+      const hit = own(rendered() ?? points).findLast(hits)
+
+      return hit === undefined ? [] : [hit]
+    },
+  }
+}
+
+export { centroidOf, createGeoContainmentFocus, createGeoGeometry }
+
+export type { GeoGeometry, ProjectionHolder }

@@ -1,0 +1,26 @@
+import { defineConfig } from 'oxfmt'
+export default defineConfig({
+  semi: false,
+  singleQuote: true,
+  trailingComma: 'all',
+  ignorePatterns: [
+    '**/node_modules/**',
+    '**/dist/**',
+    'public/**',
+    '.consumer/**',
+    '**/*.bun-fixture.ts',
+    'registry/fluid/src/styles/thinking-indicator.css',
+    'registry/fluid/src/styles/transitions.css',
+    'registry/charts/src/styles/upstream.css',
+    'registry/charts/src/styles/upstream-native.css',
+    'registry/charts/src/styles/upstream-static.css',
+    'registry/charts/src/styles/source-theme.css',
+    'registry/charts/src/styles/native-adapter.css',
+    'registry/charts/src/styles/native-keyframes.css',
+    'registry/charts/src/styles/native-registered.css',
+    'app/src/styles/upstream-bento.css',
+    'app/src/styles/upstream-type-scale.css',
+    'app/src/styles/upstream-heading-font.css',
+    'app/src/styles/upstream-rail-fade.css',
+  ],
+})

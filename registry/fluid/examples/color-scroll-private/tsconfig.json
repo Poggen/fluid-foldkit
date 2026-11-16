@@ -1,0 +1,5 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "include": ["*.ts", "../../src/color-picker*.ts", "../../src/scroll-area*.ts"],
+  "exclude": ["source", "dist"]
+}

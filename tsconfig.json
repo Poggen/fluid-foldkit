@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.base.json",
+  "include": [
+    "registry/*/src/**/*.ts",
+    "registry/*/test/**/*.ts",
+    "registry/*/examples/**/*.ts",
+    "components/**/*.ts",
+    "lib/**/*.ts",
+    "app/src/**/*.ts",
+    "tests/parity/**/*.ts"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/dist",
+    "**/source-baseline/**",
+    "**/color-scroll-private/source/**"
+  ]
+}

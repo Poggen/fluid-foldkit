@@ -1,0 +1,16 @@
+/* File-header presentation adapted from Foldcn (MIT), copyright 2026 elianiva.
+ * https://github.com/elianiva/foldcn/tree/4f719c0c0961880805992032d92646b35a6006aa */
+@theme {
+  --color-code-comment: #737373;
+  --color-code-keyword: #8b3aa8;
+  --color-code-string: #146b3a;
+  --color-code-function: #285eaa;
+  --color-code-number: #97521a;
+  --color-code-type: #99610b;
+  --color-code-comment-dark: #a3a3a3;
+  --color-code-keyword-dark: #d6a0f1;
+  --color-code-string-dark: #9ad9ab;
+  --color-code-function-dark: #9ac4ff;
+  --color-code-number-dark: #f5bd8c;
+  --color-code-type-dark: #efcc86;
+}

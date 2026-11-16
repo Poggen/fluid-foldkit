@@ -1,0 +1,14 @@
+{
+  "extends": "../tsconfig.base.json",
+  "include": [
+    "src/**/*.ts",
+    "vite.config.ts",
+    "server/**/*.ts",
+    "build-boundary.ts",
+    "playwright.config.ts",
+    "test/**/*.ts"
+  ],
+  "compilerOptions": {
+    "types": ["bun", "vite/client"]
+  }
+}

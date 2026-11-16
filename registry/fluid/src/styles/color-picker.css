@@ -1,0 +1,11 @@
+/* Generated from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
+:root,
+.light {
+  --checker-a: #bbbbbb;
+  --checker-b: #ffffff;
+}
+
+.dark {
+  --checker-a: #1f1f1f;
+  --checker-b: #2a2a2a;
+}

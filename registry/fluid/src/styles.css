@@ -1,0 +1,20 @@
+/* Generated from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
+@import './styles/surfaces.css';
+@import './styles/theme.css';
+@import './styles/tokens.css';
+@import './styles/transitions.css';
+@import './styles/transitions-reduced-motion.css';
+@import './styles/type-scale.css';
+@import './styles/typography.css';
+@import './styles/banner.css';
+@import './styles/tabs.css';
+@import './styles/thinking-indicator.css';
+@import './styles/reveal.css';
+@import './styles/scroll-area.css';
+@import './styles/thinking-steps.css';
+@import './styles/color-picker.css';
+@custom-variant dark (&:is(.dark *));
+@source './';
+
+/* Public child-styling helpers must emit for external consumer markup. */
+@source inline('typeset reveal-landing reveal-landing-subtle reveal-product reveal-product-subtle reveal-items reveal-swap scroll-fade scroll-fade-x scroll-divider scrollbar-hide');

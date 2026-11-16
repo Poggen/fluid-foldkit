@@ -1,0 +1,52 @@
+/* The native application owns settings on .site; the source Next app owns them on html. */
+.site[data-size='compact'] {
+  --fs-site-display: 20px;
+  --lh-site-display: 26px;
+  --fs-site-title: 15px;
+  --lh-site-title: 20px;
+  --fs-site-subtitle: 13px;
+  --lh-site-subtitle: 18px;
+  --fs-site-body: 12px;
+  --lh-site-body: 18px;
+  --fs-site-caption: 11px;
+  --lh-site-caption: 14px;
+  --fs-site-micro: 10px;
+  --lh-site-micro: 12px;
+}
+@media (min-width: 640px) {
+  .site[data-size='compact'] {
+    --fs-site-display: 24px;
+    --lh-site-display: 30px;
+  }
+}
+.site[data-font='serif'] {
+  --fs-display: 32px;
+  --lh-display: 38px;
+  --fs-display-compact: 28px;
+  --lh-display-compact: 34px;
+  --fs-site-display: 26px;
+  --lh-site-display: 32px;
+}
+.site[data-font='serif'][data-size='compact'] {
+  --fs-site-display: 24px;
+  --lh-site-display: 30px;
+}
+@media (min-width: 640px) {
+  .site[data-font='serif'] {
+    --fs-site-display: 32px;
+    --lh-site-display: 38px;
+  }
+  .site[data-font='serif'][data-size='compact'] {
+    --fs-site-display: 28px;
+    --lh-site-display: 34px;
+  }
+}
+.site :is(h1, h2, h3):is(.text-site-display, .text-site-title, .text-site-subtitle) {
+  font-family: var(--heading-family, var(--font-sans));
+  font-variation-settings: normal;
+  font-weight: var(--heading-weight, 550);
+  font-synthesis-weight: none;
+}
+.site :is(h1, h2, h3).text-site-display {
+  font-weight: var(--heading-display-weight, 700);
+}

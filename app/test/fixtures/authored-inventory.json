@@ -1,0 +1,268 @@
+{
+  "source": "fluidfunctionalism cc276ca0f40e5ede8cf71d96bff2c0fddf80ea96",
+  "pages": [
+    {
+      "slug": "input-message",
+      "sections": [
+        "Basic",
+        "Suggestions",
+        "Attachments",
+        "Queued messages",
+        "Left Slot Only",
+        "Right Slot Only",
+        "Send Handler",
+        "Disabled"
+      ]
+    },
+    {
+      "slug": "thinking-indicator",
+      "sections": ["Basic"]
+    },
+    {
+      "slug": "color-picker",
+      "sections": [
+        "Default",
+        "Popover",
+        "With Swatches",
+        "OKLCH Format",
+        "Controlled",
+        "Removable Trigger",
+        "Eyedropper Support"
+      ]
+    },
+    {
+      "slug": "switch",
+      "sections": ["Basic", "Disabled"]
+    },
+    {
+      "slug": "combobox",
+      "sections": [
+        "Basic",
+        "With icons",
+        "Multiple selection",
+        "Create from the query",
+        "Hide picked rows",
+        "Variants",
+        "Long list",
+        "Error & disabled"
+      ]
+    },
+    {
+      "slug": "card",
+      "sections": [
+        "Basic",
+        "Grid: 2-D fluid hover",
+        "Outlined group",
+        "Separated tiles",
+        "Fully yours \u2014 compose anything",
+        "Selected"
+      ]
+    },
+    {
+      "slug": "select",
+      "sections": [
+        "Basic",
+        "Variants",
+        "With Icons",
+        "Groups",
+        "Scrollable List",
+        "Error State",
+        "Disabled"
+      ]
+    },
+    {
+      "slug": "command-menu",
+      "sections": [
+        "Basic",
+        "Descriptions, shortcuts, disabled rows",
+        "Suggestions",
+        "Tabs",
+        "Filters",
+        "Dialog and trigger shortcut",
+        "Footer hints",
+        "Custom rows"
+      ]
+    },
+    {
+      "slug": "tooltip",
+      "sections": ["Basic", "Placement", "Rich Content", "Follow cursor", "Delay"]
+    },
+    {
+      "slug": "badge",
+      "sections": ["Solid", "Dot", "Colors"]
+    },
+    {
+      "slug": "sidebar",
+      "sections": [
+        "Layouts",
+        "Nesting",
+        "Actions & badges",
+        "Header & footer",
+        "Callouts",
+        "Resize, collapse & peek",
+        "Inside a dialog",
+        "No icon rail version?",
+        "Functional and perfectly aligned"
+      ]
+    },
+    {
+      "slug": "radio-group",
+      "sections": ["Basic"]
+    },
+    {
+      "slug": "chat-message",
+      "sections": ["Conversation", "Roles", "Attachments"]
+    },
+    {
+      "slug": "thinking-steps",
+      "sections": ["Basic", "Minimal", "Streaming", "Streaming Text", "With Images", "Full Example"]
+    },
+    {
+      "slug": "tabs",
+      "sections": ["Basic", "With Icons", "Active Label"]
+    },
+    {
+      "slug": "checkbox-group",
+      "sections": ["Basic"]
+    },
+    {
+      "slug": "ask-user-questions",
+      "sections": [
+        "Multiple questions",
+        "Multi-select",
+        "With other",
+        "Free text",
+        "Free text validation",
+        "Skippable",
+        "Chip on left",
+        "Stacked layout",
+        "Controlled"
+      ]
+    },
+    {
+      "slug": "slider",
+      "sections": [
+        "Compact",
+        "Range",
+        "Steps",
+        "Non-uniform Steps",
+        "Value Display",
+        "Format",
+        "Disabled",
+        "Default",
+        "Default \u2014 Scrubber",
+        "Default \u2014 Format",
+        "Default \u2014 Disabled"
+      ]
+    },
+    {
+      "slug": "dropdown",
+      "sections": [
+        "Basic",
+        "Groups",
+        "Triggered menu",
+        "Submenus",
+        "Multiple selection",
+        "Searchable menu",
+        "Searchable multiple selection",
+        "Create from the query"
+      ]
+    },
+    {
+      "slug": "banner",
+      "sections": ["Statuses", "Actions", "Fixed", "Custom icon"]
+    },
+    {
+      "slug": "input-copy",
+      "sections": [
+        "Basic",
+        "With Label",
+        "Button Variant",
+        "Left Aligned",
+        "Disabled",
+        "Copy Callback"
+      ]
+    },
+    {
+      "slug": "accordion",
+      "sections": ["Standalone", "Single Expand", "Multi Expand", "Row highlight"]
+    },
+    {
+      "slug": "input-group",
+      "sections": ["Basic", "Multiple Fields", "Error State"]
+    },
+    {
+      "slug": "carousel-dots",
+      "sections": ["Static", "Autoplay"]
+    },
+    {
+      "slug": "button",
+      "sections": ["Variants", "With Icons", "Loading & Disabled"]
+    },
+    {
+      "slug": "breadcrumb",
+      "sections": [
+        "Basic",
+        "With icons",
+        "Long step name",
+        "Dropdown on a step",
+        "Open on click",
+        "Collapsed",
+        "Collapse on overflow",
+        "Expand in place",
+        "Custom separator",
+        "Framework links"
+      ]
+    },
+    {
+      "slug": "table",
+      "sections": ["Basic", "Empty"]
+    },
+    {
+      "slug": "dialog",
+      "sections": ["Basic", "Sizes", "With a sidebar"]
+    },
+    {
+      "slug": "calendar",
+      "sections": [
+        "Single",
+        "Range",
+        "Stacked months",
+        "Booked and unavailable",
+        "Cell size",
+        "Week numbers"
+      ]
+    },
+    {
+      "slug": "date-picker",
+      "sections": ["Date", "Range with presets", "Date and time", "Booked days"]
+    },
+    {
+      "slug": "checkbox",
+      "sections": ["Basic", "With a description", "Invalid and disabled"]
+    },
+    {
+      "slug": "input",
+      "sections": ["Basic", "With Field", "Invalid", "Disabled", "Types", "With a button"]
+    },
+    {
+      "slug": "textarea",
+      "sections": ["Basic", "With Field", "Invalid", "Disabled", "With a button"]
+    },
+    {
+      "slug": "field",
+      "sections": [
+        "Form",
+        "Input",
+        "Textarea",
+        "Select",
+        "Checkbox",
+        "Choice card",
+        "Fieldset",
+        "Validation and errors",
+        "Horizontal",
+        "Separator"
+      ]
+    }
+  ]
+}

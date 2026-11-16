@@ -1,0 +1,13 @@
+/* Generated from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
+:root,
+.light {
+  --info: #3b82f6;
+  --success: #22c55e;
+  --warning: #f59e0b;
+}
+
+.dark {
+  --info: #93c5fd;
+  --success: #86efac;
+  --warning: #fcd34d;
+}

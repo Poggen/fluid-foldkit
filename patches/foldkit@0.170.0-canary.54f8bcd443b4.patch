@@ -1,0 +1,95 @@
+diff --git a/dist/runtime/compositionRuntime.js b/dist/runtime/compositionRuntime.js
+index 4795205ee589701da6a7202bc27c2a0d95cf85ac..e7c86d16b0dc76a7dd593412814be1605e7a618b 100644
+--- a/dist/runtime/compositionRuntime.js
++++ b/dist/runtime/compositionRuntime.js
+@@ -179,6 +179,8 @@ export const makeCompositionRuntime = ({ block, initModel, context, runtimeScope
+                     subscriptions,
+                     initModel: snapshot(node),
+                     modelPubSub: node.modelPubSub,
++                    modelInputEquivalence: (previous, next) => Object.is(previous.model, next.model) &&
++                        Object.is(previous.parentModel, next.parentModel),
+                     runtimeScope: node.scope,
+                     maybeSlowSubscriptionDependencies: Option.map(maybeSlowSubscriptionDependencies, slow => ({
+                         thresholdMs: slow.thresholdMs,
+@@ -228,13 +230,16 @@ export const makeCompositionRuntime = ({ block, initModel, context, runtimeScope
+             return { binding, occurrences };
+         }),
+     });
+-    const reconcile = (model) => {
++    const reconcile = (model, isInitial = false) => {
+         const plan = planReconciliation(block, model);
+-        const updated = [];
++        const publications = [];
+         const created = [];
+-        const applyPlan = (node, plan) => {
++        const applyPlan = (node, plan, isParentModelChanged, isNew) => {
++            const isOwnModelChanged = !Object.is(node.model, plan.model);
+             node.model = plan.model;
+-            updated.push(node);
++            if (isNew || isOwnModelChanged || isParentModelChanged) {
++                publications.push(node);
++            }
+             for (const { binding, occurrences } of plan.bindings) {
+                 const policy = runtimeBindingOf(binding);
+                 const previous = node.children.get(binding) ??
+@@ -242,12 +247,13 @@ export const makeCompositionRuntime = ({ block, initModel, context, runtimeScope
+                 const next = new Map();
+                 for (const { key, plan: childPlan } of occurrences) {
+                     let occurrence = previous.get(key);
++                    const isNew = occurrence === undefined;
+                     if (occurrence === undefined) {
+                         occurrence = makeNode(policy.block, childPlan.model, binding.placement, node.context, message => policy.toParentMessage(key, message), node, binding, key);
+                         created.push(occurrence);
+                     }
+                     next.set(key, occurrence);
+-                    applyPlan(occurrence, childPlan);
++                    applyPlan(occurrence, childPlan, isOwnModelChanged, isNew);
+                 }
+                 node.children.set(binding, next);
+                 for (const [key, occurrence] of previous) {
+@@ -257,8 +263,8 @@ export const makeCompositionRuntime = ({ block, initModel, context, runtimeScope
+                 }
+             }
+         };
+-        applyPlan(root, plan);
+-        for (const node of updated) {
++        applyPlan(root, plan, false, isInitial);
++        for (const node of publications) {
+             PubSub.publishUnsafe(node.modelPubSub, snapshot(node));
+         }
+         if (isStarted) {
+@@ -274,7 +280,7 @@ export const makeCompositionRuntime = ({ block, initModel, context, runtimeScope
+             }
+         }
+     };
+-    reconcile(initModel);
++    reconcile(initModel, true);
+     yield* Effect.addFinalizer(() => Effect.suspend(() => {
+         retire(root);
+         return Effect.forEach(globalThis.Array.from(retired), closeNode, {
+diff --git a/dist/runtime/subscriptionFibers.js b/dist/runtime/subscriptionFibers.js
+index 77f59583e854ad27b3c4eb5df76279d970a6ed55..8dd0f71a39d3d1caa7218b6b69873e513598a26c 100644
+--- a/dist/runtime/subscriptionFibers.js
++++ b/dist/runtime/subscriptionFibers.js
+@@ -9,7 +9,7 @@ import { measureSlowPhase, reportSlowPhase, } from './slowPhase.js';
+  * A defect anywhere in that pipeline crashes the runtime instead of dying
+  * silently in the fiber.
+  */
+-export const forkSubscriptionFibers = ({ subscriptions, initModel, modelPubSub, runtimeScope, maybeSlowSubscriptionDependencies, enqueueMessageEffect, provideAllResources, crashWith, }) => pipe(subscriptions, Record.toEntries, Effect.forEach(([key, subscription]) => Effect.gen(function* () {
++export const forkSubscriptionFibers = ({ subscriptions, initModel, modelPubSub, modelInputEquivalence, runtimeScope, maybeSlowSubscriptionDependencies, enqueueMessageEffect, provideAllResources, crashWith, }) => pipe(subscriptions, Record.toEntries, Effect.forEach(([key, subscription]) => Effect.gen(function* () {
+     const { dependenciesSchema, keepAliveEquivalence, dependenciesToStream, } = subscription;
+     const equivalence = Option.makeEquivalence(keepAliveEquivalence ?? Schema.toEquivalence(dependenciesSchema));
+     const modelToMaybeDependencies = (model) => maybeActiveDependencies(subscription, model);
+@@ -23,7 +23,11 @@ export const forkSubscriptionFibers = ({ subscriptions, initModel, modelPubSub,
+     }));
+     const latestDependenciesRef = yield* Ref.make(maybeInitDependencies);
+     const modelSubscription = yield* PubSub.subscribe(modelPubSub).pipe(Effect.provideService(Scope.Scope, runtimeScope));
+-    const modelChangesStream = Stream.fromSubscription(modelSubscription).pipe(
++    const modelInputs = Stream.fromSubscription(modelSubscription);
++    const modelInputsSinceInitialization = modelInputEquivalence === undefined
++        ? modelInputs
++        : Stream.concat(Stream.make(initModel), modelInputs).pipe(Stream.changesWith(modelInputEquivalence), Stream.drop(1));
++    const modelChangesStream = modelInputsSinceInitialization.pipe(
+     // NOTE: Ref.set runs upstream of Stream.changesWith on
+     // every model change, so readDependencies() returns
+     // current values even when the equivalence filter

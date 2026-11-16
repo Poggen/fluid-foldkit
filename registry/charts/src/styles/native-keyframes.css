@@ -1,0 +1,153 @@
+@layer bklit-charts {
+  @keyframes bkm-mk-in-repeat {
+    from {
+      opacity: 0;
+      filter: blur(calc(var(--bkm-enter-blur, 2) * 1px));
+    }
+  }
+}
+
+@keyframes bkm-tail-a0 {
+  from {
+    transform: translate(var(--bkm-live-ax, 0px), 0) scale(var(--bkm-live-ak, 1), 1);
+  }
+  to {
+    transform: translate(0, 0) scale(1, 1);
+  }
+}
+@keyframes bkm-tail-x0 {
+  from {
+    scale: var(--bkm-live-b0, 0) 1;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+@keyframes bkm-tail-l0 {
+  from {
+    translate: var(--bkm-live-ax, 0px) 0;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+@keyframes bkm-tail-y0 {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(0);
+  }
+}
+@keyframes bkm-tail-k0 {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(var(--bkm-live-k, 1));
+  }
+}
+@keyframes bkm-rp0 {
+  from {
+    transform: translate(0, var(--bkm-live-ry-t, 0px)) scale(1, var(--bkm-live-ry-s, 1));
+  }
+  to {
+    transform: translate(0, 0) scale(1, 1);
+  }
+}
+@keyframes bkm-rd0 {
+  from {
+    transform: translate(0, var(--bkm-live-ry-d, 0px));
+  }
+  to {
+    transform: translate(0, 0);
+  }
+}
+@keyframes bkm-dy0 {
+  from {
+    translate: 0 var(--bkm-live-dy, 0px);
+  }
+  to {
+    translate: 0 0;
+  }
+}
+@keyframes bkm-st0 {
+  from {
+    --bkm-st: 0;
+  }
+  to {
+    --bkm-st: 45;
+  }
+}
+@keyframes bkm-tail-a1 {
+  from {
+    transform: translate(var(--bkm-live-ax, 0px), 0) scale(var(--bkm-live-ak, 1), 1);
+  }
+  to {
+    transform: translate(0, 0) scale(1, 1);
+  }
+}
+@keyframes bkm-tail-x1 {
+  from {
+    scale: var(--bkm-live-b0, 0) 1;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+@keyframes bkm-tail-l1 {
+  from {
+    translate: var(--bkm-live-ax, 0px) 0;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+@keyframes bkm-tail-y1 {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(0);
+  }
+}
+@keyframes bkm-tail-k1 {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(var(--bkm-live-k, 1));
+  }
+}
+@keyframes bkm-rp1 {
+  from {
+    transform: translate(0, var(--bkm-live-ry-t, 0px)) scale(1, var(--bkm-live-ry-s, 1));
+  }
+  to {
+    transform: translate(0, 0) scale(1, 1);
+  }
+}
+@keyframes bkm-rd1 {
+  from {
+    transform: translate(0, var(--bkm-live-ry-d, 0px));
+  }
+  to {
+    transform: translate(0, 0);
+  }
+}
+@keyframes bkm-dy1 {
+  from {
+    translate: 0 var(--bkm-live-dy, 0px);
+  }
+  to {
+    translate: 0 0;
+  }
+}
+@keyframes bkm-st1 {
+  from {
+    --bkm-st: 0;
+  }
+  to {
+    --bkm-st: 45;
+  }
+}

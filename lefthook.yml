@@ -1,0 +1,8 @@
+pre-commit:
+  commands:
+    boundaries:
+      run: bun run guardrails
+    types:
+      run: bun run typecheck
+    lint:
+      run: bun run lint

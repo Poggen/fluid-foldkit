@@ -1,0 +1,9 @@
+/* Generated from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
+@keyframes shimmer {
+  0% {
+    background-position: 0% 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "charts-independent-baseline",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup": "bun setup.mjs",
+    "dev": "vite --config ../vite.original.config.mjs --host 127.0.0.1 --port 5241",
+    "build": "vite build --config ../vite.original.config.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/geist": "5.3.0",
+    "@tanstack/charts": "1.1.0",
+    "@tanstack/react-charts": "1.1.0",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "bklit-tanstack-charts": "0.1.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "typescript": "5.9.3",
+    "vite": "8.3.3"
+  },
+  "packageManager": "bun@1.4.2"
+}

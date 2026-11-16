@@ -1,0 +1,194 @@
+/* Native adapter: physical scene transport differences are listed in source-style-coverage.json. */
+@layer bklit-charts {
+:is([data-bkm-native-chart], [data-bkm-kit]) [class^=bkm-bar-front-] { x:var(--bkm-bar-current-x,var(--bkm-bar-target-x)); }
+:is([data-bkm-native-chart], [data-bkm-kit]) [class^=bkm-bar-front-] { y:var(--bkm-bar-current-y,var(--bkm-bar-target-y)); }
+:is([data-bkm-native-chart], [data-bkm-kit]) [class^=bkm-bar-front-] { width:var(--bkm-bar-current-width,var(--bkm-bar-target-width)); }
+:is([data-bkm-native-chart], [data-bkm-kit]) [class^=bkm-bar-front-] { height:var(--bkm-bar-current-height,var(--bkm-bar-target-height)); }
+:is([data-bkm-native-chart], [data-bkm-kit]) [class^=bkm-bar-front-] { rx:var(--bkm-bar-radius); }
+:is([data-bkm-native-chart], [data-bkm-kit]) [class^=bkm-bar-front-] { ry:var(--bkm-bar-radius); }
+:is([data-bkm-chart], [data-bkm-kit]) > .ts-chart-host > svg.ts-chart { --bkm-hx:inherit; }
+:is([data-bkm-chart], [data-bkm-kit]) > .ts-chart-host > svg.ts-chart { --bkm-bfx:inherit; }
+:is([data-bkm-chart], [data-bkm-kit]) > .ts-chart-host > svg.ts-chart { --bkm-pfx:inherit; }
+:is([data-bkm-chart], [data-bkm-kit]) > .ts-chart-host > svg.ts-chart { --bkm-pill-x:inherit; }
+:is([data-bkm-chart], [data-bkm-kit]) > .ts-chart-host > svg.ts-chart { --bkm-hl0:inherit; }
+:is([data-bkm-chart], [data-bkm-kit]) > .ts-chart-host > svg.ts-chart { --bkm-hl1:inherit; }
+:is([data-bkm-chart], [data-bkm-kit]) > .ts-chart-host > svg.ts-chart { --bkm-same0:inherit; }
+:is([data-bkm-chart], [data-bkm-kit]) > .ts-chart-host > svg.ts-chart { --bkm-same1:inherit; }
+:is([data-bkm-chart], [data-bkm-kit]) > .ts-chart-host > svg.ts-chart { --bkm-same2:inherit; }
+:is([data-bkm-chart], [data-bkm-kit]) > .ts-chart-host > svg.ts-chart { --bkm-same3:inherit; }
+:is([data-bkm-chart], [data-bkm-kit]) > .ts-chart-host > svg.ts-chart { --bkm-psame0:inherit; }
+:is([data-bkm-chart], [data-bkm-kit]) > .ts-chart-host > svg.ts-chart { --bkm-psame1:inherit; }
+:is([data-bkm-chart], [data-bkm-kit]) > .ts-chart-host > svg.ts-chart { --bkm-psame2:inherit; }
+:is([data-bkm-chart], [data-bkm-kit]) > .ts-chart-host > svg.ts-chart { --bkm-psame3:inherit; }
+.ts-chart__area[data-ts-key^='pattern-'] { -webkit-mask-image:url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%276%27%20height=%276%27%20shape-rendering=%27crispEdges%27%3E%3Cpath%20d=%27M%200,6%20l%206,-6%20M%20-1.5,1.5%20l%203,-3%20M%204.5,7.5%20l%203,-3%27%20stroke=%27black%27%20stroke-width=%271%27%20fill=%27none%27/%3E%3C/svg%3E); }
+.ts-chart__area[data-ts-key^='pattern-'] { mask-image:url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%276%27%20height=%276%27%20shape-rendering=%27crispEdges%27%3E%3Cpath%20d=%27M%200,6%20l%206,-6%20M%20-1.5,1.5%20l%203,-3%20M%204.5,7.5%20l%203,-3%27%20stroke=%27black%27%20stroke-width=%271%27%20fill=%27none%27/%3E%3C/svg%3E); }
+[data-chart-brush-selection] { -webkit-mask-image:url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%276%27%20height=%276%27%3E%3Cpath%20d=%27M%200,6%20l%206,-6%20M%20-1.5,1.5%20l%203,-3%20M%204.5,7.5%20l%203,-3%27%20stroke=%27black%27%20stroke-width=%271%27%20stroke-linecap=%27square%27%20fill=%27none%27/%3E%3C/svg%3E); }
+[data-chart-brush-selection] { mask-image:url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%276%27%20height=%276%27%3E%3Cpath%20d=%27M%200,6%20l%206,-6%20M%20-1.5,1.5%20l%203,-3%20M%204.5,7.5%20l%203,-3%27%20stroke=%27black%27%20stroke-width=%271%27%20stroke-linecap=%27square%27%20fill=%27none%27/%3E%3C/svg%3E); }
+.ts-chart__brush-x-fallback .selection { -webkit-mask-image:url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%276%27%20height=%276%27%3E%3Cpath%20d=%27M%200,6%20l%206,-6%20M%20-1.5,1.5%20l%203,-3%20M%204.5,7.5%20l%203,-3%27%20stroke=%27black%27%20stroke-width=%271%27%20stroke-linecap=%27square%27%20fill=%27none%27/%3E%3C/svg%3E); }
+.ts-chart__brush-x-fallback .selection { mask-image:url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%276%27%20height=%276%27%3E%3Cpath%20d=%27M%200,6%20l%206,-6%20M%20-1.5,1.5%20l%203,-3%20M%204.5,7.5%20l%203,-3%27%20stroke=%27black%27%20stroke-width=%271%27%20stroke-linecap=%27square%27%20fill=%27none%27/%3E%3C/svg%3E); }
+[data-bkm-kit]:not([data-bkm-ready]) .ts-chart__marks g[data-ts-key*=':marker:'] { animation:var(--bkm-marker-animation, bkm-mk-in) 500ms cubic-bezier(0.85, 0, 0.15, 1) calc(var(--bkm-marker-stagger-ms, var(--bkm-enter-ms, 1100ms)) * var(--bkm-mk, 0)) backwards; }
+[data-bkm-kit]:not([data-bkm-ready]) .ts-chart__marks g[data-ts-key*=':marker-ring:'] { animation:var(--bkm-marker-animation, bkm-mk-in) 500ms cubic-bezier(0.85, 0, 0.15, 1) calc(var(--bkm-marker-stagger-ms, var(--bkm-enter-ms, 1100ms)) * var(--bkm-mk, 0)) backwards; }
+[data-bkm-kit]:not([data-bkm-ready]) .ts-chart__marks g[data-ts-key*=':marker-out:'] { animation:var(--bkm-marker-animation, bkm-mk-in) 500ms cubic-bezier(0.85, 0, 0.15, 1) calc(var(--bkm-marker-stagger-ms, var(--bkm-enter-ms, 1100ms)) * var(--bkm-mk, 0)) backwards; }
+.ts-chart__marks g:is( [data-ts-key*=':marker:'], [data-ts-key*=':marker-ring:'], [data-ts-key*=':marker-out:'] ):not([data-ts-motion-role]) { transition:opacity 150ms ease-in-out, filter 150ms ease-in-out; }
+body [data-bkm-native-chart]:has(.ts-chart-host:hover) .ts-chart-surface.bkm-native-tooltip-surface > .ts-chart-tooltip:not(.bkm-heatmap-tooltip):not([data-bkm-tooltip-motion]) { opacity:1 !important; }
+body [data-bkm-native-chart]:has(svg.ts-chart:focus-visible) .ts-chart-surface.bkm-native-tooltip-surface > .ts-chart-tooltip:not(.bkm-heatmap-tooltip):not([data-bkm-tooltip-motion]) { opacity:1 !important; }
+@supports (opacity:attr(opacity type(<number>),1)) { [data-bkm-kit][data-bkm-hover] [data-ts-key^='bar:']:not(g) { opacity:var(--bkm-composed-opacity,1) !important; } }
+[data-bkm-physical-reveal] :is(.bkm-wipe-o,.bkm-wipe-i) { animation:none !important; }
+[data-bkm-physical-reveal] .bkm-wipe-o { visibility:var(--bkm-reveal-visibility,visible); }
+[data-bkm-physical-reveal][data-bkm-reveal-clip] .bkm-wipe-o { clip-path:var(--bkm-reveal-clip); }
+[data-bkm-physical-markers] .ts-chart__marks g:is([data-ts-key*=':marker:'],[data-ts-key*=':marker-ring:'],[data-ts-key*=':marker-out:']) { animation:none !important; }
+[data-bkm-kit]:not([data-bkm-ready]) .bkm-bg rect { opacity:0 !important; }
+[data-bkm-bar] :is([data-ts-key^='bars:']:not(g),[class*='bkm-bsquares-'],[class*='bkm-btrack-'],[class*='bkm-bd-']):not([data-ts-motion-role]) { transition:var(--bkm-bar-transition,none); }
+[data-bkm-bar]:is([data-hover],[data-legend]) :is([data-ts-key^='bars:']:not(g),[class*='bkm-bsquares-'],[class*='bkm-btrack-'],[class*='bkm-bd-']) { opacity:var(--bkm-bar-opacity,attr(opacity type(<number>),1)) !important; }
+[data-bkm-bar][data-hover] :is(text[data-ts-key^='x-tick-label:'],text[data-ts-key^='y-tick-label:']) { opacity:var(--bkm-bar-opacity,attr(opacity type(<number>),1)) !important; }
+[data-bkm-bar][data-hover] :is(text[data-ts-key^='x-tick-label:'],text[data-ts-key^='y-tick-label:']) { fill:var(--bkm-bar-fill,attr(fill type(<color>),var(--chart-label))) !important; }
+[data-bkm-bar] :is(text[data-ts-key^='x-tick-label:'],text[data-ts-key^='y-tick-label:']):not([data-ts-motion-role]) { transition:var(--bkm-bar-transition,none); }
+[data-bkm-bar] .ts-chart__marks { clip-path:inset(0) view-box; }
+[data-bkm-bar][data-bkm-status='loading'] .ts-chart-host { pointer-events:none; }
+[data-bkm-bar]:not([data-bkm-ready]) .bkm-hov { visibility:hidden; }
+[data-bkm-kit]:is([data-bkm-hover],[data-bkm-drag],[data-bkm-legend],[data-bkm-pl],[data-bkm-plf]) :is(g[data-ts-key^='line:'],g[data-ts-key^='area:'],g[data-ts-key^='pattern-'],g[data-ts-key^='profit-loss:']) { opacity:var(--bkm-series-opacity,1); }
+[data-bkm-kit]:is([data-bkm-hover],[data-bkm-drag],[data-bkm-legend],[data-bkm-pl],[data-bkm-plf]) :is(g[data-ts-key^='line:'],g[data-ts-key^='area:'],g[data-ts-key^='pattern-'],g[data-ts-key^='profit-loss:']) { filter:var(--bkm-series-filter,none); }
+[data-bkm-kit] :is(g[data-ts-key^='line:'],g[data-ts-key^='area:'],g[data-ts-key^='pattern-'],g[data-ts-key^='profit-loss:']):not([data-ts-motion-role]):not([data-ts-key*=':marker']) { transition:var(--bkm-series-transition,none); }
+[data-bkm-kit] path[data-ts-key*=':hl'] { opacity:var(--bkm-series-opacity,0); }
+[data-bkm-kit] path[data-ts-key*=':hl'] { clip-path:var(--bkm-series-clip-path,none); }
+[data-bkm-kit] path[data-ts-key*=':hl']:not([data-ts-motion-role]) { transition:var(--bkm-series-transition,none); }
+[data-bkm-kit] :is([data-ts-key^='segment-band:'],[data-ts-key^='segment-edge-']) { opacity:var(--bkm-series-opacity,0); }
+[data-bkm-kit] :is([data-ts-key^='segment-band:'],[data-ts-key^='segment-edge-']) { clip-path:var(--bkm-series-clip-path,none); }
+[data-bkm-kit] :is([data-ts-key^='segment-band:'],[data-ts-key^='segment-edge-']) { transform:var(--bkm-series-transform,none); }
+[data-bkm-kit] :is([data-ts-key^='segment-band:'],[data-ts-key^='segment-edge-']):not([data-ts-motion-role]) { transition:var(--bkm-series-transition,none); }
+[data-bkm-kit] linearGradient[id*='pl-'] stop { stop-opacity:var(--bkm-series-stop-opacity,attr(stop-opacity type(<number>),1)); }
+[data-bkm-kit] linearGradient[id*='pl-'] stop { transition:var(--bkm-series-transition,none); }
+@supports (opacity:attr(opacity type(<number>),1)) { [data-bkm-kit][data-bkm-hover] text[data-ts-key^='x-tick-label:'] { opacity:var(--bkm-pill-opacity,attr(opacity type(<number>),1)) !important; } }
+[data-bkm-kit] text[data-ts-key^='x-tick-label:']:not([data-ts-motion-role]) { transition:var(--bkm-pill-transition,opacity .4s ease-in-out); }
+[data-bkm-kit] .ts-chart-host { pointer-events:var(--bkm-gate-pointer-events,auto); }
+[data-bkm-kit] :is(.ts-chart-tooltip,.ts-chart__focus-layer,.ts-chart__focus-guide-layer,.ts-chart__focus-layer *,.ts-chart__focus-guide-layer *) { visibility:var(--bkm-gate-visibility,visible); }
+[data-bkm-kit] g[data-ts-key*=':loading'] { opacity:var(--bkm-loading-opacity,1); }
+[data-bkm-kit] g[data-ts-key*=':loading'] { pointer-events:var(--bkm-loading-pointer-events,none); }
+[data-bkm-kit] g[data-ts-key*=':loading'] { mask-image:var(--bkm-loading-mask-image,none); }
+[data-bkm-kit] g[data-ts-key*=':loading'] { -webkit-mask-image:var(--bkm-loading-mask-image,none); }
+[data-bkm-kit] g[data-ts-key*=':loading'] { animation:var(--bkm-loading-animation,none); }
+[data-bkm-kit] g[data-ts-key*=':loading'] { clip-path:var(--bkm-loading-clip-path,none); }
+[data-bkm-physical-pulses] g[data-ts-key*=':loading'] path { stroke:var(--bkm-loading-stroke); }
+[data-bkm-kit] [data-ts-key^='bar:']:not(g) { opacity:var(--bkm-composed-opacity,1); }
+[data-bkm-kit] [data-ts-key^='bar:']:not(g):not([data-ts-motion-role]) { transition:var(--bkm-composed-transition,none); }
+[data-bkm-kit] [data-ts-key^='bar:']:not(g):not([data-ts-motion-role]) { transition-delay:var(--bkm-composed-transition-delay,0s); }
+:is([data-bkm-native-chart], [data-bkm-kit]) [class^=bkm-candle-geometry-] { x:var(--bkm-candle-x); }
+:is([data-bkm-native-chart], [data-bkm-kit]) [class^=bkm-candle-geometry-] { y:var(--bkm-candle-y); }
+:is([data-bkm-native-chart], [data-bkm-kit]) [class^=bkm-candle-geometry-] { width:var(--bkm-candle-width); }
+:is([data-bkm-native-chart], [data-bkm-kit]) [class^=bkm-candle-geometry-] { height:var(--bkm-candle-height); }
+:is([data-bkm-native-chart], [data-bkm-kit]) [class^=bkm-scatter-frame-] { transform:var(--bkm-scatter-transform); }
+:is([data-bkm-native-chart], [data-bkm-kit]) circle[class*=bkm-scatter-] { cx:0px; }
+:is([data-bkm-native-chart], [data-bkm-kit]) circle[class*=bkm-scatter-] { cy:0px; }
+:is([data-bkm-native-chart], [data-bkm-kit]) circle[class*=bkm-scatter-] { r:var(--bkm-scatter-radius); }
+:is([data-bkm-native-chart], [data-bkm-kit]) .bkm-source-grid line { shape-rendering:crispEdges; }
+:is([data-bkm-native-chart], [data-bkm-kit]) .bkm-source-grid { mask:var(--bkm-grid-mask,none); }
+:is([data-bkm-native-chart], [data-bkm-kit]) g[class^=bkm-pulse-] { clip-path:var(--bkm-pulse-clip,none); }
+:is([data-bkm-native-chart], [data-bkm-kit]) .bkm-pulse-negative { animation-direction:reverse; }
+[data-bkm-chart='pie'] g.bkm-pie-arc { transform:var(--bkm-pie-transform,none); }
+[data-bkm-chart='pie'][data-hover] g.bkm-pie-arc { opacity:var(--bkm-pie-opacity); }
+[data-bkm-radar-scope][data-bkm-enter] g.bkm-radar-levels text { animation:var(--bkm-r-label-animation); }
+[data-bkm-radar-scope][data-bkm-enter] g.bkm-radar-dot { animation:var(--bkm-r-dot-animation); }
+[data-bkm-radar-scope][data-bkm-enter] g.bkm-radar-dot circle { transform-box:fill-box; }
+[data-bkm-radar-scope][data-bkm-enter] g.bkm-radar-dot circle { transform-origin:center; }
+[data-bkm-radar-scope][data-bkm-enter] g.bkm-radar-dot circle { transform:scale(calc(1 / max(.001, var(--bkm-rp)))); }
+@media (prefers-reduced-motion:reduce) { [data-bkm-radar-scope][data-bkm-enter] * { animation:none !important; } }
+@media (prefers-reduced-motion:reduce) { [data-bkm-radar-scope][data-bkm-enter] * { --bkm-rp:1; } }
+:where([data-bkm-radar] g.bkm-radar-label-i) text { cursor:pointer; }
+:where([data-bkm-radar] g.bkm-radar-label-i) text { transition:opacity 150ms cubic-bezier(.4,0,.2,1); }
+:where([data-bkm-radar] g.bkm-radar-label-i) text:hover { opacity:1; }
+@supports (opacity: attr(opacity type(<number>), 1)) { [data-bkm-chart="liveline"] clipPath rect { width:calc(attr(width type(<number>),0) * 1px + var(--bkm-live-ext,0px)); } }
+[data-bkm-chart="liveline"] .bkm-tp0 .bkm-live-tail-l:not(.bkm-live-tail--still) { animation:bkm-tail-l0 var(--bkm-live-roll,600ms) var(--bkm-live-roll-ease,linear); }
+[data-bkm-chart="liveline"] .bkm-tp0 .bkm-live-tail-a:not(.bkm-live-tail--still) { transform-box:view-box; }
+[data-bkm-chart="liveline"] .bkm-tp0 .bkm-live-tail-a:not(.bkm-live-tail--still) { transform-origin:var(--bkm-live-xa,0px) 0; }
+[data-bkm-chart="liveline"] .bkm-tp0 .bkm-live-tail-a:not(.bkm-live-tail--still) { animation:bkm-tail-a0 var(--bkm-live-roll,600ms) var(--bkm-live-roll-ease,linear); }
+[data-bkm-chart="liveline"] .bkm-tp0 .bkm-live-tail-x:not(.bkm-live-tail--still) { animation:bkm-tail-x0 var(--bkm-live-roll,600ms) var(--bkm-live-roll-ease,linear); }
+[data-bkm-chart="liveline"] .bkm-tp0 .bkm-live-tail-b:not(.bkm-live-tail--still) { transform:scaleY(0); }
+[data-bkm-chart="liveline"] .bkm-tp0 .bkm-live-tail-b:not(.bkm-live-tail--still) { animation:bkm-tail-x0 var(--bkm-live-roll,600ms) var(--bkm-live-roll-ease,linear),bkm-tail-y0 var(--bkm-live-settle,1380ms) var(--bkm-live-head-ease); }
+[data-bkm-chart="liveline"] .bkm-tp0 .bkm-live-tail-k:not(.bkm-live-tail--still) { transform:scaleY(var(--bkm-live-k,1)); }
+[data-bkm-chart="liveline"] .bkm-tp0 .bkm-live-tail-k:not(.bkm-live-tail--still) { animation:bkm-tail-x0 var(--bkm-live-roll,600ms) var(--bkm-live-roll-ease,linear),bkm-tail-k0 var(--bkm-live-settle,1380ms) var(--bkm-live-head-ease); }
+[data-bkm-chart="liveline"] .bkm-tp0 .bkm-live-rp { transform-box:view-box; }
+[data-bkm-chart="liveline"] .bkm-tp0 .bkm-live-rp { transform-origin:0 0; }
+[data-bkm-chart="liveline"] .bkm-tp0 .bkm-live-rp { animation:bkm-rp0 var(--bkm-live-roll,600ms) var(--bkm-live-roll-ease,linear); }
+[data-bkm-chart="liveline"] .bkm-tp0 .bkm-live-rp :is(path,polyline) { vector-effect:non-scaling-stroke; }
+[data-bkm-chart="liveline"] :is(.bkm-live-tip,.bkm-live-pulse-ov).bkm-dp0 { animation:bkm-dy0 var(--bkm-live-settle,1380ms) var(--bkm-live-head-ease),bkm-rd0 var(--bkm-live-roll,600ms) var(--bkm-live-roll-ease,linear); }
+[data-bkm-chart="liveline"] .bkm-sp0 { animation:bkm-st0 1440ms steps(45,end); }
+[data-bkm-chart="liveline"] .bkm-tp1 .bkm-live-tail-l:not(.bkm-live-tail--still) { animation:bkm-tail-l1 var(--bkm-live-roll,600ms) var(--bkm-live-roll-ease,linear); }
+[data-bkm-chart="liveline"] .bkm-tp1 .bkm-live-tail-a:not(.bkm-live-tail--still) { transform-box:view-box; }
+[data-bkm-chart="liveline"] .bkm-tp1 .bkm-live-tail-a:not(.bkm-live-tail--still) { transform-origin:var(--bkm-live-xa,0px) 0; }
+[data-bkm-chart="liveline"] .bkm-tp1 .bkm-live-tail-a:not(.bkm-live-tail--still) { animation:bkm-tail-a1 var(--bkm-live-roll,600ms) var(--bkm-live-roll-ease,linear); }
+[data-bkm-chart="liveline"] .bkm-tp1 .bkm-live-tail-x:not(.bkm-live-tail--still) { animation:bkm-tail-x1 var(--bkm-live-roll,600ms) var(--bkm-live-roll-ease,linear); }
+[data-bkm-chart="liveline"] .bkm-tp1 .bkm-live-tail-b:not(.bkm-live-tail--still) { transform:scaleY(0); }
+[data-bkm-chart="liveline"] .bkm-tp1 .bkm-live-tail-b:not(.bkm-live-tail--still) { animation:bkm-tail-x1 var(--bkm-live-roll,600ms) var(--bkm-live-roll-ease,linear),bkm-tail-y1 var(--bkm-live-settle,1380ms) var(--bkm-live-head-ease); }
+[data-bkm-chart="liveline"] .bkm-tp1 .bkm-live-tail-k:not(.bkm-live-tail--still) { transform:scaleY(var(--bkm-live-k,1)); }
+[data-bkm-chart="liveline"] .bkm-tp1 .bkm-live-tail-k:not(.bkm-live-tail--still) { animation:bkm-tail-x1 var(--bkm-live-roll,600ms) var(--bkm-live-roll-ease,linear),bkm-tail-k1 var(--bkm-live-settle,1380ms) var(--bkm-live-head-ease); }
+[data-bkm-chart="liveline"] .bkm-tp1 .bkm-live-rp { transform-box:view-box; }
+[data-bkm-chart="liveline"] .bkm-tp1 .bkm-live-rp { transform-origin:0 0; }
+[data-bkm-chart="liveline"] .bkm-tp1 .bkm-live-rp { animation:bkm-rp1 var(--bkm-live-roll,600ms) var(--bkm-live-roll-ease,linear); }
+[data-bkm-chart="liveline"] .bkm-tp1 .bkm-live-rp :is(path,polyline) { vector-effect:non-scaling-stroke; }
+[data-bkm-chart="liveline"] :is(.bkm-live-tip,.bkm-live-pulse-ov).bkm-dp1 { animation:bkm-dy1 var(--bkm-live-settle,1380ms) var(--bkm-live-head-ease),bkm-rd1 var(--bkm-live-roll,600ms) var(--bkm-live-roll-ease,linear); }
+[data-bkm-chart="liveline"] .bkm-sp1 { animation:bkm-st1 1440ms steps(45,end); }
+[data-bkm-chart="sankey"] g[data-ts-key^="sankey:sankey-node-"] > rect:not([data-bkm-owned-motion]):not([data-ts-motion-role]) { opacity:calc(1 + var(--bkm-sk-dim,0) * (var(--bkm-sk-nf) - 1)); }
+[data-bkm-chart="sankey"] g[data-ts-key^="sankey:sankey-node-"] > rect:not([data-bkm-owned-motion]):not([data-ts-motion-role]) { transition:opacity var(--bkm-sankey-dur,1100ms) var(--bkm-sankey-ease,cubic-bezier(0.85,0,0.15,1)) calc(var(--bkm-sk-i) / var(--bkm-sankey-n,1) * 0.24 * var(--bkm-sankey-dur,1100ms)); }
+[data-bkm-chart="sankey"] g[data-ts-key^="sankey:nlabel"] > text:not([data-bkm-owned-motion]):not([data-ts-motion-role]) { fill:color-mix(in srgb,var(--bkm-foreground) calc((1 + var(--bkm-sk-dim,0) * (var(--bkm-sk-nf) - 1)) * 100%),transparent); }
+[data-bkm-chart="sankey"] g[data-ts-key^="sankey:vlabel"] > text:not([data-bkm-owned-motion]):not([data-ts-motion-role]) { fill:color-mix(in srgb,var(--bkm-foreground) calc((0.6 + var(--bkm-sk-dim,0) * (var(--bkm-sk-nf) * 0.8 - 0.6)) * 100%),transparent); }
+[data-bkm-chart="sankey"] g[data-ts-key^="sankey:flow"] > path:not([data-bkm-owned-motion]):not([data-ts-motion-role]) { stroke-opacity:calc(var(--bkm-sk-lo) + var(--bkm-sk-dim,0) * (var(--bkm-sk-lf) - var(--bkm-sk-lo)) + var(--bkm-sk-hot,0) * (var(--bkm-sk-lh) - var(--bkm-sk-lo))); }
+[data-bkm-chart="sankey"] g[data-ts-key^="sankey:flow"] > path:not([data-bkm-owned-motion]):not([data-ts-motion-role]) { transition:stroke-opacity 180ms cubic-bezier(0,0,.58,1); }
+[data-bkm-chart='sankey'] g[data-ts-key^='sankey:sankey-node-'] > rect:not([data-bkm-owned-motion]) { transform-box:fill-box; }
+[data-bkm-chart='sankey'] g[data-ts-key^='sankey:sankey-node-'] > rect:not([data-bkm-owned-motion]) { transform-origin:50% 50%; }
+[data-bkm-chart='sankey'] g[data-ts-key^='sankey:sankey-node-'] > rect:not([data-bkm-owned-motion]) { animation:bkm-sankey-label-in var(--bkm-sankey-dur, 1100ms) var(--bkm-sankey-ease, cubic-bezier(0.85, 0, 0.15, 1)) calc(var(--bkm-sk-i) / var(--bkm-sankey-n, 1) * 0.24 * var(--bkm-sankey-dur, 1100ms)) backwards, bkm-sankey-node-grow var(--bkm-sankey-dur, 1100ms) var(--bkm-sankey-ease, cubic-bezier(0.85, 0, 0.15, 1)) calc(var(--bkm-sk-i) / var(--bkm-sankey-n, 1) * 0.24 * var(--bkm-sankey-dur, 1100ms)) backwards; }
+[data-bkm-chart='sankey'][data-bkm-reversed] g[data-ts-key^='sankey:flow'] > path { animation-name:bkm-sankey-flow-draw-rtl; }
+[data-bkm-chart='sankey'] g[data-ts-key^='sankey:flow'] > path { animation:bkm-sankey-flow-draw var(--bkm-sankey-dur, 1100ms) var(--bkm-sankey-ease, cubic-bezier(0.85, 0, 0.15, 1)) calc(0.2 * var(--bkm-sankey-dur, 1100ms)) backwards; }
+@supports (z-index: sibling-index()) { [data-bkm-chart='sankey'] g[data-ts-key^='sankey:flow'] > path { animation-delay:calc( (0.2 + (sibling-index() - 1) / sibling-count() * 0.32) * var(--bkm-sankey-dur, 1100ms) ); } }
+[data-bkm-chart='sankey'] g[data-ts-key^='sankey:nlabel'] > text:not([data-ts-motion-role]):not([data-bkm-owned-motion]) { --bkm-sankey-stagger:0ms; }
+[data-bkm-chart='sankey'] g[data-ts-key^='sankey:nlabel'] > text:not([data-ts-motion-role]):not([data-bkm-owned-motion]) { --bkm-sankey-label-delay:calc( var(--bkm-sankey-stagger) + 0.108 * var(--bkm-sankey-dur, 1100ms) ); }
+[data-bkm-chart='sankey'] g[data-ts-key^='sankey:nlabel'] > text:not([data-ts-motion-role]):not([data-bkm-owned-motion]) { transition:fill var(--bkm-sankey-dur, 1100ms) var(--bkm-sankey-ease, cubic-bezier(0.85, 0, 0.15, 1)) var(--bkm-sankey-label-delay); }
+[data-bkm-chart='sankey'] g[data-ts-key^='sankey:nlabel'] > text:not([data-ts-motion-role]):not([data-bkm-owned-motion]) { animation:bkm-sankey-label-in var(--bkm-sankey-dur, 1100ms) var(--bkm-sankey-ease, cubic-bezier(0.85, 0, 0.15, 1)) var(--bkm-sankey-label-delay) backwards; }
+[data-bkm-chart='sankey'] g[data-ts-key^='sankey:vlabel'] > text:not([data-ts-motion-role]):not([data-bkm-owned-motion]) { --bkm-sankey-stagger:0ms; }
+[data-bkm-chart='sankey'] g[data-ts-key^='sankey:vlabel'] > text:not([data-ts-motion-role]):not([data-bkm-owned-motion]) { --bkm-sankey-label-delay:calc( var(--bkm-sankey-stagger) + 0.108 * var(--bkm-sankey-dur, 1100ms) ); }
+[data-bkm-chart='sankey'] g[data-ts-key^='sankey:vlabel'] > text:not([data-ts-motion-role]):not([data-bkm-owned-motion]) { transition:fill var(--bkm-sankey-dur, 1100ms) var(--bkm-sankey-ease, cubic-bezier(0.85, 0, 0.15, 1)) var(--bkm-sankey-label-delay); }
+[data-bkm-chart='sankey'] g[data-ts-key^='sankey:vlabel'] > text:not([data-ts-motion-role]):not([data-bkm-owned-motion]) { animation:bkm-sankey-label-in var(--bkm-sankey-dur, 1100ms) var(--bkm-sankey-ease, cubic-bezier(0.85, 0, 0.15, 1)) var(--bkm-sankey-label-delay) backwards; }
+@supports (z-index: sibling-index()) { [data-bkm-chart='sankey'] g[data-ts-key^='sankey:nlabel'] > text:not([data-ts-motion-role]):not([data-bkm-owned-motion]) { --bkm-sankey-stagger:calc( (sibling-index() - 1) / sibling-count() * 0.24 * var(--bkm-sankey-dur, 1100ms) ); } }
+@supports (z-index: sibling-index()) { [data-bkm-chart='sankey'] g[data-ts-key^='sankey:vlabel'] > text:not([data-ts-motion-role]):not([data-bkm-owned-motion]) { --bkm-sankey-stagger:calc( (sibling-index() - 1) / sibling-count() * 0.24 * var(--bkm-sankey-dur, 1100ms) ); } }
+[data-bkm-chart='sankey'] g[data-ts-key^='sankey:vlabel'] > text:not([data-ts-motion-role]):not([data-bkm-owned-motion]) { --bkm-sankey-label-delay:calc( var(--bkm-sankey-stagger) + 0.108 * var(--bkm-sankey-dur, 1100ms) + 60ms ); }
+[data-bkm-chart='sankey'] :is(g[data-ts-key^='sankey:nlabel'], g[data-ts-key^='sankey:vlabel']) > text:not([data-ts-motion-role]):not([data-bkm-owned-motion]):is( [text-anchor='end'], [transform^='rotate(-90'] ) { animation-name:bkm-sankey-label-in, bkm-sankey-label-in-left; }
+[data-bkm-chart='sankey'] :is(g[data-ts-key^='sankey:nlabel'], g[data-ts-key^='sankey:vlabel']) > text:not([data-ts-motion-role]):not([data-bkm-owned-motion]):is( [text-anchor='start'], [transform^='rotate(90'] ) { animation-name:bkm-sankey-label-in, bkm-sankey-label-in-right; }
+[data-bkm-chart='sankey'][data-bkm-sk-hold] :is( g[data-ts-key^='sankey:sankey-node-'] > rect, g[data-ts-key^='sankey:nlabel'] > text, g[data-ts-key^='sankey:vlabel'] > text ) { animation-play-state:paused !important; }
+[data-bkm-chart='sankey'] :is(g[data-ts-key^='sankey:sankey-node-'] > rect, g[data-ts-key^='sankey:flow'] > path) { cursor:pointer; }
+[data-hm-id] rect[data-ts-key^='heatmap-cells-'] { transform-box:fill-box; }
+[data-hm-id] rect[data-ts-key^='heatmap-cells-'] { transform-origin:center; }
+[data-hm-id] rect[data-ts-key^='heatmap-cells-'] { transition:opacity .22s cubic-bezier(.4,0,.2,1),transform .22s cubic-bezier(.4,0,.2,1); }
+[data-hm-id] rect[data-ts-key^='heatmap-cells-'] { opacity:var(--bkm-hm-hover-opacity,attr(opacity type(<number>),1)); }
+[data-hm-id] rect[data-ts-key^='heatmap-cells-'] { transform:var(--bkm-hm-hover-transform,scale(1)); }
+[data-bkm-chart="candlestick"]:not([data-bkm-ready]) .ts-chart-host { pointer-events:none; }
+[data-bkm-chart="candlestick"]:not([data-bkm-ready]) :is(.ts-chart-tooltip,.ts-chart__focus-layer,.ts-chart__focus-guide-layer) { visibility:hidden; }
+[data-bkm-chart="candlestick"] .ts-chart__marks { clip-path:inset(0) view-box; }
+[data-bkm-chart="candlestick"] .chart-candlesticks { --bkm-hx:inherit; }
+[data-bkm-chart="candlestick"] g.bkm-candle { --bkm-hx:inherit; }
+[data-bkm-chart="candlestick"][data-bkm-ready] g.bkm-candle { transition:opacity .15s ease-in-out; }
+@supports (opacity: attr(data-bkm-cx type(<number>), 1)) { [data-bkm-chart="candlestick"][data-bkm-ready][data-bkm-hover] g.bkm-candle { opacity:clamp(var(--bkm-faded),calc((1.5 - abs(attr(data-bkm-cx type(<number>)) - var(--bkm-hx))) * 1000),1); } }
+[data-bkm-chart="candlestick"][data-bkm-ready][data-bkm-legend="0"] g.bkm-candle-negative { opacity:var(--bkm-faded); }
+[data-bkm-chart="candlestick"][data-bkm-ready][data-bkm-legend="1"] g.bkm-candle-positive { opacity:var(--bkm-faded); }
+[data-bkm-chart='funnel'] .bkm-ring { transform:var(--bkm-funnel-transform,none); }
+[data-bkm-chart='choropleth'] :is(.bkm-choro-features, .bkm-choro-graticule) path { vector-effect:none; }
+[data-bkm-chart="scatter"]:not([data-bkm-ready]) .ts-chart-host { pointer-events:none; }
+[data-bkm-chart="scatter"]:not([data-bkm-ready]) :is(.ts-chart-tooltip,.ts-chart__focus-layer,.ts-chart__focus-guide-layer) { visibility:hidden; }
+.bkm-scatter-base { transition:opacity .15s ease-in-out,filter .15s ease-in-out; }
+[data-bkm-chart="scatter"][data-bkm-ready][data-bkm-hover] .bkm-scatter-dim { opacity:var(--bkm-scatter-inactive); }
+[data-bkm-chart="scatter"][data-bkm-ready][data-bkm-hover] .bkm-scatter-dim { filter:blur(var(--bkm-scatter-blur)); }
+}
+
+/* Preserve the preimage native Motion exclusions when the original stylesheet is loaded. */
+@layer bklit-charts {
+body .ts-chart-surface > .ts-chart-tooltip[data-bkm-tooltip-motion] { animation: none; }
+body .ts-chart-surface > .ts-chart-tooltip[data-bkm-tooltip-motion] > .ts-chart-tooltip__body { animation: none; transition: none; }
+[data-bkm-chart="sankey"] [data-bkm-owned-motion] { animation: none !important; transition: none !important; }
+}
+
+/* The separate visible pills own paint; native full-height brush rects retain hit testing. */
+@layer bklit-charts {
+  .bk-brush-strip[data-bkm-native-chart] [data-chart-brush-handle] {
+    fill: transparent !important;
+    fill-opacity: 0 !important;
+    transform: none;
+  }
+}

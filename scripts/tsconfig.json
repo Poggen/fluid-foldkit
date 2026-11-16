@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "types": ["bun", "node"]
+  },
+  "include": [
+    "vercel.ts",
+    "registry/**/*.ts",
+    "guardrails.ts",
+    "../oxlint.config.ts",
+    "policy/scoped-view-policy*.ts",
+    "policy/design-system-*.ts",
+    "policy/tailwind-*.ts",
+    "policy/dependency-patch-policy*.ts",
+    "policy/source-boundaries.test.ts"
+  ]
+}

@@ -1,0 +1,8 @@
+/* Preserve the native port's reduced-motion policy. */
+@media (prefers-reduced-motion: reduce) {
+  html.transitioning *,
+  html.transitioning *::before,
+  html.transitioning *::after {
+    transition: none !important;
+  }
+}

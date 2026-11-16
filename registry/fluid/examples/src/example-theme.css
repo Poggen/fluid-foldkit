@@ -1,0 +1,14 @@
+/* Fixed author palette for the standalone examples and catalogue. */
+@theme {
+  --color-example-quiet: #555;
+  --color-example-muted: #666;
+  --color-example-border: #e3e3e3;
+  --color-example-control-border: #ddd;
+  --color-example-border-hover: #a3a3a3;
+  --color-example-catalogue-link: #254d91;
+  --color-example-catalogue-note: #684f20;
+  --color-example-picker-muted: #686d78;
+  --color-example-picker-help: #777b84;
+  --color-example-picker-border: #e4e6eb;
+  --color-example-icon-accent: #4667bb;
+}

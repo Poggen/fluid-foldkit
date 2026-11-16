@@ -1,0 +1,15 @@
+@import 'tailwindcss';
+@import '@foldkit-visuals/fluid/styles.css';
+@font-face {
+  font-family: Inter;
+  src: url('./assets/InterVariable.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+}

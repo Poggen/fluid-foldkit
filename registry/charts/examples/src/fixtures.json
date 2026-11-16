@@ -1,0 +1,337 @@
+[
+  {
+    "id": "arc",
+    "props": {
+      "value": 72,
+      "centerValue": 93000,
+      "prefix": "$",
+      "width": 560,
+      "height": 420
+    }
+  },
+  {
+    "id": "arc-fluid",
+    "props": {
+      "value": 42,
+      "centerValue": 1260,
+      "minWidth": 200,
+      "defaultLabel": "Requests"
+    }
+  },
+  {
+    "id": "arc-uniform-rounded",
+    "props": {
+      "value": 62,
+      "uniformWidth": true,
+      "notchCornerRadius": 4,
+      "spacing": 40,
+      "notchLengthPercent": 70,
+      "totalNotches": 60,
+      "width": 560,
+      "height": 420
+    }
+  },
+  {
+    "id": "arc-gradient",
+    "props": {
+      "value": 85,
+      "useGradient": true,
+      "width": 560,
+      "height": 420
+    }
+  },
+  {
+    "id": "arc-colors",
+    "props": {
+      "value": 65,
+      "useGradient": true,
+      "activeGradient": ["#00ff00", "#ff0000"],
+      "inactiveGradient": ["#334455", "#aabbcc"],
+      "inactiveFillOpacity": 0.5,
+      "activeFillOpacity": 0.9,
+      "width": 560,
+      "height": 420
+    }
+  },
+  {
+    "id": "arc-angles",
+    "props": {
+      "value": 37,
+      "startAngle": 180,
+      "endAngle": 360,
+      "activeFill": "#a855f7",
+      "inactiveFill": "#334155",
+      "width": 560,
+      "height": 420
+    }
+  },
+  {
+    "id": "arc-single",
+    "props": {
+      "value": 100,
+      "totalNotches": 1,
+      "width": 560,
+      "height": 420
+    }
+  },
+  {
+    "id": "arc-empty",
+    "props": {
+      "value": 0,
+      "totalNotches": 0,
+      "width": 560,
+      "height": 420
+    }
+  },
+  {
+    "id": "arc-many",
+    "props": {
+      "value": 100,
+      "totalNotches": 128,
+      "width": 560,
+      "height": 420
+    }
+  },
+  {
+    "id": "arc-tween",
+    "props": {
+      "value": 72,
+      "enterTransition": {
+        "type": "tween",
+        "duration": 0.6,
+        "ease": [0.85, 0, 0.15, 1]
+      },
+      "enterStaggerScale": 0.5,
+      "width": 560,
+      "height": 420
+    }
+  },
+  {
+    "id": "arc-spring",
+    "props": {
+      "value": 72,
+      "enterTransition": {
+        "type": "spring",
+        "stiffness": 250,
+        "damping": 18,
+        "mass": 1
+      },
+      "enterStaggerScale": 1.5,
+      "width": 560,
+      "height": 420
+    }
+  },
+  {
+    "id": "linear",
+    "props": {
+      "orientation": "linear",
+      "value": 72,
+      "width": 560,
+      "height": 24,
+      "centerValue": 1200,
+      "suffix": "%",
+      "defaultLabel": "Revenue"
+    }
+  },
+  {
+    "id": "linear-fluid",
+    "props": {
+      "orientation": "linear",
+      "value": 72,
+      "linearHeight": 32,
+      "minWidth": 200,
+      "centerValue": 1200,
+      "labelPlacement": "bottom"
+    }
+  },
+  {
+    "id": "linear-tapered",
+    "props": {
+      "orientation": "linear",
+      "value": 65,
+      "width": 560,
+      "height": 36,
+      "uniformWidth": false,
+      "notchCornerRadius": 3,
+      "notchWidthPercent": 90,
+      "notchLengthPercent": 80,
+      "useGradient": true
+    }
+  },
+  {
+    "id": "linear-bottom-start",
+    "props": {
+      "orientation": "linear",
+      "value": 55,
+      "width": 560,
+      "labelPlacement": "bottom",
+      "labelAlign": "start",
+      "centerValue": 1000
+    }
+  },
+  {
+    "id": "linear-top-center",
+    "props": {
+      "orientation": "linear",
+      "value": 55,
+      "width": 560,
+      "labelPlacement": "top",
+      "labelAlign": "center",
+      "centerValue": 1000
+    }
+  },
+  {
+    "id": "linear-bottom-end",
+    "props": {
+      "orientation": "linear",
+      "value": 55,
+      "width": 560,
+      "labelPlacement": "bottom",
+      "labelAlign": "end",
+      "centerValue": 1000
+    }
+  },
+  {
+    "id": "linear-left-start",
+    "props": {
+      "orientation": "linear",
+      "value": 55,
+      "width": 480,
+      "labelPlacement": "left",
+      "labelAlign": "start",
+      "centerValue": 1000
+    }
+  },
+  {
+    "id": "linear-left-center",
+    "props": {
+      "orientation": "linear",
+      "value": 55,
+      "width": 480,
+      "labelPlacement": "left",
+      "labelAlign": "center",
+      "centerValue": 1000
+    }
+  },
+  {
+    "id": "linear-right-end",
+    "props": {
+      "orientation": "linear",
+      "value": 55,
+      "width": 480,
+      "labelPlacement": "right",
+      "labelAlign": "end",
+      "centerValue": 1000
+    }
+  },
+  {
+    "id": "linear-round-gradient",
+    "props": {
+      "orientation": "linear",
+      "value": 88,
+      "width": 560,
+      "height": 28,
+      "notchCornerRadius": 12,
+      "notchLengthPercent": 100,
+      "notchWidthPercent": 100,
+      "useGradient": true,
+      "activeGradient": ["#0ea5e9", "#8b5cf6"]
+    }
+  },
+  {
+    "id": "formatted",
+    "props": {
+      "value": 76,
+      "width": 560,
+      "height": 420,
+      "centerValue": 12500.75,
+      "defaultLabel": "Balance",
+      "formatOptions": {
+        "style": "currency",
+        "currency": "SEK",
+        "currencyDisplay": "code",
+        "maximumFractionDigits": 2
+      },
+      "className": "extra-class",
+      "geometryScrubbing": true
+    }
+  },
+  {
+    "id": "linear-top-end",
+    "props": {
+      "orientation": "linear",
+      "value": 55,
+      "width": 560,
+      "labelPlacement": "top",
+      "labelAlign": "end",
+      "centerValue": 1000
+    }
+  },
+  {
+    "id": "linear-bottom-center",
+    "props": {
+      "orientation": "linear",
+      "value": 55,
+      "width": 560,
+      "labelPlacement": "bottom",
+      "labelAlign": "center",
+      "centerValue": 1000
+    }
+  },
+  {
+    "id": "linear-left-end",
+    "props": {
+      "orientation": "linear",
+      "value": 55,
+      "width": 480,
+      "labelPlacement": "left",
+      "labelAlign": "end",
+      "centerValue": 1000
+    }
+  },
+  {
+    "id": "linear-right-start",
+    "props": {
+      "orientation": "linear",
+      "value": 55,
+      "width": 480,
+      "labelPlacement": "right",
+      "labelAlign": "start",
+      "centerValue": 1000
+    }
+  },
+  {
+    "id": "linear-right-center",
+    "props": {
+      "orientation": "linear",
+      "value": 55,
+      "width": 480,
+      "labelPlacement": "right",
+      "labelAlign": "center",
+      "centerValue": 1000
+    }
+  },
+  {
+    "id": "linear-scrubbing",
+    "props": {
+      "orientation": "linear",
+      "value": 72,
+      "width": 560,
+      "height": 24,
+      "geometryScrubbing": true
+    }
+  },
+  {
+    "id": "arc-fractional-tween",
+    "props": {
+      "value": 72,
+      "width": 560,
+      "height": 420,
+      "enterTransition": {
+        "type": "tween",
+        "duration": 0.3333,
+        "ease": "easeInOut"
+      }
+    }
+  }
+]

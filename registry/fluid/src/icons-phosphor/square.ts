@@ -1,0 +1,46 @@
+// Exact @phosphor-icons/react 2.1.10 SVG. MIT; see NOTICE
+import { Predicate } from 'effect'
+import type { Icon } from '../presentation.js'
+
+export const icon: Icon = (options, h) =>
+  Predicate.isNumber(options.strokeWidth) && options.strokeWidth >= 1.75
+    ? h.svg(
+        [
+          h.Attribute('xmlns', 'http://www.w3.org/2000/svg'),
+          h.Attribute('width', String(options.size ?? '1em')),
+          h.Attribute('height', String(options.size ?? '1em')),
+          h.Attribute('fill', 'currentColor'),
+          h.Attribute('viewBox', '0 0 256 256'),
+          ...(options.className === undefined
+            ? []
+            : [h.Attribute('class', options.className ?? '')]),
+        ],
+        [
+          h.path([
+            h.Attribute(
+              'd',
+              'M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32Zm0,176H48V48H208V208Z',
+            ),
+          ]),
+        ],
+      )
+    : h.svg(
+        [
+          h.Attribute('xmlns', 'http://www.w3.org/2000/svg'),
+          h.Attribute('width', String(options.size ?? '1em')),
+          h.Attribute('height', String(options.size ?? '1em')),
+          h.Attribute('fill', 'currentColor'),
+          h.Attribute('viewBox', '0 0 256 256'),
+          ...(options.className === undefined
+            ? []
+            : [h.Attribute('class', options.className ?? '')]),
+        ],
+        [
+          h.path([
+            h.Attribute(
+              'd',
+              'M208,34H48A14,14,0,0,0,34,48V208a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V48A14,14,0,0,0,208,34Zm2,174a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V48a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2Z',
+            ),
+          ]),
+        ],
+      )

@@ -1,0 +1,98 @@
+@layer theme, base, components, bklit-charts, utilities;
+@property --bkm-series-opacity {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-series-filter {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-series-transition {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-series-clip-path {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-series-transform {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-series-stop-opacity {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-bar-opacity {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-bar-transition {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-bar-fill {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-composed-opacity {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-composed-transition {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-composed-transition-delay {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-pill-opacity {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-pill-transition {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-gate-visibility {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-gate-pointer-events {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-loading-opacity {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-loading-pointer-events {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-loading-mask-image {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-loading-animation {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-loading-clip-path {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-loading-stroke {
+  syntax: '*';
+  inherits: false;
+}
+
+@property --bkm-hm-hover-opacity {
+  syntax: '*';
+  inherits: false;
+}
+@property --bkm-hm-hover-transform {
+  syntax: '*';
+  inherits: false;
+}

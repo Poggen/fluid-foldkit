@@ -1,0 +1,10 @@
+/* Generated from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
+@utility scrollbar-hide {
+  & {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

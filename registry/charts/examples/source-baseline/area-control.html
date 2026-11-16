@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Area · same-document control</title>
+  </head>
+  <body>
+    <nav aria-label="Renderer">
+      <button id="source">Mount source</button><button id="native">Mount native</button
+      ><button id="release">Release renderer</button>
+    </nav>
+    <section id="area-host" style="width: 640px; height: 320px">
+      <div id="area-mount"></div>
+    </section>
+    <p id="status" role="status">Starting source…</p>
+    <script type="module" src="/area-control.tsx"></script>
+  </body>
+</html>

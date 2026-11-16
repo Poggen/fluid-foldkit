@@ -1,0 +1,75 @@
+@layer theme, base, components, bklit-charts, utilities;
+@import 'tailwindcss';
+@import './styles/upstream-type-scale.css';
+@import './styles/upstream-heading-font.css';
+@import './styles/upstream-bento.css';
+@import './styles/upstream-rail-fade.css';
+@import './styles/native-presentation.css';
+@import '@foldkit-visuals/fluid/styles.css';
+@import '../../components/docs/code-block.css';
+@reference '@foldkit-visuals/charts/styles.css';
+@font-face {
+  font-family: 'Inter Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../node_modules/@fontsource-variable/inter/files/inter-latin-opsz-normal.woff2')
+    format('woff2');
+}
+
+@source '../../registry/fluid/src';
+@source '../../registry/fluid/examples/src';
+@source '../../registry/charts/src';
+@source '../../components/docs';
+@theme {
+  --font-sans:
+    'Inter Variable', Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+}
+
+@font-face {
+  font-family: 'Geist Serif';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./assets/GeistSerif-Regular.woff2') format('woff2');
+}
+
+/* Site browser defaults and inherited typography tokens. Component layout lives at view owners. */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  html {
+    background: var(--background);
+    scrollbar-gutter: stable;
+  }
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--foreground);
+    background: var(--background);
+    -webkit-font-smoothing: antialiased;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  button,
+  a,
+  input,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button,
+  a {
+    touch-action: manipulation;
+  }
+  button {
+    cursor: pointer;
+  }
+}
+/* Derived from Fluid Functionalism cc276ca0 app/globals.css.
+ * MIT, copyright 2026 Micka Touillaud. See registry/fluid/licenses/fluid-functionalism.txt. */

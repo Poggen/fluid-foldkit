@@ -1,0 +1,18 @@
+@import 'tailwindcss';
+@import '../../src/styles.css';
+@source '../../src/color-picker*.ts';
+@source '../../src/scroll-area*.ts';
+@source '../../src/slider*.ts';
+@source '../../src/lib/*.ts';
+@font-face {
+  font-family: Inter;
+  src: url('../src/assets/InterVariable.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+}

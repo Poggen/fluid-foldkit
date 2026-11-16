@@ -1,0 +1,16 @@
+@import 'tailwindcss/theme';
+@import 'tailwindcss/utilities';
+@import './example-theme.css';
+@source '../../src';
+@source '../../../../components/docs';
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font:
+    13px/20px Arial,
+    sans-serif;
+  background: #fafafa;
+  color: #171717;
+}

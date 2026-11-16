@@ -1,0 +1,64 @@
+/* Generated from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
+:root,
+.light {
+  --z-sticky: 30;
+  --z-overlay: 40;
+  --z-modal: 50;
+  --z-popover: 60;
+  --z-tooltip: 70;
+}
+
+@layer base {
+  ::selection {
+    background-color: light-dark(
+      color-mix(in oklab, var(--fluid-accent, #6b97ff) 25%, transparent),
+      color-mix(in oklab, var(--fluid-accent, #6b97ff) 40%, transparent)
+    );
+  }
+  :focus-visible {
+    outline: 1px solid var(--focus-ring, #6b97ff);
+    outline-offset: 2px;
+    border-radius: var(--shape-input-radius, 8px);
+  }
+  /* Text fields inherit their wrapper ring without clipping text selection. */
+  :is(input, textarea):focus-visible {
+    border-radius: 0;
+  }
+  a:focus-visible {
+    border-radius: 2px;
+  }
+}
+
+@keyframes spinner-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinner-breathe {
+  0%,
+  100% {
+    stroke-dasharray: 0.01 49.99;
+    stroke-dashoffset: -25;
+  }
+  50% {
+    stroke-dasharray: 26 24;
+    stroke-dashoffset: -12;
+  }
+}
+
+@utility z-sticky {
+  z-index: var(--z-sticky);
+}
+@utility z-overlay {
+  z-index: var(--z-overlay);
+}
+@utility z-modal {
+  z-index: var(--z-modal);
+}
+@utility z-popover {
+  z-index: var(--z-popover);
+}
+@utility z-tooltip {
+  z-index: var(--z-tooltip);
+}

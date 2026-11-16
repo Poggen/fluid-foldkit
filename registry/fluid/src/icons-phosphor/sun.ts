@@ -1,0 +1,46 @@
+// Exact @phosphor-icons/react 2.1.10 SVG. MIT; see NOTICE
+import { Predicate } from 'effect'
+import type { Icon } from '../presentation.js'
+
+export const icon: Icon = (options, h) =>
+  Predicate.isNumber(options.strokeWidth) && options.strokeWidth >= 1.75
+    ? h.svg(
+        [
+          h.Attribute('xmlns', 'http://www.w3.org/2000/svg'),
+          h.Attribute('width', String(options.size ?? '1em')),
+          h.Attribute('height', String(options.size ?? '1em')),
+          h.Attribute('fill', 'currentColor'),
+          h.Attribute('viewBox', '0 0 256 256'),
+          ...(options.className === undefined
+            ? []
+            : [h.Attribute('class', options.className ?? '')]),
+        ],
+        [
+          h.path([
+            h.Attribute(
+              'd',
+              'M120,40V16a8,8,0,0,1,16,0V40a8,8,0,0,1-16,0Zm72,88a64,64,0,1,1-64-64A64.07,64.07,0,0,1,192,128Zm-16,0a48,48,0,1,0-48,48A48.05,48.05,0,0,0,176,128ZM58.34,69.66A8,8,0,0,0,69.66,58.34l-16-16A8,8,0,0,0,42.34,53.66Zm0,116.68-16,16a8,8,0,0,0,11.32,11.32l16-16a8,8,0,0,0-11.32-11.32ZM192,72a8,8,0,0,0,5.66-2.34l16-16a8,8,0,0,0-11.32-11.32l-16,16A8,8,0,0,0,192,72Zm5.66,114.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32-11.32ZM48,128a8,8,0,0,0-8-8H16a8,8,0,0,0,0,16H40A8,8,0,0,0,48,128Zm80,80a8,8,0,0,0-8,8v24a8,8,0,0,0,16,0V216A8,8,0,0,0,128,208Zm112-88H216a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Z',
+            ),
+          ]),
+        ],
+      )
+    : h.svg(
+        [
+          h.Attribute('xmlns', 'http://www.w3.org/2000/svg'),
+          h.Attribute('width', String(options.size ?? '1em')),
+          h.Attribute('height', String(options.size ?? '1em')),
+          h.Attribute('fill', 'currentColor'),
+          h.Attribute('viewBox', '0 0 256 256'),
+          ...(options.className === undefined
+            ? []
+            : [h.Attribute('class', options.className ?? '')]),
+        ],
+        [
+          h.path([
+            h.Attribute(
+              'd',
+              'M122,40V16a6,6,0,0,1,12,0V40a6,6,0,0,1-12,0Zm68,88a62,62,0,1,1-62-62A62.07,62.07,0,0,1,190,128Zm-12,0a50,50,0,1,0-50,50A50.06,50.06,0,0,0,178,128ZM59.76,68.24a6,6,0,1,0,8.48-8.48l-16-16a6,6,0,0,0-8.48,8.48Zm0,119.52-16,16a6,6,0,1,0,8.48,8.48l16-16a6,6,0,1,0-8.48-8.48ZM192,70a6,6,0,0,0,4.24-1.76l16-16a6,6,0,0,0-8.48-8.48l-16,16A6,6,0,0,0,192,70Zm4.24,117.76a6,6,0,0,0-8.48,8.48l16,16a6,6,0,0,0,8.48-8.48ZM46,128a6,6,0,0,0-6-6H16a6,6,0,0,0,0,12H40A6,6,0,0,0,46,128Zm82,82a6,6,0,0,0-6,6v24a6,6,0,0,0,12,0V216A6,6,0,0,0,128,210Zm112-88H216a6,6,0,0,0,0,12h24a6,6,0,0,0,0-12Z',
+            ),
+          ]),
+        ],
+      )

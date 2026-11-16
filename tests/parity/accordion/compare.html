@@ -1,0 +1,25 @@
+<!doctype html>
+<html class="m-0 bg-white">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="/compare.css" />
+  </head>
+  <body class="m-0 bg-white">
+    <main class="flex gap-0">
+      <iframe
+        class="border-0 w-[720px] h-[900px] flex-none"
+        title="native or source control"
+      ></iframe
+      ><iframe class="border-0 w-[720px] h-[900px] flex-none" title="source"></iframe>
+    </main>
+    <script type="module">
+      const query = new URLSearchParams(location.search)
+      const self = query.get('self') === '1'
+      query.delete('self')
+      const suffix = '?' + query
+      const frames = document.querySelectorAll('iframe')
+      frames[0].src = (self ? '/source/source.html' : '/index.html') + suffix
+      frames[1].src = '/source/source.html' + suffix
+    </script>
+  </body>
+</html>

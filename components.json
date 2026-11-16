@@ -1,0 +1,17 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": false,
+  "tsx": false,
+  "tailwind": {
+    "config": "",
+    "css": ".verification/design-system-theme.css",
+    "baseColor": "neutral",
+    "cssVariables": true
+  },
+  "aliases": {
+    "components": "./registry/fluid/src",
+    "ui": "./registry/fluid/src",
+    "utils": "./registry/fluid/src/lib/utils"
+  }
+}
