@@ -7,6 +7,8 @@ The showcase is the documentation, with live examples, source, API references,
 and composition guides. Components use Blocks, Bindings, and Effect Layers.
 Composition and showcase refinements draw on [Tim Hanlon’s Foldkit port](https://github.com/timhanlon/fluid-functionalism-foldkit).
 
+[Live showcase and installation guide](https://fluid-foldkit.vercel.app).
+
 ## Run
 
 Use the pinned Node and Bun toolchain in [mise.toml](mise.toml).
@@ -43,7 +45,7 @@ override the deployment's public registry origin.
 The private workspace manifests list component import subpaths. Generated
 registries are written to `public/r/`; the production server is in `app/dist/`.
 The installation guide explains editable source installation through shadcn.
-There is no hosted registry configured here.
+The public registries are hosted at `https://fluid-foldkit.vercel.app/r/`.
 
 The showcase uses Foldkit Query for font and attachment loading, and an
 application-owned KeyedQuery for component references. Search and Google Fonts
