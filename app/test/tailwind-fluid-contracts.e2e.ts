@@ -268,7 +268,11 @@ test('Dialog portal host consumes contents and its full-width fixed inherited-co
   if (panel === null) throw new Error('Missing mounted dialog panel')
   await expect(dialog).toHaveCSS('position', 'fixed')
   await expect(dialog).toHaveCSS('color', 'rgb(21, 45, 71)')
-  expect(await dialog.evaluate((node) => node.getBoundingClientRect().width)).toBe(1440)
+  expect(
+    await dialog.evaluate(
+      (node) => node.getBoundingClientRect().width === document.documentElement.clientWidth,
+    ),
+  ).toBe(true)
   await dialog.getByRole('button', { name: 'Cancel', exact: true }).click()
   await trigger.evaluate((node) => {
     if (!(node instanceof HTMLElement)) throw new Error('Missing dialog trigger element')
@@ -282,7 +286,11 @@ test('Dialog portal host consumes contents and its full-width fixed inherited-co
   ).toBe(true)
   await expect(dialog).toHaveCSS('position', 'fixed')
   await expect(dialog).toHaveCSS('color', 'rgb(21, 45, 71)')
-  expect(await dialog.evaluate((node) => node.getBoundingClientRect().width)).toBe(1440)
+  expect(
+    await dialog.evaluate(
+      (node) => node.getBoundingClientRect().width === document.documentElement.clientWidth,
+    ),
+  ).toBe(true)
   await panel.dispose()
 })
 

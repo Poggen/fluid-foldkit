@@ -31,7 +31,8 @@ Open [the showcase](http://127.0.0.1:5280/) and its
 Vercel builds use `bun run build:vercel`. The generated deployment serves static
 assets and registries from the CDN and uses Foldkit's emitted Fetch handler for
 SSR. Git pushes deploy through the linked Vercel project. `REGISTRY_ORIGIN` can
-override the deployment's public registry origin.
+override the deployment's public registry origin. Vercel builds enable Web Analytics
+through the showcase's browser entry; local builds leave it disabled.
 
 ## Source
 
@@ -61,6 +62,7 @@ bunx --no-install agent-browser install
 bun run check
 bun run format:check
 bun run test:consumer
+REGISTRY_CONSUMER_ORIGIN=https://fluid-foldkit.vercel.app bun run test:consumer
 ```
 
 `check` runs architecture guards, Effect diagnostics, tsrs typechecks, lint,

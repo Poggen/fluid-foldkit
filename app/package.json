@@ -17,6 +17,7 @@
     "@foldkit/node": "0.2.0-canary.54f8bcd443b4",
     "@foldkit/ui": "0.170.0-canary.54f8bcd443b4",
     "@fontsource-variable/inter": "5.3.0",
+    "@vercel/analytics": "2.0.1",
     "effect": "4.1.2",
     "foldkit": "0.170.0-canary.54f8bcd443b4"
   },

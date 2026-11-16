@@ -26,7 +26,7 @@ const origin = url.origin
 
 const build = Bun.spawnSync(['bun', 'run', 'build'], {
   cwd: root,
-  env: { ...process.env, REGISTRY_ORIGIN: origin },
+  env: { ...process.env, REGISTRY_ORIGIN: origin, VITE_VERCEL_ANALYTICS: '1' },
   stdout: 'inherit',
   stderr: 'inherit',
 })

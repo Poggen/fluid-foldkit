@@ -1,3 +1,4 @@
+import { inject } from '@vercel/analytics'
 import { messageAssetsLayer } from './reference/message-assets'
 import { createQueuedStackFramesLayer } from '@foldkit-visuals/fluid/queued-stack'
 import { questionValidators } from './reference/authored-questions'
@@ -221,3 +222,5 @@ if (import.meta.env.VITE_SHOWCASE_TRACE === '1') {
 } else {
   hydrate()
 }
+
+if (import.meta.env.VITE_VERCEL_ANALYTICS === '1') inject({ mode: 'production' })

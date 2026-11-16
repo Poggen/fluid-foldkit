@@ -22,6 +22,7 @@ const server = Bun.serve({
     return new Response(Bun.file(file))
   },
 })
+const registryOrigin = process.env.REGISTRY_CONSUMER_ORIGIN ?? server.url.origin
 const run = async (command: readonly string[], cwd: string, env = process.env) => {
   const process_ = Bun.spawn([...command], { cwd, env, stdout: 'inherit', stderr: 'inherit' })
   const code = await process_.exited
@@ -33,11 +34,12 @@ const ToolManifest = Schema.Struct({
 })
 const Catalogue = Schema.Struct({ items: Schema.Array(Schema.Struct({ name: Schema.String })) })
 try {
-  await run(['bun', 'scripts/registry/build.ts'], root, {
-    ...process.env,
-    REGISTRY_OUTPUT: registryDirectory,
-    REGISTRY_ORIGIN: server.url.origin,
-  })
+  if (process.env.REGISTRY_CONSUMER_ORIGIN === undefined)
+    await run(['bun', 'scripts/registry/build.ts'], root, {
+      ...process.env,
+      REGISTRY_OUTPUT: registryDirectory,
+      REGISTRY_ORIGIN: server.url.origin,
+    })
   const source = Schema.decodeUnknownSync(ToolManifest)(
     JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')),
   )
@@ -89,7 +91,7 @@ try {
         registries: Object.fromEntries(
           families.map((family) => [
             namespaces[family],
-            `${server.url.origin}/r/${family}/${release}/{name}.json`,
+            `${registryOrigin}/r/${family}/${release}/{name}.json`,
           ]),
         ),
       },
@@ -100,11 +102,9 @@ try {
   await run(['bun', 'install', '--ignore-scripts'], consumer)
   const addresses: string[] = []
   for (const family of families) {
-    const catalogue = Schema.decodeUnknownSync(Catalogue)(
-      JSON.parse(
-        readFileSync(path.join(registryDirectory, 'r', family, release, 'registry.json'), 'utf8'),
-      ),
-    )
+    const response = await fetch(`${registryOrigin}/r/${family}/${release}/registry.json`)
+    if (!response.ok) throw new Error(`Registry catalogue request failed: ${response.status}`)
+    const catalogue = Schema.decodeUnknownSync(Catalogue)(await response.json())
     addresses.push(
       ...catalogue.items
         .filter((item) => item.name !== 'foundation')
@@ -212,6 +212,7 @@ try {
     JSON.stringify(
       {
         directory: consumer,
+        registryOrigin,
         itemsInstalled: addresses.length,
         frameworkVersionsPreserved: true,
         reactInstalled: false,
