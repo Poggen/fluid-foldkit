@@ -68,8 +68,8 @@ const articles: Readonly<
       },
       {
         heading: 'Configure the registries',
-        body: 'Add these two namespaces to the registries field of components.json. Replace the host with your deployed registry origin when publishing.',
-        code: '"registries": {\n  "@fluid-foldkit": "http://127.0.0.1:5280/r/fluid/0.1.0-preview.0/{name}.json",\n  "@bklit-foldkit": "http://127.0.0.1:5280/r/charts/0.1.0-preview.0/{name}.json"\n}',
+        body: 'Add these two namespaces to the registries field of components.json.',
+        code: '"registries": {\n  "@fluid-foldkit": "https://fluid-foldkit.vercel.app/r/fluid/0.1.0-preview.0/{name}.json",\n  "@bklit-foldkit": "https://fluid-foldkit.vercel.app/r/charts/0.1.0-preview.0/{name}.json"\n}',
       },
       {
         heading: 'Install a component',
