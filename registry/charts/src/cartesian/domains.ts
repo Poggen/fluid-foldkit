@@ -1,6 +1,9 @@
 import { scaleLinear } from 'd3-scale'
 import { flow, Option, Schema } from 'effect'
+import { axisId, DEFAULT_Y_AXIS_ID } from './series'
 import type { ResolvedSeries } from './series'
+import type { YAxisConfig } from './axis-options'
+import type { Domains } from './state'
 
 const finiteNumber = flow(
   Schema.decodeUnknownOption(Schema.Finite),
@@ -55,4 +58,28 @@ export function niced(domain: readonly [number, number]): [number, number] {
   const nice = scaleLinear().domain(domain).nice().domain()
 
   return [nice[0] ?? 0, nice[1] ?? 100]
+}
+
+/** Explicit scales stay exact through inference, presentation frames and public context. */
+export function fixedYDomains(
+  axes: ReadonlyArray<YAxisConfig>,
+  primary?: readonly [number, number],
+): Domains {
+  const fixed = new Map<string, readonly [number, number]>()
+  const requireBounds = (domain: readonly [number, number]) => {
+    if (!Number.isFinite(domain[0]) || !Number.isFinite(domain[1]) || domain[0] >= domain[1]) {
+      throw new RangeError('yDomain requires two finite, strictly increasing bounds')
+    }
+    return domain
+  }
+  if (primary !== undefined) fixed.set(DEFAULT_Y_AXIS_ID, requireBounds(primary))
+  const seen = new Set<string>()
+  for (const axis of axes) {
+    if (axis.domain !== undefined) requireBounds(axis.domain)
+    const id = axisId(axis.yAxisId)
+    if (axis.domain === undefined || seen.has(id)) continue
+    seen.add(id)
+    fixed.set(id, axis.domain)
+  }
+  return Object.fromEntries(fixed)
 }

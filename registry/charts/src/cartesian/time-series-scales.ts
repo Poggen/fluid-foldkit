@@ -158,16 +158,8 @@ export function timeSeriesYDomains(
   extras: ReadonlyArray<number>,
   projections: ReadonlyMap<string, ReadonlyArray<number>>,
   from: Domains | undefined,
-  fixedPrimary?: readonly [number, number],
+  fixed: Domains = {},
 ) {
-  if (
-    fixedPrimary !== undefined &&
-    (!Number.isFinite(fixedPrimary[0]) ||
-      !Number.isFinite(fixedPrimary[1]) ||
-      fixedPrimary[0] >= fixedPrimary[1])
-  ) {
-    throw new RangeError('yDomain requires two finite, strictly increasing bounds')
-  }
   values.get(DEFAULT_Y_AXIS_ID)?.push(...extras)
 
   const inferred = mergeProjectionDomains(
@@ -175,13 +167,12 @@ export function timeSeriesYDomains(
     projections,
   )
 
-  const targetY =
-    fixedPrimary === undefined ? inferred : { ...inferred, [DEFAULT_Y_AXIS_ID]: fixedPrimary }
-
+  const targetY = { ...inferred, ...fixed }
+  const fixedByAxis = new Map(Object.entries(fixed))
   const yDomains = new Map(
     Object.entries(targetY).map(([id, domain]) => [
       id,
-      fixedPrimary !== undefined && id === DEFAULT_Y_AXIS_ID ? domain : (from?.[id] ?? domain),
+      fixedByAxis.get(id) ?? from?.[id] ?? domain,
     ]),
   )
 

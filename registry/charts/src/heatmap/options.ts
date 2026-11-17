@@ -24,7 +24,12 @@ export type HeatmapChild = ReturnType<
 export const HeatmapColumnSchema = Schema.Struct({
   bin: Schema.Number,
   bins: Schema.Array(
-    Schema.Struct({ bin: Schema.Number, date: Schema.Date, count: Schema.Number }),
+    Schema.Struct({
+      bin: Schema.Number,
+      date: Schema.Date,
+      count: Schema.Number,
+      observed: Schema.optionalKey(Schema.Boolean),
+    }),
   ),
 })
 

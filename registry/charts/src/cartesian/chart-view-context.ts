@@ -1,3 +1,4 @@
+import { fixedYDomains } from './domains'
 import { Predicate, DateTime, Option } from 'effect'
 import { projectScatterDomains } from '../scatter/context-domains'
 import type { RegisteredLineConfig, Margin } from './context-types'
@@ -163,6 +164,15 @@ function familyContextDomains<Row extends Readonly<Record<string, unknown>>>(
     ]
   }
 
+  if (kind === 'line' || kind === 'area' || kind === 'composed') {
+    yDomains = {
+      ...yDomains,
+      ...fixedYDomains(
+        props.children.filter((child) => child.kind === 'yAxis').map((child) => child.props),
+        props.yDomain,
+      ),
+    }
+  }
   return { xDomain, yDomains, lines }
 }
 

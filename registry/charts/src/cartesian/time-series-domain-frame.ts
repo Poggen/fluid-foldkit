@@ -17,6 +17,7 @@ export class TimeSeriesDomainFrame<Row> {
   #started = 0
   #duration = 500
   #active = false
+  #fixed = new Map<string, readonly [number, number]>()
 
   constructor(
     clock: () => number,
@@ -43,7 +44,7 @@ export class TimeSeriesDomainFrame<Row> {
     const progress = this.#active ? REVEAL_EASING(Math.min(1, elapsed / this.#duration)) : 1
     this.#current = Object.fromEntries(
       Object.entries(this.#target).map(([id, to]) => {
-        const from = this.#from[id] ?? to
+        const from = this.#fixed.get(id) ?? this.#from[id] ?? to
 
         return [
           id,
@@ -71,9 +72,10 @@ export class TimeSeriesDomainFrame<Row> {
     return livePhase && enabled && !this.#reduced()
   }
 
-  resolve(target: Domains): Map<string, readonly [number, number]> {
+  resolve(target: Domains, fixed: Domains = {}): Map<string, readonly [number, number]> {
     const now = this.#clock()
     this.#sample(now)
+    this.#fixed = new Map(Object.entries(fixed))
     const props = this.#props()
     const state = this.#state()
     const canAnimate = this.#canAnimate(state, props)
@@ -88,7 +90,9 @@ export class TimeSeriesDomainFrame<Row> {
         this.#current !== undefined &&
         canAnimate &&
         this.#duration > 0 &&
-        Object.entries(target).some(([id, to]) => shouldTweenYDomain(this.#from[id] ?? to, to))
+        Object.entries(target).some(
+          ([id, to]) => !this.#fixed.has(id) && shouldTweenYDomain(this.#from[id] ?? to, to),
+        )
     }
 
     if (!canAnimate) {

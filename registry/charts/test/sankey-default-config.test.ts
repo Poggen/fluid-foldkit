@@ -37,7 +37,7 @@ const children: Readonly<Record<Mode, NonNullable<SankeyChartProps['children']>>
     SankeyNode({ fill: '#112233' }),
     SankeyLink({ stroke: '#445566' }),
     SankeyTooltip({ formatValue: () => 'Discarded formatter' }),
-    node,
+    SankeyNode({ fill: '#778899', formatValue: (value) => `Vehicles ${value}` }),
     link,
     SankeyTooltip({ formatValue: (value) => `Units ${value}` }),
   ],
@@ -199,6 +199,9 @@ it.effect('Sankey public tooltip requests render defaults without a Tooltip carr
 
     const duplicate = yield* render('duplicate', 'node')
     expect(duplicate.querySelector('#default-config-tooltip')?.textContent).toContain('Units 12')
+    expect(duplicate.querySelector('svg')?.textContent).toContain('Vehicles 12')
+    expect(duplicate.querySelector('svg')?.textContent).not.toContain('Units 12')
+    expect(node.querySelector('svg')?.textContent).toContain('12 sessions')
     expect(duplicate.textContent).not.toContain('Discarded formatter')
 
     const invalid = yield* render('none', 'invalid')

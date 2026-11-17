@@ -38,7 +38,7 @@ import type { CartesianLayer } from './layers'
 import type { Margin } from './context-types'
 import type { BuildState, SeriesMark } from './build-state'
 import { cartesianFocus } from './focus'
-import { toNumber, seriesValueOf, visibleRows } from './domains'
+import { fixedYDomains, toNumber, seriesValueOf, visibleRows } from './domains'
 import { gridColumnGuides, gridHostAttrs, gridRowGuides, loadingGridProps } from './grid-guides'
 import type { SourceGridMask } from './grid-mask'
 import type { CandleProjection } from '../candlestick/body'
@@ -187,18 +187,16 @@ export function buildTimeSeriesDefinition<
     [props.y1, props.y2].filter((value) => value !== undefined),
   )
 
+  const fixed = fixedYDomains(yAxes, options.yDomain)
   const { targetY, yDomains: targetDomains } = timeSeriesYDomains(
     values,
     [...(options.extraYValues ?? []), ...referenceValues],
     projections.yValues,
     options.yDomainFrom,
-    options.yDomain,
+    fixed,
   )
 
-  const yDomains = options.domainFrame?.resolve(targetY) ?? targetDomains
-  if (options.yDomain !== undefined) {
-    yDomains.set(DEFAULT_Y_AXIS_ID, options.yDomain)
-  }
+  const yDomains = options.domainFrame?.resolve(targetY, fixed) ?? targetDomains
 
   const times = [
     ...data.map((row) => options.x(row).getTime()),

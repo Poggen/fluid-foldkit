@@ -16,7 +16,10 @@ export type BarDepthConfig<Row> = Pick<
   BarDepthProviderProps<Row>,
   'segmentsAccessor' | 'minBarHeight'
 > &
-  Pick<BarChartProps<Row>, 'missingValues'>
+  Pick<BarChartProps<Row>, 'missingValues'> & {
+    /** Explicit value-axis domains opt depth into that scale; omitted retains the Source primary projection. */
+    readonly fixedYAxisIds?: ReadonlyArray<string>
+  }
 
 export interface BarViewContext<Row, Action = void> extends ChartViewContext<Row, Action> {
   readonly depthConfig: BarDepthConfig<Row>
@@ -33,8 +36,12 @@ export function useBarDepthEntries<Row extends Readonly<Record<string, unknown>>
   dataKey: string,
   activeIndex?: number,
 ): Array<BarDepthEntry<Row>> {
-  const { data, barScale, bandWidth, yScale, innerHeight, innerWidth, barXAccessor } =
-    useChartStable(context)
+  const stable = useChartStable(context)
+  const { data, barScale, bandWidth, innerHeight, innerWidth, barXAccessor } = stable
+  const axis = stable.lines.find((line) => line.dataKey === dataKey)?.yAxisId ?? 'left'
+  const yScale = context.depthConfig.fixedYAxisIds?.includes(String(axis))
+    ? (stable.yScales[String(axis)] ?? stable.yScale)
+    : stable.yScale
 
   const { segmentsAccessor, minBarHeight = 0 } = context.depthConfig
 

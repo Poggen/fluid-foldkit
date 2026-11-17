@@ -38,8 +38,11 @@ const data = [
   },
 ]
 
-const propsFor = (tooltip: HeatmapTooltipProps = {}): HeatmapChartProps => ({
-  data,
+const propsFor = (
+  tooltip: HeatmapTooltipProps = {},
+  cells: HeatmapChartProps['data'] = data,
+): HeatmapChartProps => ({
+  data: cells,
   animate: false,
   binSize: 24,
   children: [HeatmapCells({ hideGhostCells: false }), HeatmapTooltip(tooltip)],
@@ -51,19 +54,19 @@ const element = (container: Element, selector: string): HTMLElement => {
   return found
 }
 
-const setup = (tooltip: HeatmapTooltipProps = {}) => {
+const setup = (tooltip: HeatmapTooltipProps = {}, cells: HeatmapChartProps['data'] = data) => {
   vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
   const environment = fontTestEnvironment()
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
     () => new DOMRect(0, 0, 400, 240),
   )
-  const props = propsFor(tooltip)
+  const props = propsFor(tooltip, cells)
   const observe = vi.fn<(index: number | null) => void>()
   const host = chart
     .inputs('heatmap-source', props)
     .mount(
       environment.container,
-      data,
+      cells,
       null,
       null,
       observe,
@@ -82,7 +85,7 @@ const setup = (tooltip: HeatmapTooltipProps = {}) => {
     host,
     shell: element(environment.container, '#heatmap-source-tooltip'),
     configure: (next: HeatmapTooltipProps) => {
-      chart.inputs('heatmap-source', propsFor(next)).configure(host)
+      chart.inputs('heatmap-source', propsFor(next, cells)).configure(host)
     },
     key: (key: string, expected: number) => {
       const svg = environment.container.querySelector('svg.ts-chart')
@@ -92,9 +95,9 @@ const setup = (tooltip: HeatmapTooltipProps = {}) => {
       const observed = observe.mock.lastCall?.[0]
       if (observed === undefined) throw new Error('Renderer did not publish cell focus')
       // Supply the observed presentation input through the same public host contract as Drawing.
-      host.update(data, observed, null, true)
+      host.update(cells, observed, null, true)
     },
-    present: (focus: number | null) => host.update(data, focus, null, true),
+    present: (focus: number | null) => host.update(cells, focus, null, true),
     dispose: () => {
       host.destroy()
       environment.destroy()
@@ -248,3 +251,49 @@ for (const pending of ['show', 'hide']) {
     }
   })
 }
+
+test('unknown days stay blank, skip native keyboard navigation and cannot show a tooltip', () => {
+  const cells = data.map((column) => ({
+    ...column,
+    bins: column.bins.map((bin, row) => ({
+      ...bin,
+      count: 0,
+      ...(row === 1 ? { observed: false } : {}),
+    })),
+  }))
+  const owner = setup({ instant: true, hideDelay: 0 }, cells)
+  try {
+    owner.key('Home', 0)
+    expect(element(owner.shell, '.ts-bkm-heatmap-tooltip-value').textContent).toBe(
+      '0 contributions',
+    )
+    owner.key('ArrowDown', 2)
+    expect(element(owner.shell, '.ts-bkm-heatmap-tooltip-date').textContent).toBe(
+      'November 10th 2026',
+    )
+    owner.present(1)
+    vi.advanceTimersByTime(1)
+    expect(owner.shell.hidden).toBe(true)
+    const observed = cells.map((column) => ({
+      ...column,
+      bins: column.bins.map((bin) => ({ ...bin, observed: true })),
+    }))
+    owner.host.update(observed, 1, null, true)
+    expect(owner.shell.hidden).toBe(false)
+    expect(element(owner.shell, '.ts-bkm-heatmap-tooltip-date').textContent).toBe(
+      'November 9th 2026',
+    )
+    owner.host.update(cells, 1, null, true)
+    vi.advanceTimersByTime(1)
+    expect(owner.shell.hidden).toBe(true)
+    chart
+      .inputs('heatmap-source', { ...propsFor({}, cells), status: 'loading', animate: true })
+      .configure(owner.host)
+    owner.flush()
+    expect(
+      owner.container.querySelectorAll('g[data-ts-key^="heatmap-loading-shimmer"] rect'),
+    ).toHaveLength(6)
+  } finally {
+    owner.dispose()
+  }
+})

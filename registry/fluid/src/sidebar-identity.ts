@@ -271,22 +271,22 @@ export function sidebarIdentityRecipe(kind: 'workspace' | 'user') {
               inputs.className,
             ),
             content: () => [
-              h.block(
-                Highlight.embedView({
-                  slotId: 'highlight',
-                  model: model.highlight,
-                  viewInputs: {
-                    animate: inputs.highlight,
-                    className: shape.bg,
-                    mode: model.hover.mode,
-                  },
-                }),
-              ),
               SidebarMenuItem(
                 {
                   size: size.variant,
                   attributes: childAttributes(hoverItemAttributes(0)),
                   children: [
+                    h.block(
+                      Highlight.embedView({
+                        slotId: 'highlight',
+                        model: model.highlight,
+                        viewInputs: {
+                          animate: inputs.highlight,
+                          className: shape.bg,
+                          mode: model.hover.mode,
+                        },
+                      }),
+                    ),
                     ...(workspace ? pin() : []),
                     h.block(
                       Menu.embedView({

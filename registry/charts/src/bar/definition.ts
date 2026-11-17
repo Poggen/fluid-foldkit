@@ -13,12 +13,13 @@ import type {
   ChartSpec,
   DomChartDefinition,
 } from '@tanstack/charts'
-import { barPlot } from './plot'
+import { barPlot, barValueScales } from './plot'
+import { fixedYDomains } from '../cartesian/domains'
 import { sourceYAxisControl } from '../cartesian/y-axis-control'
 import { referenceAreaConfigs } from '../cartesian/reference-area'
 import type { BarChartProps } from './options'
 import {
-  barValueDomains,
+  configuredBarDomains,
   barAxisId,
   buildBarData,
   resolveBarSeries,
@@ -103,7 +104,7 @@ export function buildBarDefinition<Row extends Readonly<Record<string, unknown>>
   const categories = data.map((row) => String(row[props.xDataKey ?? 'name']))
   const datums = buildBarData(data, props.xDataKey ?? 'name', series, props.missingValues)
 
-  const domains = barValueDomains(datums, categories, series, horizontal, stacked)
+  const domains = configuredBarDomains(datums, categories, series, props)
   const domain: readonly [number, number] = domains.left ?? [0, 100]
   const margin = { top: 40, right: 40, bottom: 40, left: 40, ...props.margin }
   const xAxis = props.children.find((child) => child.kind === 'barXAxis')?.props
@@ -113,6 +114,7 @@ export function buildBarDefinition<Row extends Readonly<Record<string, unknown>>
     .filter((child) => child.kind === 'yAxis')
     .map((child) => child.props)
 
+  const fixedDepthAxes = new Set(Object.keys(fixedYDomains(numericAxes)))
   const numericAxis = numericAxes.find((axis) => barAxisId(axis.yAxisId) === 'left')
   const grid = props.children.find((child) => child.kind === 'grid')?.props
 
@@ -151,13 +153,20 @@ export function buildBarDefinition<Row extends Readonly<Record<string, unknown>>
       valueScale: primaryScale,
     } = barPlot(categories, domain, innerWidth, innerHeight, props)
 
+    const depthScales = barValueScales(domains, innerWidth, innerHeight, horizontal)
     const common = {
       bandWidth,
       depthFrame: {
         bandWidth,
         bandStep: categoryBand.step(),
         categoryStart: (category: string) => (categoryBand(category) ?? Number.NaN) + margin.left,
-        valueY: (value: number) => primaryScale(value) + margin.top,
+        valueY: (value: number, key?: string) => {
+          const axis = series.find((item) => item.key === key)?.yAxisId ?? 'left'
+          const scale = fixedDepthAxes.has(axis)
+            ? (depthScales[axis] ?? primaryScale)
+            : primaryScale
+          return scale(value) + margin.top
+        },
         innerWidth,
         plotLeft: margin.left,
       },

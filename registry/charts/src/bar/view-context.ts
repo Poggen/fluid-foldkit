@@ -12,8 +12,9 @@ import type { Interaction } from '../cartesian/state'
 import type { ChartViewport } from '../cartesian/viewport'
 import type { BarChartProps } from './options'
 import type { BarDepthConfig, BarViewContext } from './depth-entries'
-import { buildBarData, barValueDomains, resolveBarSeries, flattenBarLayers } from './model'
+import { buildBarData, configuredBarDomains, resolveBarSeries, flattenBarLayers } from './model'
 import { barPlot, barValueScales } from './plot'
+import { fixedYDomains } from '../cartesian/domains'
 
 const shortDate = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
 
@@ -86,11 +87,22 @@ export function projectBarViewContext<Row extends Readonly<Record<string, unknow
     (child) => child.kind === 'barDepthProvider',
   )
 
+  const fixedYAxisIds = Object.keys(
+    fixedYDomains(
+      flattenBarLayers(props.children)
+        .filter((child) => child.kind === 'yAxis')
+        .map((child) => child.props),
+    ),
+  ).filter((id) => id !== 'left')
   const segmentsAccessor = provider?.props.segmentsAccessor
   const minBarHeight = provider?.props.minBarHeight
 
   let depthConfig: BarDepthConfig<Row> =
     props.missingValues === undefined ? {} : { missingValues: props.missingValues }
+
+  if (fixedYAxisIds.length > 0) {
+    depthConfig = { ...depthConfig, fixedYAxisIds }
+  }
 
   if (segmentsAccessor !== undefined) {
     depthConfig = { ...depthConfig, segmentsAccessor }
@@ -142,12 +154,11 @@ export function projectBarViewContext<Row extends Readonly<Record<string, unknow
       const categories = data.map(categoryOf)
       const bandLength = horizontal ? innerHeight : innerWidth
 
-      const domains = barValueDomains(
+      const domains = configuredBarDomains(
         buildBarData(data, props.xDataKey ?? 'name', series, props.missingValues),
         categories,
         series,
-        horizontal,
-        props.stacked === true,
+        props,
       )
       const domain: readonly [number, number] = domains.left ?? [0, 100]
 

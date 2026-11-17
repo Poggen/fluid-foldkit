@@ -11,6 +11,8 @@ import type { HeatmapWeekStartDay } from './day-labels'
 export interface HeatmapBin {
   /** Activity level of the cell. Values of `0` or less map to level 0 (empty), `1` to `3` to levels 1 to 3, and `4` or more to level 4. */
   readonly count: number
+  /** Whether the date has observed data. `false` leaves a blank, noninteractive cell without shifting later rows; omitted means observed, including a count of zero. */
+  readonly observed?: boolean
   /** Row index of the cell in its column (`0` to `6` for the days of a Sunday-first week). */
   readonly bin: number
   /** Date of the cell. Must be a `Date` object. */

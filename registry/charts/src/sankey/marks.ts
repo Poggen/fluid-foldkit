@@ -67,6 +67,7 @@ export interface SankeyMarkConfig {
   readonly lineCap: number
   readonly showLabels: boolean
   readonly showValueLabels: boolean
+  readonly formatValue?: (value: number) => string
   readonly labelOrientation: LabelOrientation
   readonly enter: SankeyEnter
 }
@@ -227,6 +228,7 @@ const createSankeyMark = (
               chart,
               config.labelOrientation,
               config.showValueLabels,
+              config.formatValue,
             )
           : []
 

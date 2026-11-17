@@ -52,6 +52,13 @@ The showcase uses Foldkit Query for font and attachment loading, and an
 application-owned KeyedQuery for component references. Search and Google Fonts
 menus opt into CommandMenu's `virtualized` config, backed by native VirtualList.
 
+Chart `YAxis.domain` sets exact finite, increasing bounds per axis and takes
+precedence over primary `yDomain`. Bar and Composed also accept `yDomain`.
+Horizontal bars support `BarXAxis({ type: 'number', formatValue })` for numeric ticks.
+`SankeyNode.formatValue` formats visible node values separately from tooltips.
+`HeatmapBin.observed: false` leaves an unavailable date blank and noninteractive
+without shifting weekday positions; omitted or true keeps observed zero values.
+
 ## Verify
 
 Install Google Chrome for the showcase suite and Chromium for the independent

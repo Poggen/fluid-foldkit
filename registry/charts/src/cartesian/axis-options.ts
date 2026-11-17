@@ -22,6 +22,8 @@ export interface XAxisConfig {
 }
 
 export interface YAxisConfig {
+  /** Fixed finite, strictly increasing bounds; no padding, rounding or domain tween. Overrides primary yDomain. */
+  readonly domain?: readonly [number, number]
   /**
    * Id of the y scale this axis labels. Must match the `yAxisId` of the series that use it.
    * @default "left"

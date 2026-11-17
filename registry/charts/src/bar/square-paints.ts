@@ -2,7 +2,7 @@ import { inertHtml as h } from 'foldkit/html'
 import type { ChartViewport } from '../cartesian/viewport'
 import type { BarChartProps } from './options'
 import type { BarSeries } from './model'
-import { buildBarData, barValueDomains, resolveBarSeries } from './model'
+import { buildBarData, configuredBarDomains, resolveBarSeries } from './model'
 import { barPlot, barValueScales } from './plot'
 import { squareColumnFrame } from './geometry'
 import { renderPatternPreset } from '../kit/pattern/presets'
@@ -87,7 +87,7 @@ export function squarePaintResources<Row extends Readonly<Record<string, unknown
   const series = resolveBarSeries(props.children)
   const categories = data.map((row) => String(row[props.xDataKey ?? 'name']))
   const datums = buildBarData(data, props.xDataKey ?? 'name', series, props.missingValues)
-  const domains = barValueDomains(datums, categories, series, false, props.stacked === true)
+  const domains = configuredBarDomains(datums, categories, series, props)
   const domain: readonly [number, number] = domains.left ?? [0, 100]
   const valueScales = barValueScales(domains, innerWidth, innerHeight, false)
   const plot = barPlot(categories, domain, innerWidth, innerHeight, props)

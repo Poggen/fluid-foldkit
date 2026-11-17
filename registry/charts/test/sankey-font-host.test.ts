@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom -- public Sankey scene and renderer font lifecycle
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { motion } from '@tanstack/charts/motion'
+import { renderChartSvg } from '@tanstack/charts/svg'
 import type { ChartRendererHostOptions, ChartScene } from '@tanstack/charts'
 import { mountCartesianRenderer } from '../src/cartesian/font-renderer'
 import { SankeyNode } from '../src/sankey/carriers'
@@ -41,7 +42,7 @@ const clock = () => 0
 
 const ignoreReverse = () => {}
 
-const setup = () => {
+const setup = (configured: SankeyChartProps = props) => {
   // This renderer-only fixture supplies the now-default view-owned tooltip host.
   tooltipHost = document.createElement('div')
   tooltipHost.id = 'font-host-tooltip'
@@ -57,7 +58,7 @@ const setup = () => {
   const options: ChartRendererHostOptions<SankeyDatum, number, number> = {
     renderer: motion({ initial: false }),
     definition: sankeyDefinition(
-      props,
+      configured,
       'font-host',
       ignoreReverse,
       clock,
@@ -260,3 +261,40 @@ test('external font capture commits the same resource that began the successful 
     host.destroy()
   }
 })
+
+test.each(['horizontal', 'vertical'] satisfies ReadonlyArray<'horizontal' | 'vertical'>)(
+  'custom node value text shares native, SSR and measured hit geometry (%s)',
+  (labelOrientation) => {
+    const formatted = '12 vehicles with telemetry'
+    environment.measure.mockImplementation((text) => ({
+      width: text === formatted ? 128 : 20,
+      actualBoundingBoxLeft: 0,
+      actualBoundingBoxRight: 20,
+      actualBoundingBoxAscent: 9,
+      actualBoundingBoxDescent: 3,
+    }))
+    const { host, fonts } = setup({
+      ...props,
+      children: [
+        SankeyNode({
+          labelOrientation,
+          formatValue: (value) => `${value} vehicles with telemetry`,
+        }),
+      ],
+    })
+    try {
+      expect(environment.container.querySelector('svg')?.textContent).toContain(formatted)
+      expect(renderChartSvg(host.getScene(), { ariaLabel: 'Formatted flow' })).toContain(formatted)
+      expect(environment.container.textContent).not.toContain('12 sessions')
+      expect(environment.measure.mock.calls.map(([text]) => text)).toContain(formatted)
+      expect(fonts.fontMetricsChanged()).toBe(false)
+      const box = nodeBox(host.getScene(), true)
+      expect(labelOrientation === 'horizontal' ? box.x1 - box.x0 : box.y1 - box.y0).toBe(128)
+      const x = labelOrientation === 'horizontal' ? box.x0 + 1 : (box.x0 + box.x1) / 2
+      const y = labelOrientation === 'vertical' ? box.y0 + 1 : (box.y0 + box.y1) / 2
+      expect(host.interaction.resolvePointer(x, y)?.point.markId).toContain('sankey-node-0')
+    } finally {
+      host.destroy()
+    }
+  },
+)

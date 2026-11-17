@@ -69,7 +69,7 @@ interface BuildCellDataParams {
   readonly layout: Readonly<HeatmapSeparatorLayout> | null
 }
 
-/** Ghost bins (outside the display range) are not data: they never draw and never take focus. */
+/** Unknown and ghost bins never draw or take focus; iteration retains their weekday positions. */
 const buildCellData = ({
   columns,
   dayLabels,
@@ -83,7 +83,10 @@ const buildCellData = ({
     const x0 = columnStartX(column, cellSize, layout)
 
     for (const [row, bin] of col.bins.entries()) {
-      if (displayRange === undefined || !isHeatmapGhostBin(bin, displayRange)) {
+      if (
+        bin.observed !== false &&
+        (displayRange === undefined || !isHeatmapGhostBin(bin, displayRange))
+      ) {
         data.push({
           colKey: String(column),
           column,

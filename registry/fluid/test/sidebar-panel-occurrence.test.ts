@@ -105,6 +105,17 @@ for (const occurrence of ['desktop', 'mobile'] as const) {
             ).not.toBeNull()
             expect(window.document.querySelectorAll('[data-sidebar="header"]')).toHaveLength(1)
             expect(window.document.querySelectorAll('[data-sidebar="footer"]')).toHaveLength(1)
+            for (const label of ['User', 'Workspace']) {
+              const menu = window.document.querySelector(
+                `ul[data-sidebar="menu"][aria-label="${label}"]`,
+              )
+              if (menu === null) throw new Error(`Missing ${label} menu`)
+              expect(
+                [...menu.children]
+                  .filter((child) => !['LI', 'SCRIPT', 'TEMPLATE'].includes(child.tagName))
+                  .map((child) => child.tagName),
+              ).toEqual([])
+            }
           } finally {
             window.close()
           }

@@ -31,6 +31,11 @@ export interface SankeyNodeProps {
    */
   readonly showValueLabels?: boolean
   /**
+   * Formats visible node values and their label hit boxes. Tooltip formatting is configured separately on `SankeyTooltip`.
+   * @default integer formatting followed by " sessions"
+   */
+  readonly formatValue?: (value: number) => string
+  /**
    * Reading direction of the labels outside the nodes.
    * @default "horizontal"
    */

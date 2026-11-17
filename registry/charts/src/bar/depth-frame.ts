@@ -7,7 +7,7 @@ export interface DepthFrame {
   readonly bandWidth: number
   readonly bandStep: number
   readonly categoryStart: (category: string) => number
-  readonly valueY: (value: number) => number
+  readonly valueY: (value: number, series?: string) => number
   readonly innerWidth: number
   readonly plotLeft: number
 }
@@ -39,8 +39,8 @@ export function projectDepthEntry<Row>(
     step: frame.bandStep,
     innerWidth: frame.innerWidth,
     plotLeft: frame.plotLeft,
-    baselineY: frame.valueY(0),
-    valueY: frame.valueY(value),
+    baselineY: frame.valueY(0, datum.series),
+    valueY: frame.valueY(value, datum.series),
     minBarHeight: provider?.minBarHeight ?? 0,
     ...(top === undefined || total <= 0 ? {} : { topSegmentFraction: top.value / total }),
   })

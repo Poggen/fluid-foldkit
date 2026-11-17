@@ -159,6 +159,10 @@ export interface BarColumnTrackProps {
 }
 
 export interface BarXAxisProps {
+  /** Horizontal charts: opt in to the numeric value axis. Omitted preserves category labels. */
+  readonly type?: 'category' | 'number'
+  /** Formats numeric ticks when type is number. */
+  readonly formatValue?: (value: number) => string
   /**
    * Half-width in px of the zone around the date pill inside which tick labels are hidden.
    * @default 50
@@ -246,6 +250,8 @@ export interface BarPulseProps<Key extends string = string> {
 export type BarOrientation = 'vertical' | 'horizontal'
 
 export interface BarChartProps<Row> {
+  /** Fixed primary value bounds; finite and strictly increasing. YAxis.domain takes precedence. */
+  readonly yDomain?: readonly [number, number]
   readonly environment?: ChartEnvironment
   /** Opt in to omitting null/absent observations. Omitted keeps upstream zero coercion. */
   readonly missingValues?: 'gap'

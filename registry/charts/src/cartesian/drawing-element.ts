@@ -460,8 +460,10 @@ export function defineDrawingElement<
             this.append(frame.host)
             const descriptor = current.inputs.tooltip
             if (descriptor !== undefined) {
-              const tooltip = this.ownerDocument.getElementById(descriptor.id)
-              if (tooltip === null || !this.closest('[data-bkm-native-chart]')?.contains(tooltip)) {
+              const tooltip = this.closest('[data-bkm-native-chart]')?.querySelector<HTMLElement>(
+                `#${CSS.escape(descriptor.id)}`,
+              )
+              if (tooltip === undefined || tooltip === null) {
                 throw new TypeError('Cartesian Mount requires its committed tooltip shell')
               }
               this.#tooltipAttachment = acquireTooltipAttachment(container, tooltip)

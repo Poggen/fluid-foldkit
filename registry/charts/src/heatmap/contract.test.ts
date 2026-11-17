@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest'
-import { DateTime, Option } from 'effect'
+import { DateTime, Effect, Option, Schema } from 'effect'
+import { findNearestPoint } from '@tanstack/charts/scene'
 import { Block, Story } from 'foldkit'
 import { it as effectIt } from '@effect/vitest'
 import { createChartRuntime } from '@tanstack/charts/runtime'
@@ -14,6 +15,7 @@ import {
 } from './index'
 import { heatmapDefinition } from './build'
 import { heatmapResources } from './resources'
+import { localCalendarDate } from './calendar-date'
 import type { CellDatum } from './definition'
 import type { HeatmapColumn } from './columns'
 
@@ -130,3 +132,92 @@ it('backs patterned cell paints with scoped portable resources and caller-contro
   expect(resources[1]?.attributes.patternTransform).toBe('translate(40 28)')
   expect(resources[0]?.children.filter((child) => child.tag === 'path')).toHaveLength(2)
 })
+
+it.each([undefined, false])(
+  'unknown bins stay blank without shifting weekday geometry (hideGhostCells=%s)',
+  (hideGhostCells) => {
+    const runtime = createChartRuntime<Readonly<CellDatum>, number | string, string>()
+    const unknown = [0, 1].map((column) => ({
+      bin: column,
+      bins: Array.from({ length: 7 }, (_, row) => ({
+        bin: row,
+        count: 0,
+        date:
+          column === 0
+            ? localCalendarDate(2025, 10, 30 + row)
+            : localCalendarDate(2026, 10, 15 + row),
+        ...(column === 1 && row === 1 ? { observed: false } : row === 2 ? { observed: true } : {}),
+      })),
+    }))
+    try {
+      const definition = heatmapDefinition(
+        {
+          data: unknown,
+          animate: false,
+          binSize: 12,
+          children: [HeatmapCells(hideGhostCells === undefined ? {} : { hideGhostCells })],
+        },
+        300,
+        'unknown',
+        { at: null, origin: () => null, now: () => 0 },
+        () => null,
+        localCalendarDate(2026, 10, 17),
+      )
+      const scene = runtime.render(definition, { width: 300, height: 113 })
+      const cells = scene.points.filter((point) => point.markId.startsWith('heatmap-cells-'))
+      expect(
+        [0, 1].map((column) =>
+          cells.filter((point) => point.datum.column === column).map((point) => point.datum.row),
+        ),
+      ).toEqual(
+        hideGhostCells === false
+          ? [
+              [0, 1, 2, 3, 4, 5, 6],
+              [0, 2, 3, 4, 5, 6],
+            ]
+          : [
+              [1, 2, 3, 4, 5, 6],
+              [0, 2],
+            ],
+      )
+      expect(cells.every((point) => point.datum.count === 0)).toBe(true)
+      const first = cells.find((point) => point.datum.column === 1 && point.datum.row === 0)
+      const third = cells.find((point) => point.datum.column === 1 && point.datum.row === 2)
+      if (first === undefined || third === undefined)
+        throw new Error('Expected observed zero cells')
+      expect(third.y - first.y).toBe(24)
+      expect(findNearestPoint(scene, first.x, first.y, 0)).not.toBeNull()
+      expect(findNearestPoint(scene, first.x, first.y + 12, 0)).toBeNull()
+    } finally {
+      runtime.destroy()
+    }
+  },
+)
+
+effectIt.effect(
+  'preserves observed state through init, requested data, loading and JSON serialization',
+  () => {
+    const unknown = data.map((column) => ({
+      ...column,
+      bins: column.bins.map((bin, row) => ({ ...bin, count: 0, observed: row !== 1 })),
+    }))
+    const observed = unknown.map((column) => ({
+      ...column,
+      bins: column.bins.map((bin) => ({ ...bin, observed: true })),
+    }))
+    return Effect.gen(function* () {
+      const model = yield* Story.story(
+        subject,
+        Story.init('observed-state', unknown),
+        Story.model((model) => expect(model.data[0]?.bins[1]?.observed).toBe(false)),
+        Story.inMessage(HeatmapBlock.InMessage.RequestedData({ data: observed })),
+        Story.model((model) => expect(model.data[0]?.bins[1]?.observed).toBe(true)),
+        Story.inMessage(HeatmapBlock.InMessage.RequestedData({ data: unknown })),
+      )
+      const codec = Schema.fromJsonString(Schema.toCodecJson(HeatmapBlock.Model))
+      const decoded = yield* Schema.decodeEffect(codec)(yield* Schema.encodeEffect(codec)(model))
+      expect(decoded.data).toEqual(unknown)
+      expect(HeatmapChartLoading({ data: unknown }).data[0]?.bins[1]?.observed).toBe(false)
+    })
+  },
+)

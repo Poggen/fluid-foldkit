@@ -23,7 +23,7 @@ export interface TimeSeriesProps<Row> {
   readonly yDomainTween?: boolean
   readonly yDomainTweenDuration?: number
   readonly xDomain?: readonly [Date, Date]
-  /** Fixed primary y-axis bounds. Finite, strictly increasing; no padding or rounding. */
+  /** Fixed primary y-axis bounds. Finite, strictly increasing; no padding, rounding or domain tween. YAxis.domain takes precedence. */
   readonly yDomain?: readonly [number, number]
   readonly xDomainSlotCount?: number
   readonly tweenYDomainOnXDomainChange?: boolean

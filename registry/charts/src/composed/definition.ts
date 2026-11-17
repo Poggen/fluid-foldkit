@@ -74,6 +74,7 @@ export function composedDefinition<Row extends Readonly<Record<string, unknown>>
       id,
       x: props.x ?? ((row) => toDate(row[props.xDataKey ?? 'date'])),
       children,
+      ...(props.yDomain === undefined ? {} : { yDomain: props.yDomain }),
       tooltipSpring: useChartConfig(props.environment).tooltipSpring,
       ...(props.margin === undefined ? {} : { margin: props.margin }),
       ...(props.xDomain === undefined ? {} : { xDomain: props.xDomain }),

@@ -49,6 +49,7 @@ const placeLabels = (
   chart: { readonly x: number; readonly width: number },
   orientation: LabelOrientation,
   showValue: boolean,
+  formatValue: (value: number) => string = (value) => `${intFmt.format(value)} sessions`,
 ): Array<LabelRow> =>
   nodes.map((node) => {
     let total = 0
@@ -66,7 +67,7 @@ const placeLabels = (
     const centerY = node.y0 + (node.y1 - node.y0) / 2
     const isLeft = node.x0 - chart.x < chart.width / 2
     const edge = isLeft ? node.x0 - LABEL_OFFSET : node.x0 + nodeW + LABEL_OFFSET
-    const base = { key: node.key, name: node.data.name, value: `${intFmt.format(total)} sessions` }
+    const base = { key: node.key, name: node.data.name, value: formatValue(total) }
 
     if (orientation === 'vertical') {
       const half = VALUE_LABEL_GAP / 2

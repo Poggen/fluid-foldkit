@@ -17,10 +17,7 @@ export const SeriesBar = <const Key extends string>(
   props,
 })
 
-export interface ComposedChartProps<Row> extends Omit<
-  TimeSeriesProps<Row>,
-  'children' | 'yDomain'
-> {
+export interface ComposedChartProps<Row> extends Omit<TimeSeriesProps<Row>, 'children'> {
   readonly barSize?: number
   readonly maxBarSize?: number
   readonly barGap?: number

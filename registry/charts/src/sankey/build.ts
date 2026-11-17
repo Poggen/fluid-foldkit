@@ -107,6 +107,7 @@ export function sankeyDefinition(
           durationMs: duration,
           transition: toNativeTransition(props.enterTransition, duration),
         },
+        ...(node.formatValue === undefined ? {} : { formatValue: node.formatValue }),
         labelOrientation: node.labelOrientation ?? 'horizontal',
         lineCap: node.lineCap ?? 4,
         linkStroke: (row, sourceColor, gradientId, laidOut) => {
@@ -253,6 +254,7 @@ export function sameSankeyDrawing(a: SankeyChartProps, b: SankeyChartProps): boo
       node.fadedOpacity,
       node.showLabels,
       node.showValueLabels,
+      node.formatValue,
       node.labelOrientation,
       node.getNodeColor,
       link.stroke,

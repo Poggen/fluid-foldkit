@@ -21,7 +21,7 @@ function labelsFor(
   axis: BarXAxisProps | undefined,
   focused: number | null,
 ) {
-  if (axis === undefined || !snapshot.bandWidth) return []
+  if (axis === undefined || axis.type === 'number' || !snapshot.bandWidth) return []
   const count = snapshot.categories.length
   const step =
     axis.showAllLabels === true || count <= (axis.maxLabels ?? 12)

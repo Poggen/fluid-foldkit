@@ -1,5 +1,6 @@
 // Derived from Fluid Functionalism 200b4534, MIT; see NOTICE
 import { Match, Schema } from 'effect'
+import { modifyFields } from 'foldkit/struct'
 import { Month, Selection } from '../calendar-state.js'
 import type { CalendarState, Projection } from '../calendar-state.js'
 
@@ -115,44 +116,58 @@ export function initialVisual(selection: Selection): VisualState {
   }
 }
 
+const sameRect = Schema.toEquivalence(Rect)
+const sameRects = Schema.toEquivalence(VisualState.fields.rects)
+const sameHeights = Schema.toEquivalence(VisualState.fields.heights)
+
 export function observeVisual(state: VisualState, observation: Observation): VisualState {
   return Match.value(observation).pipe(
     Match.tagsExhaustive({
-      Measured: (observed): VisualState => ({
-        ...state,
-        heightSpring: observed.generation !== state.measurementGeneration,
-        measurementGeneration: observed.generation,
-        heights: observed.heights,
-        navRects: observed.navRects,
-        fits: observed.fits,
-        stride: observed.stride,
-        rects: observed.rects,
-        reduceMotion: observed.reduceMotion,
-      }),
-      NavActive: (observed): VisualState => ({ ...state, navActive: observed.key }),
-      Active: (observed): VisualState => ({
-        ...state,
-        active: observed.ordinal,
-        focused: observed.keyboard ? observed.ordinal : null,
-        snap: observed.keyboard ? state.snap : false,
-      }),
-      Pressed: (observed): VisualState => ({
-        ...state,
-        pressed: observed.value,
-        focused: observed.value ? null : state.focused,
-      }),
-      OverlayExited: (observed): VisualState => ({
-        ...state,
-        overlays: state.overlays.filter(
-          (slot) =>
-            slot.key !== observed.key || slot.generation !== observed.generation || slot.present,
-        ),
-      }),
-      PanelExited: (observed): VisualState => ({
-        ...state,
-        retained: state.retained.filter((panel) => panel.key !== observed.key),
-      }),
-      SnapReleased: (): VisualState => ({ ...state, snap: false }),
+      Measured: (observed): VisualState =>
+        modifyFields(state, {
+          heightSpring: () => observed.generation !== state.measurementGeneration,
+          measurementGeneration: () => observed.generation,
+          heights: (current) =>
+            sameHeights(current, observed.heights) ? current : observed.heights,
+          navRects: (current) =>
+            sameRects(current, observed.navRects) ? current : observed.navRects,
+          fits: () => observed.fits,
+          stride: () => observed.stride,
+          rects: (current) => (sameRects(current, observed.rects) ? current : observed.rects),
+          reduceMotion: () => observed.reduceMotion,
+        }),
+      NavActive: (observed): VisualState => modifyFields(state, { navActive: () => observed.key }),
+      Active: (observed): VisualState =>
+        modifyFields(state, {
+          active: () => observed.ordinal,
+          focused: () => (observed.keyboard ? observed.ordinal : null),
+          snap: (current) => (observed.keyboard ? current : false),
+        }),
+      Pressed: (observed): VisualState =>
+        modifyFields(state, {
+          pressed: () => observed.value,
+          focused: (current) => (observed.value ? null : current),
+        }),
+      OverlayExited: (observed): VisualState =>
+        modifyFields(state, {
+          overlays: (current) => {
+            const remaining = current.filter(
+              (slot) =>
+                slot.key !== observed.key ||
+                slot.generation !== observed.generation ||
+                slot.present,
+            )
+            return remaining.length === current.length ? current : remaining
+          },
+        }),
+      PanelExited: (observed): VisualState =>
+        modifyFields(state, {
+          retained: (current) => {
+            const remaining = current.filter((panel) => panel.key !== observed.key)
+            return remaining.length === current.length ? current : remaining
+          },
+        }),
+      SnapReleased: (): VisualState => modifyFields(state, { snap: () => false }),
       GhostSettled: (observed): VisualState =>
         state.ghost !== null && observed.generation === state.ghostGeneration
           ? { ...state, ghost: null }
@@ -255,7 +270,7 @@ function overlayRect(state: VisualState, group: string): typeof Rect.Type | null
 
 export function syncOverlaySlots(state: VisualState): VisualState {
   let sequence = state.overlaySequence
-  let slots = [...state.overlays]
+  let slots = state.overlays
   const groups = ['hover', 'focus', 'nav:previous', 'nav:next', 'nav:previous-next']
 
   for (const group of groups) {
@@ -263,24 +278,27 @@ export function syncOverlaySlots(state: VisualState): VisualState {
 
     const present = slots.find((slot) => slot.group === group && slot.present)
 
-    if (rect === null) {
+    if (rect === null && present !== undefined) {
       slots = slots.map((slot) =>
         slot.group === group && slot.present
           ? { ...slot, present: false, generation: slot.generation + 1 }
           : slot,
       )
-    } else if (present === undefined) {
+    } else if (rect !== null && present === undefined) {
       const reversing = group === 'focus' ? slots.find((slot) => slot.group === group) : undefined
 
       if (reversing === undefined) {
         sequence += 1
-        slots.push({
-          key: `${state.occurrence}-${group}-${sequence}`,
-          group,
-          rect,
-          present: true,
-          generation: 0,
-        })
+        slots = [
+          ...slots,
+          {
+            key: `${state.occurrence}-${group}-${sequence}`,
+            group,
+            rect,
+            present: true,
+            generation: 0,
+          },
+        ]
       } else {
         slots = slots.map((slot) =>
           slot.key === reversing.key
@@ -288,10 +306,10 @@ export function syncOverlaySlots(state: VisualState): VisualState {
             : slot,
         )
       }
-    } else {
+    } else if (rect !== null && present !== undefined && !sameRect(present.rect, rect)) {
       slots = slots.map((slot) => (slot.key === present.key ? { ...slot, rect } : slot))
     }
   }
 
-  return { ...state, overlays: slots, overlaySequence: sequence }
+  return modifyFields(state, { overlays: () => slots, overlaySequence: () => sequence })
 }

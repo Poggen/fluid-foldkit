@@ -1,11 +1,14 @@
 import { it } from '@effect/vitest'
 // @vitest-environment happy-dom -- real checked parent and native renderer ResizeObserver deliveries
 import { expect } from 'vitest'
-import { Effect, Schedule } from 'effect'
+import { Effect, Option, Schedule } from 'effect'
 import { viewportFixture } from './viewport-runtime-fixture'
 
 const eventually = (check: () => void) =>
   Effect.try(check).pipe(Effect.retry({ times: 50, schedule: Schedule.spaced('20 millis') }))
+
+const focusedIndexOf = (fixture: ReturnType<typeof viewportFixture>) =>
+  fixture.model === undefined ? undefined : Option.getOrNull(fixture.model.chart.focusedIndex)
 
 const settle = (fixture: ReturnType<typeof viewportFixture>) =>
   Effect.gen(function* settleMountedOwner() {
@@ -122,29 +125,77 @@ it.live('enabling a derived renderer publishes retained geometry without another
   }),
 )
 
-it.live('concurrent original and derived descriptors keep separate container ownership', () =>
-  Effect.gen(function* independentDerivedContainer() {
-    const original = viewportFixture('viewport-concurrent-native', 'line')
-    const derived = viewportFixture('viewport-concurrent-derived', 'line', 'derived', original)
+it.live(
+  'concurrent Programs with reused chart ids retain independent tooltips through remount',
+  () =>
+    Effect.gen(function* independentDerivedContainer() {
+      const original = viewportFixture('viewport-concurrent-native', 'line')
+      const key = (fixture: ReturnType<typeof viewportFixture>, value: string) =>
+        fixture.host
+          .querySelector('.ts-chart-surface')
+          ?.dispatchEvent(new KeyboardEvent('keydown', { key: value, bubbles: true }))
 
-    try {
-      yield* settle(original)
-      yield* settle(derived)
-      derived.resize(570)
-      yield* settle(derived)
-      const owner = derived.host.querySelector('[data-bkm-native-chart]')
-      const ref = original.contextRefs.at(-1)
-      expect(ref?.current).toBe(owner)
-      original.host.querySelector<HTMLButtonElement>('[data-data]')?.click()
-      yield* eventually(() => {
-        original.flush()
-        expect(original.model?.chart.domains.left?.[1]).toBeGreaterThan(100)
-      })
-      expect(ref?.current).toBe(owner)
-      expect(derived.host.querySelector('[data-viewport]')?.textContent).toBe('570')
-    } finally {
-      yield* derived.dispose()
-      yield* original.dispose()
-    }
-  }),
+      try {
+        const derived = viewportFixture('viewport-concurrent-derived', 'line', 'derived', original)
+        let retiredSurface: Element | null = null
+        try {
+          yield* settle(original)
+          yield* settle(derived)
+          derived.resize(570)
+          yield* settle(derived)
+          const owner = derived.host.querySelector('[data-bkm-native-chart]')
+          const ref = original.contextRefs.at(-1)
+          expect(ref?.current).toBe(owner)
+          original.host.querySelector<HTMLButtonElement>('[data-data]')?.click()
+          yield* eventually(() => {
+            original.flush()
+            expect(original.model?.chart.domains.left?.[1]).toBeGreaterThan(100)
+          })
+          expect(ref?.current).toBe(owner)
+          expect(derived.host.querySelector('[data-viewport]')?.textContent).toBe('570')
+          const firstTooltip = original.host.querySelector('.ts-chart-tooltip')
+          const secondTooltip = derived.host.querySelector('.ts-chart-tooltip')
+          expect(firstTooltip).not.toBeNull()
+          expect(secondTooltip).not.toBeNull()
+          expect(firstTooltip).not.toBe(secondTooltip)
+
+          key(original, 'ArrowRight')
+          yield* eventually(() => expect(focusedIndexOf(original)).toBe(0))
+          expect(focusedIndexOf(derived)).toBeNull()
+          key(derived, 'ArrowRight')
+          yield* eventually(() => expect(focusedIndexOf(derived)).toBe(0))
+          key(derived, 'ArrowRight')
+          yield* eventually(() => expect(focusedIndexOf(derived)).toBe(1))
+          expect(focusedIndexOf(original)).toBe(0)
+          retiredSurface = derived.host.querySelector('.ts-chart-surface')
+        } finally {
+          yield* derived.dispose()
+        }
+        const replacement = viewportFixture(
+          'viewport-concurrent-replacement',
+          'line',
+          'derived',
+          original,
+        )
+        try {
+          yield* settle(replacement)
+          expect(focusedIndexOf(replacement)).toBeNull()
+          retiredSurface?.dispatchEvent(
+            new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }),
+          )
+          yield* Effect.sleep('40 millis')
+          expect(focusedIndexOf(replacement)).toBeNull()
+          expect(focusedIndexOf(original)).toBe(0)
+          key(replacement, 'ArrowRight')
+          yield* eventually(() => expect(focusedIndexOf(replacement)).toBe(0))
+          key(original, 'ArrowRight')
+          yield* eventually(() => expect(focusedIndexOf(original)).toBe(1))
+          expect(focusedIndexOf(replacement)).toBe(0)
+        } finally {
+          yield* replacement.dispose()
+        }
+      } finally {
+        yield* original.dispose()
+      }
+    }),
 )

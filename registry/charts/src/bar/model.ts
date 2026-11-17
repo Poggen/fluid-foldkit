@@ -1,5 +1,5 @@
-import type { BarLayer, BarProps, BarSquaresProps } from './options'
-import { bklitYDomain } from '../cartesian/domains'
+import type { BarChartProps, BarLayer, BarProps, BarSquaresProps } from './options'
+import { bklitYDomain, fixedYDomains } from '../cartesian/domains'
 import { Schema } from 'effect'
 import { scaleLinear } from 'd3-scale'
 import type { Domains } from '../cartesian/state'
@@ -148,4 +148,20 @@ export function barValueDomains<Row>(
     domains.set('left', [0, 100])
   }
   return Object.fromEntries(domains)
+}
+
+/** Shared by native marks, public context and sibling square paint resources. */
+export function configuredBarDomains<Row>(
+  datums: ReadonlyArray<BarDatum<Row>>,
+  categories: ReadonlyArray<string>,
+  series: ReadonlyArray<BarSeries>,
+  props: BarChartProps<Row>,
+): Domains {
+  const horizontal = props.orientation === 'horizontal'
+  const axes = flattenBarLayers(props.children)
+    .filter((child) => child.kind === 'yAxis')
+    .map((child) => child.props)
+  const fixed = fixedYDomains(axes, props.yDomain)
+  const inferred = barValueDomains(datums, categories, series, horizontal, props.stacked === true)
+  return horizontal ? { left: fixed.left ?? inferred.left ?? [0, 100] } : { ...inferred, ...fixed }
 }

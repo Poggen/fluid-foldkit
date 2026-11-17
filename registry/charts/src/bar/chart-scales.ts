@@ -82,7 +82,22 @@ export function buildBarScales(input: BarScaleInputs) {
       )
 
   const { categoryScale, tickValues } = categoryScaleFor(input, horizontal ? undefined : xAxis)
-  const valueScale = valueScaleFor(input, numericAxis, grid, rowGuides)
+  let valueScale = valueScaleFor(input, numericAxis, grid, rowGuides)
+  if (xAxis?.type === 'number') {
+    if (!horizontal) throw new TypeError('Numeric BarXAxis requires horizontal orientation')
+    valueScale = {
+      ...valueScale,
+      axis: {
+        line: false,
+        ticks: {
+          count: 5,
+          size: 0,
+          format: (value) => xAxis.formatValue?.(Number(value)) ?? String(value),
+        },
+        tickLabels: { fontSize: 12, opacity: 1, thin: false },
+      },
+    }
+  }
 
   const valueScales: Record<`y:${string}`, ChartPositionScaleOptions<BarValue>> = {}
   if (!horizontal) {

@@ -113,3 +113,67 @@ for (const { failureAt, cleanupAt } of [
     }
   })
 }
+
+test('reused chart ids acquire and release only their occurrence tooltip across remounts', () => {
+  const environment = fontTestEnvironment()
+  const props = {
+    width: 400,
+    height: 240,
+    animationDuration: 0,
+    children: [Line({ dataKey: 'value' })],
+  }
+  const inputs = chart.inputs('shared-chart', props)
+  const makeOwner = (label: string) => {
+    const container = document.createElement('div')
+    container.dataset.bkmNativeChart = 'shared-chart'
+    const element = new Drawing()
+    const origin = document.createElement('div')
+    const shell = document.createElement('div')
+    shell.id = 'shared-chart-tooltip'
+    shell.textContent = label
+    origin.append(shell)
+    container.append(element, origin)
+    environment.container.append(container)
+    expect(
+      Reflect.set(element, 'presentation', {
+        id: 'shared-chart',
+        data: [Row.make({ date: DateTime.toDateUtc(DateTime.makeUnsafe(0)), value: 1 })],
+        focusedIndex: null,
+        focusedSeriesIndex: null,
+        state: initialInteraction(chart.configuration(props)),
+        inputs,
+      }),
+    ).toBe(true)
+    return { container, element, origin, shell }
+  }
+  const first = makeOwner('first owner')
+  const second = makeOwner('second owner')
+  let releaseFirst: (() => void) | undefined
+  let releaseSecond: (() => void) | undefined
+  let releaseReplacement: (() => void) | undefined
+  try {
+    releaseFirst = first.element.acquire(() => 0)
+    releaseSecond = second.element.acquire(() => 0)
+    expect(first.shell.parentElement).toBe(first.element.querySelector('.ts-chart-surface'))
+    expect(second.shell.parentElement).toBe(second.element.querySelector('.ts-chart-surface'))
+    releaseFirst()
+    first.container.remove()
+    const replacement = makeOwner('replacement owner')
+    releaseReplacement = replacement.element.acquire(() => 0)
+    expect(replacement.shell.parentElement).toBe(
+      replacement.element.querySelector('.ts-chart-surface'),
+    )
+    expect(second.shell.parentElement).toBe(second.element.querySelector('.ts-chart-surface'))
+    expect(second.shell.textContent).toBe('second owner')
+    releaseReplacement()
+    expect(replacement.shell.parentElement).toBe(replacement.origin)
+    expect(second.shell.parentElement).toBe(second.element.querySelector('.ts-chart-surface'))
+    releaseSecond()
+    expect(second.shell.parentElement).toBe(second.origin)
+  } finally {
+    releaseReplacement?.()
+    releaseSecond?.()
+    releaseFirst?.()
+    environment.destroy()
+  }
+})
