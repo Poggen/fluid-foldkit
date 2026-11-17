@@ -12,7 +12,11 @@ export const loadBuiltStyles = async (page: Page, route: string, html: string) =
     .locator('style[data-chart-styles]')
     .evaluateAll((styles) => styles.map((style) => style.textContent ?? '').filter(Boolean))
   if (stylesheets.length === 0) throw new Error('Normal production stylesheets are required')
-  await page.setContent(html)
+  // setContent loses native pointer departure events in Linux headless Chromium.
+  await page.route(page.url(), (route) => route.fulfill({ contentType: 'text/html', body: html }), {
+    times: 1,
+  })
+  await page.reload()
   for (const url of stylesheets) await page.addStyleTag({ url })
   for (const content of chartStyles) await page.addStyleTag({ content })
   await page.evaluate(async () => {

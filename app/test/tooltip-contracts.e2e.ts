@@ -25,85 +25,6 @@ const rasterSvg = (page: Page, svg: string) =>
     }
   }, svg)
 
-const observePointer = (page: Page) =>
-  page.evaluateHandle(() => {
-    const events: unknown[] = []
-    let point = { x: 0, y: 0 }
-    const identify = (target: EventTarget | null) =>
-      target instanceof Element ? { tag: target.tagName, id: target.id } : null
-    const snapshot = () => ({
-      active: identify(document.activeElement),
-      hit: identify(document.elementFromPoint(point.x, point.y)),
-      point,
-      visibility: document.visibilityState,
-      viewport: {
-        width: innerWidth,
-        height: innerHeight,
-        clientWidth: document.documentElement.clientWidth,
-        scrollX,
-        scrollY,
-      },
-      tooltips: [
-        ...document.querySelectorAll<HTMLElement>('[data-tooltip-trigger],[data-tooltip-popup]'),
-      ].map((node) => ({
-        id: node.id,
-        state: node.dataset.state,
-        rect: node.getBoundingClientRect().toJSON(),
-        pointerEvents: getComputedStyle(node).pointerEvents,
-        describedBy: node.getAttribute('aria-describedby'),
-      })),
-    })
-    for (const type of [
-      'pointerover',
-      'pointerenter',
-      'pointermove',
-      'pointerout',
-      'pointerleave',
-      'focusin',
-      'focusout',
-    ]) {
-      document.addEventListener(
-        type,
-        (event) => {
-          if (event instanceof PointerEvent) point = { x: event.clientX, y: event.clientY }
-          events.push({
-            type,
-            time: performance.now(),
-            target: identify(event.target),
-            related:
-              event instanceof MouseEvent || event instanceof FocusEvent
-                ? identify(event.relatedTarget)
-                : null,
-            pointerType: event instanceof PointerEvent ? event.pointerType : null,
-            point,
-            active: identify(document.activeElement),
-            hit: identify(document.elementFromPoint(point.x, point.y)),
-            prevented: event.defaultPrevented,
-            trusted: event.isTrusted,
-          })
-          if (events.length > 300) events.shift()
-        },
-        { capture: true, passive: true },
-      )
-    }
-    return { events, snapshot }
-  })
-
-const pointerTraces = new WeakMap<Page, Awaited<ReturnType<typeof observePointer>>>()
-test.afterEach(async ({ page }, testInfo) => {
-  const trace = pointerTraces.get(page)
-  if (trace === undefined) return
-  await testInfo.attach('tooltip-native-pointer', {
-    body: JSON.stringify(
-      await trace.evaluate((value) => ({ events: value.events, final: value.snapshot() })),
-      null,
-      2,
-    ),
-    contentType: 'application/json',
-  })
-  await trace.dispose()
-})
-
 let code = ''
 test.beforeAll(async () => {
   code = await bundleRuntimeFixture(
@@ -178,7 +99,6 @@ test('hoverable content, pass-through content and keyboard shortcuts retain dist
   page,
 }) => {
   await mountRuntimeFixture(page, '/components/tooltip', code)
-  pointerTraces.set(page, await observePointer(page))
   const hoverable = page.locator('#trigger-hover-on')
   await hoverable.hover()
   await expect(hoverable).toHaveAttribute('aria-describedby', 'hover-on-popup')
@@ -281,7 +201,6 @@ test('disabling hoverability over an open bubble preserves departure and cancels
   page,
 }) => {
   await mountRuntimeFixture(page, '/components/tooltip', code)
-  pointerTraces.set(page, await observePointer(page))
   const trigger = page.locator('#trigger-hover-on')
   await trigger.hover()
   await expect(trigger).toHaveAttribute('aria-describedby', 'hover-on-popup')
