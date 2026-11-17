@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
 import {
   bundleRuntimeFixture,
   loadBuiltStyles,
@@ -6,6 +7,23 @@ import {
 } from './style-contract-helpers.js'
 
 type LabelPresentation = { fontSize: string; color: string }
+
+const rasterSvg = (page: Page, svg: string) =>
+  page.evaluate(async (source) => {
+    const image = new Image()
+    image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(source)
+    await image.decode()
+    const canvas = document.createElement('canvas')
+    canvas.width = 24
+    canvas.height = 12
+    const context = canvas.getContext('2d')
+    if (context === null) throw new Error('Missing canvas raster context')
+    context.drawImage(image, 0, 0)
+    return {
+      use: [...context.getImageData(6, 6, 1, 1).data],
+      image: [...context.getImageData(0, 0, 24, 12).data],
+    }
+  }, svg)
 
 let code = ''
 test.beforeAll(async () => {
@@ -277,6 +295,7 @@ test('simultaneous captures retain SVG rendering references without navigation o
   page,
 }) => {
   await mountRuntimeFixture(page, '/components/tooltip', code)
+  const sourcePixels = []
   for (const key of ['svg-a', 'svg2-a']) {
     await page.locator(`#show-${key}`).evaluate((node: HTMLButtonElement) => node.click())
     await expect(page.locator(`#${key}-popup`)).toBeVisible()
@@ -285,6 +304,10 @@ test('simultaneous captures retain SVG rendering references without navigation o
         .locator(`#${key}-popup [data-local-svg] use`)
         .evaluate((node: SVGGraphicsElement) => node.getBBox().width),
     ).toBe(12)
+    const sourceSvg = await page
+      .locator(`#${key}-popup [data-local-svg]`)
+      .evaluate((node) => new XMLSerializer().serializeToString(node))
+    sourcePixels.push(await rasterSvg(page, sourceSvg))
   }
   const captures = await page.evaluate(
     () =>
@@ -360,7 +383,7 @@ test('simultaneous captures retain SVG rendering references without navigation o
       }),
   )
   expect(captures.duplicateIds).toEqual([])
-  for (const row of captures.rows) {
+  for (const [index, row] of captures.rows.entries()) {
     expect(row).toMatchObject({
       localReferencesResolve: true,
       localWidth: 12,
@@ -371,23 +394,10 @@ test('simultaneous captures retain SVG rendering references without navigation o
       hidden: 'true',
     })
     expect(row.ids).toHaveLength(2)
-    const pixels = await page.evaluate(async (svg) => {
-      const image = new Image()
-      image.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)
-      await image.decode()
-      const canvas = document.createElement('canvas')
-      canvas.width = 24
-      canvas.height = 12
-      const context = canvas.getContext('2d')
-      if (context === null) throw new Error('Missing canvas raster context')
-      context.drawImage(image, 0, 0)
-      return {
-        use: [...context.getImageData(6, 6, 1, 1).data],
-        gradient: [...context.getImageData(18, 6, 1, 1).data],
-      }
-    }, row.svg)
+    const pixels = await rasterSvg(page, row.svg)
     expect(pixels.use).toEqual([255, 0, 0, 255])
-    expect(pixels.gradient).toEqual([0, 138, 117, 255])
+    // Gradient rounding differs between browser rasterizers; captures must match their source exactly.
+    expect(pixels).toEqual(sourcePixels[index])
   }
   await expect(page.locator('[data-tooltip-previous]')).toHaveCount(0)
   expect(

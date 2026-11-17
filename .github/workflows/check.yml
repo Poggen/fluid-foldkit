@@ -2,10 +2,20 @@ name: Native registries
 on:
   pull_request:
   push:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: Verification scope
+        type: choice
+        default: full
+        options:
+          - full
+          - browser-contracts
 permissions:
   contents: read
 jobs:
   check:
+    name: ${{ github.event_name == 'workflow_dispatch' && inputs.scope == 'browser-contracts' && 'browser-contracts' || 'check' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -21,7 +31,13 @@ jobs:
       - run: bunx --no-install playwright install --with-deps chromium
         working-directory: app
       - run: bun run check
+        if: github.event_name != 'workflow_dispatch' || inputs.scope != 'browser-contracts'
+      - run: |
+          bun run build
+          bun run --cwd app test:e2e test/tailwind-fluid-contracts.e2e.ts test/tooltip-contracts.e2e.ts
+        if: github.event_name == 'workflow_dispatch' && inputs.scope == 'browser-contracts'
       - run: bun run test:consumer
+        if: github.event_name != 'workflow_dispatch' || inputs.scope != 'browser-contracts'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: registries-and-native-showcase
@@ -32,4 +48,9 @@ jobs:
         if: always()
         with:
           name: consumer-verification
-          path: .verification
+          include-hidden-files: true
+          path: |
+            .verification/showcase-results
+            .verification/showcase-tests.json
+            .verification/consumer.json
+            .verification/consumer.png

@@ -268,11 +268,14 @@ test('Dialog portal host consumes contents and its full-width fixed inherited-co
   if (panel === null) throw new Error('Missing mounted dialog panel')
   await expect(dialog).toHaveCSS('position', 'fixed')
   await expect(dialog).toHaveCSS('color', 'rgb(21, 45, 71)')
-  expect(
-    await dialog.evaluate(
-      (node) => node.getBoundingClientRect().width === document.documentElement.clientWidth,
-    ),
-  ).toBe(true)
+  // Scroll locking expands clientWidth with classic scrollbars, but the stable gutter remains.
+  const viewport = await page.evaluate(() => ({
+    x: 0,
+    y: 0,
+    width: document.documentElement.getBoundingClientRect().width,
+    height: window.innerHeight,
+  }))
+  expect(await dialog.boundingBox()).toEqual(viewport)
   await dialog.getByRole('button', { name: 'Cancel', exact: true }).click()
   await trigger.evaluate((node) => {
     if (!(node instanceof HTMLElement)) throw new Error('Missing dialog trigger element')
@@ -286,11 +289,7 @@ test('Dialog portal host consumes contents and its full-width fixed inherited-co
   ).toBe(true)
   await expect(dialog).toHaveCSS('position', 'fixed')
   await expect(dialog).toHaveCSS('color', 'rgb(21, 45, 71)')
-  expect(
-    await dialog.evaluate(
-      (node) => node.getBoundingClientRect().width === document.documentElement.clientWidth,
-    ),
-  ).toBe(true)
+  expect(await dialog.boundingBox()).toEqual(viewport)
   await panel.dispose()
 })
 
