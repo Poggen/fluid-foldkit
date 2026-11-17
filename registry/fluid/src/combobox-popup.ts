@@ -11,7 +11,9 @@ import { spring, exitFallbackMs } from './lib/springs.js'
 import { popupMotionClass } from './lib/popup.js'
 import { popupShape } from './lib/shape.js'
 import { cn } from './lib/utils.js'
-import type { ShapeVariant } from './lib/shape.js'
+import { Elevated } from './elevated.js'
+import { createPresentationContext, resolvePresentation } from './presentation.js'
+import type { Presentation, PresentationContext } from './presentation.js'
 const Model = Schema.Struct({
   id: Schema.String,
   anchorId: Schema.String,
@@ -254,11 +256,10 @@ const inMessageUpdate = Composition.makeInMessageUpdate({
     }
   },
 })
-export interface ComboboxPopupViewInputs {
-  readonly content: () => ReadonlyArray<Html>
+export interface ComboboxPopupViewInputs extends Presentation {
+  readonly content: (context: PresentationContext) => ReadonlyArray<Html>
   readonly animate: (node: Html, options: MotionOptions) => Html
   readonly className?: string
-  readonly shape?: ShapeVariant
 }
 const view = Composition.makeView.withInputs<ComboboxPopupViewInputs>((model, inputs, h) =>
   model.retained
@@ -283,23 +284,29 @@ const view = Composition.makeView.withInputs<ComboboxPopupViewInputs>((model, in
         ],
         [
           inputs.animate(
-            h.div(
-              [
-                h.DataAttribute('combo-surface', ''),
-                h.Class(
-                  `flex flex-col min-w-[var(--anchor-width)] max-h-[min(300px,var(--available-height))] overflow-hidden ${popupShape(inputs.shape ?? 'rounded').container} select-none outline-none bg-surface-3 shadow-surface-3 ${popupMotionClass} ${inputs.className ?? ''}`,
+            Elevated(
+              {
+                context: createPresentationContext(inputs),
+                offset: 2,
+                shadowLevel: 3,
+                attributes: [h.DataAttribute('combo-surface', '')],
+                className: cn(
+                  `flex flex-col min-w-[var(--anchor-width)] max-h-[min(300px,var(--available-height))] overflow-hidden ${popupShape(resolvePresentation(inputs).shape.variant).container} select-none outline-none`,
+                  popupMotionClass,
+                  inputs.className,
                 ),
-              ],
-              [
-                ...inputs.content(),
-                h.button([
-                  h.Type('button'),
-                  h.Tabindex(-1),
-                  h.AriaLabel('Dismiss'),
-                  h.Class('sr-only'),
-                  h.OnClick(Message.Dismissed()),
-                ]),
-              ],
+                children: (context) => [
+                  ...inputs.content(context),
+                  h.button([
+                    h.Type('button'),
+                    h.Tabindex(-1),
+                    h.AriaLabel('Dismiss'),
+                    h.Class('sr-only'),
+                    h.OnClick(Message.Dismissed()),
+                  ]),
+                ],
+              },
+              h,
             ),
             {
               initial: { opacity: 0, y: 'var(--popup-enter-y)', scaleY: 0.96 },

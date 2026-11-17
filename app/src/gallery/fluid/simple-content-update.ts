@@ -4,6 +4,11 @@ import type { FluidConfiguration } from '../../playground/configuration'
 import { FluidGalleryBlock } from './block'
 import { Chat, Color } from './details-bindings'
 import { Dialog } from './interactive-bindings'
+import { Table } from './core-bindings'
+import { selectedIndices as selectedTableIndices } from '../../playground/configs/table'
+import { filesFor } from '../../playground/configs/chat-message'
+import { ChatMessageBlock } from '@foldkit-visuals/fluid/chat-message'
+const equalFiles = Schema.toEquivalence(ChatMessageBlock.InMessage.RequestedConfigure.fields.files)
 const equal = Schema.toEquivalence(ColorPickerBlock.InMessage.RequestedConfigure.fields.settings)
 export const reconcileSimpleContent = (
   configuration: Extract<
@@ -21,14 +26,24 @@ export const reconcileSimpleContent = (
 ) =>
   FluidGalleryBlock.makeStep((model) =>
     Match.value(configuration).pipe(
-      Match.tag('badge', 'table', 'thinking-indicator', () => FluidGalleryBlock.makeNoopStep()),
+      Match.tag('badge', 'thinking-indicator', () => FluidGalleryBlock.makeNoopStep()),
+      Match.tag('table', (c) =>
+        Table.requestConfigure({
+          selectedIndices: selectedTableIndices(c),
+          heldHeadIndex: c.heldHeader < 0 ? null : c.heldHeader,
+          hideHeadHighlight: c.hideHeaderHighlight,
+          snapKey: `${c.rowCount}:${c.columnCount}:${c.size}`,
+        }),
+      ),
       Match.tag('chat-message', (c) =>
-        model.chat.from === c.from
+        model.chat.from === c.from &&
+        model.chat.thumbnailSize === c.thumbnailSize &&
+        equalFiles(model.chat.files, filesFor(c))
           ? FluidGalleryBlock.makeNoopStep()
           : Chat.requestConfigure({
               from: c.from,
-              files: model.chat.files,
-              thumbnailSize: model.chat.thumbnailSize,
+              files: filesFor(c),
+              thumbnailSize: c.thumbnailSize,
             }),
       ),
       Match.tag('dialog', (c) =>

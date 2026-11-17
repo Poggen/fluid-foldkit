@@ -36,6 +36,7 @@ export const renderDocumentTooltip = (
         return renderInteraction(key, row.interaction, {
           ...popup,
           part: 'popup',
+          group: model.groups[row.groupKey],
           presentation: row.presentation,
           animate: inputs.animate,
           renderContent: () => {
@@ -83,6 +84,7 @@ export const renderDocumentTooltip = (
     return renderInteraction(key, row.interaction, {
       ...popup,
       part: 'popup',
+      group: model.groups[row.groupKey],
       presentation: row.presentation,
       renderContent: () => {
         if (content !== undefined) return content

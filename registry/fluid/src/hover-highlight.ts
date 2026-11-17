@@ -1,7 +1,10 @@
+import { highlightFrameUpdate } from './highlight-frame.js'
+import { highlightSnapResource } from './highlight-snap.js'
+import type { HighlightSnap } from './highlight-snap.js'
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
 import { modifyFields } from 'foldkit/struct'
 import { rectAt } from './lib/indexed-geometry.js'
-import { Data, Effect, Option, Queue, Schema, Stream, Number } from 'effect'
+import { Data, Effect, Layer, Option, Queue, Schema, Stream, Number } from 'effect'
 import { Block } from 'foldkit'
 import type { Attribute, ChildAttribute, Html } from 'foldkit/html'
 import { defineInMessageUnion, defineMessageUnion } from 'foldkit/message'
@@ -10,7 +13,7 @@ import { HoverMode, Snapshot } from './hover-observation.js'
 import type { ItemRect } from './lib/hover-geometry.js'
 import { spring } from './lib/springs.js'
 import { cn } from './lib/utils.js'
-import { EXIT_COMPLETE_EVENT } from './motion-target.js'
+import { EXIT_COMPLETE_EVENT, createTargetMotionScope } from './motion-target.js'
 import type { TargetMotionScope } from './motion-target.js'
 
 const Rect = Schema.Struct({
@@ -63,6 +66,7 @@ export const InMessage = defineInMessageUnion({
     snapshot: Snapshot,
     hidden: Schema.Boolean,
     targetKey: Schema.optionalKey(Schema.String),
+    allowUnmeasured: Schema.optionalKey(Schema.Boolean),
   },
 })
 
@@ -216,11 +220,12 @@ const inMessageUpdate = HoverHighlightComposition.makeInMessageUpdate({
       slots: () => (model.mode === 'standard' ? [] : model.slots.map(exiting)),
     }),
   }),
-  InformedOfSource: (model, { snapshot, hidden, targetKey, mode }) =>
+  InformedOfSource: (model, { snapshot, hidden, targetKey, mode, allowUnmeasured }) =>
     requestedRect(
       model,
-      !hidden && snapshot.isMeasured && snapshot.activeIndex !== null
-        ? (rectAt(snapshot.itemRects, snapshot.activeIndex) ?? null)
+      !hidden && (snapshot.isMeasured || allowUnmeasured) && snapshot.activeIndex !== null
+        ? (rectAt(snapshot.itemRects, snapshot.activeIndex) ??
+            (allowUnmeasured ? { top: 0, left: 0, width: 0, height: 0 } : null))
         : null,
       snapshot.session,
       targetKey,
@@ -244,12 +249,23 @@ const update = HoverHighlightComposition.makeUpdate({
   Unmounted: (model) => ({ model: modifyFields(model, { slots: () => [] }) }),
 })
 
+export interface HoverHighlightTarget extends ItemRect {
+  readonly fluidPresentation?: {
+    readonly snap?: HighlightSnap
+    readonly observeFrame?: boolean
+  }
+}
+
 export interface HoverHighlightViewInputs {
+  readonly observeFrame?: boolean
+  readonly snap?: HighlightSnap
+  readonly instant?: boolean
+  readonly children?: ReadonlyArray<Html | string>
   readonly mode?: HoverMode
   readonly animate: (
     node: Html,
     present: boolean,
-    rect: ItemRect,
+    rect: HoverHighlightTarget,
     reduceMotion: boolean,
     transition?: false,
   ) => Html
@@ -257,8 +273,8 @@ export interface HoverHighlightViewInputs {
   readonly attributes?: ReadonlyArray<ChildAttribute>
 }
 
-const view = HoverHighlightComposition.makeView.withInputs<HoverHighlightViewInputs>(
-  (model, inputs, h) =>
+const makeView = (staticMotion: TargetMotionScope) =>
+  HoverHighlightComposition.makeView.withInputs<HoverHighlightViewInputs>((model, inputs, h) =>
     h.div(
       [
         h.Id(model.id),
@@ -269,23 +285,44 @@ const view = HoverHighlightComposition.makeView.withInputs<HoverHighlightViewInp
       model.slots
         .filter((slot) => (inputs.mode ?? model.mode) !== 'standard' || slot.phase === 'Present')
         .map((slot) => {
+          const target: HoverHighlightTarget = {
+            ...slot.rect,
+            fluidPresentation: {
+              ...(slot.phase === 'Present' && inputs.snap !== undefined
+                ? { snap: inputs.snap }
+                : {}),
+              ...(inputs.observeFrame ? { observeFrame: true } : {}),
+            },
+          }
           if ((inputs.mode ?? model.mode) === 'standard') {
-            return h.keyed('div')(
-              String(slot.session),
-              sourceStyleAttributes(
-                {
-                  transform: `translate(${slot.rect.left}px, ${slot.rect.top}px)`,
-                  width: `${slot.rect.width}px`,
-                  height: `${slot.rect.height}px`,
-                },
-                [
-                  h.Class(
-                    cn('pointer-events-none absolute left-0 top-0 bg-hover', inputs.className),
-                  ),
-                  h.DataAttribute('slot', 'fluid-hover-highlight'),
-                  ...(inputs.attributes ?? []),
-                ],
+            return staticMotion.node(
+              h.keyed('div')(
+                String(slot.session),
+                sourceStyleAttributes(
+                  {
+                    transform: `translate(${slot.rect.left}px, ${slot.rect.top}px)`,
+                    width: `${slot.rect.width}px`,
+                    height: `${slot.rect.height}px`,
+                  },
+                  [
+                    h.Class(
+                      cn('pointer-events-none absolute left-0 top-0 bg-hover', inputs.className),
+                    ),
+                    h.DataAttribute('slot', 'fluid-hover-highlight'),
+                    ...(inputs.attributes ?? []),
+                  ],
+                ),
+                inputs.children,
               ),
+              {
+                initial: { opacity: 1, ...toHighlightTarget(slot.rect) },
+                animate: { opacity: 1, ...toHighlightTarget(slot.rect) },
+                transition: { duration: 0 },
+                ...(inputs.snap === undefined
+                  ? {}
+                  : { resource: highlightSnapResource(inputs.snap) }),
+                ...(inputs.observeFrame ? { onUpdate: highlightFrameUpdate(slot.rect) } : {}),
+              },
             )
           }
           const completion = Events.OnCustomEvent({
@@ -297,29 +334,41 @@ const view = HoverHighlightComposition.makeView.withInputs<HoverHighlightViewInp
           })
 
           return inputs.animate(
-            h.keyed('div')(String(slot.session), [
-              h.DataAttribute('slot', 'fluid-hover-highlight'),
-              h.DataAttribute('session', String(slot.session)),
-              h.Class(cn('pointer-events-none absolute left-0 top-0 bg-hover', inputs.className)),
-              completion,
-              ...(inputs.attributes ?? []),
-            ]),
+            h.keyed('div')(
+              String(slot.session),
+              [
+                h.DataAttribute('slot', 'fluid-hover-highlight'),
+                h.DataAttribute('session', String(slot.session)),
+                h.Class(cn('pointer-events-none absolute left-0 top-0 bg-hover', inputs.className)),
+                completion,
+                ...(inputs.attributes ?? []),
+              ],
+              inputs.children,
+            ),
             slot.phase === 'Present',
-            slot.rect,
+            target,
             model.isReducedMotion,
-            slot.hasRowChanged ? undefined : false,
+            inputs.instant || !slot.hasRowChanged ? false : undefined,
           )
         }),
     ),
-)
+  )
 
-export const layer = HoverHighlightBlock.makeLayer({
-  init,
-  update,
-  inMessageUpdate,
-  view,
-  EffectsLayer: ObserveReducedMotion.layer,
-})
+export const layer = HoverHighlightBlock.makeLayer(
+  Effect.gen(function* () {
+    const children = yield* HoverHighlightComposition.acquireChildren()
+    const staticMotion = createTargetMotionScope('fluid-static-highlight')
+    yield* Layer.build(staticMotion.layer)
+    return {
+      children,
+      init,
+      update,
+      inMessageUpdate,
+      view: makeView(staticMotion),
+      EffectsLayer: ObserveReducedMotion.layer,
+    }
+  }),
+)
 
 export const toHighlightTarget = (rect: ItemRect) => ({
   x: rect.left,
@@ -349,6 +398,10 @@ export const hoverHighlightAnimation =
   ): HoverHighlightViewInputs['animate'] =>
   (node, present, rect, reduceMotion, transition) =>
     motion.node(node, {
+      ...(rect.fluidPresentation?.snap === undefined
+        ? {}
+        : { resource: highlightSnapResource(rect.fluidPresentation.snap) }),
+      ...(rect.fluidPresentation?.observeFrame ? { onUpdate: highlightFrameUpdate(rect) } : {}),
       initial: {
         opacity: options.fadeIn === false ? 1 : 0,
         ...toHighlightTarget(options.from ?? rect),

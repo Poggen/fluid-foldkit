@@ -35,7 +35,9 @@ const render = (
                 {
                   context,
                   variant: 'secondary',
-                  children: [c.triggerLabel],
+                  children: [
+                    key === 'basic' ? c.triggerLabel : key === 'tooltip-neighbor' ? 'Next' : 'Last',
+                  ],
                   render: (attrs, children) =>
                     attributes.button(
                       attrs.flatMap((a) => ('__childAttribute' in a ? [a] : childAttributes([a]))),
@@ -48,12 +50,26 @@ const render = (
         renderDocument: (content, popups) => h.div([h.Class('contents')], [content, ...popups]),
         render: ({ tooltip }) =>
           c._tag === 'tooltip'
-            ? tooltip('basic', {
-                content: c.label,
-                shapeClass: shape === 'sharp' ? 'rounded-none' : 'rounded-lg',
-                animate: motion.node,
-                reducedMotion: 'user',
-              })
+            ? h.div(
+                [h.Class('flex items-center gap-2')],
+                (c.presentation === 'morph'
+                  ? ['basic', 'tooltip-neighbor', 'tooltip-third']
+                  : ['basic']
+                ).map((key) =>
+                  tooltip(key, {
+                    content:
+                      key === 'basic'
+                        ? c.label
+                        : key === 'tooltip-neighbor'
+                          ? 'A longer detail on the next item'
+                          : 'One more detail',
+                    shortcut: c.shortcut,
+                    shapeClass: shape === 'sharp' ? 'rounded-none' : 'rounded-lg',
+                    animate: motion.node,
+                    reducedMotion: 'user',
+                  }),
+                ),
+              )
             : h.block(
                 Copy.embedView({
                   slotId: 'copy',

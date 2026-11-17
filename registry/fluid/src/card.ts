@@ -130,7 +130,7 @@ export function Card<Message, Requirements = never>(
 
   const overlayAttributes = [
     h.Class(
-      'absolute inset-0 z-20 outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)] rounded-[inherit]',
+      'absolute inset-0 z-20 outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[color:var(--focus-ring,#6B97FF)] rounded-[inherit]',
     ),
     ...(props.label === undefined ? [] : [h.AriaLabel(props.label)]),
     ...(props.onClick === undefined ? [] : [h.OnClick(props.onClick)]),

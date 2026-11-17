@@ -1,3 +1,4 @@
+import { ScrollAreaBlock } from '@foldkit-visuals/fluid/scroll-area'
 import { Result } from 'effect'
 import { ReferenceQuery } from './reference/query'
 import { pageAt } from '../../lib/catalogue'
@@ -120,5 +121,14 @@ export const MobileMenu = ApplicationBlock.makeRequiredFieldBinding(NavigationBl
 }).withOutMessagePolicy({
   fold: ApplicationBlock.makeOutMessageFold(NavigationBlock, {
     RequestedSearch: () => Search.requestOpen(),
+  }),
+})
+
+export const RightRailScroll = ApplicationBlock.makeRequiredFieldBinding(ScrollAreaBlock, {
+  field: 'rightRailScroll',
+  init: { contextToArgs: () => [{ id: 'site-right-rail-scroll' }] },
+}).withOutMessagePolicy({
+  fold: ApplicationBlock.makeOutMessageFold(ScrollAreaBlock, {
+    Scrolled: ApplicationBlock.makeNoopStep,
   }),
 })

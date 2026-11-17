@@ -2,6 +2,8 @@
 // See NOTICE
 import { Schema } from 'effect'
 import { MessageFile } from '@foldkit-visuals/fluid/input-message'
+import { RemoteFile } from '@foldkit-visuals/fluid/chat-message'
+import portraitUrl from '../../../../lib/assets/micka.png'
 
 export const Entry = Schema.Struct({
   id: Schema.String,
@@ -10,7 +12,7 @@ export const Entry = Schema.Struct({
   text: Schema.String,
   time: Schema.String,
   actions: Schema.Boolean,
-  files: Schema.Array(MessageFile),
+  files: Schema.Array(Schema.Union([MessageFile, RemoteFile])),
   entrance: Schema.Boolean,
 })
 export type Entry = typeof Entry.Type
@@ -82,7 +84,15 @@ export const initialEntries: ReadonlyArray<Entry> = [
     text: 'Can you use this as my new avatar?',
     time: '',
     actions: false,
-    files: [portrait],
+    files: [
+      portrait,
+      { url: portraitUrl, mediaType: 'image', filename: 'Remote portrait' },
+      {
+        url: 'https://example.test/report.pdf',
+        mediaType: 'application/pdf',
+        filename: 'Report.pdf',
+      },
+    ],
     entrance: false,
   }),
   Entry.make({

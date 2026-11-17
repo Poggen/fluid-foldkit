@@ -1,6 +1,8 @@
-import { Schema } from 'effect'
+import { Effect, Schema } from 'effect'
 import type { Control } from '../control-definition'
 import { Appearance } from './presentation'
+
+const SelectionMode = Schema.Literals(['none', 'first', 'run', 'disjoint'])
 
 export const Configuration = Schema.TaggedStruct('table', {
   appearance: Appearance,
@@ -8,6 +10,14 @@ export const Configuration = Schema.TaggedStruct('table', {
   rowCount: Schema.Int.check(Schema.isBetween({ minimum: 0, maximum: 4 })),
   columnCount: Schema.Int.check(Schema.isBetween({ minimum: 1, maximum: 3 })),
   showHeader: Schema.Boolean,
+  selection: SelectionMode.pipe(Schema.withDecodingDefaultKey(Effect.succeed('none'))),
+  headerHover: Schema.Boolean.pipe(Schema.withDecodingDefaultKey(Effect.succeed(false))),
+  heldHeader: Schema.Int.check(Schema.isBetween({ minimum: -1, maximum: 2 })).pipe(
+    Schema.withDecodingDefaultKey(Effect.succeed(-1)),
+  ),
+  hideHeaderHighlight: Schema.Boolean.pipe(Schema.withDecodingDefaultKey(Effect.succeed(false))),
+  keepHeaderRule: Schema.Boolean.pipe(Schema.withDecodingDefaultKey(Effect.succeed(false))),
+  hoverMarker: Schema.Boolean.pipe(Schema.withDecodingDefaultKey(Effect.succeed(false))),
   headers: Schema.String,
   firstCell: Schema.String,
   emptyTitle: Schema.String,
@@ -21,6 +31,12 @@ export const defaults: Configuration = Configuration.make({
   rowCount: 4,
   columnCount: 3,
   showHeader: true,
+  selection: 'none',
+  headerHover: false,
+  heldHeader: -1,
+  hideHeaderHighlight: false,
+  keepHeaderRule: false,
+  hoverMarker: false,
   headers: 'Name, Status, Updated',
   firstCell: 'Design system',
   emptyTitle: 'No records',
@@ -52,6 +68,31 @@ export const controls = [
     max: 3,
     step: 1,
   },
+  {
+    kind: 'choice',
+    prop: 'selection',
+    group: 'State',
+    initial: defaults.selection,
+    values: SelectionMode.literals,
+  },
+  { kind: 'toggle', prop: 'headerHover', group: 'State', initial: defaults.headerHover },
+  {
+    kind: 'number',
+    prop: 'heldHeader',
+    group: 'State',
+    initial: defaults.heldHeader,
+    min: -1,
+    max: 2,
+    step: 1,
+  },
+  {
+    kind: 'toggle',
+    prop: 'hideHeaderHighlight',
+    group: 'State',
+    initial: defaults.hideHeaderHighlight,
+  },
+  { kind: 'toggle', prop: 'keepHeaderRule', group: 'State', initial: defaults.keepHeaderRule },
+  { kind: 'toggle', prop: 'hoverMarker', group: 'State', initial: defaults.hoverMarker },
   { kind: 'toggle', prop: 'showHeader', group: 'Content', initial: defaults.showHeader },
   {
     kind: 'text',
@@ -91,3 +132,10 @@ export const controlsFor = (configuration: Configuration): ReadonlyArray<Control
       return { ...control, enabled: configuration.rowCount === 0 }
     return control
   })
+
+export const selectedIndices = (configuration: Configuration) => {
+  const indices = { none: [], first: [0], run: [0, 1, 2], disjoint: [0, 2] }[
+    configuration.selection
+  ]
+  return indices.filter((index) => index < configuration.rowCount)
+}

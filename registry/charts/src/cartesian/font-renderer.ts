@@ -32,6 +32,7 @@ export function mountCartesianRenderer<Row, X extends ChartValue, Y extends Char
 
   const runtime = createChartRuntime<Row, X, Y>()
   let options = initialOptions
+  let mayRetainTooltip = Boolean(initialOptions.definition.tooltip)
   let measureText = measurement.measure
   let epoch = 0
   let renderedEpoch = -1
@@ -40,6 +41,29 @@ export function mountCartesianRenderer<Row, X extends ChartValue, Y extends Char
   let frame = 0
   let destroyed = false
   let renderedResource: FontResource | undefined
+  let capture: { available: boolean } | undefined
+
+  const invalidateCapture = () => {
+    if (capture !== undefined) capture.available = false
+  }
+
+  const withCapturedTypography = (available: boolean, run: () => void) => {
+    const previous = capture
+    invalidateCapture()
+    const current = { available }
+    capture = current
+
+    try {
+      run()
+    } finally {
+      current.available = false
+      capture = previous
+    }
+  }
+
+  // Core retains hidden tooltip instances after input removal; their callbacks still run.
+  const canReuseCapture = (next: ChartRendererHostOptions<Row, X, Y>) =>
+    !mayRetainTooltip && next.definition.cursor === undefined
 
   const cancelFontWork = () => {
     admission?.disconnect()
@@ -59,12 +83,14 @@ export function mountCartesianRenderer<Row, X extends ChartValue, Y extends Char
 
   const wrapped: ChartRuntime<Row, X, Y> = {
     render: (definition, size, layout) => {
+      const captured = capture?.available === true
+      invalidateCapture()
       if (options.measureText !== undefined) {
         return runtime.render(definition, size, layout)
       }
 
       const currentResource = resource()
-      measurement.refresh()
+      if (!captured) measurement.refresh()
       measurement.begin()
       currentResource?.beginFontMetrics?.()
 
@@ -94,6 +120,10 @@ export function mountCartesianRenderer<Row, X extends ChartValue, Y extends Char
       return
     }
 
+    invalidateCapture()
+    mayRetainTooltip ||= Boolean(next.definition.tooltip)
+    const clearsPointer = options.definition.pointer !== false && next.definition.pointer === false
+    const reusable = canReuseCapture(options) && canReuseCapture(next) && !clearsPointer
     const previousMeasurer = options.measureText
     options = next
 
@@ -112,7 +142,7 @@ export function mountCartesianRenderer<Row, X extends ChartValue, Y extends Char
       measureText = (text, style) => measurement.measure(text, style)
     }
 
-    host.update({ ...next, measureText })
+    withCapturedTypography(reusable, () => host.update({ ...next, measureText }))
   }
 
   const checkPending = () => {
@@ -122,16 +152,19 @@ export function mountCartesianRenderer<Row, X extends ChartValue, Y extends Char
       return
     }
 
+    invalidateCapture()
     const checkingEpoch = epoch
     const current = resource()
+    const resourceChanged =
+      current !== renderedResource || current?.fontMetricsChanged?.() !== false
 
-    if (
-      current !== renderedResource ||
-      current?.fontMetricsChanged?.() !== false ||
-      measurement.changed()
-    ) {
+    const reusable = canReuseCapture(options)
+
+    if (resourceChanged && reusable) measurement.refresh()
+
+    if (resourceChanged || measurement.changed()) {
       measureText = (text, style) => measurement.measure(text, style)
-      host.update({ ...options, measureText })
+      withCapturedTypography(reusable, () => host.update({ ...options, measureText }))
     } else {
       checkedEpoch = checkingEpoch
     }
@@ -191,6 +224,7 @@ export function mountCartesianRenderer<Row, X extends ChartValue, Y extends Char
       }
 
       destroyed = true
+      invalidateCapture()
       fonts?.removeEventListener('loadingdone', loaded)
       container.removeEventListener('focusin', checkPending, true)
       cancelFontWork()

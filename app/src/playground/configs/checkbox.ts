@@ -1,4 +1,4 @@
-import { Schema } from 'effect'
+import { Effect, Schema } from 'effect'
 import type { Control } from '../control-definition'
 import { Appearance } from './presentation'
 
@@ -6,6 +6,7 @@ export const Configuration = Schema.TaggedStruct('checkbox', {
   appearance: Appearance,
   label: Schema.String,
   checked: Schema.Boolean,
+  indeterminate: Schema.Boolean.pipe(Schema.withDecodingDefaultKey(Effect.succeed(false))),
   disabled: Schema.Boolean,
   readOnly: Schema.Boolean,
   invalid: Schema.Boolean,
@@ -20,6 +21,7 @@ export const defaults: Configuration = Configuration.make({
   appearance: {},
   label: 'Notifications',
   checked: true,
+  indeterminate: false,
   disabled: false,
   readOnly: false,
   invalid: false,
@@ -37,6 +39,7 @@ export const controls = [
     values: [defaults.label],
   },
   { kind: 'toggle', prop: 'checked', group: 'State', initial: defaults.checked },
+  { kind: 'toggle', prop: 'indeterminate', group: 'State', initial: defaults.indeterminate },
   { kind: 'toggle', prop: 'disabled', group: 'State', initial: defaults.disabled },
   { kind: 'toggle', prop: 'readOnly', group: 'State', initial: defaults.readOnly },
   { kind: 'toggle', prop: 'invalid', group: 'State', initial: defaults.invalid },

@@ -3,6 +3,7 @@ import { observeTooltipFocus } from './focus-resource.js'
 import { observeTooltipDismissal } from './dismiss-resource.js'
 import { Context, Effect, Layer, Option, Queue, Schema, Stream } from 'effect'
 import { positionTooltip } from './position-resource.js'
+import { observeGroupMotion, GROUP_COMMIT_ATTRIBUTE } from './group-motion.js'
 import { POPUP_PRESENTATION_ATTRIBUTE, readPopupPresentation } from './popup-presentation.js'
 import { observeBaseGrace, hasOpenTooltipChild } from './base-grace-observation.js'
 import { Observation } from './observation.js'
@@ -20,6 +21,7 @@ export const TOOLTIP_ANIMATION_COMPLETE = 'fluid-tooltip-animation-complete'
 export class TooltipDom extends Context.Service<
   TooltipDom,
   {
+    readonly observeViewport: () => Stream.Stream<void>
     readonly hasOpenChild: (id: string) => Effect.Effect<boolean>
     readonly wait: (delay: number) => Effect.Effect<void>
     readonly portal: (input: {
@@ -38,6 +40,21 @@ export const makeTooltipDomLayer = (document: Document, window: Window) =>
       const follows = new WeakMap<Element, { offset: number; forced: string; axis: string }>()
       const popupPositions = new WeakMap<Element, () => void>()
       return TooltipDom.of({
+        observeViewport: () =>
+          Stream.callback<void>((queue) =>
+            Effect.acquireRelease(
+              Effect.sync(() => {
+                const reset = () => Queue.offerUnsafe(queue, undefined)
+                window.addEventListener('scroll', reset, { capture: true, passive: true })
+                window.addEventListener('resize', reset)
+                return () => {
+                  window.removeEventListener('scroll', reset, { capture: true })
+                  window.removeEventListener('resize', reset)
+                }
+              }),
+              (cleanup) => Effect.sync(cleanup),
+            ).pipe(Effect.andThen(Effect.never)),
+          ),
         hasOpenChild: (id) => Effect.sync(() => hasOpenTooltipChild(document, id)),
         wait: (delay) =>
           Effect.callback<void>((resume) => {
@@ -267,6 +284,10 @@ export const makeTooltipDomLayer = (document: Document, window: Window) =>
                           readPopupPresentation(element),
                         )
                         popupPositions.set(element, position.refresh)
+                        let grouped = element.hasAttribute(GROUP_COMMIT_ATTRIBUTE)
+                        let stopGroupMotion = observeGroupMotion(window, element, (observation) =>
+                          Queue.offerUnsafe(queue, observation),
+                        )
                         const stopDismiss = observeTooltipDismissal(
                           document,
                           window,
@@ -307,12 +328,24 @@ export const makeTooltipDomLayer = (document: Document, window: Window) =>
                         }
                         paintFollow()
                         const presentationChanges = new MutationObserver(() => {
+                          const nextGrouped = element.hasAttribute(GROUP_COMMIT_ATTRIBUTE)
+                          if (nextGrouped !== grouped) {
+                            stopGroupMotion()
+                            grouped = nextGrouped
+                            stopGroupMotion = observeGroupMotion(window, element, (observation) =>
+                              Queue.offerUnsafe(queue, observation),
+                            )
+                          }
                           position.update()
                           paintFollow()
                         })
                         presentationChanges.observe(element, {
                           attributes: true,
-                          attributeFilter: [POPUP_PRESENTATION_ATTRIBUTE, 'data-tooltip-container'],
+                          attributeFilter: [
+                            POPUP_PRESENTATION_ATTRIBUTE,
+                            'data-tooltip-container',
+                            GROUP_COMMIT_ATTRIBUTE,
+                          ],
                         })
                         const complete = (event: Event) => {
                           if (!(event instanceof CustomEvent)) return
@@ -331,6 +364,7 @@ export const makeTooltipDomLayer = (document: Document, window: Window) =>
                           presentationChanges.disconnect()
                           popupPositions.delete(element)
                           position.dispose()
+                          stopGroupMotion()
                           stopDismiss()
                           hoverElement.removeEventListener('pointerleave', leave)
                           element.removeEventListener(TOOLTIP_ANIMATION_COMPLETE, complete)

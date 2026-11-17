@@ -91,6 +91,32 @@ describe('Slider', () => {
         })
       }),
   )
+  it.effect('large keyboard changes advance ten configured steps before snapping', () =>
+    Effect.gen(function* largeKeyboardSteps() {
+      for (const step of [2, 10, 25]) {
+        for (const [key, shift, direction] of [
+          ['ArrowRight', true, 1],
+          ['PageUp', false, 1],
+          ['ArrowLeft', true, -1],
+          ['PageDown', false, -1],
+        ] as const) {
+          yield* Story.story(
+            subject,
+            Story.init({ id: 'slider', value: 50, step, size: 'compact' }),
+            Story.message(
+              Message.CapturedKey({ index: 0, key, shift, alt: false, ctrl: false, meta: false }),
+            ),
+            Story.expectOutMessage(
+              OutMessage.Changed({ value: Math.max(0, Math.min(100, 50 + direction * step * 10)) }),
+            ),
+            Story.model((model) => {
+              expect(model.settings.value).toBe(50)
+            }),
+          )
+        }
+      }
+    }),
+  )
   it.effect('controlled keyboard and editing request changes without taking value ownership', () =>
     Effect.gen(function* controlledEditing() {
       const initial = yield* Story.story(

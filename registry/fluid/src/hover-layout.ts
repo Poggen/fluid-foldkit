@@ -66,6 +66,7 @@ export const measureHoverLayout = (
   container: HTMLElement,
   items: ReadonlyMap<number, HTMLElement>,
   scopeKey: (element: Element) => string,
+  geometryOrigin?: HTMLElement,
 ) => {
   const measured: Array<{ index: number; rect: Rect }> = []
   const rows: Array<typeof HoverRow.Type> = []
@@ -107,6 +108,27 @@ export const measureHoverLayout = (
       top += ancestor.offsetTop + ancestor.clientTop
       left += ancestor.offsetLeft + ancestor.clientLeft
       ancestor = ancestor.offsetParent
+    }
+
+    if (geometryOrigin !== undefined) {
+      const origin = geometryOrigin.getBoundingClientRect()
+      const box = element.getBoundingClientRect()
+      const scaleX = origin.width / geometryOrigin.offsetWidth || 1
+      const scaleY = origin.height / geometryOrigin.offsetHeight || 1
+      measured.push({
+        index,
+        rect: {
+          top:
+            (box.top - origin.top) / scaleY - geometryOrigin.clientTop + geometryOrigin.scrollTop,
+          left:
+            (box.left - origin.left) / scaleX -
+            geometryOrigin.clientLeft +
+            geometryOrigin.scrollLeft,
+          width: box.width / scaleX,
+          height: box.height / scaleY,
+        },
+      })
+      continue
     }
 
     measured.push({

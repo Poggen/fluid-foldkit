@@ -91,13 +91,18 @@ export const ChecksRequests = FluidGalleryBlock.makeRequiredFieldBinding(Checkbo
 export const Checks = ChecksRequests.withOutMessagePolicy({
   fold: FluidGalleryBlock.makeOutMessageFold(CheckboxGroupBlock, {
     Toggled: ({ index }) =>
-      FluidGalleryBlock.makeStep((model) =>
-        ChecksRequests.requestSelection({
-          indices: model.checks.checkedIndices.includes(index)
-            ? model.checks.checkedIndices.filter((value) => value !== index)
-            : [...model.checks.checkedIndices, index],
-        }),
-      ),
+      FluidGalleryBlock.makeStep((model) => {
+        const checked =
+          model.checks.checkedItems.find((item) => item.index === index)?.checked ?? false
+        const items = model.checks.checkedItems.filter((item) => item.index !== index)
+        const nextItems = [...items, { index, checked: !checked }]
+        const indices = nextItems.filter((item) => item.checked).map((item) => item.index)
+
+        return Update.combineSteps([
+          ChecksRequests.requestItems({ items: nextItems }),
+          ChecksRequests.requestSelection({ indices }),
+        ])
+      }),
   }),
 })
 export const StepsRequests = FluidGalleryBlock.makeRequiredFieldBinding(ThinkingStepsBlock, {

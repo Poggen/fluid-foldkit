@@ -12,9 +12,9 @@ import type { TargetMotionOptions } from './motion-target.js'
 import { resolvePresentation } from './presentation.js'
 import type { Presentation } from './presentation.js'
 
-const Status = Schema.Literals(['complete', 'active', 'pending'])
-
-export type ThinkingStepStatus = typeof Status.Type
+const Status = Schema.Literals(['complete', 'active', 'pending', 'upcoming', 'error'])
+type Status = typeof Status.Type
+export type ThinkingStepStatus = Status
 
 const Model = Schema.Struct({
   id: Schema.String,
@@ -83,7 +83,7 @@ const ThinkingStepComposition = ThinkingStepBlock.makeComposition({ mounts: [Obs
 
 export interface ThinkingStepConfig {
   readonly id: string
-  readonly status?: 'complete' | 'active' | 'pending'
+  readonly status?: ThinkingStepStatus
 }
 
 const init = ThinkingStepComposition.makeInit((config: ThinkingStepConfig) => ({
@@ -100,6 +100,8 @@ export interface ThinkingStepViewInputs extends Presentation {
   readonly animate: (node: Html, options: TargetMotionOptions) => Html
   readonly label: string
   readonly description?: string
+  readonly meta?: () => Html | string
+  readonly href?: string
   readonly icon?: IconName
   readonly showIcon?: boolean
   readonly delay?: number
@@ -115,6 +117,20 @@ const view = ThinkingStepComposition.makeView.withInputs<ThinkingStepViewInputs>
     }
 
     const { shape, size, icons } = resolvePresentation(inputs)
+    const isUpcoming = model.status === 'upcoming'
+    const isError = model.status === 'error'
+    const safeHref =
+      inputs.href && /^(https?:\/\/|\/(?!\/))/i.test(inputs.href) ? inputs.href : undefined
+    const labelClass = cn(
+      size.type.body,
+      isError ? 'text-destructive' : isUpcoming ? 'text-muted-foreground' : 'text-foreground',
+      model.status === 'active' && 'shimmer-text',
+      'min-w-0',
+    )
+    const labelStyle = {
+      fontVariationSettings: isUpcoming ? fontWeights.normal : fontWeights.semibold,
+    }
+    const label = [inputs.label, model.status === 'active' ? '…' : '']
 
     return inputs.animate(
       h.div(
@@ -146,7 +162,11 @@ const view = ThinkingStepComposition.makeView.withInputs<ThinkingStepViewInputs>
                                   {
                                     size: size.variant === 'compact' ? 12 : 14,
                                     strokeWidth: 1.5,
-                                    className: 'text-muted-foreground',
+                                    className: isError
+                                      ? 'text-destructive'
+                                      : isUpcoming
+                                        ? 'text-muted-foreground opacity-60'
+                                        : 'text-muted-foreground',
                                   },
                                   h,
                                 ),
@@ -161,17 +181,45 @@ const view = ThinkingStepComposition.makeView.withInputs<ThinkingStepViewInputs>
                       [h.Class('flex-1 flex flex-col gap-1 min-w-0')],
                       [
                         h.span(
+                          [h.Class('flex items-baseline gap-2')],
                           [
-                            h.Class(
-                              cn(
-                                size.type.body,
-                                'text-foreground',
-                                model.status === 'active' && 'shimmer-text',
-                              ),
-                            ),
-                            h.Style({ fontVariationSettings: fontWeights.semibold }),
+                            safeHref === undefined
+                              ? h.span([h.Class(labelClass), h.Style(labelStyle)], label)
+                              : h.a(
+                                  [
+                                    h.Href(safeHref),
+                                    h.Target('_blank'),
+                                    h.Rel('noreferrer'),
+                                    h.Class(
+                                      cn(
+                                        labelClass,
+                                        'rounded-sm underline-offset-2 outline-none hover:underline',
+                                        'focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)]',
+                                      ),
+                                    ),
+                                    h.Style(labelStyle),
+                                  ],
+                                  [
+                                    ...label,
+                                    h.span([h.Class('sr-only')], [' (opens in a new tab)']),
+                                  ],
+                                ),
+                            ...(inputs.meta === undefined
+                              ? []
+                              : [
+                                  h.span(
+                                    [
+                                      h.Class(
+                                        cn(
+                                          size.type.body,
+                                          'shrink-0 tabular-nums text-muted-foreground',
+                                        ),
+                                      ),
+                                    ],
+                                    [inputs.meta()],
+                                  ),
+                                ]),
                           ],
-                          [inputs.label, model.status === 'active' ? '…' : ''],
                         ),
                         inputs.description !== undefined && inputs.description !== ''
                           ? h.span(
@@ -216,3 +264,5 @@ export const layer = ThinkingStepBlock.makeLayer({
   view,
   EffectsLayer: Observe.layer,
 })
+
+export const test = { Observe }

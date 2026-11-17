@@ -138,13 +138,18 @@ const RawChecks = Root.makeRequiredFieldBinding(CheckboxGroupBlock, {
 const Checks = RawChecks.withOutMessagePolicy({
   fold: Root.makeOutMessageFold(CheckboxGroupBlock, {
     Toggled: ({ index }) =>
-      Root.makeStep((model) =>
-        RawChecks.requestSelection({
-          indices: model.checks.checkedIndices.includes(index)
-            ? model.checks.checkedIndices.filter((i) => i !== index)
-            : [...model.checks.checkedIndices, index],
-        }),
-      ),
+      Root.makeStep((model) => {
+        const checked =
+          model.checks.checkedItems.find((item) => item.index === index)?.checked ?? false
+        const items = model.checks.checkedItems.filter((item) => item.index !== index)
+        const nextItems = [...items, { index, checked: !checked }]
+        const indices = nextItems.filter((item) => item.checked).map((item) => item.index)
+
+        return Update.combineSteps([
+          RawChecks.requestItems({ items: nextItems }),
+          RawChecks.requestSelection({ indices }),
+        ])
+      }),
   }),
 })
 const Indicator = Root.makeRequiredFieldBinding(ThinkingIndicatorBlock, {

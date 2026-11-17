@@ -159,6 +159,7 @@ const renderThinkingSteps = (
         context,
         animate: target.node,
         label: () => c.label,
+        ...(c.meta === '' ? {} : { meta: () => c.meta }),
         content: () => [
           h.block(
             Profile.embedView({
@@ -169,6 +170,8 @@ const renderThinkingSteps = (
                 animate: target.node,
                 label: c.stepLabel,
                 description: c.stepDescription,
+                ...(c.stepMeta === '' ? {} : { meta: () => c.stepMeta }),
+                href: c.href,
                 showIcon: c.showIcons,
                 icon: 'search',
                 isLast: c.count === 1,

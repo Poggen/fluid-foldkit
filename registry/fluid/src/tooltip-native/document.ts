@@ -2,7 +2,7 @@ import { resetTriggerPresentation, releaseTriggerLease } from './trigger-lifecyc
 import { flow, pipe, Layer, Option, Record, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { modifyFields } from 'foldkit/struct'
-import { configuration, effectiveOpen, groupConfiguration } from './domain.js'
+import { configuration, effectiveOpen, hoverableContent } from './domain.js'
 import type { InteractionContext, Presentation } from './domain.js'
 import { Message, InMessage, OutMessage, registration } from './document-messages.js'
 import { TooltipInteractionBlock, layer as InteractionLayer } from './interaction.js'
@@ -10,6 +10,16 @@ import type { DocumentTooltipRenderInputs } from './document-inputs.js'
 import { renderDocumentTooltip } from './document-view.js'
 import type { TooltipDom } from './resources.js'
 import { Model, admit, transition } from './state.js'
+import { heldVisual } from './group-transitions.js'
+import {
+  finishGroupHold,
+  captureGroupTransfer,
+  settleGroupTransfer,
+  placeGroup,
+  removeGroupVisual,
+  configureGroup,
+  completeGroupExit,
+} from './group-update.js'
 import type { PresentationModel } from './state.js'
 import { TooltipGroupClockBlock, layer as ClockLayer } from './group-clock.js'
 
@@ -34,15 +44,11 @@ export const DocumentTooltipBlock = Block.make('DocumentTooltip', {
 const contextFor = (model: PresentationModel, key: string): InteractionContext => {
   const row = model.rows[key]
 
-  if (row === undefined) {
-    throw new Error(`Unknown Tooltip occurrence ${key}`)
-  }
+  if (row === undefined) throw new Error(`Unknown Tooltip occurrence ${key}`)
 
   const group = model.groups[row.groupKey]
 
-  if (group === undefined) {
-    throw new Error(`Unknown Tooltip group ${row.groupKey}`)
-  }
+  if (group === undefined) throw new Error(`Unknown Tooltip group ${row.groupKey}`)
 
   return { presentation: row.presentation, group }
 }
@@ -72,19 +78,42 @@ const ClocksWithPolicy = Clocks.withOutMessagePolicy({
   fold: (key, outMessage) =>
     DocumentTooltipBlock.makeOutMessageFold(TooltipGroupClockBlock, {
       Elapsed: ({ generation }) => expireCooldown(key, generation),
+      ViewportChanged: () =>
+        DocumentTooltipBlock.makeFieldsStep(() => ({
+          groups: (groups) => {
+            const group = groups[key]
+            return group === undefined
+              ? groups
+              : Record.set(groups, key, modifyFields(group, { preferredSide: () => Option.none() }))
+          },
+        })),
+      HoldElapsed: ({ generation }) =>
+        DocumentTooltipBlock.makeStep((model) =>
+          applyTransition(
+            {
+              model: finishGroupHold(model, key, generation),
+              transaction: { admissions: [], changes: [] },
+            },
+            [key],
+          ),
+        ),
     })(outMessage),
 })
 
-const applyTransition = (result: ReturnType<typeof transition>) =>
-  DocumentTooltipBlock.makeStep(() => {
+const applyTransition = (
+  result: ReturnType<typeof transition>,
+  visualGroups: ReadonlyArray<string> = [],
+) =>
+  DocumentTooltipBlock.makeStep((model) => {
     const changedGroups = [
-      ...new Set(
-        [...result.transaction.admissions, ...result.transaction.changes].flatMap((fact) => {
+      ...new Set([
+        ...visualGroups,
+        ...[...result.transaction.admissions, ...result.transaction.changes].flatMap((fact) => {
           const row = result.model.rows[fact.key]
 
           return row === undefined ? [] : [row.groupKey]
         }),
-      ),
+      ]),
     ]
 
     const clocks = changedGroups.map((groupKey) =>
@@ -95,18 +124,25 @@ const applyTransition = (result: ReturnType<typeof transition>) =>
           return DocumentTooltipBlock.makeNoopStep()
         }
 
-        {
-          const active = Option.isSome(group.active)
-            ? result.model.rows[group.active.value]
-            : undefined
+        const active = Option.isSome(group.active)
+          ? result.model.rows[group.active.value]
+          : undefined
 
-          return active === undefined || effectiveOpen(active.presentation)
+        return Update.combineSteps([
+          Clocks.requestPresentation(groupKey, { morph: group.presentation === 'morph' }),
+          active === undefined || effectiveOpen(active.presentation)
             ? Clocks.requestCancel(groupKey)
             : Clocks.requestSchedule(groupKey, {
                 generation: group.cooldownGeneration,
                 delay: group.skipDelayDuration,
-              })
-        }
+              }),
+          Clocks.requestHold(groupKey, {
+            generation:
+              group.visual._tag === 'Holding'
+                ? Option.some(group.visual.generation)
+                : Option.none(),
+          }),
+        ])
       }),
     )
 
@@ -128,20 +164,29 @@ const applyTransition = (result: ReturnType<typeof transition>) =>
           ),
       })),
       ...clocks,
-      ...result.transaction.changes.map(({ key }) =>
-        DocumentTooltipBlock.makeStep(() => {
-          const row = result.model.rows[key]
+      ...Object.entries(result.model.rows)
+        .filter(
+          ([key, row]) =>
+            !hoverableContent(row.presentation.configuration, result.model.groups[row.groupKey]) &&
+            Option.isSome(model.rows[key]?.interaction.graceWait ?? Option.none()),
+        )
+        .map(([key]) => Interactions.requestCancelGraceWait(key)),
+      ...Object.entries(result.model.rows)
+        .filter(([, row]) => changedGroups.includes(row.groupKey))
+        .map(([key]) =>
+          DocumentTooltipBlock.makeStep(() => {
+            const row = result.model.rows[key]
 
-          return row === undefined
-            ? DocumentTooltipBlock.makeNoopStep()
-            : Interactions.requestExitWait(key, {
-                generation:
-                  row.presentation.phase === 'exiting'
-                    ? Option.some(row.presentation.generation)
-                    : Option.none(),
-              })
-        }),
-      ),
+            return row === undefined
+              ? DocumentTooltipBlock.makeNoopStep()
+              : Interactions.requestExitWait(key, {
+                  generation:
+                    row.presentation.phase === 'exiting' && !heldVisual(result.model, key)
+                      ? Option.some(row.presentation.generation)
+                      : Option.none(),
+                })
+          }),
+        ),
       ...result.transaction.admissions.map((admission) =>
         Interactions.requestCancelWait(admission.key),
       ),
@@ -167,6 +212,30 @@ const InteractionsWithPolicy = Interactions.withOutMessagePolicy({
   fold: (key, outMessage) =>
     DocumentTooltipBlock.makeOutMessageFold(TooltipInteractionBlock, {
       RequestedVisibility: ({ next, reason }) => requestVisibility(key, next, reason),
+      MeasuredTransfer: (measured) =>
+        DocumentTooltipBlock.makeStep((model) =>
+          applyTransition(
+            {
+              model: captureGroupTransfer(model, key, measured),
+              transaction: { admissions: [], changes: [] },
+            },
+            model.rows[key] === undefined ? [] : [model.rows[key].groupKey],
+          ),
+        ),
+      CompletedTransfer: ({ generation }) =>
+        DocumentTooltipBlock.makeStep((model) =>
+          applyTransition({
+            model: settleGroupTransfer(model, key, generation),
+            transaction: { admissions: [], changes: [] },
+          }),
+        ),
+      PlacedGroup: ({ generation, side }) =>
+        DocumentTooltipBlock.makeStep((model) =>
+          applyTransition({
+            model: placeGroup(model, key, generation, side),
+            transaction: { admissions: [], changes: [] },
+          }),
+        ),
       TriggerMounted: () =>
         DocumentTooltipBlock.makeStep((model) =>
           commitTransition(transition(model, key, { kind: 'inserted' })),
@@ -195,30 +264,29 @@ const InteractionsWithPolicy = Interactions.withOutMessagePolicy({
                   }),
                 ),
               groups: (groups) =>
-                ownsLease ? Record.set(groups, row.groupKey, releaseTriggerLease(group)) : groups,
+                group === undefined
+                  ? groups
+                  : Record.set(
+                      groups,
+                      row.groupKey,
+                      modifyFields(ownsLease ? releaseTriggerLease(group) : group, {
+                        visual: (visual) => removeGroupVisual(visual, key),
+                      }),
+                    ),
             })),
             ...(ownsLease ? [Clocks.requestCancel(row.groupKey)] : []),
+            ...(group?.visual._tag === 'Holding' && group.visual.key === key
+              ? [Clocks.requestHold(row.groupKey, { generation: Option.none() })]
+              : []),
           ])
         }),
       CompletedExit: ({ generation }) =>
-        DocumentTooltipBlock.makeFieldsStep(() => ({
-          rows: (rows) => {
-            const row = rows[key]
-
-            return row === undefined ||
-              row.presentation.generation !== generation ||
-              effectiveOpen(row.presentation)
-              ? rows
-              : Record.set(
-                  rows,
-                  key,
-                  modifyFields(row, {
-                    presentation: (presentation) =>
-                      modifyFields(presentation, { phase: () => 'absent' }),
-                  }),
-                )
-          },
-        })),
+        DocumentTooltipBlock.makeStep((model) =>
+          applyTransition({
+            model: completeGroupExit(model, key, generation),
+            transaction: { admissions: [], changes: [] },
+          }),
+        ),
     })(outMessage),
 })
 
@@ -238,9 +306,16 @@ const inMessageUpdate = DocumentTooltipComposition.makeInMessageUpdate({
       }
 
       const existing = model.groups[groupKey]
+      if (
+        existing !== undefined &&
+        input.group?.presentation !== undefined &&
+        input.group.presentation !== existing.presentation
+      )
+        throw new Error(`Conflicting Tooltip presentation for group ${groupKey}`)
 
       const presentation: Presentation = {
         configuration: config,
+        placementSide: Option.none(),
         internalOpen: false,
         lastOpenReason: 'application',
         phase: Option.contains(config.forceOpen, true) ? 'present' : 'absent',
@@ -304,15 +379,27 @@ const inMessageUpdate = DocumentTooltipComposition.makeInMessageUpdate({
     return {
       model: modifyFields(model, {
         rows: (rows) => Record.remove(rows, key),
-        clocks: (clocks) => (row.ownsGroup ? Record.remove(clocks, row.groupKey) : clocks),
+        clocks: (clocks) =>
+          Object.entries(model.rows).some(
+            ([other, candidate]) => other !== key && candidate.groupKey === row.groupKey,
+          )
+            ? clocks
+            : Record.remove(clocks, row.groupKey),
         groups: (groups) => {
-          if (row.ownsGroup) {
+          if (
+            !Object.entries(model.rows).some(
+              ([other, candidate]) => other !== key && candidate.groupKey === row.groupKey,
+            )
+          ) {
             return Record.remove(groups, row.groupKey)
           }
 
           const previous = groups[row.groupKey]
 
-          const group = previous
+          const group =
+            previous === undefined
+              ? undefined
+              : modifyFields(previous, { visual: (visual) => removeGroupVisual(visual, key) })
 
           if (
             group !== undefined &&
@@ -338,52 +425,27 @@ const inMessageUpdate = DocumentTooltipComposition.makeInMessageUpdate({
     DocumentTooltipBlock.makeStep((model) => {
       const group = model.groups[groupKey]
 
-      if (group === undefined) {
-        return DocumentTooltipBlock.makeNoopStep()
-      }
+      if (group === undefined) return DocumentTooltipBlock.makeNoopStep()
 
-      const settings = groupConfiguration(
-        options,
-        Object.values(model.rows).some((row) => row.groupKey === groupKey && row.ownsGroup),
-      )
-
-      const timeoutChanged = settings.skipDelayDuration !== group.skipDelayDuration
-      const active = Option.isSome(group.active) ? model.rows[group.active.value] : undefined
-
-      const cooling =
-        Option.isSome(group.active) && (active === undefined || !effectiveOpen(active.presentation))
-
-      const generation = group.cooldownGeneration + (timeoutChanged ? 1 : 0)
-
-      const nextGroup = modifyFields(group, {
-        delayDuration: () => settings.delayDuration,
-        skipDelayDuration: () => settings.skipDelayDuration,
-        disableHoverableContent: () => settings.disableHoverableContent,
-        cooldownGeneration: () => generation,
-        active: (current) =>
-          timeoutChanged && cooling && !settings.skipDelayDuration ? Option.none() : current,
-      })
+      const { nextGroup } = configureGroup(model, groupKey, options)
 
       const updated = modifyFields(model, {
         groups: (groups) => Record.set(groups, groupKey, nextGroup),
+        rows: (rows) =>
+          group.presentation === nextGroup.presentation
+            ? rows
+            : Record.map(rows, (row) =>
+                row.groupKey === groupKey
+                  ? modifyFields(row, {
+                      presentation: (presentation) =>
+                        modifyFields(presentation, { placementSide: () => Option.none() }),
+                    })
+                  : row,
+              ),
       })
 
-      const clock = DocumentTooltipBlock.makeStep(() => {
-        if (!timeoutChanged) {
-          return DocumentTooltipBlock.makeNoopStep()
-        }
-
-        return cooling && settings.skipDelayDuration
-          ? Clocks.requestSchedule(groupKey, { generation, delay: settings.skipDelayDuration })
-          : Clocks.requestCancel(groupKey)
-      })
-
-      return Update.combineSteps([
-        DocumentTooltipBlock.makeFieldsStep(() => ({ groups: () => updated.groups })),
-        clock,
-        ...Object.entries(updated.rows)
-          .filter(([, row]) => row.groupKey === groupKey && settings.disableHoverableContent)
-          .map(([key]) => Interactions.requestClearGrace(key)),
+      return applyTransition({ model: updated, transaction: { admissions: [], changes: [] } }, [
+        groupKey,
       ])
     }),
   ),

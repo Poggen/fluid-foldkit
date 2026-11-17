@@ -118,8 +118,8 @@ export const selectView = SelectComposition.makeView.withInputs<SelectViewInputs
                       cn(
                         'group inline-flex items-center justify-between outline-none cursor-pointer transition-[color,background-color,border-radius,box-shadow,opacity] duration-80 disabled:opacity-50 disabled:pointer-events-none focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)]',
                         inputs.variant === 'borderless'
-                          ? 'border border-transparent bg-transparent text-foreground hover:bg-hover'
-                          : 'border border-border bg-transparent text-foreground hover:bg-hover',
+                          ? 'border border-transparent bg-transparent text-foreground hover:bg-hover data-[state=open]:bg-active'
+                          : 'border border-border bg-transparent text-foreground hover:bg-hover data-[state=open]:bg-active',
                         size.control,
                         size.text,
                         size.px,

@@ -43,16 +43,20 @@ export const reconcileSimpleState = (
           ? FluidGalleryBlock.makeNoopStep()
           : Slider.requestSettings({ settings })
       }),
-      Match.tag('checkbox-group', (c) =>
-        model.checks.checkedItems.length === c.count
-          ? FluidGalleryBlock.makeNoopStep()
-          : Checks.requestItems({
-              items: Array.from({ length: c.count }, (_, index) => ({
-                index,
-                checked: model.checks.checkedItems[index]?.checked ?? false,
-              })),
-            }),
-      ),
+      Match.tag('checkbox-group', (c) => {
+        if (model.checks.checkedItems.length === c.count) return FluidGalleryBlock.makeNoopStep()
+        const items = Array.from({ length: c.count }, (_, index) => ({
+          index,
+          checked: model.checks.checkedItems.find((item) => item.index === index)?.checked ?? false,
+        }))
+
+        return Update.combineSteps([
+          Checks.requestItems({ items }),
+          Checks.requestSelection({
+            indices: items.filter((item) => item.checked).map((item) => item.index),
+          }),
+        ])
+      }),
       Match.tag('radio-group', (c) =>
         model.radio.values.length === c.count
           ? FluidGalleryBlock.makeNoopStep()
@@ -65,9 +69,17 @@ export const reconcileSimpleState = (
       ),
       Match.tag('thinking-steps', (c) =>
         Update.combineSteps([
-          ...(edited !== undefined && !edited.includes('open') && !edited.includes('disabled')
+          ...(edited !== undefined &&
+          !['open', 'disabled', 'running', 'control'].some((field) => edited.includes(field))
             ? []
-            : [Steps.requestConfigure({ open: c.open, disabled: c.disabled })]),
+            : [
+                Steps.requestConfigure({
+                  open: c.control === 'controlled' ? c.open : null,
+                  disabled: c.disabled,
+                  defaultOpen: c.open,
+                  running: c.running === 'unset' ? null : c.running === 'running',
+                }),
+              ]),
           ...(model.profile.status === c.status
             ? []
             : [Profile.requestConfigure({ status: c.status })]),

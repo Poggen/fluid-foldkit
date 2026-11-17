@@ -1,6 +1,6 @@
 import { modifyFields } from 'foldkit/struct'
 import { IndexedGeometry } from './lib/indexed-geometry.js'
-import { Schema } from 'effect'
+import { Effect, Schema } from 'effect'
 import { Rect } from './hover-observation.js'
 import {
   assignRunIds,
@@ -53,6 +53,9 @@ export const SelectionSlot = Schema.Struct({
 
 export const SelectionModel = Schema.Struct({
   id: Schema.String,
+  snapGeneration: Schema.Natural.pipe(Schema.withDecodingDefaultKey(Effect.succeed(0))),
+  snapPending: Schema.Boolean.pipe(Schema.withDecodingDefaultKey(Effect.succeed(false))),
+  snapMeasured: Schema.Boolean.pipe(Schema.withDecodingDefaultKey(Effect.succeed(false))),
   runs: Schema.Array(SelectionRun),
   lastId: Schema.Natural,
   lastTid: Schema.Natural,

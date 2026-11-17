@@ -58,7 +58,9 @@ const FluidTableExampleBlock = Block.make('FluidTableExample', {
 
 const Normal = FluidTableExampleBlock.makeRequiredFieldBinding(TableBlock, {
   field: 'normal',
-  init: { contextToArgs: () => [{ ...exampleHoverConfig, id: 'normal-table' }] },
+  init: {
+    contextToArgs: () => [{ ...exampleHoverConfig, id: 'normal-table', selectedIndices: [0, 1] }],
+  },
 })
 
 const Compact = FluidTableExampleBlock.makeRequiredFieldBinding(TableBlock, {
@@ -116,12 +118,13 @@ const view = FluidTableExampleComposition.makeView((model, h) => {
   const content: Parameters<typeof Normal.embedView>[0]['viewInputs']['content'] = (context) => [
     TableHeader(
       {
+        context,
         children: [
           TableRow(
             {
               context,
-              children: ['Name', 'Status', 'Region'].map((label) =>
-                TableHead({ size: context.size, children: [label] }, h),
+              children: ['Name', 'Status', 'Region'].map((label, hoverIndex) =>
+                TableHead({ context, hoverIndex, children: [label] }, h),
               ),
             },
             h,

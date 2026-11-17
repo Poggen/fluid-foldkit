@@ -17,7 +17,7 @@ import {
 import type { SelectOption } from './select.js'
 import { SelectItem } from './select-item.js'
 import { createPresentationContext, resolvePresentation } from './presentation.js'
-import type { Icon, Presentation } from './presentation.js'
+import type { Icon, Presentation, PresentationContext } from './presentation.js'
 import type { MotionOptions } from './motion.js'
 import { dropdownHighlightMotion, dropdownSelectionMotion } from './dropdown-motion.js'
 import { popupScrollAreaClass, popupViewportClass } from './lib/popup.js'
@@ -114,7 +114,7 @@ export const view = Composition.makeView.withInputs<ComboboxViewInputs>((model, 
     )
   const chips = comboboxChips(model, inputs, h)
   const input = comboboxInput(model, inputs, h, active !== undefined)
-  const rows = () =>
+  const rows = (context: PresentationContext) =>
     h.block(
       Hover.embedView({
         slotId: model.hover.id,
@@ -214,7 +214,7 @@ export const view = Composition.makeView.withInputs<ComboboxViewInputs>((model, 
                     activeIndex,
                     multiple: model.multiple,
                     inMenu: true,
-                    context: createPresentationContext(inputs),
+                    context,
                   },
                   h,
                 ),
@@ -386,8 +386,8 @@ export const view = Composition.makeView.withInputs<ComboboxViewInputs>((model, 
           model: model.popup,
           viewInputs: {
             animate: inputs.animate,
-            shape: shape.variant,
-            content: () => [
+            context: createPresentationContext(inputs),
+            content: (context) => [
               h.block(
                 Scroll.embedView({
                   slotId: model.scroll.id,
@@ -399,7 +399,7 @@ export const view = Composition.makeView.withInputs<ComboboxViewInputs>((model, 
                       'scroll-fade max-h-[min(300px,var(--available-height))]',
                     ),
                     children: [],
-                    content: () => [rows()],
+                    content: () => [rows(context)],
                   },
                 }),
               ),

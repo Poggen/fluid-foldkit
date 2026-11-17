@@ -1,6 +1,6 @@
 import { expect } from 'vitest'
 import { it as test } from '@effect/vitest'
-import { Cause, Effect, Exit, Schema, Layer } from 'effect'
+import { Effect, Schema, Layer } from 'effect'
 import { Block } from 'foldkit'
 import { defineMessageUnion } from 'foldkit/message'
 import { renderToString } from 'foldkit/experimental/server'
@@ -82,35 +82,35 @@ const makeServerLayer = (motion: ReturnType<typeof createMotionScope>) => {
   return AskServerBlock.makeLayer({ init, update, view }).pipe(Layer.provide(AskLayer))
 }
 
-test.effect(
-  'Ask requires client rendering for initial choices and progressed free-text drafts',
-  () =>
-    Effect.gen(function* serverSnapshots() {
-      for (const progressed of [false, true]) {
-        const motion = createMotionScope('ask-reset-server')
-        const layer = makeServerLayer(motion)
+test.effect('Ask server-renders initial choices and progressed free-text drafts', () =>
+  Effect.gen(function* serverSnapshots() {
+    for (const progressed of [false, true]) {
+      const motion = createMotionScope('ask-reset-server')
+      const layer = makeServerLayer(motion)
 
-        const environment = Layer.merge(
-          motion.layer,
-          createAskUserQuestionsLayer({ document: undefined, platform: '', validators: {} }),
-        )
+      const environment = Layer.merge(
+        motion.layer,
+        createAskUserQuestionsLayer({ document: undefined, platform: '', validators: {} }),
+      )
 
-        const result = yield* renderToString(
-          { block: AskServerBlock, layer },
-          { Flags: Schema.Boolean },
-          { flags: progressed, isHydratable: false },
-        ).pipe(Effect.provide(environment), Effect.exit)
+      const rendered = yield* renderToString(
+        { block: AskServerBlock, layer },
+        { Flags: Schema.Boolean },
+        { flags: progressed, isHydratable: false },
+      ).pipe(Effect.provide(environment))
 
-        expect(Exit.isFailure(result)).toBe(true)
-
-        if (Exit.isFailure(result)) {
-          expect(Cause.squash(result.cause)).toMatchObject({
-            cause: {
-              message:
-                '[foldkit] Block binding "selection" emitted before its occurrence was captured.',
-            },
-          })
-        }
+      expect(rendered.html).toContain('id="ask-reset-server"')
+      if (progressed) {
+        expect(rendered.html).toContain('Later question')
+        expect(rendered.html).toContain('Draft before removal')
+        expect(rendered.html).toContain('<textarea')
+        expect(rendered.html).not.toContain('Initial question')
+      } else {
+        expect(rendered.html).toContain('Initial question')
+        expect(rendered.html).toContain('Alpha')
+        expect(rendered.html).toContain('role="radio"')
+        expect(rendered.html).not.toContain('Later question')
       }
-    }),
+    }
+  }),
 )

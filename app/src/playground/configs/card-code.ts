@@ -21,7 +21,7 @@ Cards.embedView({ slotId: 'cards', model: model.cards, viewInputs: {
   children: group => visibleItems.map((item, index) => Card({ group, index, label: item.title,
     selected: ${c.selected ? 'index === model.selectedIndex' : 'false'}, disabled: ${c.disabled},
     onClick: Message.SelectedCard({ index }), dismissible: ${c.dismissible}, dismissOnHover: ${c.dismissOnHover}, onDismiss: Message.DismissedCard({ index }),
-    ${c.media === 'image' ? `image: () => CardImage({ src: ${JSON.stringify(cardBanner)}, alt: 'Abstract gradient' }, h),` : ''}
+    ${c.media === 'image' ? `image: card => CardImage({ ...card, src: ${JSON.stringify(cardBanner)}, alt: 'Abstract gradient' }, h),` : ''}
     children: card => [
       ${c.media === 'icon' || c.media === 'logo' ? `CardMedia({ context, orientation: '${c.cardOrientation}', ${c.media === 'icon' ? 'icon: defaultIcons[item.icon]' : `logo: ${JSON.stringify(CARD_THUMB)}, logoAlt: 'Fluid', size: 32`} }, h),` : ''}
       CardHeader({ ...card, children: [CardTitle({ ...card, children: [item.title] }, h), ${c.description ? 'CardDescription({ ...card, children: [item.description] }, h)' : ''}] }, h),

@@ -1,10 +1,12 @@
 import { Schema } from 'effect'
+import { GroupPresentation } from './group-visual.js'
 import { defineInMessageUnion, defineMessageUnion } from 'foldkit/message'
 import { Side, Transaction, configuration, initialGroup } from './domain.js'
 
 export const Message = defineMessageUnion({})
 
 const TooltipOptions = Schema.Struct({
+  hoverable: Schema.optionalKey(Schema.UndefinedOr(Schema.Boolean)),
   side: Schema.optionalKey(Schema.UndefinedOr(Side)),
   sideOffset: Schema.optionalKey(Schema.UndefinedOr(Schema.Number)),
   delayDuration: Schema.optionalKey(Schema.UndefinedOr(Schema.Number)),
@@ -13,6 +15,7 @@ const TooltipOptions = Schema.Struct({
 })
 
 const GroupOptions = Schema.Struct({
+  presentation: Schema.optionalKey(Schema.UndefinedOr(GroupPresentation)),
   delayDuration: Schema.optionalKey(Schema.UndefinedOr(Schema.Number)),
   skipDelayDuration: Schema.optionalKey(Schema.UndefinedOr(Schema.Number)),
   disableHoverableContent: Schema.optionalKey(Schema.UndefinedOr(Schema.Boolean)),

@@ -8,6 +8,7 @@ import { defineInMessageUnion, defineMessageUnion } from 'foldkit/message'
 import * as Render from 'foldkit/render'
 import {
   HOVER_ROOT_ATTR,
+  HOVER_GEOMETRY_ORIGIN_ATTR,
   HOVER_POINTER_HANDLERS_ATTR,
   HOVER_MOUSE_ADMISSION_ATTRS,
   hoverItemAttributes,
@@ -74,6 +75,7 @@ const effects = Block.makeEffectsContract()
 
 export const InMessage = defineInMessageUnion({
   RequestedHighlight: { index: Index },
+  RequestedPointerHighlight: { index: Index, entered: Schema.Boolean },
   RequestedClear: {},
   RequestedRemeasure: {},
   RequestedMeasureItems: {},
@@ -94,6 +96,7 @@ export const HoverBlock = Block.make('Hover', {
   effects,
   inMessageOutputs: {
     RequestedHighlight: { outMessage: OutMessage.Changed },
+    RequestedPointerHighlight: { outMessage: OutMessage.Changed },
     RequestedClear: { outMessage: OutMessage.Changed },
     RequestedRemeasure: { outMessage: OutMessage.Changed },
     RequestedConfigure: { outMessage: OutMessage.Changed },
@@ -371,6 +374,17 @@ const update = HoverComposition.makeUpdate({
 
 const inMessageUpdate = HoverComposition.makeInMessageUpdate({
   RequestedClear: (model) => highlight(model, null),
+  RequestedPointerHighlight: (model, { index, entered }) => {
+    const pending = entered || model.sessionPending
+    const starts = pending && index !== model.activeIndex
+    const next = {
+      ...model,
+      activeIndex: index,
+      session: model.session + (starts ? 1 : 0),
+      sessionPending: index === null || (!starts && pending),
+    }
+    return index !== model.activeIndex || starts ? changed(next) : { model: next }
+  },
   RequestedHighlight: (model, { index }) => highlight(model, index),
   RequestedRemeasure: (model) => ({
     ...changed(modifyFields(model, { isMeasured: () => false })),
@@ -424,9 +438,10 @@ export interface HoverMouseHandlers {
 }
 
 export interface HoverViewInputs {
+  readonly geometryOriginId?: string
   /** Per-event defaults; false lets a caller own that event without disabling the others. */
   readonly mouseHandlers?: HoverMouseHandlers
-  readonly content: (snapshot: HoverViewState) => ReadonlyArray<Html>
+  readonly content: (snapshot: HoverViewState) => ReadonlyArray<Html | string>
   readonly tag?: Exclude<keyof HTMLElementTagNameMap & TagName, 'textarea'>
   readonly className?: string
   readonly attributes?: ReadonlyArray<ChildAttribute>
@@ -446,6 +461,11 @@ const view = HoverComposition.makeView.withInputs((model, inputs, h) => {
 
   const allAttributes = [
     ...childAttributes(attributes),
+    ...(inputs.geometryOriginId === undefined
+      ? []
+      : childAttributes([
+          h.DataAttribute(HOVER_GEOMETRY_ORIGIN_ATTR.slice(5), inputs.geometryOriginId),
+        ])),
     ...(inputs.attributes ?? []),
     ...childAttributes([
       h.DataAttribute(HOVER_POINTER_HANDLERS_ATTR.slice(5), String(model.pointerHandlers)),

@@ -57,7 +57,9 @@ export const Sidebar = SidebarRequests.withOutMessagePolicy({
 })
 export const SidebarWorkspace = makeRequiredFieldBinding(SidebarWorkspaceHeaderBlock, {
   field: 'sidebarWorkspace',
-  init: { contextToArgs: () => [{ id: 'preview-sidebar-workspace', name: 'Acme Inc' }] },
+  init: {
+    contextToArgs: () => [{ id: 'preview-sidebar-workspace', name: 'Acme Inc', checkedIndex: 0 }],
+  },
 }).withOutMessagePolicy({
   fold: makeOutMessageFold(SidebarWorkspaceHeaderBlock, {
     Events: makeNoopStep,

@@ -62,10 +62,8 @@ export function BannerActions<Message>(props: BannerPartProps<Message>, h: HtmlB
         cn(
           'col-start-3 row-start-1 flex flex-wrap items-center gap-2',
           compact ? '-my-[5px] ml-2.5' : '-my-1 ml-3',
-          'group-has-data-[slot=banner-description]/banner:col-start-2 group-has-data-[slot=banner-description]/banner:row-start-3 group-has-data-[slot=banner-description]/banner:my-0 group-has-data-[slot=banner-description]/banner:ml-0',
-          compact
-            ? 'group-has-data-[slot=banner-description]/banner:mt-1.5'
-            : 'group-has-data-[slot=banner-description]/banner:mt-2',
+          'group-data-described/banner:col-start-2 group-data-described/banner:row-start-3 group-data-described/banner:my-0 group-data-described/banner:ml-0',
+          compact ? 'group-data-described/banner:mt-1.5' : 'group-data-described/banner:mt-2',
           '@max-sm/banner:col-start-2 @max-sm/banner:row-start-3 @max-sm/banner:my-0 @max-sm/banner:ml-0',
           compact ? '@max-sm/banner:mt-1.5' : '@max-sm/banner:mt-2',
           props.className,
@@ -80,9 +78,9 @@ export function BannerActions<Message>(props: BannerPartProps<Message>, h: HtmlB
 export type BannerActionVariant = 'primary' | 'secondary' | 'ghost'
 
 const actionOrder: Record<BannerActionVariant, string> = {
-  primary: 'order-3 group-has-data-[slot=banner-description]/banner:order-1 @max-sm/banner:order-1',
+  primary: 'order-3 group-data-described/banner:order-1 @max-sm/banner:order-1',
   secondary: 'order-2',
-  ghost: 'order-1 group-has-data-[slot=banner-description]/banner:order-3 @max-sm/banner:order-3',
+  ghost: 'order-1 group-data-described/banner:order-3 @max-sm/banner:order-3',
 }
 
 export interface BannerActionProps<Message> extends Omit<

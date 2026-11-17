@@ -4,7 +4,7 @@ import { Appearance } from './presentation'
 
 export const Configuration = Schema.TaggedStruct('badge', {
   appearance: Appearance,
-  variant: Schema.Literals(['solid', 'dot']),
+  variant: Schema.Literals(['solid', 'dot', 'ghost']),
   color: Schema.Literals([
     'gray',
     'red',

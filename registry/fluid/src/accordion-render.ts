@@ -7,7 +7,6 @@ import type { AccordionTint } from './accordion-state.js'
 
 export function accordionExpansion<Message, Requirements>(
   slot: AccordionTint,
-  dim: boolean,
   shape: string,
   animate: (node: Html, options: MotionOptions) => Html,
   completion: ReadonlyArray<ChildAttribute>,
@@ -20,7 +19,7 @@ export function accordionExpansion<Message, Requirements>(
     ]),
     {
       initial: { ...slot.rect, opacity: 0 },
-      animate: { ...slot.rect, opacity: dim ? 0.7 : 1 },
+      animate: { ...slot.rect, opacity: 1 },
       exit: { opacity: 0, transition: spring.moderate.exit },
       present: slot.present,
       transition: {

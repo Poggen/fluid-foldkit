@@ -1,6 +1,6 @@
 import { expect } from 'vitest'
 import { it as test } from '@effect/vitest'
-import { Cause, Effect, Exit, Layer, Schema } from 'effect'
+import { Effect, Layer, Schema } from 'effect'
 import { Server } from 'foldkit/experimental'
 import { Block, Story } from 'foldkit'
 import { defineMessageUnion } from 'foldkit/message'
@@ -106,27 +106,22 @@ test.effect('standalone Radix and Base Sliders server-render without browser acq
   }),
 )
 
-test.effect('combined choice Ask consumer documents its accepted client-only SSR boundary', () =>
-  Effect.gen(function* observesAskBoundary() {
-    const result = yield* Server.renderToString(
+test.effect('combined choice Ask consumer server-renders its bound sliders and choices', () =>
+  Effect.gen(function* rendersAskConsumer() {
+    const rendered = yield* Server.renderToString(
       { block: SliderAskExampleBlock, layer: SliderAskExampleLayer },
       {},
       { isHydratable: true, buildId: 'slider-ask' },
-    ).pipe(
-      Effect.provide(Layer.merge(SliderAskMotionLayer, sliderAskEnvironment(undefined, ''))),
-      Effect.exit,
-    )
+    ).pipe(Effect.provide(Layer.merge(SliderAskMotionLayer, sliderAskEnvironment(undefined, ''))))
 
-    expect(Exit.isFailure(result)).toBe(true)
-
-    if (Exit.isFailure(result)) {
-      expect(Cause.squash(result.cause)).toMatchObject({
-        cause: {
-          message:
-            '[foldkit] Block binding "selection" emitted before its occurrence was captured.',
-        },
-      })
-    }
+    expect(rendered.html).toContain('Which approach should we use?')
+    expect(rendered.html).toContain('Native')
+    expect(rendered.html).toContain('Portable')
+    expect(rendered.html).toContain('Custom')
+    expect(rendered.html).toContain('role="radio"')
+    expect(rendered.html).toContain('role="slider"')
+    expect(rendered.html).toContain('aria-valuetext="20 start range"')
+    expect(rendered.html).toContain('aria-valuetext="70 end range"')
   }),
 )
 

@@ -277,7 +277,7 @@ export function sliderKeyboard(
   const step = list.length > 1 ? 1 : settings.step
   const direction = ['ArrowLeft', 'ArrowDown', 'PageDown'].includes(key) ? -1 : 1
   const large = shift || key.startsWith('Page')
-  const increment = large ? 10 : step
+  const increment = large ? step * 10 : step
 
   const next = keyboardPosition(
     key,

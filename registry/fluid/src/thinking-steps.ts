@@ -10,12 +10,12 @@ import {
   OutMessage,
   InMessage,
   initialize,
-  changedOpen,
+  configure,
   toggle,
 } from './thinking-collapse-state.js'
 import type { ThinkingStepsConfig } from './thinking-collapse-state.js'
 
-import * as Disclosure from '@foldkit/ui/disclosure'
+import { Disclosure } from '@foldkit/ui'
 import { fontWeights } from './lib/font-weight.js'
 import { spring } from './lib/springs.js'
 import { cn } from './lib/utils.js'
@@ -41,6 +41,7 @@ const contract = {
       id: Schema.String,
       open: Schema.optionalKey(Schema.Boolean),
       defaultOpen: Schema.optionalKey(Schema.Boolean),
+      running: Schema.optionalKey(Schema.Boolean),
       disabled: Schema.optionalKey(Schema.Boolean),
     }),
   ]),
@@ -178,6 +179,7 @@ function plans<const Name extends string, const Key extends symbol>(
                               cn(
                                 'col-start-1 row-start-1 transition-[color,font-variation-settings] duration-80',
                                 highlighted ? 'text-foreground' : 'text-muted-foreground',
+                                Option.getOrElse(model.running, () => false) && 'shimmer-text',
                               ),
                             ),
                             h.Style({
@@ -190,6 +192,14 @@ function plans<const Name extends string, const Key extends symbol>(
                         ),
                       ],
                     ),
+                    ...(inputs.meta === undefined
+                      ? []
+                      : [
+                          h.span(
+                            [h.Class(cn('shrink-0 tabular-nums text-muted-foreground', size.text))],
+                            [inputs.meta()],
+                          ),
+                        ]),
                     inputs.animate(
                       h.span(
                         [h.Class('shrink-0 inline-flex items-center justify-center')],
@@ -291,12 +301,7 @@ function plans<const Name extends string, const Key extends symbol>(
   )
 
   const inMessageUpdate = Composition.makeInMessageUpdate({
-    RequestedConfigure: (model, { open, disabled }) => ({
-      model: modifyFields(changedOpen(model, open ?? model.internal), {
-        controlled: () => Option.fromNullOr(open),
-        disabled: () => disabled,
-      }),
-    }),
+    RequestedConfigure: configure,
     RequestedToggle: toggle,
   })
 
@@ -311,6 +316,7 @@ function plans<const Name extends string, const Key extends symbol>(
 export interface ThinkingStepsViewInputs extends Presentation {
   readonly animate: (node: Html, options: TargetMotionOptions) => Html
   readonly label?: () => Html | string
+  readonly meta?: () => Html | string
   readonly details?: ReadonlyArray<string>
   readonly compose?: (header: Html, panel: Html) => ReadonlyArray<Html | string>
   readonly triggerAttributes?: ReadonlyArray<ChildAttribute>

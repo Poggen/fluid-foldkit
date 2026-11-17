@@ -1,6 +1,6 @@
 // Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
 import { modifyFields } from 'foldkit/struct'
-import * as Primitive from '@foldkit/ui/checkbox'
+import { Checkbox } from '@foldkit/ui'
 import { Data, Effect, Function, Option, Predicate, Queue, Schema, Stream } from 'effect'
 import { Block } from 'foldkit'
 import type { Attribute, ChildAttribute, Html } from 'foldkit/html'
@@ -13,15 +13,37 @@ import { EXIT_COMPLETE_EVENT } from './motion-target.js'
 import { keepSwitchInputDefault } from './switch-input.js'
 import { preserveCheckboxReset } from './checkbox-group-input.js'
 
+const Glyph = Schema.Literals(['check', 'dash'])
+type Glyph = typeof Glyph.Type
+const Mark = Schema.Union([
+  Schema.TaggedStruct('Empty', { generation: Schema.Natural }),
+  Schema.TaggedStruct('Present', { glyph: Glyph, generation: Schema.Natural }),
+  Schema.TaggedStruct('Exiting', { glyph: Glyph, generation: Schema.Natural }),
+])
+type Mark = typeof Mark.Type
+const glyphFor = (checked: boolean, indeterminate: boolean): Glyph | undefined =>
+  indeterminate ? 'dash' : checked ? 'check' : undefined
+
+const configureMark = (mark: Mark, glyph: Glyph | undefined): Mark => {
+  if (glyph !== undefined) {
+    return mark._tag === 'Present' && mark.glyph === glyph
+      ? mark
+      : { _tag: 'Present', glyph, generation: mark.generation + 1 }
+  }
+  return mark._tag === 'Present'
+    ? { _tag: 'Exiting', glyph: mark.glyph, generation: mark.generation + 1 }
+    : mark
+}
+
 const Model = Schema.Struct({
   id: Schema.String,
   checked: Schema.Boolean,
+  indeterminate: Schema.Boolean,
   initialChecked: Schema.Boolean,
   disabled: Schema.Boolean,
   readOnly: Schema.Boolean,
-  mark: Schema.Boolean,
+  mark: Mark,
   entering: Schema.Boolean,
-  generation: Schema.Natural,
 })
 
 const Message = defineMessageUnion({
@@ -37,6 +59,7 @@ const OutMessage = defineMessageUnion({ Changed: { checked: Schema.Boolean } })
 const InMessage = defineInMessageUnion({
   RequestedConfigure: {
     checked: Schema.Boolean,
+    indeterminate: Schema.optionalKey(Schema.Boolean),
     disabled: Schema.Boolean,
     readOnly: Schema.Boolean,
   },
@@ -45,6 +68,7 @@ const InMessage = defineInMessageUnion({
 const Config = Schema.Struct({
   id: Schema.String,
   checked: Schema.Boolean,
+  indeterminate: Schema.optionalKey(Schema.Boolean),
   disabled: Schema.optionalKey(Schema.Boolean),
   readOnly: Schema.optionalKey(Schema.Boolean),
 })
@@ -151,6 +175,7 @@ const CheckboxComposition = CheckboxBlock.makeComposition({ mounts: [ObserveCont
 export interface CheckboxConfig {
   readonly id: string
   readonly checked: boolean
+  readonly indeterminate?: boolean
   readonly disabled?: boolean
   readonly readOnly?: boolean
 }
@@ -167,17 +192,23 @@ export interface CheckboxViewInputs extends Presentation {
   readonly animate: (node: Html, options: TargetMotionOptions) => Html
 }
 
-const init = CheckboxComposition.makeInit((config: CheckboxConfig) => ({
-  model: {
-    ...config,
-    initialChecked: config.checked,
-    disabled: config.disabled ?? false,
-    readOnly: config.readOnly ?? false,
-    mark: config.checked,
-    entering: false,
-    generation: 0,
-  },
-}))
+const init = CheckboxComposition.makeInit((config: CheckboxConfig) => {
+  const glyph = glyphFor(config.checked, config.indeterminate ?? false)
+  return {
+    model: {
+      ...config,
+      indeterminate: config.indeterminate ?? false,
+      initialChecked: config.checked,
+      disabled: config.disabled ?? false,
+      readOnly: config.readOnly ?? false,
+      mark:
+        glyph === undefined
+          ? { _tag: 'Empty', generation: 0 }
+          : { _tag: 'Present', glyph, generation: 0 },
+      entering: false,
+    },
+  }
+})
 
 const update = CheckboxComposition.makeUpdate({
   Toggled: (model, { checked }) =>
@@ -186,23 +217,27 @@ const update = CheckboxComposition.makeUpdate({
       : { model, outMessage: OutMessage.Changed({ checked }) },
   CompletedExit: (model, { generation }) => ({
     model:
-      generation === model.generation && !model.checked
-        ? modifyFields(model, { mark: () => false })
+      generation === model.mark.generation && model.mark._tag === 'Exiting'
+        ? modifyFields(model, { mark: () => ({ _tag: 'Empty', generation }) })
         : model,
   }),
 })
 
 const inMessageUpdate = CheckboxComposition.makeInMessageUpdate({
-  RequestedConfigure: (model, { checked, disabled, readOnly }) => ({
-    model: modifyFields(model, {
-      checked: () => checked,
-      disabled: () => disabled,
-      readOnly: () => readOnly,
-      mark: (currentMark) => currentMark || checked,
-      entering: () => !model.checked && checked,
-      generation: () => (model.checked === checked ? model.generation : model.generation + 1),
-    }),
-  }),
+  RequestedConfigure: (model, { checked, disabled, readOnly, indeterminate = false }) => {
+    const glyph = glyphFor(checked, indeterminate)
+    const mark = configureMark(model.mark, glyph)
+    return {
+      model: modifyFields(model, {
+        checked: () => checked,
+        indeterminate: () => indeterminate,
+        disabled: () => disabled,
+        readOnly: () => readOnly,
+        mark: () => mark,
+        entering: () => mark._tag === 'Present' && mark !== model.mark,
+      }),
+    }
+  },
 })
 
 const view = CheckboxComposition.makeView.withInputs<CheckboxViewInputs>((model, inputs, h) => {
@@ -210,10 +245,11 @@ const view = CheckboxComposition.makeView.withInputs<CheckboxViewInputs>((model,
   const compact = size.variant === 'compact'
   const rounded = compact ? 'rounded-[4px]' : 'rounded-[5px]'
 
-  return Primitive.view(
+  return Checkbox.view(
     {
       id: model.id,
       isChecked: model.checked,
+      isIndeterminate: model.indeterminate,
       isDisabled: model.disabled,
       isReadOnly: model.readOnly,
       onToggle: (checked) => Message.Toggled({ checked }),
@@ -234,7 +270,7 @@ const view = CheckboxComposition.makeView.withInputs<CheckboxViewInputs>((model,
                 h.Disabled(model.disabled),
                 h.Class(
                   cn(
-                    'relative inline-block shrink-0 cursor-pointer border-[1.5px] border-solid border-border bg-transparent p-0 outline-none transition-[border-color] duration-80 hover:not-data-checked:border-foreground/40 group-hover/field:not-data-checked:border-foreground/40 data-checked:border-transparent hover:data-checked:border-foreground/40 group-hover/field:not-data-disabled:data-checked:border-foreground/40 aria-invalid:not-data-checked:border-destructive/50 focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)] data-disabled:pointer-events-none data-disabled:opacity-50',
+                    'relative inline-block shrink-0 cursor-pointer border-[1.5px] border-solid border-border bg-transparent p-0 outline-none transition-[border-color] duration-80 hover:not-data-checked:border-foreground/40 group-hover/field:not-data-checked:border-foreground/40 data-checked:border-transparent data-indeterminate:border-transparent hover:data-checked:border-foreground/40 group-hover/field:not-data-disabled:data-checked:border-foreground/40 aria-invalid:not-data-checked:border-destructive/50 focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)] data-disabled:pointer-events-none data-disabled:opacity-50',
                     compact ? 'size-[14px]' : 'size-4',
                     shape.variant === 'sharp' ? 'rounded-none' : rounded,
                     inputs.className,
@@ -243,7 +279,7 @@ const view = CheckboxComposition.makeView.withInputs<CheckboxViewInputs>((model,
                 ...(inputs.attributes ?? []),
               ],
               [
-                model.mark
+                model.mark._tag !== 'Empty'
                   ? h.svg(
                       [
                         h.Width(compact ? '16' : '18'),
@@ -262,12 +298,13 @@ const view = CheckboxComposition.makeView.withInputs<CheckboxViewInputs>((model,
                       [
                         inputs.animate(
                           h.path([
-                            h.D('M6 12L10 16L18 8'),
+                            h.Key(model.mark.glyph),
+                            h.D(model.mark.glyph === 'dash' ? 'M7 12H17' : 'M6 12L10 16L18 8'),
                             Events.OnCustomEvent({
                               name: EXIT_COMPLETE_EVENT,
                               f: () =>
                                 Option.some(
-                                  Message.CompletedExit({ generation: model.generation }),
+                                  Message.CompletedExit({ generation: model.mark.generation }),
                                 ),
                             }),
                           ]),
@@ -278,7 +315,7 @@ const view = CheckboxComposition.makeView.withInputs<CheckboxViewInputs>((model,
                               transition: { duration: 0.08, ease: 'easeOut' },
                             },
                             exit: { pathLength: 0, transition: { duration: 0.04, ease: 'easeIn' } },
-                            present: model.checked,
+                            present: model.mark._tag === 'Present',
                             reducedMotion,
                           },
                         ),
@@ -289,7 +326,7 @@ const view = CheckboxComposition.makeView.withInputs<CheckboxViewInputs>((model,
             ),
             inputs.label === undefined
               ? null
-              : h.span([h.Id(Primitive.labelId(model.id)), h.Class('sr-only')], [inputs.label]),
+              : h.span([h.Id(Checkbox.labelId(model.id)), h.Class('sr-only')], [inputs.label]),
             preserveCheckboxReset(
               keepSwitchInputDefault(
                 h.input([
@@ -323,3 +360,5 @@ export const layer = CheckboxBlock.makeLayer({
   view,
   EffectsLayer: ObserveControl.layer,
 })
+
+export const test = { ObserveControl }

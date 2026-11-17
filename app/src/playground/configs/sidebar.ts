@@ -311,6 +311,7 @@ export const callouts = [
 export const sidebarRows = (configuration: Configuration) =>
   sidebarSectionIds.flatMap((section) =>
     (configuration.l1Primary === 'threads' ? threadRows : menuRows).flatMap((row, index) => {
+      if (section === 'primary' ? index >= 3 : index < 3) return []
       const value = `${section}-${index}`
       return [
         {

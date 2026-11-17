@@ -3,7 +3,7 @@ import { Update } from 'foldkit'
 import { modifyFields } from 'foldkit/struct'
 import { evaluateBaseGrace } from './base-grace.js'
 import type { GraceObservation } from './base-grace.js'
-import { effectiveOpen } from './domain.js'
+import { effectiveOpen, hoverableContent } from './domain.js'
 import type { InteractionContext } from './domain.js'
 import {
   OutMessage,
@@ -108,7 +108,7 @@ const hover = (
   }
 }
 
-const baseGraceMove = (model: typeof Model.Type, observation: GraceObservation) => {
+const baseGraceMove = (model: typeof Model.Type, observation: GraceObservation, canWait = true) => {
   if (Option.isNone(model.baseGrace)) {
     return { model }
   }
@@ -119,7 +119,7 @@ const baseGraceMove = (model: typeof Model.Type, observation: GraceObservation) 
     generation: () => decision.grace.generation,
     baseGrace: () => (decision.action === 'close' ? Option.none() : Option.some(decision.grace)),
     graceWait: () =>
-      decision.action === 'arm' ? Option.some(decision.grace.generation) : Option.none(),
+      decision.action === 'arm' && canWait ? Option.some(decision.grace.generation) : Option.none(),
   })
 
   return decision.action === 'close' ? request(next, false, 'hover') : { model: next }
@@ -127,6 +127,12 @@ const baseGraceMove = (model: typeof Model.Type, observation: GraceObservation) 
 
 const update = TooltipInteractionComposition.makeUpdate.withContext(
   (context: InteractionContext) => ({
+    MeasuredTransfer: (model, message) =>
+      Update.withOutMessage({ model }, OutMessage.MeasuredTransfer(message)),
+    PlacedGroup: (model, message) =>
+      Update.withOutMessage({ model }, OutMessage.PlacedGroup(message)),
+    CompletedTransfer: (model, message) =>
+      Update.withOutMessage({ model }, OutMessage.CompletedTransfer(message)),
     Mounted: (model) =>
       Update.withOutMessage(
         { model: modifyFields(model, { domReady: () => true }) },
@@ -197,27 +203,37 @@ const update = TooltipInteractionComposition.makeUpdate.withContext(
         nestedHover: () => false,
       })
 
-      return context.group.disableHoverableContent ? request(left, false, 'hover') : { model: left }
+      return !hoverableContent(context.presentation.configuration, context.group)
+        ? request(left, false, 'hover')
+        : { model: left }
     },
     WindowBlurred: (model) =>
       effectiveOpen(context.presentation)
         ? { model }
         : { model: modifyFields(model, { blockedFocus: () => true }) },
     StartedBaseGrace: (model, { origin, side, observation }) =>
-      baseGraceMove(
-        modifyFields(model, {
-          baseGrace: () =>
-            Option.some({
-              origin,
-              side,
-              hasLanded: false,
-              last: Option.none(),
-              generation: model.generation,
+      !hoverableContent(context.presentation.configuration, context.group)
+        ? { model }
+        : baseGraceMove(
+            modifyFields(model, {
+              baseGrace: () =>
+                Option.some({
+                  origin,
+                  side,
+                  hasLanded: false,
+                  last: Option.none(),
+                  generation: model.generation,
+                }),
             }),
-        }),
+            observation,
+          ),
+    // A policy change cannot discard the departure owed by an already-hovered bubble.
+    MovedInBaseGrace: (model, { observation }) =>
+      baseGraceMove(
+        model,
         observation,
+        hoverableContent(context.presentation.configuration, context.group),
       ),
-    MovedInBaseGrace: (model, { observation }) => baseGraceMove(model, observation),
     CompletedBaseGraceWait: (model, { generation, hasOpenChild }) =>
       hasOpenChild || !Option.contains(model.graceWait, generation)
         ? { model }
@@ -273,11 +289,8 @@ const init = TooltipInteractionComposition.makeInit((input: { readonly id: strin
 }))
 
 const inMessageUpdate = TooltipInteractionComposition.makeInMessageUpdate({
-  RequestedClearGrace: (model) => ({
-    model: modifyFields(model, {
-      baseGrace: () => Option.none(),
-      graceWait: () => Option.none(),
-    }),
+  RequestedCancelGraceWait: (model) => ({
+    model: modifyFields(model, { graceWait: () => Option.none() }),
   }),
   RequestedCancelWait: (model) => ({ model: cancel(model) }),
   RequestedExitWait: (model, { generation }) => ({

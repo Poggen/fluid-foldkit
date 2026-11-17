@@ -2,7 +2,7 @@ import { fontWeights } from './lib/font-weight.js'
 import * as RadioGroup from '@foldkit/ui/radioGroup'
 import * as Checkbox from '@foldkit/ui/checkbox'
 // Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
-import { Data, Layer, Option } from 'effect'
+import { Data, Layer, Option, Predicate } from 'effect'
 import { layer as HoverLayer } from './hover.js'
 import { layer as HighlightLayer } from './hover-highlight.js'
 import { layer as SelectionLayer } from './selection-backgrounds.js'
@@ -359,7 +359,7 @@ const view = AskUserQuestionsComposition.makeView.withInputs<AskUserQuestionsVie
       [
         h.Id(model.id),
         h.OnMount(Observe()),
-        h.OnUnmount(Message.Unmounted()),
+        ...(Predicate.isUndefined(globalThis.window) ? [] : [h.OnUnmount(Message.Unmounted())]),
         h.Class(
           cn(
             question

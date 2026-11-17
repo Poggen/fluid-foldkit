@@ -1,8 +1,15 @@
 // Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
 // See NOTICE
+import {
+  SELECTION_SNAP_EVENT,
+  SelectionSnapGeometry,
+  selectionSnapResource,
+} from './selection-snap.js'
+import type { SelectionSnap } from './selection-snap.js'
+import { MIRROR_TARGETS_ATTRIBUTE, observeSelectionMirrors } from './selection-mirrors.js'
 import { modifyFields } from 'foldkit/struct'
 import { IndexedGeometry, Rect, emptyGeometry, normalizeGeometry } from './lib/indexed-geometry.js'
-import { Data, Effect, Layer, Option, Queue, Schema, Stream } from 'effect'
+import { Data, Effect, Layer, Option, Predicate, Queue, Schema, Stream } from 'effect'
 import { Block } from 'foldkit'
 import type { Attribute, Html } from 'foldkit/html'
 import { defineInMessageUnion, defineMessageUnion } from 'foldkit/message'
@@ -25,13 +32,15 @@ import {
   renderSelection,
   selectionRuns,
 } from './selection-state.js'
-import type { SelectionShape } from './selection-state.js'
+import { SelectionShape } from './selection-state.js'
 
 const Message = defineMessageUnion({
   ResolvedBoundary: { id: Schema.Natural },
   AdvancedFrame: { ids: Schema.Array(Schema.Natural) },
   CompletedExit: { key: Schema.String, generation: Schema.Natural },
   CompletedClock: {},
+  CapturedSnap: { ...SelectionSnapGeometry.fields },
+  CompletedSnap: { generation: Schema.Natural },
   Unmounted: {},
 })
 
@@ -39,6 +48,11 @@ const GeometryInput = Schema.Union([IndexedGeometry, Schema.Array(Schema.NullOr(
 
 export const InMessage = defineInMessageUnion({
   RequestedSelection: { indices: Schema.Array(SelectionRowIndex) },
+  RequestedSnap: {
+    indices: Schema.Array(SelectionRowIndex),
+    itemRects: GeometryInput,
+    radius: Schema.Finite,
+  },
   RequestedRuns: { runs: Schema.Array(SelectionRun) },
   InformedOfGeometry: { itemRects: GeometryInput, radius: Schema.Finite },
 })
@@ -80,12 +94,12 @@ const clockPlan = (model: Model): SelectionClockPlan => ({
 })
 
 const ObserveClock = SelectionBackgroundsBlock.makeMountStream('ObserveClock', {
-  args: { id: Schema.String, plan: SelectionClockPlan },
+  args: { id: Schema.String, plan: SelectionClockPlan, mirrorIds: Schema.Array(Schema.String) },
   messages: [Message.ResolvedBoundary, Message.AdvancedFrame],
   *handler() {
     const clocks = yield* SelectionClocks
 
-    return ({ element, id, plan, viewStateChanges }) =>
+    return ({ element, id, plan, mirrorIds, viewStateChanges }) =>
       viewStateChanges.pipe(
         Stream.switchMap((state) =>
           state === 'Live'
@@ -111,10 +125,12 @@ const ObserveClock = SelectionBackgroundsBlock.makeMountStream('ObserveClock', {
                     clocks.set(id, clock)
                     clock.synchronize(plan)
 
-                    return clock
+                    const releaseMirrors = observeSelectionMirrors(element, mirrorIds)
+                    return { clock, releaseMirrors }
                   }),
-                  (clock) =>
+                  ({ clock, releaseMirrors }) =>
                     Effect.sync(() => {
+                      releaseMirrors()
                       clock.dispose()
                       clocks.delete(id)
                     }),
@@ -142,6 +158,22 @@ const SynchronizeClock = SelectionBackgroundsBlock.makeCommand('SynchronizeClock
   },
 })
 
+const CompleteSnap = SelectionBackgroundsBlock.makeCommand('CompleteSnap', {
+  args: { generation: Schema.Natural },
+  messages: [Message.CompletedSnap],
+  *handler() {
+    return ({ generation }) =>
+      Effect.gen(function* () {
+        yield* Render.afterCommit
+        yield* Effect.callback<void>((resume) => {
+          const frame = requestAnimationFrame(() => resume(Effect.void))
+          return Effect.sync(() => cancelAnimationFrame(frame))
+        })
+        return Message.CompletedSnap({ generation })
+      })
+  },
+})
+
 const SelectionBackgroundsComposition = SelectionBackgroundsBlock.makeComposition({
   mounts: [ObserveClock],
 })
@@ -156,6 +188,9 @@ export interface SelectionConfig {
 const init = SelectionBackgroundsComposition.makeInit((config: SelectionConfig) => {
   const empty = Model.make({
     id: config.id,
+    snapGeneration: 0,
+    snapPending: false,
+    snapMeasured: false,
     runs: [],
     lastId: 0,
     lastTid: 0,
@@ -176,6 +211,45 @@ const rendered = (next: Model) => ({
 })
 
 const inMessageUpdate = SelectionBackgroundsComposition.makeInMessageUpdate({
+  RequestedSnap: (model, { indices, itemRects, radius }) => {
+    const ids = selectionRuns(model, indices)
+    const next = renderSelection({
+      ...model,
+      runs: ids.runs,
+      lastId: ids.lastId,
+      boundaries: [],
+      slots: [],
+      snapGeneration: model.snapGeneration + 1,
+      snapPending: ids.runs.length > 0,
+      snapMeasured: false,
+      itemRects: normalizeGeometry(itemRects),
+      radius,
+    })
+    const slots = ids.runs.map((run) => {
+      const existing = next.slots.find((slot) => slot.shape.key === `sel-${run.id}`)
+      return existing === undefined
+        ? {
+            generation: next.snapGeneration,
+            present: true,
+            shape: {
+              key: `sel-${run.id}`,
+              top: 0,
+              left: 0,
+              width: 0,
+              height: 0,
+              radii: [radius, radius, radius, radius] satisfies SelectionShape['radii'],
+              instant: true,
+              exitInstant: true,
+              delayCorners: false,
+            },
+          }
+        : { ...existing, shape: { ...existing.shape, instant: true, exitInstant: true } }
+    })
+    return {
+      model: { ...next, slots },
+      commands: [SynchronizeClock({ id: model.id, plan: { deadlines: [], nextFrame: [] } })],
+    }
+  },
   RequestedSelection: (model, { indices }) => {
     const ids = selectionRuns(model, indices)
 
@@ -200,6 +274,17 @@ const inMessageUpdate = SelectionBackgroundsComposition.makeInMessageUpdate({
 })
 
 const update = SelectionBackgroundsComposition.makeUpdate({
+  CapturedSnap: (model, { generation, itemRects }) => {
+    if (!model.snapPending || model.snapMeasured || generation !== model.snapGeneration)
+      return { model }
+    return {
+      model: { ...renderSelection({ ...model, itemRects }), snapMeasured: true },
+      commands: [CompleteSnap({ generation })],
+    }
+  },
+  CompletedSnap: (model, { generation }) => ({
+    model: generation === model.snapGeneration ? { ...model, snapPending: false } : model,
+  }),
   ResolvedBoundary: (model, { id }) =>
     rendered(
       modifyFields(model, {
@@ -247,17 +332,53 @@ const update = SelectionBackgroundsComposition.makeUpdate({
 })
 
 export interface SelectionBackgroundsViewInputs {
-  readonly animate: (node: Html, shape: SelectionShape, present: boolean) => Html
+  readonly radius?: number
+  readonly mirrorIds?: ReadonlyArray<string>
+  readonly snapGeometryOriginId?: string
+  readonly animate: (
+    node: Html,
+    shape: SelectionShape & {
+      readonly snap?: SelectionSnap
+      readonly fluidPresentation?: { readonly mirrored: boolean }
+    },
+    present: boolean,
+  ) => Html
+}
+
+const presentationShape = (
+  shape: typeof SelectionShape.Type,
+  radius: number | undefined,
+): typeof SelectionShape.Type => {
+  if (radius === undefined) return shape
+  const corners = (radii: SelectionShape['radii']): SelectionShape['radii'] => [
+    radii[0] === 0 ? 0 : radius,
+    radii[1] === 0 ? 0 : radius,
+    radii[2] === 0 ? 0 : radius,
+    radii[3] === 0 ? 0 : radius,
+  ]
+  return {
+    ...shape,
+    radii: corners(shape.radii),
+    ...(shape.enterFrom === undefined
+      ? {}
+      : {
+          enterFrom: { ...shape.enterFrom, radii: corners(shape.enterFrom.radii) },
+        }),
+  }
 }
 
 const view = SelectionBackgroundsComposition.makeView.withInputs<SelectionBackgroundsViewInputs>(
   (model, inputs, h) =>
-    h.div(
+    h.keyed('div')(
+      model.id,
       [
         h.Id(model.id),
         h.Class('contents'),
-        h.OnMount(ObserveClock({ id: model.id, plan: clockPlan(model) })),
-        h.OnUnmount(Message.Unmounted()),
+        h.DataAttribute(MIRROR_TARGETS_ATTRIBUTE, JSON.stringify(inputs.mirrorIds ?? [])),
+        h.OnMount(
+          ObserveClock({ id: model.id, plan: clockPlan(model), mirrorIds: inputs.mirrorIds ?? [] }),
+        ),
+        ...(Predicate.isUndefined(globalThis.window) ? [] : [h.OnUnmount(Message.Unmounted())]),
       ],
       model.slots.map((slot) => {
         const complete = Events.OnCustomEvent({
@@ -273,17 +394,44 @@ const view = SelectionBackgroundsComposition.makeView.withInputs<SelectionBackgr
             h.AriaHidden(true),
             h.Class('absolute bg-active pointer-events-none'),
             complete,
+            Events.OnCustomEvent({
+              name: SELECTION_SNAP_EVENT,
+              f: (event) =>
+                Schema.is(SelectionSnapGeometry)(event.detail)
+                  ? Option.some(Message.CapturedSnap(event.detail))
+                  : Option.none(),
+            }),
           ]),
-          slot.shape,
+          {
+            ...presentationShape(slot.shape, inputs.radius),
+            ...((inputs.mirrorIds?.length ?? 0) > 0
+              ? { fluidPresentation: { mirrored: true } }
+              : {}),
+            ...(model.snapPending && slot.present && inputs.snapGeometryOriginId !== undefined
+              ? {
+                  instant: true,
+                  exitInstant: true,
+                  snap: {
+                    originId: inputs.snapGeometryOriginId,
+                    generation: model.snapGeneration,
+                    start:
+                      model.runs.find((run) => `sel-${run.id}` === slot.shape.key)?.start ?? -1,
+                    end: model.runs.find((run) => `sel-${run.id}` === slot.shape.key)?.end ?? -1,
+                  },
+                }
+              : {}),
+          },
           slot.present,
         )
       }),
     ),
 )
 
-const EffectsLayer = Layer.mergeAll(ObserveClock.layer, SynchronizeClock.layer).pipe(
-  Layer.provide(SelectionClocksLayer),
-)
+const EffectsLayer = Layer.mergeAll(
+  ObserveClock.layer,
+  SynchronizeClock.layer,
+  CompleteSnap.layer,
+).pipe(Layer.provide(SelectionClocksLayer))
 
 export const layer = SelectionBackgroundsBlock.makeLayer({
   init,
@@ -310,7 +458,10 @@ export const selectionBackgroundAnimation =
     const opacity = shape.opacity ?? 1
 
     return motion.node(node, {
+      // Mirrored frames need committed values; compositor-only interpolation has no DOM writes.
+      ...(shape.fluidPresentation?.mirrored ? { onUpdate: () => {} } : {}),
       present,
+      ...(shape.snap === undefined ? {} : { resource: selectionSnapResource(shape.snap) }),
       initial: shape.enterFrom
         ? {
             opacity,
@@ -346,4 +497,4 @@ export const selectionBackgroundAnimation =
 export type { SelectionShape } from './selection-state.js'
 export type { Run, SelBlock } from './lib/selection-geometry.js'
 
-export const test = { SynchronizeClock }
+export const test = { SynchronizeClock, CompleteSnap }

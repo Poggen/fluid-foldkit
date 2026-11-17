@@ -1,6 +1,6 @@
 import { it } from '@effect/vitest'
 import { Effect, Layer, Option, Schema } from 'effect'
-import { Story } from 'foldkit'
+import { Scene, Story } from 'foldkit'
 import { expect } from 'vitest'
 import { FileThumbnailBlock, layer } from '../src/file-thumbnail.js'
 import { FileThumbnailResourcesServerLayer } from '../src/file-thumbnail-resources.js'
@@ -95,7 +95,7 @@ for (const outcome of ['loaded', 'failed']) {
         }),
       ),
       Story.model((model) => {
-        expect(model.file.id).toBe('replacement-pdf')
+        expect(model.file._tag === 'Local' && model.file.id).toBe('replacement-pdf')
         expect(Option.isNone(model.url)).toBe(true)
       }),
       Story.message(
@@ -148,3 +148,115 @@ for (const scenario of [
     ),
   )
 }
+
+const remote = { url: 'https://example.test/image.png', mediaType: 'image', filename: 'Remote' }
+
+it.effect('remote failures follow URL identity and reject stale local and remote completions', () =>
+  Effect.gen(function* () {
+    const model = yield* Story.story(
+      subject,
+      Story.init({ id: 'remote', file: remote, size: 64 }),
+      Story.message(
+        FileThumbnailBlock.Message.RemoteImageFailed({ generation: 0, url: remote.url }),
+      ),
+      Story.inMessage(
+        FileThumbnailBlock.InMessage.RequestedConfigure({
+          file: { ...remote, filename: 'Renamed' },
+          size: 128,
+        }),
+      ),
+      Story.model((model) => {
+        expect(Option.getOrNull(model.failedUrl)).toBe(remote.url)
+        expect(model.file.name).toBe('Renamed')
+        expect(model.generation).toBe(0)
+      }),
+      Story.inMessage(
+        FileThumbnailBlock.InMessage.RequestedConfigure({
+          file: { ...remote, url: 'https://example.test/new.png' },
+          size: 128,
+        }),
+      ),
+      Story.message(
+        FileThumbnailBlock.Message.RemoteImageFailed({
+          generation: 0,
+          url: 'https://example.test/new.png',
+        }),
+      ),
+      Story.message(FileThumbnailBlock.Message.Loaded({ generation: 1, url: 'blob:stale-local' })),
+      Story.message(FileThumbnailBlock.Message.Failed({ generation: 1 })),
+      Story.model((model) => {
+        expect(Option.getOrNull(model.failedUrl)).toBe(remote.url)
+        expect(Option.isNone(model.url)).toBe(true)
+        expect(model.failed).toBe(false)
+      }),
+      Story.inMessage(FileThumbnailBlock.InMessage.RequestedConfigure({ file: remote, size: 64 })),
+      Story.model((model) => expect(Option.getOrNull(model.failedUrl)).toBe(remote.url)),
+      Story.inMessage(FileThumbnailBlock.InMessage.RequestedConfigure({ file: image, size: 64 })),
+      Story.message(
+        FileThumbnailBlock.Message.RemoteImageFailed({ generation: 3, url: remote.url }),
+      ),
+      Story.message(FileThumbnailBlock.Message.Loaded({ generation: 3, url: 'blob:local' })),
+      Story.model((model) => expect(Option.getOrNull(model.url)).toBe('blob:local')),
+      Story.Command.expectNone(),
+    )
+    const codec = Schema.fromJsonString(FileThumbnailBlock.Model)
+    expect(yield* Schema.decodeEffect(codec)(yield* Schema.encodeEffect(codec)(model))).toEqual(
+      model,
+    )
+  }),
+)
+
+for (const mediaType of ['image', 'image/png', 'application/pdf', 'text/plain']) {
+  it.effect(`renders remote ${mediaType} directly without a local resource mount`, () =>
+    Scene.scene(
+      { ...subject, viewInputs: {} },
+      Scene.init({ id: 'remote', file: { url: remote.url, mediaType }, size: 64 }),
+      Scene.Mount.expectNone(),
+      Scene.expect(Scene.role('img', { name: 'Attachment' })).toExist(),
+      ...(mediaType.startsWith('image')
+        ? [Scene.expect(Scene.selector('img')).toHaveAttr('src', remote.url)]
+        : [Scene.expect(Scene.selector('img')).not.toExist()]),
+      Scene.Command.expectNone(),
+    ),
+  )
+}
+
+it.effect(
+  'a failed remote image renders its document glyph after metadata edits and returning to that URL',
+  () =>
+    Effect.gen(function* () {
+      const failed = yield* Story.story(
+        subject,
+        Story.init({ id: 'remote', file: remote, size: 64 }),
+        Story.message(
+          FileThumbnailBlock.Message.RemoteImageFailed({ generation: 0, url: remote.url }),
+        ),
+      )
+      yield* Scene.scene(
+        { ...subject, viewInputs: {} },
+        Scene.given(failed),
+        Scene.expect(Scene.selector('img')).not.toExist(),
+        Scene.expect(Scene.role('img', { name: 'Remote' })).toExist(),
+        Scene.inMessage(
+          FileThumbnailBlock.InMessage.RequestedConfigure({
+            file: { ...remote, filename: 'Renamed' },
+            size: 96,
+          }),
+        ),
+        Scene.expect(Scene.selector('img')).not.toExist(),
+        Scene.expect(Scene.role('img', { name: 'Renamed' })).toExist(),
+        Scene.inMessage(
+          FileThumbnailBlock.InMessage.RequestedConfigure({
+            file: { ...remote, url: 'https://example.test/new.png' },
+            size: 96,
+          }),
+        ),
+        Scene.expect(Scene.selector('img')).toHaveAttr('src', 'https://example.test/new.png'),
+        Scene.inMessage(
+          FileThumbnailBlock.InMessage.RequestedConfigure({ file: remote, size: 64 }),
+        ),
+        Scene.expect(Scene.selector('img')).not.toExist(),
+        Scene.Mount.expectNone(),
+      )
+    }),
+)

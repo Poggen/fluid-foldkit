@@ -1,6 +1,7 @@
 import { Option, Record, Schema } from 'effect'
 import { modifyFields } from 'foldkit/struct'
 import { Group, Presentation, effectiveOpen } from './domain.js'
+import { reconcileGroupVisuals } from './group-transitions.js'
 import type { Admission, Configuration, Transaction } from './domain.js'
 import { TooltipGroupClockBlock } from './group-clock.js'
 import { TooltipInteractionBlock } from './interaction.js'
@@ -135,7 +136,10 @@ export function transition(
       })
     }
   }
-  return { model: updated, transaction: { admissions, changes } satisfies Transaction }
+  return {
+    model: reconcileGroupVisuals(updated, changes),
+    transaction: { admissions, changes } satisfies Transaction,
+  }
 }
 export const admit = (model: PresentationModel, key: string, next: boolean, reason: string) =>
   transition(model, key, { kind: 'request', next, reason })

@@ -186,6 +186,30 @@ function backgroundVariant(
   return bgVariants[variant]
 }
 
+function popupHeld<Message, Requirements>(
+  attributes: ReadonlyArray<ButtonAttribute<Message, Requirements>>,
+): boolean {
+  let expanded = false
+  let popup = false
+  for (const input of attributes) {
+    const attribute = '_tag' in input ? input : input.attribute
+    if (!('value' in attribute)) continue
+    if (
+      attribute._tag === 'AriaExpanded' ||
+      (attribute._tag === 'Attribute' && 'key' in attribute && attribute.key === 'aria-expanded')
+    ) {
+      expanded = attribute.value === true || attribute.value === 'true'
+    }
+    if (
+      attribute._tag === 'AriaHasPopup' ||
+      (attribute._tag === 'Attribute' && 'key' in attribute && attribute.key === 'aria-haspopup')
+    ) {
+      popup = Boolean(attribute.value) && attribute.value !== 'dialog'
+    }
+  }
+  return expanded && popup
+}
+
 export function Button<Message, Requirements = never>(
   props: ButtonProps<Message, Requirements>,
   h: HtmlBuilder<Message, NoInfer<Requirements>>,
@@ -209,7 +233,11 @@ export function Button<Message, Requirements = never>(
       h.Class(
         cn(
           'absolute inset-px rounded-[inherit] transition-[box-shadow,background-color] [transition-duration:180ms,80ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1),ease] group-active:[transition-duration:80ms,80ms]',
-          backgroundVariant(variant, props.active === true, loading),
+          backgroundVariant(
+            variant,
+            props.active === true || popupHeld(props.attributes ?? []),
+            loading,
+          ),
         ),
       ),
     ]),

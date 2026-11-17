@@ -51,7 +51,7 @@ const renderChatMessage = (
       viewInputs: {
         context,
         animate: (node, options) => target.node(node, { ...options, initial: false }),
-        children: () => h.p([], [c.label]),
+        children: () => (c.label === '' ? null : h.p([], [c.label])),
         ...(c.showTime ? { time: () => c.time } : {}),
         ...(c.showActions
           ? {
@@ -151,17 +151,32 @@ const renderTable = (
       viewInputs: {
         context,
         animateHighlight: highlight,
+        ...(c.hoverMarker
+          ? {
+              hoverMarker: () =>
+                h.span([h.Class('absolute left-0 top-1/2 -translate-y-1/2')], ['•']),
+            }
+          : {}),
         content: (tableContext) => [
           ...(c.showHeader
             ? [
                 TableHeader(
                   {
+                    context: tableContext,
                     children: [
                       TableRow(
                         {
                           context: tableContext,
-                          children: headers.map((label) =>
-                            TableHead({ context, children: [label] }, h),
+                          keepRule: c.keepHeaderRule,
+                          children: headers.map((label, index) =>
+                            TableHead(
+                              {
+                                context: tableContext,
+                                ...(c.headerHover ? { hoverIndex: index } : {}),
+                                children: [label],
+                              },
+                              h,
+                            ),
                           ),
                         },
                         h,

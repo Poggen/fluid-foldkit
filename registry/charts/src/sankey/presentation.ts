@@ -2,6 +2,7 @@ import { frame, cancelFrame } from 'motion-dom'
 import { motion } from '@tanstack/charts/motion'
 import type { ChartRenderer, ChartPoint, ChartScene } from '@tanstack/charts'
 import type { SankeyDatum } from './marks'
+import { hitFlow } from './focus'
 
 type Point = ChartPoint<SankeyDatum, number, number>
 
@@ -10,22 +11,32 @@ type Scene = ChartScene<SankeyDatum, number, number>
 const groupOf = (root: HTMLElement, id: string) =>
   root.querySelector<SVGGElement>(`g[data-ts-key="${CSS.escape(id)}"]`)
 
+const isInvertible = (matrix: DOMMatrix) => {
+  const determinant = matrix.a * matrix.d - matrix.b * matrix.c
+  return Number.isFinite(determinant) && determinant !== 0
+}
+
 const toLocal = (element: SVGGraphicsElement, x: number, y: number) => {
   const screen = element.ownerSVGElement?.getScreenCTM()
   const local = element.getScreenCTM()
 
-  if (screen === null || screen === undefined || local === null) {
+  // A delayed node starts at scaleY(0), which has no invertible local hit area.
+  if (screen === null || screen === undefined || local === null || !isInvertible(local)) {
     return null
   }
 
   return new DOMPoint(x, y).matrixTransform(screen).matrixTransform(local.inverse())
 }
 
-const toScene = (element: SVGGraphicsElement, x: number, y: number) => {
-  const screen = element.ownerSVGElement?.getScreenCTM()
+const toScene = (
+  element: SVGGraphicsElement,
+  x: number,
+  y: number,
+  screen: DOMMatrix | null | undefined,
+) => {
   const local = element.getScreenCTM()
 
-  if (screen === null || screen === undefined || local === null) {
+  if (screen === null || screen === undefined || local === null || !isInvertible(screen)) {
     return null
   }
 
@@ -62,7 +73,22 @@ export function hitSankeyPresentation(
     const path = group.querySelectorAll<SVGPathElement>(':scope > path').item(point.datumIndex)
     const position = path === null ? null : toLocal(path, x, y)
 
-    return path !== null && position !== null && path.isPointInStroke(position)
+    if (path === null || position === null) return false
+
+    // Source focus covers the full bump curve while its stroke entrance is still drawing.
+    const start = path.getPointAtLength(0)
+    const end = path.getPointAtLength(path.getTotalLength())
+    return hitFlow(
+      {
+        x1: start.x,
+        y1: start.y,
+        x2: end.x,
+        y2: end.y,
+        width: Number(path.getAttribute('stroke-width')),
+      },
+      position.x,
+      position.y,
+    )
   }
 
   const rect = group.querySelector<SVGRectElement>(':scope > rect')
@@ -101,6 +127,7 @@ export function createSankeyRenderer(sync: (root: HTMLElement, scene: Scene) => 
   const listeners = new Set<(points: ReadonlyArray<Point>) => void>()
   let root: HTMLElement | undefined
   let scene: Scene | undefined
+  let svg: SVGSVGElement | undefined
   let points: ReadonlyArray<Point> = []
   let pending = false
 
@@ -112,6 +139,7 @@ export function createSankeyRenderer(sync: (root: HTMLElement, scene: Scene) => 
     }
 
     const host = root
+    const screen = svg?.getScreenCTM()
 
     points = scene.points.flatMap((point) => {
       const group = groupOf(host, point.markId)
@@ -127,15 +155,8 @@ export function createSankeyRenderer(sync: (root: HTMLElement, scene: Scene) => 
           return []
         }
 
-        const length = path.getTotalLength()
-        const offset = Number(path.style.strokeDashoffset || 0)
-
-        if (length - offset <= 0) {
-          return []
-        }
-
-        const p = path.getPointAtLength(Math.max(0, Math.min(length, length - offset)) / 2)
-        const pose = toScene(path, p.x, p.y)
+        const p = path.getPointAtLength(path.getTotalLength() / 2)
+        const pose = toScene(path, p.x, p.y, screen)
 
         return pose === null ? [] : [{ ...point, x: pose.x, y: pose.y }]
       }
@@ -147,7 +168,7 @@ export function createSankeyRenderer(sync: (root: HTMLElement, scene: Scene) => 
       }
 
       const box = rect.getBBox()
-      const pose = toScene(rect, box.x + box.width / 2, box.y + box.height / 2)
+      const pose = toScene(rect, box.x + box.width / 2, box.y + box.height / 2, screen)
 
       return pose === null ? [] : [{ ...point, x: pose.x, y: pose.y }]
     })
@@ -197,6 +218,9 @@ export function createSankeyRenderer(sync: (root: HTMLElement, scene: Scene) => 
         render(next, options) {
           surface.render(next, options)
           scene = next
+          const element = surface.element
+          const view = element.ownerDocument.defaultView
+          svg = view !== null && element instanceof view.SVGSVGElement ? element : undefined
           sync(container, next)
           publish()
         },
@@ -214,6 +238,7 @@ export function createSankeyRenderer(sync: (root: HTMLElement, scene: Scene) => 
           listeners.clear()
           scene = undefined
           root = undefined
+          svg = undefined
           points = []
           surface.destroy()
         },

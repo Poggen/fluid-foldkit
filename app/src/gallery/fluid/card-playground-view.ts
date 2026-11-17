@@ -50,10 +50,8 @@ const render = (
     .slice(0, columnsOf(config) === 3 ? 6 : 4)
     .map((item, index) => ({ ...item, index }))
     .filter((item) => !dismissed.includes(item.index))
-  const selected = Math.max(
-    0,
-    items.findIndex((item) => item.index === selectedIndex),
-  )
+  const selectedItem = items.findIndex((item) => item.index === selectedIndex)
+  const selected = selectedItem < 0 ? Math.min(selectedIndex, items.length - 1) : selectedItem
   return h.block(
     CardGroup.embedView({
       slotId: 'card-group',
@@ -84,8 +82,11 @@ const render = (
                 onDismiss: events.DismissedCard({ index: item.index }),
                 ...(config.media === 'image'
                   ? {
-                      image: () =>
-                        CardImage({ src: tintCardBanner(accent), alt: 'Abstract gradient' }, h),
+                      image: (card) =>
+                        CardImage(
+                          { ...card, src: tintCardBanner(accent), alt: 'Abstract gradient' },
+                          h,
+                        ),
                     }
                   : {}),
                 children: (card) => {

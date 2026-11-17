@@ -7,8 +7,11 @@ import type { ChildAttribute, Html } from 'foldkit/html'
 import { spring } from '../lib/springs.js'
 import { cn } from '../lib/utils.js'
 import type { TargetMotionOptions } from '../motion-target.js'
-import { effectiveOpen } from './domain.js'
-import type { Presentation } from './domain.js'
+import { effectiveOpen, hoverableContent } from './domain.js'
+import { TooltipShortcut } from '../tooltip-shortcut.js'
+import type { Presentation, Group } from './domain.js'
+import { groupPaint } from './group-visual.js'
+import { encodeGroupCommit } from './group-motion.js'
 import {
   TooltipInteractionComposition,
   ObserveTrigger,
@@ -42,6 +45,7 @@ export interface TooltipViewInputs {
     readonly span: TooltipSpanRenderer
     readonly div: TooltipDivRenderer
   }) => Html
+  readonly shortcut?: string | ReadonlyArray<string> | undefined
   readonly content?: string
   readonly className?: string
   readonly contentClassName?: string
@@ -59,6 +63,7 @@ export type InteractionViewInputs =
     }
   | (Omit<TooltipViewInputs, 'trigger' | 'content'> & {
       readonly part: 'popup'
+      readonly group?: Group | undefined
       readonly presentation: Presentation
       readonly renderContent: () => Html | string
     })
@@ -89,21 +94,13 @@ export const view = TooltipInteractionComposition.makeView.withInputs<Interactio
       return inputs.trigger({
         attributes: attrs,
         button: (own, children, key) =>
-          key === undefined
-            ? h.button([...own, ...attrs], children)
-            : h.keyed('button')(key, [...own, ...attrs], children),
+          h.keyed('button')(key ?? `${model.id}-trigger`, [...own, ...attrs], children),
         anchor: (own, children, key) =>
-          key === undefined
-            ? h.a([...own, ...attrs], children)
-            : h.keyed('a')(key, [...own, ...attrs], children),
+          h.keyed('a')(key ?? `${model.id}-trigger`, [...own, ...attrs], children),
         span: (own, children, key) =>
-          key === undefined
-            ? h.span([...own, ...attrs], children)
-            : h.keyed('span')(key, [...own, ...attrs], children),
+          h.keyed('span')(key ?? `${model.id}-trigger`, [...own, ...attrs], children),
         div: (own, children, key) =>
-          key === undefined
-            ? h.div([...own, ...attrs], children)
-            : h.keyed('div')(key, [...own, ...attrs], children),
+          h.keyed('div')(key ?? `${model.id}-trigger`, [...own, ...attrs], children),
       })
     }
 
@@ -121,39 +118,86 @@ export const view = TooltipInteractionComposition.makeView.withInputs<Interactio
 
     const exit = { opacity: 0, ...slide }
 
-    const box = inputs.animate(
-      h.div(
-        [
-          h.Class(
-            cn(
-              'bg-foreground text-background text-[length:var(--fs-caption,12px)] leading-[var(--lh-caption,16px)] px-2 py-1',
-              '[text-box:trim-both_cap_alphabetic] supports-[text-box:trim-both]:py-2',
-              inputs.shapeClass,
-              inputs.className,
-            ),
-          ),
-          h.Style({ fontVariationSettings: fontWeights.normal }),
-        ],
-        [inputs.renderContent()],
-      ),
-      {
-        initial: { opacity: 0, ...slide },
-        animate: open ? { opacity: 1, x: 0, y: 0 } : exit,
-        transition: open ? spring.fast : spring.fast.exit,
-        reducedMotion: inputs.reducedMotion,
-        onAnimationComplete: (element) => {
-          element.dispatchEvent(
-            new CustomEvent(TOOLTIP_ANIMATION_COMPLETE, {
-              bubbles: true,
-              detail: { generation: presentation.generation },
-            }),
+    const content = () =>
+      inputs.shortcut === undefined || inputs.shortcut.length === 0
+        ? inputs.renderContent()
+        : h.span(
+            [h.Class('flex items-center gap-2')],
+            [
+              h.span([h.Class('[text-box:trim-both_cap_alphabetic]')], [inputs.renderContent()]),
+              TooltipShortcut({ children: inputs.shortcut }, h),
+            ],
           )
-        },
-      },
-    )
 
+    const independentBox = () =>
+      inputs.animate(
+        h.div(
+          [
+            h.Class(
+              cn(
+                'bg-foreground text-background text-[length:var(--fs-caption,12px)] leading-[var(--lh-caption,16px)] px-2 py-1',
+                '[text-box:trim-both_cap_alphabetic] supports-[text-box:trim-both]:py-2',
+                inputs.shapeClass,
+                inputs.className,
+              ),
+            ),
+            h.Style({ fontVariationSettings: fontWeights.normal }),
+          ],
+          [content()],
+        ),
+        {
+          initial: { opacity: 0, ...slide },
+          animate: open ? { opacity: 1, x: 0, y: 0 } : exit,
+          transition: open ? spring.fast : spring.fast.exit,
+          reducedMotion: inputs.reducedMotion,
+          onAnimationComplete: (element) => {
+            element.dispatchEvent(
+              new CustomEvent(TOOLTIP_ANIMATION_COMPLETE, {
+                bubbles: true,
+                detail: { generation: presentation.generation },
+              }),
+            )
+          },
+        },
+      )
+
+    const morph = inputs.group?.presentation === 'morph'
+    const group = inputs.group
+    const box = morph
+      ? h.div(
+          [
+            h.Class('relative'),
+            h.DataAttribute('tooltip-group-box', ''),
+            h.Style({ opacity: '0' }),
+          ],
+          [
+            h.div([
+              h.Class(cn('absolute bg-foreground', inputs.shapeClass)),
+              h.DataAttribute('tooltip-group-shape', ''),
+            ]),
+            h.div(
+              [
+                h.Class(
+                  cn(
+                    'text-background text-[length:var(--fs-caption,12px)] leading-[var(--lh-caption,16px)] px-2 py-1 [text-box:trim-both_cap_alphabetic] supports-[text-box:trim-both]:py-2 relative',
+                    inputs.className,
+                  ),
+                ),
+                h.DataAttribute('tooltip-label', ''),
+                h.Style({ fontVariationSettings: fontWeights.normal }),
+              ],
+              [content()],
+            ),
+            h.div([h.DataAttribute('tooltip-previous-host', ''), h.AriaHidden(true)]),
+          ],
+        )
+      : independentBox()
+    const side =
+      morph && group !== undefined
+        ? Option.getOrElse(presentation.placementSide, () => config.side)
+        : config.side
     const committed: typeof PopupPresentation.Type = {
-      side: config.side,
+      side,
       sideOffset: config.sideOffset,
       followCursor: Option.getOrElse(config.followCursor, () => 'none'),
     }
@@ -162,13 +206,32 @@ export const view = TooltipInteractionComposition.makeView.withInputs<Interactio
       ObservePopup({ resource: PopupResource.Content({ id: model.id }) }),
     )
 
-    return h.div(
+    return h.keyed('div')(
+      `${model.id}-popup`,
       [
         h.Class(
-          cn('z-[var(--z-tooltip,70)]', inputs.contentClassName, open ? '' : 'pointer-events-none'),
+          cn(
+            'z-[var(--z-tooltip,70)]',
+            inputs.contentClassName,
+            open && hoverableContent(config, inputs.group) ? '' : 'pointer-events-none',
+          ),
         ),
         h.Id(`${model.id}-popup`),
         h.Role('tooltip'),
+        ...(!open ? [h.AriaHidden(true)] : []),
+        ...(morph && group !== undefined
+          ? [
+              h.DataAttribute(
+                'tooltip-group-commit',
+                encodeGroupCommit({
+                  paint: groupPaint(group.visual, model.id, open, presentation.generation),
+                  exitGeneration: presentation.generation,
+                  side,
+                  reducedMotion: inputs.reducedMotion,
+                }),
+              ),
+            ]
+          : []),
         h.DataAttribute('tooltip-popup', model.id),
         h.DataAttribute('state', open ? 'open' : 'closed'),
         h.DataAttribute('tooltip-presentation', encodePopupPresentation(committed)),

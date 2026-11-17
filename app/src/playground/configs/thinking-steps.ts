@@ -1,6 +1,9 @@
-import { Schema } from 'effect'
+import { Effect, Schema } from 'effect'
 import type { Control } from '../control-definition'
 import { Appearance } from './presentation'
+
+const Running = Schema.Literals(['unset', 'running', 'finished'])
+const ControlMode = Schema.Literals(['uncontrolled', 'controlled'])
 
 export const Configuration = Schema.TaggedStruct('thinking-steps', {
   appearance: Appearance,
@@ -8,7 +11,12 @@ export const Configuration = Schema.TaggedStruct('thinking-steps', {
   count: Schema.Int.check(Schema.isBetween({ minimum: 1, maximum: 4 })),
   stepLabel: Schema.String,
   stepDescription: Schema.String,
-  status: Schema.Literals(['complete', 'active', 'pending']),
+  status: Schema.Literals(['complete', 'active', 'pending', 'upcoming', 'error']),
+  meta: Schema.String.pipe(Schema.withDecodingDefaultKey(Effect.succeed(''))),
+  stepMeta: Schema.String.pipe(Schema.withDecodingDefaultKey(Effect.succeed(''))),
+  href: Schema.String.pipe(Schema.withDecodingDefaultKey(Effect.succeed(''))),
+  running: Running.pipe(Schema.withDecodingDefaultKey(Effect.succeed('unset'))),
+  control: ControlMode.pipe(Schema.withDecodingDefaultKey(Effect.succeed('uncontrolled'))),
   showIcons: Schema.Boolean,
   open: Schema.Boolean,
   disabled: Schema.Boolean,
@@ -23,6 +31,11 @@ export const defaults: Configuration = Configuration.make({
   stepLabel: 'Searching profiles',
   stepDescription: 'Reviewing the available sources',
   status: 'complete',
+  meta: '',
+  stepMeta: '',
+  href: '',
+  running: 'unset',
+  control: 'uncontrolled',
   showIcons: true,
   open: true,
   disabled: false,
@@ -65,6 +78,27 @@ export const controls = [
     group: 'State',
     initial: defaults.status,
     values: Configuration.fields.status.literals,
+  },
+  ...(['meta', 'stepMeta', 'href'] as const).map((prop) => ({
+    kind: 'text' as const,
+    prop,
+    group: 'Content',
+    initial: defaults[prop],
+    values: [defaults[prop]],
+  })),
+  {
+    kind: 'choice',
+    prop: 'running',
+    group: 'State',
+    initial: defaults.running,
+    values: Running.literals,
+  },
+  {
+    kind: 'choice',
+    prop: 'control',
+    group: 'State',
+    initial: defaults.control,
+    values: ControlMode.literals,
   },
   { kind: 'toggle', prop: 'showIcons', group: 'Appearance', initial: defaults.showIcons },
   { kind: 'toggle', prop: 'open', group: 'State', initial: defaults.open },

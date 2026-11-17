@@ -1,3 +1,4 @@
+import { layer as ScrollAreaLayer } from '@foldkit-visuals/fluid/scroll-area'
 import { Query } from 'foldkit/experimental'
 import { referenceArgs } from './reference/query'
 import {
@@ -20,6 +21,7 @@ import {
   Search as SearchRequests,
   Navigation,
   MobileMenu,
+  RightRailScroll,
 } from './application-bindings'
 import {
   requestFont,
@@ -216,6 +218,7 @@ const CodeClipboard = ApplicationBlock.makeRequiredFieldBinding(CodeClipboardBlo
 })
 export const ApplicationComposition = ApplicationBlock.makeComposition({
   bindings: [
+    RightRailScroll,
     ReferenceQueryBinding,
     Reference,
     SystemPages,
@@ -380,6 +383,7 @@ const update = ApplicationComposition.makeUpdate.compose(
   ),
 )
 export const applicationViewBindings = {
+  RightRailScroll,
   Reference,
   SystemPages,
   LandingGallery,
@@ -437,6 +441,7 @@ export const application = {
     Layer.provide(
       Layer.mergeAll(
         Query.layer,
+        ScrollAreaLayer,
         ReferenceLayer,
         SystemPagesLayer,
         googleFontPickerLayer,

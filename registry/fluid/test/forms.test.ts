@@ -34,7 +34,7 @@ describe('standalone form controls', () => {
             }),
           ),
           Story.model((model) => {
-            expect(model.mark).toBe(true)
+            expect(model.mark._tag).toBe('Exiting')
           }),
         )
         yield* Story.story(
@@ -47,9 +47,11 @@ describe('standalone form controls', () => {
               readOnly: false,
             }),
           ),
-          Story.message(CheckboxBlock.Message.CompletedExit({ generation: exiting.generation })),
+          Story.message(
+            CheckboxBlock.Message.CompletedExit({ generation: exiting.mark.generation }),
+          ),
           Story.model((model) => {
-            expect(model.mark).toBe(true)
+            expect(model.mark._tag).toBe('Present')
             expect(model.checked).toBe(true)
           }),
           Story.inMessage(

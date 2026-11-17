@@ -56,10 +56,16 @@ export const acceptConfiguration = (
             thirdValue: after.website.value,
           },
     ),
-    Match.tag('checkbox', (c) =>
-      before.checkbox.checked === after.checkbox.checked
+    Match.tag('thinking-steps', (c) =>
+      Option.getOrNull(before.steps.manual) === Option.getOrNull(after.steps.manual)
         ? c
-        : { ...c, checked: after.checkbox.checked },
+        : { ...c, open: after.steps.open },
+    ),
+    Match.tag('checkbox', (c) =>
+      before.checkbox.checked === after.checkbox.checked &&
+      before.checkbox.indeterminate === after.checkbox.indeterminate
+        ? c
+        : { ...c, checked: after.checkbox.checked, indeterminate: after.checkbox.indeterminate },
     ),
     Match.tag('switch', (c) =>
       before.switch.checked === after.switch.checked ? c : { ...c, checked: after.switch.checked },

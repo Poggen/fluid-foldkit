@@ -217,7 +217,7 @@ test('disposal removes pending font work and destroys the existing surface once'
   expect(destroyed).toHaveBeenCalledTimes(1)
 })
 
-test.each(['resize-first', 'font-first'])(
+test.each(['resize-first', 'font-first', 'resize-only'])(
   'native resize and fonts coalesce with fresh typography (%s)',
   (order) => {
     const deliveries: Array<(width: number) => void> = []
@@ -307,10 +307,12 @@ test('losing the current resource hook stays conservative', () => {
 
   try {
     check = undefined
+    environment.container.style.fontFamily = 'ResourceReplacement'
     const count = rendered.mock.calls.length
     environment.loaded()
     environment.flush()
     expect(rendered).toHaveBeenCalledTimes(count + 1)
+    expect(environment.context.font).toContain('ResourceReplacement')
   } finally {
     host.destroy()
   }
@@ -321,10 +323,12 @@ test('a replaced resource and an initially unaudited resource remain conservativ
 
   try {
     first.replaceResource({ fontMetricsChanged: unchangedResource.fontMetricsChanged })
+    environment.container.style.fontFamily = 'ReplacedResource'
     const count = first.rendered.mock.calls.length
     environment.loaded()
     environment.flush()
     expect(first.rendered).toHaveBeenCalledTimes(count + 1)
+    expect(environment.context.font).toContain('ReplacedResource')
   } finally {
     first.host.destroy()
   }
@@ -338,5 +342,116 @@ test('a replaced resource and an initially unaudited resource remain conservativ
     expect(second.rendered).toHaveBeenCalledTimes(count + 1)
   } finally {
     second.host.destroy()
+  }
+})
+
+test('one typography capture serves a rendering update and independent updates remain fresh', () => {
+  const { host, options, rendered } = setup()
+  const styles = vi.spyOn(window, 'getComputedStyle')
+  const reads = () =>
+    styles.mock.calls.filter(([element]) => element === environment.container).length
+  const sheet = document.createElement('style')
+  sheet.textContent = '.font-parent { font-family: Inherited; font-weight: 650; }'
+  document.head.append(sheet)
+  environment.container.style.fontFamily = ''
+  environment.container.style.fontWeight = ''
+  document.body.classList.add('font-parent')
+
+  try {
+    const svg = environment.container.querySelector('svg')
+    const interaction = host.interaction
+    const count = rendered.mock.calls.length
+    host.update(options)
+    expect(environment.context.font).toContain('Inherited')
+    expect(environment.context.font).toContain('650')
+    expect(rendered).toHaveBeenCalledTimes(count + 1)
+    expect(reads()).toBe(1)
+    styles.mockClear()
+    host.update(options)
+    expect(rendered).toHaveBeenCalledTimes(count + 1)
+    expect(reads()).toBe(1)
+    sheet.textContent = '.font-parent { font-family: Restyled; font-weight: 750; }'
+    styles.mockClear()
+    host.update(options)
+    expect(environment.context.font).toContain('Restyled')
+    expect(environment.context.font).toContain('750')
+    expect(rendered).toHaveBeenCalledTimes(count + 2)
+    expect(reads()).toBe(1)
+    expect(environment.container.querySelector('svg')).toBe(svg)
+    expect(host.interaction).toBe(interaction)
+  } finally {
+    host.destroy()
+    sheet.remove()
+    document.body.classList.remove('font-parent')
+  }
+})
+
+test('font checks share their capture with the synchronous layout before focus bubbles', () => {
+  const { host, rendered } = setup()
+  const styles = vi.spyOn(window, 'getComputedStyle')
+  const svg = environment.container.querySelector('svg')
+  const bubbling: Array<number> = []
+  const onFocus = () => bubbling.push(rendered.mock.calls.length)
+  environment.container.addEventListener('focusin', onFocus)
+
+  try {
+    environment.setBounds({ ascent: 19 })
+    environment.loaded()
+    environment.container.dispatchEvent(new FocusEvent('focusin', { bubbles: true }))
+    expect(bubbling).toEqual([2])
+    expect(styles.mock.calls.filter(([element]) => element === environment.container)).toHaveLength(
+      1,
+    )
+    expect(environment.container.querySelector('svg')).toBe(svg)
+    environment.flush()
+    expect(rendered).toHaveBeenCalledTimes(2)
+  } finally {
+    environment.container.removeEventListener('focusin', onFocus)
+    host.destroy()
+  }
+})
+
+test('initial scene captures fonts changed by the native host position write', () => {
+  const sheet = document.createElement('style')
+  sheet.textContent =
+    'div[style*="position: relative"] { font-family: Mounted !important; font-weight: 750 !important; }'
+  document.head.append(sheet)
+  const { host, rendered } = setup()
+  try {
+    expect(rendered).toHaveBeenCalledTimes(1)
+    expect(environment.context.font).toContain('Mounted')
+    expect(environment.context.font).toContain('750')
+  } finally {
+    host.destroy()
+    sheet.remove()
+  }
+})
+
+test('nested public updates and a throwing render never leave a reusable font snapshot', () => {
+  const { host, options, rendered } = setup()
+  try {
+    host.update({
+      ...options,
+      ariaLabel: 'Outer',
+      onRender: () => {
+        environment.container.style.fontFamily = 'Nested'
+        host.update({ ...options, ariaLabel: 'Nested' })
+      },
+    })
+    expect(environment.context.font).toContain('Nested')
+    expect(environment.container.querySelector('svg')?.getAttribute('aria-label')).toBe('Nested')
+    const broken = {
+      ...options.definition,
+      get marks(): never {
+        throw new Error('Broken scene')
+      },
+    }
+    expect(() => host.update({ ...options, definition: broken })).toThrow('Broken scene')
+    environment.container.style.fontFamily = 'Recovered'
+    host.update(options)
+    expect(environment.context.font).toContain('Recovered')
+    expect(rendered).toHaveBeenCalledTimes(4)
+  } finally {
+    host.destroy()
   }
 })

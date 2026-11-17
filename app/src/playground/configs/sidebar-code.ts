@@ -14,6 +14,7 @@ import {
   sidebarFeatureBindingsSource,
   sidebarFeatureCompletionSource,
   sidebarRowsSource,
+  sidebarWorkspaceMenuSource,
 } from './sidebar-code-template'
 
 export const sidebarCode = (
@@ -38,6 +39,7 @@ import { SidebarUserFooterBlock, SidebarUserFooterLayer, hoverModeOf as userHove
 import { SidebarContent, SidebarFooter, SidebarHeader, SidebarGroup, SidebarGroupLabel, SidebarMenuSub, SidebarMenuSkeleton, SidebarTrigger, SidebarToggleTooltipContent } from '@foldkit-visuals/fluid/sidebar/parts'
 import { SidebarSearchField } from '@foldkit-visuals/fluid/sidebar/search-field'
 import { DropdownItem } from '@foldkit-visuals/fluid/dropdown-item'
+import type { DropdownItemContext } from '@foldkit-visuals/fluid/dropdown-item'
 import { defaultIcons } from '@foldkit-visuals/fluid/icons'
 import { createMotionScope } from '@foldkit-visuals/fluid/motion'
 import { createTargetMotionScope } from '@foldkit-visuals/fluid/motion/target'
@@ -65,6 +67,7 @@ const sidebarActionRows = (position: 'header' | 'footer', count: number): Readon
   sidebarActionItems[position].slice(0, count).map(({ label }) => ({
     value: label, label, href: '#', disabled: false, status: null, badge: null, level: 0,
   }))
+${sidebarWorkspaceMenuSource}
 ${sidebarFeatureContractSource}
 ${sidebarRowsSource}
 ${sidebarFeatureBindingsSource}

@@ -8,6 +8,7 @@ export const resetTriggerPresentation = (
 ): Presentation =>
   modifyFields(presentation, {
     internalOpen: () => false,
+    placementSide: () => Option.none(),
     lastOpenReason: () => 'application',
     phase: () =>
       Option.contains(presentation.configuration.forceOpen, true) ? 'present' : 'absent',

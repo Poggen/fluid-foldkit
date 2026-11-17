@@ -1,4 +1,5 @@
 import { Option } from 'effect'
+import { Update } from 'foldkit'
 import type { Configuration as CopyConfiguration } from '../../playground/configs/input-copy'
 import type { Configuration as TooltipConfiguration } from '../../playground/configs/tooltip'
 import { Copy, Tooltips } from './interactive-bindings'
@@ -18,18 +19,31 @@ export const reconcileSimpleTooltip = (c: CopyConfiguration | TooltipConfigurati
             disabled: c.disabled,
           })
     const current = model.tooltips.rows.basic?.presentation.configuration
-    return current?.side === c.side &&
+    const configured =
+      current?.hoverable === c.hoverable &&
+      current.side === c.side &&
       current.sideOffset === c.sideOffset &&
       Option.getOrNull(current.delayDuration) === c.delayDuration &&
       Option.getOrNull(current.followCursor) === (c.followCursor === 'none' ? null : c.followCursor)
-      ? FluidGalleryBlock.makeNoopStep()
-      : Tooltips.requestConfigure({
-          key: 'basic',
-          options: {
-            side: c.side,
-            sideOffset: c.sideOffset,
-            delayDuration: c.delayDuration,
-            followCursor: c.followCursor === 'none' ? undefined : c.followCursor,
-          },
-        })
+    return Update.combineSteps([
+      ...(model.tooltips.groups['playground-tooltip']?.presentation === c.presentation
+        ? []
+        : [
+            Tooltips.requestGroup({ groupKey: 'playground-tooltip', presentation: c.presentation }),
+          ]),
+      ...(configured
+        ? []
+        : ['basic', 'tooltip-neighbor', 'tooltip-third'].map((key) =>
+            Tooltips.requestConfigure({
+              key,
+              options: {
+                hoverable: c.hoverable,
+                side: c.side,
+                sideOffset: c.sideOffset,
+                delayDuration: c.delayDuration,
+                followCursor: c.followCursor === 'none' ? undefined : c.followCursor,
+              },
+            }),
+          )),
+    ])
   })

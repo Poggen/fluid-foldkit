@@ -273,6 +273,23 @@ const view = BannerComposition.makeView.withInputs<BannerViewInputs>((model, inp
     return status === 'default' ? null : bannerGlyph(status, compact ? 16 : 20, h)
   }
 
+  const children = inputs.children({
+    context: createPresentationContext({
+      ...inputs,
+      shape: presentation.shape.variant,
+      size: presentation.size.variant,
+      surface: presentation.surface,
+      icons,
+    }),
+    size: presentation.size.variant,
+    shape: presentation.shape.variant,
+    surface: presentation.surface,
+  })
+  const described = children.some(
+    (child) =>
+      typeof child !== 'string' && child?.data?.attrs?.['data-slot'] === 'banner-description',
+  )
+
   const renderBody = () =>
     h.div(
       sourceStyleAttributes(
@@ -285,7 +302,7 @@ const view = BannerComposition.makeView.withInputs<BannerViewInputs>((model, inp
           h.Class(
             cn(
               'group/banner @container/banner relative grid w-full grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center text-foreground',
-              'has-data-[slot=banner-description]:items-start',
+              'data-described:items-start',
               compact ? 'p-3' : 'p-4',
               !fixed && presentation.shape.container,
               inputs.className,
@@ -293,6 +310,7 @@ const view = BannerComposition.makeView.withInputs<BannerViewInputs>((model, inp
           ),
           h.Role(inputs.role ?? (status === 'error' || status === 'warning' ? 'alert' : 'status')),
           h.DataAttribute('slot', 'banner'),
+          ...(described ? [h.DataAttribute('described', '')] : []),
           h.DataAttribute('status', status),
           h.DataAttribute('contrast', contrast),
           h.DataAttribute('variant', fixed ? 'fixed' : 'inline'),
@@ -312,18 +330,7 @@ const view = BannerComposition.makeView.withInputs<BannerViewInputs>((model, inp
           ],
           [renderGlyph()],
         ),
-        ...inputs.children({
-          context: createPresentationContext({
-            ...inputs,
-            shape: presentation.shape.variant,
-            size: presentation.size.variant,
-            surface: presentation.surface,
-            icons,
-          }),
-          size: presentation.size.variant,
-          shape: presentation.shape.variant,
-          surface: presentation.surface,
-        }),
+        ...children,
         inputs.dismissible === true
           ? h.button(
               [

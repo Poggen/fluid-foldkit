@@ -6,7 +6,7 @@ import { Data, Layer, Option, Predicate, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import type { Attribute, ChildAttribute, Html } from 'foldkit/html'
 import { defineInMessageUnion, defineMessageUnion } from 'foldkit/message'
-import { FileThumbnailBlock, layer as FileThumbnailLayer } from './file-thumbnail.js'
+import { FileThumbnailBlock, RemoteFile, layer as FileThumbnailLayer } from './file-thumbnail.js'
 import type { FileThumbnailResources, FileThumbnailConfig } from './file-thumbnail.js'
 import { MessageFile } from './input-message-domain.js'
 import type { TouchPrimaryResources } from './touch-primary.js'
@@ -18,12 +18,17 @@ import type { TargetMotionOptions } from './motion-target.js'
 import { createPresentationContext, resolvePresentation } from './presentation.js'
 import type { Presentation } from './presentation.js'
 
+export { RemoteFile } from './file-thumbnail.js'
+
+const Attachment = Schema.Union([MessageFile, RemoteFile])
+type Attachment = typeof Attachment.Type
+
 const From = Schema.Literals(['user', 'assistant'])
 
 const Model = Schema.Struct({
   id: Schema.String,
   from: From,
-  files: Schema.Array(MessageFile),
+  files: Schema.Array(Attachment),
   thumbnailSize: Schema.Finite,
   entered: Schema.Boolean,
   touch: TouchPrimaryBlock.Model,
@@ -37,7 +42,7 @@ const Message = defineMessageUnion({
 export const InMessage = defineInMessageUnion({
   RequestedConfigure: {
     from: From,
-    files: Schema.Array(MessageFile),
+    files: Schema.Array(Attachment),
     thumbnailSize: Schema.Finite,
   },
 })
@@ -52,7 +57,7 @@ export const ChatMessageBlock = Block.make('ChatMessage', {
     Schema.Struct({
       id: Schema.String,
       from: From,
-      files: Schema.optionalKey(Schema.Array(MessageFile)),
+      files: Schema.optionalKey(Schema.Array(Attachment)),
       thumbnailSize: Schema.optionalKey(Schema.Finite),
     }),
   ]),
@@ -66,7 +71,7 @@ export const ChatMessageBlock = Block.make('ChatMessage', {
 export interface ChatMessageConfig {
   readonly id: string
   readonly from: 'user' | 'assistant'
-  readonly files?: ReadonlyArray<MessageFile>
+  readonly files?: ReadonlyArray<Attachment>
   readonly thumbnailSize?: number
 }
 
@@ -93,8 +98,10 @@ const initializeThumbnail = (options: {
 }) => makeInitIfMissingStep(Thumbnail, options)
 
 // Source keys include the list position: replacing/reordering an attachment remounts its preview.
-const fileKey = (file: MessageFile, index: number) =>
-  `${file.name}-${file.size}-${file.lastModified}-${index}`
+const fileKey = (file: Attachment, index: number) =>
+  'url' in file
+    ? `remote:${file.url}:${index}`
+    : `${file.name}-${file.size}-${file.lastModified}-${index}`
 
 const init = ChatMessageComposition.makeInit((config: ChatMessageConfig) => ({
   childInitContext: config,

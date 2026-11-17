@@ -1,6 +1,7 @@
 import { readReference } from './reference/query'
 import chartStyles from '@foldkit-visuals/charts/styles.css?inline'
 import { applicationClasses } from './application-classes'
+import { makeRenderRightRail } from './application-right-rail'
 import { createLazy } from 'foldkit/html'
 import type { GalleryBlock } from './gallery/definition'
 import type { PlaygroundConfiguration } from './playground/configuration'
@@ -36,13 +37,13 @@ export const makeRenderApplication = (bindings: typeof applicationViewBindings) 
     Navigation,
     MobileMenu,
     MobilePreferences,
-    Preferences,
     CodeClipboard,
     FontPicker,
     Search,
     MobileNavigation,
   } = bindings
 
+  const renderRightRail = makeRenderRightRail(bindings)
   const lazyReferencePreview = createLazy()
   const viewReferencePreview = (
     model: typeof GalleryBlock.Model.Type,
@@ -354,82 +355,13 @@ export const makeRenderApplication = (bindings: typeof applicationViewBindings) 
                   ]
                 : main,
             ),
-            h.aside(
-              [
-                h.Id('site-customizer'),
-                h.AriaLabel('Customization'),
-                h.Class(applicationClasses.customizer),
-                h.DataAttribute('site-right-panel', ''),
-                h.Style({ width: '264px', marginLeft: '-4px', marginRight: '12px' }),
-                h.DataAttribute(
-                  'font-picker-return',
-                  String(
-                    model.fontPicker.returnFocusId === 'customize-desktop-font-select-trigger',
-                  ),
-                ),
-              ],
-              [
-                h.div(
-                  [h.Class('flex h-8 items-center justify-between pl-2')],
-                  [h.h2([h.Class('text-site-caption text-foreground')], ['Make them yours'])],
-                ),
-                h.block(
-                  Preferences.embedView({
-                    slotId: 'preferences',
-                    model: model.preferences,
-                    viewInputs: { settings: model.settings },
-                  }),
-                ),
-                h.div(
-                  [h.Class('mt-3 ')],
-                  [
-                    Button(
-                      {
-                        context,
-                        children: ['Copy install prompt'],
-                        leadingIcon: model.copyFeedback.sidebar.complete
-                          ? defaultIcons.check
-                          : defaultIcons.copy,
-                        className: 'w-full',
-                        attributes: [h.OnClick(events.copySidebar)],
-                      },
-                      h,
-                    ),
-                  ],
-                ),
-                ...(page !== undefined && reference !== undefined && model.columns === 3
-                  ? [
-                      h.block(
-                        Reference.embedView({
-                          key: reference.key,
-                          slotId: 'reference-controls',
-                          model: reference.model,
-                          viewInputs: {
-                            reference: readReference(model.referenceQuery, model.path),
-                            renderPreview,
-                            previewReady,
-                            settings: settings,
-                            part: 'controls',
-                          },
-                        }),
-                      ),
-                    ]
-                  : []),
-                h.div(
-                  [h.Class(applicationClasses.credit)],
-                  [
-                    h.a(
-                      [
-                        h.Href('https://www.fluidfunctionalism.com'),
-                        h.Target('_blank'),
-                        h.Rel('noopener noreferrer'),
-                      ],
-                      ['Original by @micka_design ↗'],
-                    ),
-                  ],
-                ),
-              ],
-            ),
+            renderRightRail(model, h, {
+              context,
+              settings,
+              renderPreview,
+              previewReady,
+              onCopyInstall: events.copySidebar,
+            }),
             h.block(
               CodeClipboard.embedView({ slotId: 'code-clipboard', model: model.codeClipboard }),
             ),

@@ -4,7 +4,8 @@ import { defineInMessageUnion, defineMessageUnion } from 'foldkit/message'
 import { defineTaggedUnion } from 'foldkit/schema'
 import { BaseGrace } from './base-grace.js'
 import type { InteractionViewInputs } from './interaction-view.js'
-import { InteractionContext } from './domain.js'
+import { InteractionContext, Side } from './domain.js'
+import { TransferGeometry } from './group-visual.js'
 import { Observation as Message } from './observation.js'
 import { exitFallbackMs, spring } from '../lib/springs.js'
 import { TooltipDom } from './resources.js'
@@ -26,6 +27,15 @@ export const Model = Schema.Struct({
 })
 
 export const OutMessage = defineMessageUnion({
+  MeasuredTransfer: {
+    generation: Schema.Natural,
+    connected: Schema.Boolean,
+    fromSide: Side,
+    toSide: Side,
+    geometry: TransferGeometry,
+  },
+  PlacedGroup: { generation: Schema.Natural, side: Side },
+  CompletedTransfer: { generation: Schema.Natural },
   TriggerMounted: {},
   TriggerUnmounted: {},
   RequestedVisibility: { next: Schema.Boolean, reason: Schema.String },
@@ -33,7 +43,7 @@ export const OutMessage = defineMessageUnion({
 })
 
 export const InMessage = defineInMessageUnion({
-  RequestedClearGrace: {},
+  RequestedCancelGraceWait: {},
   RequestedCancelWait: {},
   RequestedExitWait: { generation: Schema.Option(Schema.Natural) },
 })
@@ -84,6 +94,9 @@ export const ObservePopup = TooltipInteractionBlock.makeMountStream('ObservePopu
   args: { resource: PopupResource },
   messages: [
     Message.CompletedAnimation,
+    Message.MeasuredTransfer,
+    Message.PlacedGroup,
+    Message.CompletedTransfer,
     Message.StartedBaseGrace,
     Message.MovedInBaseGrace,
     Message.Dismissed,

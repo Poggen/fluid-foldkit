@@ -6,11 +6,13 @@ export function pillFontMeasurement(element: HTMLElement, limit = 256) {
     `500 14px ${document.defaultView?.getComputedStyle(document.body).fontFamily ?? ''}`
 
   let dependencies = new Map<string, { readonly font: string; readonly width: number }>()
+  let capturedFont: string | undefined
   let unknown = true
   let overflow = false
 
   return {
     begin: () => {
+      capturedFont = context === null ? undefined : font()
       dependencies = new Map()
       unknown = true
       overflow = false
@@ -23,7 +25,7 @@ export function pillFontMeasurement(element: HTMLElement, limit = 256) {
         return null
       }
 
-      context.font = font()
+      context.font = capturedFont ??= font()
       const { width } = context.measureText(text)
 
       if (dependencies.size < limit || dependencies.has(text)) {

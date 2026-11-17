@@ -39,30 +39,59 @@ export type {
 } from './file-thumbnail-pdf.js'
 
 const FileIdentity = Schema.Struct({ id: Schema.String, name: Schema.String, type: Schema.String })
+type FileIdentity = typeof FileIdentity.Type
+
+/** A caller-owned attachment URL, including the AI SDK file-part shape. */
+export const RemoteFile = Schema.Struct({
+  url: Schema.String,
+  mediaType: Schema.String,
+  filename: Schema.optionalKey(Schema.String),
+})
+export type RemoteFile = typeof RemoteFile.Type
+
+const File = Schema.Union([FileIdentity, RemoteFile])
+type File = typeof File.Type
+
+const Source = Schema.Union([
+  Schema.TaggedStruct('Local', FileIdentity.fields),
+  Schema.TaggedStruct('Remote', {
+    url: Schema.String,
+    name: Schema.String,
+    type: Schema.String,
+  }),
+])
+type Source = typeof Source.Type
+
+const sourceOf = (file: File): Source =>
+  'url' in file
+    ? { _tag: 'Remote', url: file.url, name: file.filename ?? 'Attachment', type: file.mediaType }
+    : { _tag: 'Local', ...file }
 
 export interface FileThumbnailConfig {
   readonly id: string
-  readonly file: typeof FileIdentity.Type
+  readonly file: File
   readonly size: number
 }
 
 const Model = Schema.Struct({
   id: Schema.String,
-  file: FileIdentity,
+  file: Source,
   size: Schema.NumberFromString,
   generation: Schema.Natural,
   url: Schema.OptionFromNullOr(Schema.String),
   failed: Schema.Boolean,
+  failedUrl: Schema.OptionFromNullOr(Schema.String),
 })
 
 const Message = defineMessageUnion({
   Loaded: { generation: Schema.Natural, url: Schema.String },
   Failed: { generation: Schema.Natural },
+  RemoteImageFailed: { generation: Schema.Natural, url: Schema.String },
   Unmounted: {},
 })
 
 export const InMessage = defineInMessageUnion({
-  RequestedConfigure: { file: FileIdentity, size: Schema.NumberFromString },
+  RequestedConfigure: { file: File, size: Schema.NumberFromString },
 })
 
 export const FileThumbnailKey = Symbol('FluidFileThumbnail')
@@ -72,7 +101,7 @@ const effects = Block.makeEffectsContract<never, FileThumbnailResources>()
 export const FileThumbnailBlock = Block.make('FileThumbnail', {
   key: FileThumbnailKey,
   InitArgs: Schema.Tuple([
-    Schema.Struct({ id: Schema.String, file: FileIdentity, size: Schema.NumberFromString }),
+    Schema.Struct({ id: Schema.String, file: File, size: Schema.NumberFromString }),
   ]),
   Model,
   Message,
@@ -99,23 +128,33 @@ const FileThumbnailComposition = FileThumbnailBlock.makeComposition({
 const init = FileThumbnailComposition.makeInit((config: FileThumbnailConfig) => ({
   model: Model.make({
     id: config.id,
-    file: config.file,
+    file: sourceOf(config.file),
     size: config.size,
     generation: 0,
     url: Option.none(),
     failed: false,
+    failedUrl: Option.none(),
   }),
 }))
 
 const update = FileThumbnailComposition.makeUpdate({
   Loaded: (model, { generation, url }) => ({
     model:
-      generation === model.generation
+      model.file._tag === 'Local' && generation === model.generation
         ? modifyFields(model, { url: () => Option.some(url), failed: () => false })
         : model,
   }),
   Failed: (model, { generation }) => ({
-    model: generation === model.generation ? modifyFields(model, { failed: () => true }) : model,
+    model:
+      model.file._tag === 'Local' && generation === model.generation
+        ? modifyFields(model, { failed: () => true })
+        : model,
+  }),
+  RemoteImageFailed: (model, { generation, url }) => ({
+    model:
+      model.file._tag === 'Remote' && model.file.url === url && model.generation === generation
+        ? modifyFields(model, { failedUrl: () => Option.some(url) })
+        : model,
   }),
   Unmounted: (model) => ({
     model: modifyFields(model, {
@@ -128,29 +167,44 @@ const update = FileThumbnailComposition.makeUpdate({
 
 const inMessageUpdate = FileThumbnailComposition.makeInMessageUpdate({
   RequestedConfigure: (model, { file, size }) => {
-    const sameFile = file.id === model.file.id
+    const source = sourceOf(file)
+    const sameFile =
+      source._tag === 'Local' && model.file._tag === 'Local'
+        ? source.id === model.file.id
+        : source._tag === 'Remote' && model.file._tag === 'Remote' && source.url === model.file.url
+    if (source._tag === 'Remote') {
+      return {
+        model: modifyFields(model, {
+          file: () => source,
+          size: () => size,
+          generation: sameFile ? (current) => current : Number.increment,
+          url: () => Option.none(),
+          failed: () => false,
+        }),
+      }
+    }
     if (sameFile) {
       if (Object.is(size, model.size)) {
         return {
           model:
-            file.name === model.file.name && file.type === model.file.type
+            source.name === model.file.name && source.type === model.file.type
               ? model
-              : modifyFields(model, { file: () => file }),
+              : modifyFields(model, { file: () => source }),
         }
       }
 
-      if (file.type !== 'application/pdf') {
-        return { model: modifyFields(model, { file: () => file, size: () => size }) }
+      if (source.type !== 'application/pdf') {
+        return { model: modifyFields(model, { file: () => source, size: () => size }) }
       }
     }
 
     return {
       model: modifyFields(model, {
-        file: () => file,
+        file: () => source,
         size: () => size,
         generation: Number.increment,
         url: (currentUrl) =>
-          sameFile && file.type === 'application/pdf' ? currentUrl : Option.none(),
+          sameFile && source.type === 'application/pdf' ? currentUrl : Option.none(),
         failed: () => false,
       }),
     }
@@ -165,11 +219,17 @@ export interface FileThumbnailProps extends Presentation {
 
 const view = FileThumbnailComposition.makeView.withInputs<FileThumbnailProps>(
   (model, inputs, h) => {
-    const isImage = model.file.type.startsWith('image/')
-    const isPdf = model.file.type === 'application/pdf'
-    const previewUrl = Option.getOrNull(model.url)
+    const local = model.file._tag === 'Local'
+    const isImage = model.file.type === 'image' || model.file.type.startsWith('image/')
+    const isPdf = local && model.file.type === 'application/pdf'
+    const remoteUrl = model.file._tag === 'Remote' && isImage ? model.file.url : null
+    const previewUrl = local
+      ? Option.getOrNull(model.url)
+      : remoteUrl !== Option.getOrNull(model.failedUrl)
+        ? remoteUrl
+        : null
     const hasPreview = previewUrl !== null && previewUrl !== ''
-    const pending = (isImage && !hasPreview) || (isPdf && !hasPreview && !model.failed)
+    const pending = (local && isImage && !hasPreview) || (isPdf && !hasPreview && !model.failed)
     const glyph = Math.max(16, model.size * 0.35)
 
     const preview = () => {
@@ -178,6 +238,13 @@ const view = FileThumbnailComposition.makeView.withInputs<FileThumbnailProps>(
           h.Src(previewUrl),
           h.Alt(model.file.name),
           h.Class('absolute inset-0 w-full h-full object-cover'),
+          ...(remoteUrl === null
+            ? []
+            : [
+                h.OnError(
+                  Message.RemoteImageFailed({ generation: model.generation, url: remoteUrl }),
+                ),
+              ]),
         ])
       }
 
@@ -224,7 +291,8 @@ const view = FileThumbnailComposition.makeView.withInputs<FileThumbnailProps>(
       )
     }
 
-    return h.div(
+    return h.keyed('div')(
+      model.id,
       sourceStyleAttributes(
         inputs.radius === undefined
           ? { width: `${model.size}px`, height: `${model.size}px` }
@@ -247,16 +315,18 @@ const view = FileThumbnailComposition.makeView.withInputs<FileThumbnailProps>(
         ],
       ),
       [
-        h.keyed('span')(String(model.generation), [
-          h.Class('contents'),
-          h.OnMount(
-            Observe({
-              fileId: model.file.id,
-              size: isPdf ? model.size : 0,
-              generation: model.generation,
-            }),
-          ),
-        ]),
+        model.file._tag === 'Local'
+          ? h.keyed('span')(String(model.generation), [
+              h.Class('contents'),
+              h.OnMount(
+                Observe({
+                  fileId: model.file.id,
+                  size: isPdf ? model.size : 0,
+                  generation: model.generation,
+                }),
+              ),
+            ])
+          : h.empty,
         preview(),
       ],
     )

@@ -1,3 +1,4 @@
+import { filesFor } from './chat-message'
 import { Match } from 'effect'
 import type { FluidConfiguration } from '../configuration'
 
@@ -27,21 +28,25 @@ import { childAttributes } from 'foldkit/html'
 ${bind(name, `${name}Block`, c._tag, q({ id: 'example', value: c.value, disabled: c.disabled, readOnly: c.readOnly }))}
 ${view(name, c._tag, `name: ${q(c.name)}, placeholder: ${q(c.placeholder)}, invalid: ${c.invalid}, ${c._tag === 'input' ? `type: ${q(c.type)}, attributes: ${c.required ? "childAttributes([h.Attribute('required', '')])" : '[]'},` : ''}`)}`
 }
-const tooltipCode = (
-  c: Extract<FluidConfiguration, { readonly _tag: 'tooltip' }>,
-) => `import { DocumentTooltipBlock } from '@foldkit-visuals/fluid/tooltip'
+const tooltipCode = (c: Extract<FluidConfiguration, { readonly _tag: 'tooltip' }>) => {
+  const keys = c.presentation === 'morph' ? ['basic', 'neighbor', 'third'] : ['basic']
+  return `import { DocumentTooltipBlock } from '@foldkit-visuals/fluid/tooltip'
 import { Button } from '@foldkit-visuals/fluid/button'
 import { childAttributes } from 'foldkit/html'
-${bind('Tooltips', 'DocumentTooltipBlock', 'tooltips', '')}
+${bind('Tooltips', 'DocumentTooltipBlock', 'tooltips', '')}.withOutMessagePolicy({
+  fold: Page.makeOutMessageFold(DocumentTooltipBlock, { Transaction: () => Page.makeNoopStep() }),
+})
 const Composition = Page.makeComposition({ bindings: [Tooltips] })
-const addTooltip = Tooltips.requestAdd({ key: 'basic', options: ${q({ side: c.side, sideOffset: c.sideOffset, delayDuration: c.delayDuration, ...(c.followCursor === 'none' ? {} : { followCursor: c.followCursor }) })} })
-${view(
-  'Tooltips',
-  'tooltips',
-  `renderTrigger: (_key, attributes) => Button({ context, variant: 'secondary', children: [${q(c.triggerLabel)}], render: (attrs, children) => attributes.button(attrs.flatMap(attr => '__childAttribute' in attr ? [attr] : childAttributes([attr])), children) }, h),
+const keys = ${q(keys)}
+const labels = ${q([c.label, 'A longer detail on the next item', 'One more detail'])}
+const triggers = ${q([c.triggerLabel, 'Next', 'Last'])}
+const addTooltips = keys.map(key => Tooltips.requestAdd({ key, groupKey: 'example-tooltips', group: { presentation: ${q(c.presentation)} }, options: ${q({ hoverable: c.hoverable, side: c.side, sideOffset: c.sideOffset, delayDuration: c.delayDuration, ...(c.followCursor === 'none' ? {} : { followCursor: c.followCursor }) })} }))
+h.block(Tooltips.embedView({ slotId: 'tooltips', model: model.tooltips, viewInputs: {
+  renderTrigger: (key, attributes) => Button({ context, variant: 'secondary', children: [triggers[keys.indexOf(key)] ?? ''], render: (attrs, children) => attributes.button(attrs.flatMap(attr => '__childAttribute' in attr ? [attr] : childAttributes([attr])), children) }, h),
   renderDocument: (content, popups) => h.div([], [content, ...popups]),
-  render: ({ tooltip }) => tooltip('basic', { content: ${q(c.label)}, shapeClass: ${q(c.appearance.shape === 'sharp' ? 'rounded-none' : 'rounded-lg')}, animate, reducedMotion: 'user' }),`,
-)}`
+  render: ({ tooltip }) => h.div([h.Class('flex items-center gap-2')], keys.map(key => tooltip(key, { content: labels[keys.indexOf(key)] ?? '', shortcut: ${q(c.shortcut)}, shapeClass: ${q(c.appearance.shape === 'sharp' ? 'rounded-none' : 'rounded-lg')}, animate, reducedMotion: 'user' }))),
+} }))`
+}
 
 export const simpleCode = (c: FluidConfiguration): string | undefined => {
   const code = Match.value(c).pipe(
@@ -67,7 +72,7 @@ Badge({ context, variant: ${q(c.variant)}, color: ${q(c.color)}, children: [${q(
       checkbox: (c) => {
         return `import { CheckboxBlock } from '@foldkit-visuals/fluid/checkbox'
 import { Field, FieldLabel } from '@foldkit-visuals/fluid/field'
-${bind('Checkbox', 'CheckboxBlock', 'checkbox', q({ id: 'notification', checked: c.checked, disabled: c.disabled, readOnly: c.readOnly }))}
+${bind('Checkbox', 'CheckboxBlock', 'checkbox', q({ id: 'notification', checked: c.checked, indeterminate: c.indeterminate, disabled: c.disabled, readOnly: c.readOnly }))}
 Field({ context, orientation: 'horizontal', invalid: ${c.invalid}, children: [
   ${view('Checkbox', 'checkbox', `animate: animateTarget, label: ${q(c.label)}, name: ${q(c.name)}, value: ${q(c.formValue)}, required: ${c.required}, invalid: ${c.invalid},`)},
   FieldLabel({ context, htmlFor: 'notification', children: [${q(c.label)}] }, h),
@@ -80,14 +85,22 @@ ${bind('Switch', 'SwitchBlock', 'switch', q({ id: 'example', checked: c.checked,
 ${view('Switch', 'switch', `label: ${q(c.label)}, animate: switchMotion.node,`)}`
       },
       field: (c) => {
+        const hasError = c.invalid && c.error !== ''
+        const describedBy = [
+          c.showDescription ? 'field-input-description' : '',
+          hasError ? 'field-input-error' : '',
+        ]
+          .filter((id) => id !== '')
+          .join(' ')
         return `import { InputBlock } from '@foldkit-visuals/fluid/input'
 import { Field, FieldLabel, FieldDescription, FieldError } from '@foldkit-visuals/fluid/field'
+import { childAttributes } from 'foldkit/html'
 ${bind('Input', 'InputBlock', 'input', q({ id: 'field-input', value: c.value, disabled: c.disabled, readOnly: c.readOnly }))}
 Field({ context, orientation: ${q(c.orientation)}, invalid: ${c.invalid}, children: [
   FieldLabel({ context, htmlFor: 'field-input', children: [${q(c.label)}] }, h),
-  ${view('Input', 'input', `placeholder: ${q(c.placeholder)}, invalid: ${c.invalid},`)},
-  ${c.showDescription ? `FieldDescription({ children: [${q(c.description)}] }, h),` : ''}
-  ${c.invalid ? `FieldError({ children: [${q(c.error)}] }, h),` : ''}
+  ${view('Input', 'input', `placeholder: ${q(c.placeholder)}, invalid: ${c.invalid}, attributes: ${describedBy === '' ? '[]' : `childAttributes([h.AriaDescribedBy(${q(describedBy)})])`},`)},
+  ${c.showDescription ? `FieldDescription({ context, id: 'field-input-description', children: [${q(c.description)}] }, h),` : ''}
+  ${hasError ? `FieldError({ context, id: 'field-input-error', children: [${q(c.error)}] }, h),` : ''}
 ]}, h)`
       },
       'input-group': (c) => {
@@ -174,25 +187,36 @@ ${view(
 )}`
       },
       'checkbox-group': (c) => {
-        const radio = false
-        const name = radio ? 'RadioGroup' : 'CheckboxGroup'
-        const item = radio ? 'RadioItem' : 'CheckboxItem'
-        return `import { ${name}Block, ${item} } from '@foldkit-visuals/fluid/${c._tag}'
-${radio ? '' : "import { selectionBackgroundAnimation } from '@foldkit-visuals/fluid/selection-backgrounds'"}
-${bind('Group', `${name}Block`, 'group', q({ id: 'example', ...(radio ? { selectedIndex: Math.min(1, c.count - 1), items: Array.from({ length: c.count }, (_, index) => ({ index, value: `option-${index}` })) } : { checkedIndices: [1, 2].filter((index) => index < c.count), items: Array.from({ length: c.count }, (_, index) => ({ index, checked: index === 1 || index === 2 })) }) }))}
+        return `import { CheckboxGroupBlock, CheckboxItem } from '@foldkit-visuals/fluid/checkbox-group'
+import { selectionBackgroundAnimation } from '@foldkit-visuals/fluid/selection-backgrounds'
+import { Update } from 'foldkit'
+${bind('RawGroup', 'CheckboxGroupBlock', 'group', q({ id: 'example', checkedIndices: [1, 2].filter((index) => index < c.count), items: Array.from({ length: c.count }, (_, index) => ({ index, checked: index === 1 || index === 2 })) }))}
+const Group = RawGroup.withOutMessagePolicy({
+  fold: Page.makeOutMessageFold(CheckboxGroupBlock, {
+    Toggled: ({ index }) => Page.makeStep(model => {
+      const checked = model.group.checkedItems.find(item => item.index === index)?.checked ?? false
+      const items = [...model.group.checkedItems.filter(item => item.index !== index), { index, checked: !checked }]
+      return Update.combineSteps([
+        RawGroup.requestItems({ items }),
+        RawGroup.requestSelection({ indices: items.filter(item => item.checked).map(item => item.index) }),
+      ])
+    }),
+  }),
+})
 const labels = ${q(labels(c.labels, c.count, 'Option'))}
 ${view(
   'Group',
   'group',
-  `animate: animateTarget, animateHighlight, ${radio ? '' : 'animateSelection: selectionBackgroundAnimation(target),'}
-  content: group => labels.map((label, index) => ${item}({ index, label }, group, h)),`,
+  `animate: animateTarget, animateHighlight, animateSelection: selectionBackgroundAnimation(target),
+  content: group => labels.map((label, index) => CheckboxItem({ index, label }, group, h)),`,
 )}`
       },
       'chat-message': (c) => {
-        return `import { ChatMessageBlock } from '@foldkit-visuals/fluid/chat-message'
+        return `import { ChatMessageBlock, type ChatMessageConfig } from '@foldkit-visuals/fluid/chat-message'
 import { Button } from '@foldkit-visuals/fluid/button'
-${bind('Chat', 'ChatMessageBlock', 'chat', q({ id: 'example', from: c.from }))}
-${view('Chat', 'chat', `animate: (node, options) => animateTarget(node, { ...options, initial: false }), children: () => h.p([], [${q(c.label)}]), ${c.showTime ? `time: () => ${q(c.time)},` : ''} ${c.showActions ? `actions: () => Button({ context, variant: 'ghost', children: [${q(c.actionLabel)}], attributes: [h.OnClick(Message.RequestedCopy())] }, h),` : ''}`)}`
+const chatConfig: ChatMessageConfig = ${q({ id: 'example', from: c.from, files: filesFor(c), thumbnailSize: c.thumbnailSize })}
+${bind('Chat', 'ChatMessageBlock', 'chat', 'chatConfig')}
+${view('Chat', 'chat', `animate: (node, options) => animateTarget(node, { ...options, initial: false }), children: () => ${c.label === '' ? 'null' : `h.p([], [${q(c.label)}])`}, ${c.showTime ? `time: () => ${q(c.time)},` : ''} ${c.showActions ? `actions: () => Button({ context, variant: 'ghost', children: [${q(c.actionLabel)}], attributes: [h.OnClick(Message.RequestedCopy())] }, h),` : ''}`)}`
       },
       'thinking-indicator': (c) => {
         return `import { ThinkingIndicatorBlock, thinkingIndicatorAnimations } from '@foldkit-visuals/fluid/thinking-indicator'
@@ -233,13 +257,13 @@ ${view('Thinking', 'thinking', `...thinkingIndicatorAnimations(target), size: ${
         ].slice(0, c.count)
         return `import { ThinkingStepsBlock } from '@foldkit-visuals/fluid/thinking-steps'
 import { ThinkingStepBlock } from '@foldkit-visuals/fluid/thinking-step'
-${bind('Steps', 'ThinkingStepsBlock', 'steps', q({ id: 'steps', defaultOpen: c.open, disabled: c.disabled }))}
-${rows.map((row) => bind(row.name, 'ThinkingStepBlock', row.field, q({ id: row.field, status: row.status }))).join('\n')}
+${bind('Steps', 'ThinkingStepsBlock', 'steps', q({ id: 'steps', defaultOpen: c.open, disabled: c.disabled, ...(c.control === 'controlled' ? { open: c.open } : {}), ...(c.running === 'unset' ? {} : { running: c.running === 'running' }) }))}
+${rows.map((row) => bind(row.name, 'ThinkingStepBlock', row.field, `${q({ id: row.field, status: row.status })} as const`)).join('\n')}
 ${view(
   'Steps',
   'steps',
-  `animate: animateTarget, label: () => ${q(c.label)}, content: () => [
-${rows.map((row, index) => `  ${view(row.name, row.field, `animate: animateTarget, label: ${q(row.label)}, ${row.description === undefined ? '' : `description: ${q(row.description)},`} showIcon: ${c.showIcons}, icon: ${q(row.icon)}, isLast: ${index === rows.length - 1},`)},`).join('\n')}
+  `animate: animateTarget, label: () => ${q(c.label)}, ${c.meta === '' ? '' : `meta: () => ${q(c.meta)},`} content: () => [
+${rows.map((row, index) => `  ${view(row.name, row.field, `animate: animateTarget, label: ${q(row.label)}, ${index === 0 ? `href: ${q(c.href)}, ${c.stepMeta === '' ? '' : `meta: () => ${q(c.stepMeta)},`}` : ''} ${row.description === undefined ? '' : `description: ${q(row.description)},`} showIcon: ${c.showIcons}, icon: ${q(row.icon)}, isLast: ${index === rows.length - 1},`)},`).join('\n')}
 ],`,
 )}`
       },
@@ -266,17 +290,20 @@ ${view(
             `${index + 1} minutes ago`,
           ].slice(0, c.columnCount),
         )
+        const selected = { none: [], first: [0], run: [0, 1, 2], disjoint: [0, 2] }[
+          c.selection
+        ].filter((index) => index < c.rowCount)
         return `import { TableBlock } from '@foldkit-visuals/fluid/table'
 import { TableHeader, TableHead, TableBody, TableRow, TableCell, TableEmpty } from '@foldkit-visuals/fluid/table-parts'
-${bind('Table', 'TableBlock', 'table', "{ id: 'table' }")}
+${bind('Table', 'TableBlock', 'table', q({ id: 'table', selectedIndices: selected, heldHeadIndex: c.heldHeader < 0 ? null : c.heldHeader, hideHeadHighlight: c.hideHeaderHighlight }))}
 const headers = ${q(headers)}
 const rows = ${q(rows)}
 ${view(
   'Table',
   'table',
-  `animateHighlight, content: table => [
-  ${c.showHeader ? 'TableHeader({ children: [TableRow({ children: headers.map(label => TableHead({ children: [label] }, h)) }, h)] }, h),' : ''}
-  TableBody({ children: rows.length > 0 ? rows.map((row, index) => TableRow({ index, context: table, children: row.map(value => TableCell({ children: [value] }, h)) }, h)) : [TableEmpty({ columns: ${c.columnCount}, title: ${q(c.emptyTitle)}, description: ${q(c.emptyDescription)} }, h)] }, h),
+  `animateHighlight, ${c.hoverMarker ? `hoverMarker: () => h.span([h.Class('absolute left-0 top-1/2 -translate-y-1/2')], ['•']), ` : ''}content: table => [
+  ${c.showHeader ? `TableHeader({ context: table, children: [TableRow({ context: table, keepRule: ${c.keepHeaderRule}, children: headers.map((label, index) => TableHead({ context: table, ${c.headerHover ? 'hoverIndex: index, ' : ''}children: [label] }, h)) }, h)] }, h),` : ''}
+  TableBody({ children: rows.length > 0 ? rows.map((row, index) => TableRow({ index, context: table, children: row.map(value => TableCell({ size: table.size, children: [value] }, h)) }, h)) : [TableEmpty({ columns: ${c.columnCount}, title: ${q(c.emptyTitle)}, description: ${q(c.emptyDescription)} }, h)] }, h),
 ],`,
 )}`
       },
@@ -306,7 +333,9 @@ h.div([h.Id('color-container')], [${view('Color', 'color', "portalContainerId: '
 import { DocumentTooltipBlock, type DocumentTooltipOccurrenceViewInputs } from '@foldkit-visuals/fluid/tooltip'
 let copyTrigger: DocumentTooltipOccurrenceViewInputs['trigger'] = () => null
 ${bind('Copy', 'InputCopyBlock', 'copy', q({ id: 'copy', value: c.value, variant: c.variant, align: c.align, disabled: c.disabled }))}
-${bind('Tooltips', 'DocumentTooltipBlock', 'tooltips', '')}
+${bind('Tooltips', 'DocumentTooltipBlock', 'tooltips', '')}.withOutMessagePolicy({
+  fold: Page.makeOutMessageFold(DocumentTooltipBlock, { Transaction: () => Page.makeNoopStep() }),
+})
 const Composition = Page.makeComposition({ bindings: [Copy, Tooltips] })
 const init = Composition.makeInit(() => ({ model: {}, steps: [Tooltips.requestAdd({ key: 'copy', options: { side: 'top' } })] }))
 ${view(

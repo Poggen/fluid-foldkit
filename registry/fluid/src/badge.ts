@@ -11,7 +11,7 @@ import { resolvePresentation, type Presentation } from './presentation.js'
 
 export interface BadgeProps<Message> extends Presentation {
   readonly children: ReadonlyArray<Html | string>
-  readonly variant?: 'solid' | 'dot'
+  readonly variant?: 'solid' | 'dot' | 'ghost'
   readonly color?: BadgeColor
   readonly badgeSize?: BadgeSize
   readonly className?: string
@@ -61,7 +61,10 @@ export function Badge<Message>(props: BadgeProps<Message>, h: HtmlBuilder<Messag
               backgroundColor: color === 'gray' ? 'var(--muted-foreground)' : value,
             }),
           ]),
-      h.span([h.Class('[text-box:trim-both_cap_alphabetic]')], [...props.children]),
+      h.span(
+        [h.Class('min-w-0 overflow-x-clip text-ellipsis [text-box:trim-both_cap_alphabetic]')],
+        [...props.children],
+      ),
     ],
   )
 }

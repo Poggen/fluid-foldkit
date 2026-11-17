@@ -1,9 +1,14 @@
-import { Schema } from 'effect'
+import { Effect, Schema } from 'effect'
 import type { Control } from '../control-definition'
 import { Appearance } from './presentation'
 
+const Presentation = Schema.Literals(['independent', 'morph'])
+
 export const Configuration = Schema.TaggedStruct('tooltip', {
   appearance: Appearance,
+  presentation: Presentation.pipe(Schema.withDecodingDefaultKey(Effect.succeed('independent'))),
+  hoverable: Schema.Boolean.pipe(Schema.withDecodingDefaultKey(Effect.succeed(true))),
+  shortcut: Schema.String.pipe(Schema.withDecodingDefaultKey(Effect.succeed(''))),
   label: Schema.String,
   triggerLabel: Schema.String,
   side: Schema.Literals(['top', 'right', 'bottom', 'left']),
@@ -15,6 +20,9 @@ export type Configuration = typeof Configuration.Type
 export const defaults: Configuration = Configuration.make({
   _tag: 'tooltip',
   appearance: {},
+  presentation: 'independent',
+  hoverable: true,
+  shortcut: '',
   label: 'A little detail',
   triggerLabel: 'Hover me',
   side: 'top',
@@ -23,6 +31,21 @@ export const defaults: Configuration = Configuration.make({
   followCursor: 'none',
 })
 export const controls = [
+  { kind: 'toggle', prop: 'hoverable', group: 'Properties', initial: defaults.hoverable },
+  {
+    kind: 'text',
+    prop: 'shortcut',
+    group: 'Content',
+    initial: defaults.shortcut,
+    values: ['', 'Esc', '⇧⌘O', 'Ctrl+K'],
+  },
+  {
+    kind: 'choice',
+    prop: 'presentation',
+    group: 'Properties',
+    initial: defaults.presentation,
+    values: Presentation.literals,
+  },
   {
     kind: 'text',
     prop: 'label',

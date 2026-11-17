@@ -63,6 +63,13 @@ const renderField = (
   h: FluidViewBuilder,
 ) => {
   const context = configuredContext({ shape, size, hover }, c.appearance, c.size)
+  const descriptionId = `${search.id}-description`
+  const errorId = `${search.id}-error`
+  const hasError = c.invalid && c.error !== ''
+  const describedBy = [c.showDescription ? descriptionId : '', hasError ? errorId : '']
+    .filter((id) => id !== '')
+    .join(' ')
+
   return Field(
     {
       context,
@@ -74,11 +81,19 @@ const renderField = (
           Search.embedView({
             slotId: 'field-input',
             model: search,
-            viewInputs: { context, placeholder: c.placeholder, invalid: c.invalid },
+            viewInputs: {
+              context,
+              placeholder: c.placeholder,
+              invalid: c.invalid,
+              attributes:
+                describedBy === '' ? [] : childAttributes([h.AriaDescribedBy(describedBy)]),
+            },
           }),
         ),
-        ...(c.showDescription ? [FieldDescription({ children: [c.description] }, h)] : []),
-        ...(c.invalid ? [FieldError({ children: [c.error] }, h)] : []),
+        ...(c.showDescription
+          ? [FieldDescription({ context, id: descriptionId, children: [c.description] }, h)]
+          : []),
+        ...(hasError ? [FieldError({ context, id: errorId, children: [c.error] }, h)] : []),
       ],
     },
     h,

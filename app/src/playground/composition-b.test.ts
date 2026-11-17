@@ -121,7 +121,7 @@ test('sidebar nesting preserves stable row and menu identities while leaves own 
   const nested = { ...Sidebar.defaults, l1Primary: 'menu' as const, l1Children: true }
   const flat = Sidebar.sidebarRows({ ...nested, l1Children: false })
   const rows = Sidebar.sidebarRows(nested)
-  expect(rows).toHaveLength(40)
+  expect(rows).toHaveLength(20)
   expect(rows.filter((row) => row.level === 0).map((row) => row.value)).toEqual(
     flat.map((row) => row.value),
   )
@@ -135,4 +135,22 @@ test('sidebar nesting preserves stable row and menu identities while leaves own 
   expect(enabled(Sidebar.controlsFor(nested), 'l1Actions')).toBe(false)
   expect(enabled(Sidebar.controlsFor({ ...nested, l1Primary: 'threads' }), 'l2Actions')).toBe(false)
   expect(enabled(Sidebar.controlsFor(Sidebar.defaults), 'footerCalloutStacked')).toBe(false)
+})
+
+test('sidebar sections partition original rows without duplicating labels or status', () => {
+  const rows = Sidebar.sidebarRows(Sidebar.defaults)
+  expect(rows.filter((row) => row.value.startsWith('primary-')).map((row) => row.label)).toEqual(
+    Sidebar.threadRows.slice(0, 3).map((row) => row.label),
+  )
+  expect(
+    rows.filter((row) => row.value.startsWith('secondary-')).map((row) => [row.label, row.status]),
+  ).toEqual(Sidebar.threadRows.slice(3).map((row) => [row.label, row.status]))
+  const menus = Sidebar.sidebarRows({ ...Sidebar.defaults, l1Primary: 'menu' })
+  expect(menus.map((row) => row.value)).toEqual([
+    'primary-0',
+    'primary-1',
+    'primary-2',
+    'secondary-3',
+    'secondary-4',
+  ])
 })

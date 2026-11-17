@@ -59,15 +59,18 @@ it.live('the same step stops its shimmer when completed and resumes when active 
     document.body.append(host)
     const program = Runtime.embed(Program.makeElement({ block: Root, layer, container }))
     const label = () => {
-      const element = [...host.querySelectorAll('#shimmer-step span')].find((candidate) =>
-        candidate.textContent?.startsWith('Working'),
+      const element = [...host.querySelectorAll('#shimmer-step span')].find(
+        (candidate) =>
+          candidate.children.length === 0 && candidate.textContent?.startsWith('Working'),
       )
       if (!(element instanceof HTMLElement)) throw new Error('Missing step label')
       return element
     }
     try {
       yield* Effect.promise(() =>
-        vi.waitFor(() => expect(getComputedStyle(label()).animation).toContain('shimmer')),
+        vi.waitFor(() =>
+          expect(getComputedStyle(label()).animation, label().outerHTML).toContain('shimmer'),
+        ),
       )
       const original = label()
       const complete = host.querySelector('#complete')
@@ -86,7 +89,7 @@ it.live('the same step stops its shimmer when completed and resumes when active 
       yield* Effect.promise(() =>
         vi.waitFor(() => {
           expect(label()).toBe(original)
-          expect(getComputedStyle(label()).animation).toContain('shimmer')
+          expect(getComputedStyle(label()).animation, label().outerHTML).toContain('shimmer')
         }),
       )
     } finally {

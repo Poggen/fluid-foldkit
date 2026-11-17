@@ -9,7 +9,7 @@ export const applicationClasses = {
   navigation: 'peer shrink-0 sticky top-0 h-svh overflow-hidden max-xl:hidden ml-2 site-navigation',
   customizer:
     'shrink-0 overflow-hidden sticky top-4 self-start mt-4 xl-fade-block max-xl:pointer-events-none site-customizer',
-  credit: 'mt-auto pt-8 grid gap-3 text-[10px] text-muted-foreground [&_a]:mt-1',
+  credit: 'fixed bottom-4 right-4 h-8 w-64 grid gap-3 text-[10px] text-muted-foreground [&_a]:mt-1',
   fontStatus:
     'fixed bottom-4 right-4 z-80 max-w-[360px] bg-background border border-border pt-3 pr-3 pb-3 pl-3 [&_button]:ml-2 [&_button]:underline',
 }

@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom -- font metric dependency contract
-import { afterEach, beforeEach, expect, test } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { ChartTextMeasureOptions } from '@tanstack/charts'
 import { cartesianFontMeasurement } from '../src/cartesian/font-measurement'
+import { pillLayout } from '../src/cartesian/date-pill'
 import { pillFontMeasurement } from '../src/cartesian/pill-font-measurement'
 import { fontTestEnvironment } from './font-test-environment'
 
@@ -168,4 +169,48 @@ test('post-layout focus measurements remain conservative after dependency overfl
   expect(environment.context.measureText('retained')).toEqual(original)
   expect(environment.context.measureText('late focus label').actualBoundingBoxAscent).toBe(18)
   expect(measurement.changed()).toBe(true)
+})
+
+test('pill draw captures body family before writes and reuses it for all words', () => {
+  const measurement = pillFontMeasurement(environment.container)
+  const styles = vi.spyOn(window, 'getComputedStyle')
+  document.body.style.fontFamily = 'Before'
+
+  try {
+    measurement.begin()
+    expect(styles.mock.calls.filter(([element]) => element === document.body)).toHaveLength(1)
+    document.body.style.fontFamily = 'After'
+    const layout = pillLayout(['November 12', 'November 13', 'December 1'], measurement.measure)
+    measurement.commit()
+    expect(layout).toEqual({
+      width: 96,
+      month: -12,
+      day: 22,
+      months: ['November', 'December'],
+      monthOf: [0, 0, 1],
+      days: ['12', '13', '1'],
+    })
+    expect(environment.context.font).toBe('500 14px Before')
+    expect(styles.mock.calls.filter(([element]) => element === document.body)).toHaveLength(1)
+    expect(measurement.changed()).toBe(true)
+    measurement.begin()
+    measurement.measure('November')
+    measurement.commit()
+    expect(environment.context.font).toBe('500 14px After')
+    expect(measurement.changed()).toBe(false)
+  } finally {
+    document.body.style.fontFamily = ''
+  }
+})
+
+test.each([
+  { name: 'empty', labels: [] },
+  { name: 'over 60 labels', labels: Array.from({ length: 61 }, () => 'November 12') },
+])('pill fallback skips canvas work for $name', ({ labels }) => {
+  const measurement = pillFontMeasurement(environment.container)
+  measurement.begin()
+  expect(pillLayout(labels, measurement.measure)).toBeNull()
+  measurement.commit()
+  expect(environment.measure).not.toHaveBeenCalled()
+  expect(measurement.changed()).toBe(false)
 })

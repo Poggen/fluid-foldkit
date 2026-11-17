@@ -102,11 +102,13 @@ export const reconcileSimpleInput = (
       ),
       Match.tag('checkbox', (c) =>
         model.checkbox.checked === c.checked &&
+        model.checkbox.indeterminate === c.indeterminate &&
         model.checkbox.disabled === c.disabled &&
         model.checkbox.readOnly === c.readOnly
           ? FluidGalleryBlock.makeNoopStep()
           : Checkbox.requestConfigure({
               checked: c.checked,
+              indeterminate: c.indeterminate,
               disabled: c.disabled,
               readOnly: c.readOnly,
             }),

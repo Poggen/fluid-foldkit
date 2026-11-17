@@ -2,6 +2,8 @@ import { Data } from 'effect'
 import type { Attribute } from 'foldkit/html'
 import { ACTIVE_ATTR } from './lib/hover-geometry.js'
 
+export const HOVER_GEOMETRY_ORIGIN_ATTR = 'data-fluid-hover-geometry-origin'
+
 export const HOVER_ROOT_ATTR = 'data-fluid-hover-root'
 
 export const HOVER_ITEM_ATTR = 'data-fluid-hover-item'

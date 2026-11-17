@@ -19,7 +19,7 @@ export default defineConfig({
   test: {
     maxWorkers: Number(process.env.VITEST_MAX_WORKERS ?? 1),
     environment: 'happy-dom',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
     testTimeout: 30000,
   },
 })

@@ -32,6 +32,7 @@ const cases: ReadonlyArray<{
   label: string
   content: string
   options?: DocumentTooltipOptions
+  shortcut?: string | ReadonlyArray<string>
 }> = [
   { key: 'basic', label: 'Hover me', content: 'Save your changes' },
   ...(['top', 'right', 'bottom', 'left'] as const).map((side) => ({
@@ -41,6 +42,19 @@ const cases: ReadonlyArray<{
     options: { side },
   })),
   { key: 'rich', label: 'Save', content: '' },
+  { key: 'shortcut-esc', label: 'Escape', content: 'Close', shortcut: 'Esc' },
+  { key: 'shortcut-combo', label: 'Open', content: 'Open file', shortcut: '⇧⌘O' },
+  { key: 'shortcut-space', label: 'Page up', content: 'Previous page', shortcut: ['Page Up'] },
+  { key: 'hoverable', label: 'Hoverable', content: 'Move onto this bubble' },
+  {
+    key: 'pass-through',
+    label: 'Pass through',
+    content: 'Closes with the trigger',
+    options: { hoverable: false },
+  },
+  { key: 'group-a', label: 'First', content: 'A short label' },
+  { key: 'group-b', label: 'Next', content: 'A longer label on the next item' },
+  { key: 'group-c', label: 'Last', content: 'One more detail' },
   {
     key: 'follow-x',
     label: 'Move along me',
@@ -94,7 +108,16 @@ const Tooltips = TooltipShowcaseBlock.makeRequiredFieldBinding(DocumentTooltipBl
 export const DocTabs = TooltipShowcaseBlock.makeRecordBinding(PreviewControlsBlock, {
   field: 'docTabs',
 })
-const initDocTabs = ['Basic', 'Placement', 'Rich Content', 'Follow cursor', 'Delay'].map((key) =>
+const initDocTabs = [
+  'Basic',
+  'Placement',
+  'Rich Content',
+  'Keyboard shortcut',
+  'Hoverable',
+  'Follow cursor',
+  'Delay',
+  'Group',
+].map((key) =>
   TooltipShowcaseBlock.makeStep((model) =>
     initAndInsert(DocTabs, model, {
       key,
@@ -118,9 +141,15 @@ const init = TooltipShowcaseComposition.makeInit(() => ({
     ...initDocTabs,
     ...cases.map(({ key, options }) =>
       Tooltips.requestAdd(
-        options === undefined
-          ? { key: `docs-tooltip-${key}` }
-          : { key: `docs-tooltip-${key}`, options },
+        key.startsWith('group-')
+          ? {
+              key: `docs-tooltip-${key}`,
+              groupKey: 'docs-tooltip-morph',
+              group: { presentation: 'morph' },
+            }
+          : options === undefined
+            ? { key: `docs-tooltip-${key}` }
+            : { key: `docs-tooltip-${key}`, options },
       ),
     ),
   ],
@@ -250,6 +279,7 @@ const view = TooltipShowcaseComposition.makeView((model, h) => {
         render: ({ tooltip }) => {
           const item = (key: string) => {
             const options = {
+              shortcut: cases.find((entry) => entry.key === key)?.shortcut,
               shapeClass: model.docShape === 'sharp' ? 'rounded-none' : 'rounded-lg',
               animate: motion.node,
               reducedMotion: 'user',
@@ -281,12 +311,34 @@ const view = TooltipShowcaseComposition.makeView((model, h) => {
               section('Basic', [item('basic')]),
               section('Placement', ['top', 'right', 'bottom', 'left'].map(item)),
               section('Rich Content', [item('rich')]),
+              section('Keyboard shortcut', [
+                item('shortcut-esc'),
+                item('shortcut-combo'),
+                item('shortcut-space'),
+              ]),
+              section('Hoverable', [item('hoverable'), item('pass-through')]),
               section(
                 'Follow cursor',
                 [item('follow-x'), item('follow-y')],
                 'flex flex-wrap items-center justify-center gap-6',
               ),
               section('Delay', [item('instant'), item('slow')]),
+              section(
+                'Group',
+                [
+                  h.p(
+                    [],
+                    [
+                      'Morph groups retain the closed bubble for 150 ms and carry its shape and label to a neighbor. Provider groups share the hover delay without morphing.',
+                    ],
+                  ),
+                  h.div(
+                    [h.Class('flex items-center gap-3')],
+                    ['group-a', 'group-b', 'group-c'].map(item),
+                  ),
+                ],
+                'flex flex-col items-center gap-3',
+              ),
             ],
           )
         },

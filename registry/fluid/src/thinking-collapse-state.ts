@@ -7,7 +7,9 @@ export const Model = Schema.Struct({
   id: Schema.String,
   details: Schema.Boolean,
   controlled: Schema.OptionFromNullOr(Schema.Boolean),
-  internal: Schema.Boolean,
+  manual: Schema.OptionFromNullOr(Schema.Boolean),
+  running: Schema.OptionFromNullOr(Schema.Boolean),
+  defaultOpen: Schema.Boolean,
   open: Schema.Boolean,
   disabled: Schema.Boolean,
   hidden: Schema.Boolean,
@@ -16,7 +18,6 @@ export const Model = Schema.Struct({
   hoverPaint: Schema.Boolean,
   hoverGeneration: Schema.Natural,
 })
-
 export type Model = typeof Model.Type
 
 export const Message = defineMessageUnion({
@@ -29,27 +30,36 @@ export const Message = defineMessageUnion({
 export const OutMessage = defineMessageUnion({ OpenChanged: { open: Schema.Boolean } })
 
 export const InMessage = defineInMessageUnion({
-  RequestedConfigure: { open: Schema.NullOr(Schema.Boolean), disabled: Schema.Boolean },
+  RequestedConfigure: {
+    open: Schema.NullOr(Schema.Boolean),
+    disabled: Schema.Boolean,
+    running: Schema.optionalKey(Schema.NullOr(Schema.Boolean)),
+    defaultOpen: Schema.optionalKey(Schema.NullOr(Schema.Boolean)),
+  },
   RequestedToggle: {},
 })
 
 export interface ThinkingStepsConfig {
   readonly id: string
   readonly open?: boolean
+  readonly running?: boolean
   readonly defaultOpen?: boolean
   readonly disabled?: boolean
 }
 
 export const initialize = (config: ThinkingStepsConfig, details: boolean) => {
-  const internal = config.defaultOpen ?? !details
-  const open = config.open ?? internal
+  const defaultOpen = config.defaultOpen ?? !details
+  const running = details ? Option.none<boolean>() : Option.fromUndefinedOr(config.running)
+  const open = config.open ?? Option.getOrElse(running, () => defaultOpen)
 
   return {
     model: Model.make({
       id: config.id,
       details,
       controlled: Option.fromUndefinedOr(config.open),
-      internal,
+      manual: Option.none(),
+      running,
+      defaultOpen,
       open,
       disabled: config.disabled ?? false,
       hidden: !open,
@@ -71,7 +81,28 @@ export const toggle = (model: Model) =>
     ? { model }
     : {
         model: Option.isNone(model.controlled)
-          ? modifyFields(changedOpen(model, !model.open), { internal: () => !model.open })
+          ? modifyFields(changedOpen(model, !model.open), {
+              manual: () => Option.some(!model.open),
+            })
           : model,
         outMessage: OutMessage.OpenChanged({ open: !model.open }),
       }
+
+export const configure = (model: Model, inputs: typeof InMessage.RequestedConfigure.Type) => {
+  const next = modifyFields(model, {
+    controlled: () => Option.fromNullOr(inputs.open),
+    disabled: () => inputs.disabled,
+    running: () =>
+      model.details || inputs.running === undefined
+        ? model.running
+        : Option.fromNullOr(inputs.running),
+    defaultOpen: () =>
+      model.details || inputs.defaultOpen === undefined
+        ? model.defaultOpen
+        : (inputs.defaultOpen ?? true),
+  })
+  const open = Option.getOrElse(next.controlled, () =>
+    Option.getOrElse(next.manual, () => Option.getOrElse(next.running, () => next.defaultOpen)),
+  )
+  return { model: changedOpen(next, open) }
+}

@@ -1,6 +1,7 @@
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
 // Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
 // See NOTICE
+import { childAttributes } from 'foldkit/html'
 import type { Attribute, ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
 import type { HoverViewState } from './hover.js'
 import { fontWeights } from './lib/font-weight.js'
@@ -13,6 +14,15 @@ import type { Presentation, PresentationContext } from './presentation.js'
 export interface TableContext extends HoverViewState {
   readonly size: SizeVariant
   readonly presentation?: PresentationContext
+  readonly selectedIndices?: ReadonlyArray<number>
+  readonly headItemAttributes?: (
+    index: number,
+  ) => ReadonlyArray<Extract<Attribute<never>, { readonly _tag: 'DataAttribute' }>>
+  readonly renderHeader?: (props: {
+    readonly children: ReadonlyArray<Html | string>
+    readonly className?: string
+    readonly attributes?: ReadonlyArray<ChildAttribute>
+  }) => Html
 }
 
 export interface TablePartProps<Message> {
@@ -22,17 +32,33 @@ export interface TablePartProps<Message> {
 }
 
 export interface TableRowProps<Message> extends TablePartProps<Message> {
+  readonly keepRule?: boolean
   readonly index?: number
   readonly context?: TableContext
   readonly style?: Readonly<Record<string, string>>
 }
 
 export interface TableCellProps<Message> extends TablePartProps<Message>, Presentation {}
+export interface TableHeadProps<Message> extends Omit<TableCellProps<Message>, 'context'> {
+  readonly context?: PresentationContext | TableContext
+  readonly hoverIndex?: number
+}
+export interface TableHeaderProps<Message> extends TablePartProps<Message> {
+  readonly context?: TableContext
+}
 
 export function TableHeader<Message>(
-  props: TablePartProps<Message>,
+  props: TableHeaderProps<Message>,
   h: HtmlBuilder<Message>,
 ): Html {
+  if (props.context?.renderHeader !== undefined)
+    return props.context.renderHeader({
+      ...props,
+      children: props.children,
+      attributes: (props.attributes ?? []).flatMap((attribute) =>
+        '_tag' in attribute ? childAttributes([attribute]) : [attribute],
+      ),
+    })
   return h.thead([h.Class(cn(props.className)), ...(props.attributes ?? [])], props.children)
 }
 
@@ -45,9 +71,10 @@ export function TableRow<Message>(props: TableRowProps<Message>, h: HtmlBuilder<
   const isBodyRow = index !== undefined
   const activeIndex = context?.activeIndex ?? null
 
+  const selected = context?.selectedIndices ?? []
   const hideBorder =
-    activeIndex !== null &&
-    (isBodyRow ? index === activeIndex || index === activeIndex - 1 : activeIndex === 0)
+    (isBodyRow ? selected.includes(index) || selected.includes(index + 1) : selected.includes(0)) &&
+    !(props.keepRule && !isBodyRow)
 
   return h.tr(
     sourceStyleAttributes(
@@ -58,8 +85,11 @@ export function TableRow<Message>(props: TableRowProps<Message>, h: HtmlBuilder<
       [
         h.Class(
           cn(
-            'group/row relative z-10 border-b transition-[border-color] duration-80',
-            hideBorder ? 'border-transparent' : 'border-accent/40',
+            'group/row relative z-10 *:border-b *:transition-[border-color] *:duration-80',
+            'group-data-snap-rules/table:*:duration-0',
+            hideBorder
+              ? '*:border-transparent'
+              : '*:border-accent/40 data-[under-highlight]:*:border-transparent data-[under-highlight]:*:duration-0',
             isBodyRow && activeIndex === index && 'is-active',
             props.className,
           ),
@@ -77,14 +107,26 @@ export function TableRow<Message>(props: TableRowProps<Message>, h: HtmlBuilder<
   )
 }
 
-export function TableHead<Message>(props: TableCellProps<Message>, h: HtmlBuilder<Message>): Html {
+export function TableHead<Message>(props: TableHeadProps<Message>, h: HtmlBuilder<Message>): Html {
   return h.th(
     [
+      ...(props.hoverIndex === undefined
+        ? []
+        : [
+            h.DataAttribute('head-hover', ''),
+            ...((typeof props.context === 'function'
+              ? undefined
+              : props.context?.headItemAttributes?.(props.hoverIndex)) ?? []),
+          ]),
       h.Class(
         cn(
           'text-left text-foreground',
           'py-(--table-cell-py)',
-          resolvePresentation(props).size.variant === 'compact' ? 'px-2.5' : 'px-3',
+          (props.size ??
+            (typeof props.context === 'function' ? props.context().size : props.context?.size) ??
+            'default') === 'compact'
+            ? 'px-2.5'
+            : 'px-3',
           props.className,
         ),
       ),
@@ -113,7 +155,7 @@ export function TableCell<Message>(props: TableCellProps<Message>, h: HtmlBuilde
 
 export const tableClassName = (size: SizeVariant, className?: string) =>
   cn(
-    'w-full border-collapse',
+    'w-full border-separate border-spacing-0',
     size === 'compact' ? '[--table-cell-py:5px]' : '[--table-cell-py:--spacing(2)]',
     sizeMap[size].text,
     className,
@@ -148,7 +190,7 @@ export function TableEmpty<Message>(
           h.div(
             [
               h.Class(
-                'flex min-h-[calc(var(--table-empty-rows)*(1lh+2*var(--table-cell-py)))] flex-col items-center justify-center gap-1 px-3 py-4 text-center',
+                'sticky left-0 flex w-(--table-view-w,100%) min-h-[calc(var(--table-empty-rows)*(1lh+2*var(--table-cell-py)+1px))] flex-col items-center justify-center gap-1 px-3 py-4 text-center',
               ),
               h.Style({ '--table-empty-rows': String(props.rows ?? 3) }),
             ],

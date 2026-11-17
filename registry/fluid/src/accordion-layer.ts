@@ -338,10 +338,6 @@ function accordionPlans<const Key extends symbol>(
       tintAttributes,
     }
 
-    const dim =
-      model.hover.activeIndex !== null &&
-      !model.items.some((item) => item.open && item.index === model.hover.activeIndex)
-
     return h.block(
       Hover.embedView({
         slotId: model.hover.id,
@@ -368,7 +364,6 @@ function accordionPlans<const Key extends symbol>(
               ? model.tints.map((slot) =>
                   accordionExpansion(
                     slot,
-                    dim,
                     appearance.bg,
                     inputs.animate,
                     tintAttributes(slot.value, slot.generation, false),

@@ -5,6 +5,7 @@ import { HoverObservation } from './hover-observation.js'
 
 import {
   HOVER_ITEM_ATTR,
+  HOVER_GEOMETRY_ORIGIN_ATTR,
   HOVER_DISABLED_ATTR,
   HOVER_HIDDEN_ATTR,
   HOVER_SCOPE_ATTR,
@@ -57,8 +58,13 @@ export function mountHover(
     }
   }
 
+  const geometryOrigin = () => {
+    const id = container.getAttribute(HOVER_GEOMETRY_ORIGIN_ATTR)
+    return id === null ? undefined : (container.ownerDocument.getElementById(id) ?? undefined)
+  }
+
   const runMeasurement = (ready: boolean) => {
-    const measured = measureHoverLayout(container, items, scopeKey)
+    const measured = measureHoverLayout(container, items, scopeKey, geometryOrigin())
 
     if (!measured.ready) {
       return false
@@ -189,14 +195,15 @@ export function mountHover(
 
         return a.contains(b) ? -1 : 1
       })
-      const rect = container.getBoundingClientRect()
+      const origin = geometryOrigin() ?? container
+      const rect = origin.getBoundingClientRect()
       publish(
         HoverObservation.PointerMoved({
           point: { x, y },
           containerRect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
-          scroll: { x: container.scrollLeft, y: container.scrollTop },
-          border: { x: container.clientLeft, y: container.clientTop },
-          layoutSize: { width: container.offsetWidth, height: container.offsetHeight },
+          scroll: { x: origin.scrollLeft, y: origin.scrollTop },
+          border: { x: origin.clientLeft, y: origin.clientTop },
+          layoutSize: { width: origin.offsetWidth, height: origin.offsetHeight },
           targetIndices: containing.map(([index]) => index),
           disabledIndices: [...items].flatMap(([index, element]) =>
             isDisabled(element) ? [index] : [],
@@ -280,6 +287,10 @@ export function mountHover(
   }
 
   setPointerHandlers(container.getAttribute(HOVER_POINTER_HANDLERS_ATTR) !== 'false')
+  const scrolled = () => {
+    if (geometryOrigin() !== undefined) runMeasurement(false)
+  }
+  window.addEventListener('scroll', scrolled, true)
   container.addEventListener(MEASURE_EVENT, measureItems)
   registerItems(initialItems)
   scheduleMeasurement()
@@ -314,6 +325,7 @@ export function mountHover(
         window.cancelAnimationFrame(measureFrame)
       }
 
+      window.removeEventListener('scroll', scrolled, true)
       observer?.disconnect()
       registrations.disconnect()
       container.removeEventListener(MEASURE_EVENT, measureItems)

@@ -1,10 +1,12 @@
 // Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
 import { Option, Schema } from 'effect'
+import { GroupPresentation, GroupVisual } from './group-visual.js'
 
 export const Side = Schema.Literals(['top', 'right', 'bottom', 'left'])
 export type Side = typeof Side.Type
 export const Configuration = Schema.Struct({
   side: Side,
+  hoverable: Schema.Boolean,
   sideOffset: Schema.Number,
   delayDuration: Schema.Option(Schema.Number),
   forceOpen: Schema.Option(Schema.Boolean),
@@ -12,6 +14,7 @@ export const Configuration = Schema.Struct({
 })
 export type Configuration = typeof Configuration.Type
 export interface TooltipOptions {
+  readonly hoverable?: boolean | undefined
   readonly side?: Side | undefined
   readonly sideOffset?: number | undefined
   readonly delayDuration?: number | undefined
@@ -20,6 +23,7 @@ export interface TooltipOptions {
 }
 export const configuration = (options: TooltipOptions): Configuration => ({
   side: options.side ?? 'top',
+  hoverable: options.hoverable ?? true,
   sideOffset: options.sideOffset ?? 8,
   delayDuration: Option.fromUndefinedOr(options.delayDuration),
   forceOpen: Option.fromUndefinedOr(options.forceOpen),
@@ -31,6 +35,7 @@ export const Presentation = Schema.Struct({
   phase: Schema.Literals(['absent', 'present', 'exiting']),
   generation: Schema.Natural,
   configuration: Configuration,
+  placementSide: Schema.Option(Side),
 })
 export type Presentation = typeof Presentation.Type
 export const effectiveOpen = (presentation: Presentation) =>
@@ -41,9 +46,15 @@ export const Group = Schema.Struct({
   disableHoverableContent: Schema.Boolean,
   active: Schema.Option(Schema.String),
   cooldownGeneration: Schema.Natural,
+  presentation: GroupPresentation,
+  visual: GroupVisual,
+  preferredSide: Schema.Option(Side),
 })
 export type Group = typeof Group.Type
+export const hoverableContent = (configuration: Configuration, group?: Group) =>
+  configuration.hoverable && !group?.disableHoverableContent && group?.presentation !== 'morph'
 interface GroupOptions {
+  readonly presentation?: GroupPresentation | undefined
   readonly delayDuration?: number | undefined
   readonly skipDelayDuration?: number | undefined
   readonly disableHoverableContent?: boolean | undefined
@@ -53,12 +64,15 @@ export const groupConfiguration = (options: GroupOptions, ownsGroup: boolean) =>
   delayDuration: options.delayDuration ?? 200,
   skipDelayDuration: options.skipDelayDuration ?? (ownsGroup ? 400 : 300),
   disableHoverableContent: options.disableHoverableContent ?? false,
+  presentation: options.presentation ?? 'independent',
 })
 
 export const initialGroup = (options: GroupOptions = {}, ownsGroup = false): Group => ({
   ...groupConfiguration(options, ownsGroup),
   active: Option.none(),
   cooldownGeneration: 0,
+  visual: GroupVisual.Empty({ generation: 0 }),
+  preferredSide: Option.none(),
 })
 export const InteractionContext = Schema.Struct({ presentation: Presentation, group: Group })
 export type InteractionContext = typeof InteractionContext.Type

@@ -1,6 +1,8 @@
 export { DocumentTooltipBlock, DocumentTooltipKey, layer } from './tooltip-native/document.js'
 
 export { TooltipDom, makeTooltipDomLayer } from './tooltip-native/resources.js'
+export { TooltipShortcut } from './tooltip-shortcut.js'
+export type { TooltipShortcutProps } from './tooltip-shortcut.js'
 
 export type {
   DocumentTooltipViewInputs,

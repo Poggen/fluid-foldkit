@@ -25,15 +25,13 @@ export const badgeColors = {
 
 export type BadgeColor = keyof typeof badgeColors
 
-export const badgeVariants = cva('inline-flex items-center whitespace-nowrap', {
+export const badgeVariants = cva('inline-flex min-w-0 max-w-full items-center whitespace-nowrap', {
   variants: {
     variant: {
       solid: '',
       dot: 'border border-border text-foreground',
+      ghost: '',
     },
-    // The two-step size ladder shared by every control: 24px tall by
-    // default, 20px compact. The height is fixed rather than padded so the
-    // trimmed label below can't shrink the badge.
     size: {
       default:
         'h-6 px-2.5 text-[length:var(--fs-caption,12px)] leading-[var(--lh-caption,16px)] gap-1.5',
@@ -41,6 +39,7 @@ export const badgeVariants = cva('inline-flex items-center whitespace-nowrap', {
         'h-5 px-2 text-[length:var(--fs-caption-compact,11px)] leading-[var(--lh-caption-compact,14px)] gap-1',
     },
   },
+  compoundVariants: [{ variant: 'ghost', className: 'px-0' }],
   defaultVariants: {
     variant: 'solid',
     size: 'default',

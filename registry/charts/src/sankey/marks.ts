@@ -214,6 +214,7 @@ const createSankeyMark = (
         x: columns.area.x,
         y: bounds.y,
       })
+      let labelFamily: string | undefined
       const build = (config: Readonly<SankeyMarkConfig>) => {
         const suffix = config.occurrence === undefined ? '' : `-role-${config.occurrence}`
         config.onLayout?.(callbacks, columns.links)
@@ -221,27 +222,34 @@ const createSankeyMark = (
         const fullNodes: ReadonlyArray<NodeLayoutRow> = columns.nodes
         const fullLinks = columns.links
 
-        const labels = config.showLabels
-          ? placeLabels(
-              fullNodes,
-              fullLinks,
-              chart,
-              config.labelOrientation,
-              config.showValueLabels,
-              config.formatValue,
-            )
-          : []
+        const labels =
+          config.role !== 'link' && config.showLabels
+            ? placeLabels(
+                fullNodes,
+                fullLinks,
+                chart,
+                config.labelOrientation,
+                config.showValueLabels,
+                config.formatValue,
+              )
+            : []
 
-        // One computed-style read per layout (not per label): it is a style flush right after the resize invalidated it.
-        const family =
-          typeof document === 'undefined' || labels.length === 0
-            ? 'sans-serif'
-            : getComputedStyle(document.body).fontFamily
+        // All label occurrences in this layout share the same body typography.
+        if (labels.length > 0 && labelFamily === undefined)
+          labelFamily =
+            typeof document === 'undefined'
+              ? 'sans-serif'
+              : getComputedStyle(document.body).fontFamily
 
         const hitBoxesOf = new Map(
           labels.map((label) => [
             label.key,
-            labelHitBoxes(label, config.showValueLabels, family, measureTextWidth),
+            labelHitBoxes(
+              label,
+              config.showValueLabels,
+              labelFamily ?? 'sans-serif',
+              measureTextWidth,
+            ),
           ]),
         )
 

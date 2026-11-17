@@ -1,3 +1,4 @@
+import { ScrollAreaBlock } from '@foldkit-visuals/fluid/scroll-area'
 import { ReferenceQuery } from './reference/query'
 import { MobileDrawerBlock } from '@foldkit-visuals/fluid/mobile-drawer'
 import { Schema } from 'effect'
@@ -85,6 +86,7 @@ export const ApplicationBlock = Block.make('Application', {
     fontRevision: Schema.Natural,
     fontAsset: FontAsset,
     fontPicker: GoogleFontPickerBlock.Model,
+    rightRailScroll: ScrollAreaBlock.Model,
     navigation: NavigationBlock.Model,
     mobileMenu: NavigationBlock.Model,
     search: SearchBlock.Model,

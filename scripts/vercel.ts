@@ -2,6 +2,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } fr
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Schema } from 'effect'
+import { restoreRegistryArchive } from './registry/history'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const hostname =
@@ -41,6 +42,17 @@ const manifest = Schema.decodeUnknownSync(Schema.Struct({ serverEntry: Schema.St
 rmSync(output, { recursive: true, force: true })
 mkdirSync(functionDirectory, { recursive: true })
 cpSync(path.join(root, 'app/dist/client'), path.join(output, 'static'), { recursive: true })
+const archive = await fetch(
+  'https://github.com/Poggen/fluid-foldkit/releases/download/registry-0.1.0-preview.0/registry-0.1.0-preview.0.json.gz',
+)
+if (!archive.ok) throw new Error(`Previous registry archive request failed: ${archive.status}`)
+restoreRegistryArchive(
+  path.join(output, 'static'),
+  '0.1.0-preview.0',
+  new Uint8Array(await archive.arrayBuffer()),
+  '673c465c89670a9c89d37b83e238eb5bca547ac0228e3e3f1e9c0eb65c345f35',
+)
+
 cpSync(path.join(server, manifest.serverEntry), path.join(functionDirectory, manifest.serverEntry))
 if (existsSync(path.join(server, 'assets')))
   cpSync(path.join(server, 'assets'), path.join(functionDirectory, 'assets'), { recursive: true })

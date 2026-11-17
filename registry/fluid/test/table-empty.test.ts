@@ -59,6 +59,8 @@ it.effect(
       )
       expect(html).toContain('colspan="4"')
       expect(html).toContain('--table-empty-rows: 3')
+      expect(html).toContain('sticky left-0 flex w-(--table-view-w,100%)')
+      expect(html).toContain('1lh+2*var(--table-cell-py)+1px')
       expect(html).toContain('No projects')
       expect(html).toContain('Create a project to start.')
       expect(html).toContain('Create project')

@@ -1,7 +1,7 @@
 import type { ComponentPage } from '../../lib/catalogue'
 import { currentFontFamily, settingsQuery, type Settings } from './settings'
 
-const release = '0.1.0-preview.0'
+const release = '0.1.0-preview.1'
 export const buildInstallBrief = (
   origin: string,
   page: ComponentPage | undefined,
@@ -12,7 +12,10 @@ export const buildInstallBrief = (
   const registry = (family: 'fluid' | 'charts') => `${base}/r/${family}/${release}/{name}.json`
   const commands =
     page === undefined
-      ? ['bunx shadcn@4.23.0 add @fluid-foldkit/all', 'bunx shadcn@4.23.0 add @bklit-foldkit/all']
+      ? [
+          'bunx shadcn@4.23.0 add @fluid-foldkit/button',
+          'bunx shadcn@4.23.0 add @bklit-foldkit/all',
+        ]
       : [
           `bunx shadcn@4.23.0 add @${page.family === 'fluid' ? 'fluid' : 'bklit'}-foldkit/${page.slug}`,
         ]

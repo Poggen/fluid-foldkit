@@ -15,10 +15,12 @@ describe('global customization behavior', () => {
   })
   it('copies a self-contained native install brief at the current origin', () => {
     const brief = buildInstallBrief('https://docs.example.test', undefined, defaults)
-    expect(brief).toContain('https://docs.example.test/r/fluid/0.1.0-preview.0/{name}.json')
+    expect(brief).toContain('https://docs.example.test/r/fluid/0.1.0-preview.1/{name}.json')
     expect(brief).toContain('https://docs.example.test/installation')
     expect(brief).toContain('0.170.0-canary.54f8bcd443b4')
     expect(brief).toContain('makeRequiredFieldBinding')
+    expect(brief).toContain('bunx shadcn@4.23.0 add @fluid-foldkit/button')
+    expect(brief).not.toContain('@fluid-foldkit/all')
     expect(brief).toContain('bunx shadcn@4.23.0 add @bklit-foldkit/all')
   })
   it('cycles the original supported shortcut choices from current settings', () => {

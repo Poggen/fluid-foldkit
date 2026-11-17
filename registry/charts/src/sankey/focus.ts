@@ -207,4 +207,4 @@ const createSankeyFocus = <TDatum>(
   }
 }
 
-export { createSankeyFocus, SANKEY_LINK_POINT_MARK_ID, SANKEY_NODE_POINT_MARK_ID }
+export { createSankeyFocus, hitFlow, SANKEY_LINK_POINT_MARK_ID, SANKEY_NODE_POINT_MARK_ID }

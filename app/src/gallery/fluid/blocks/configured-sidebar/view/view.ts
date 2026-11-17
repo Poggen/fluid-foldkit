@@ -5,6 +5,7 @@ import {
   type PresentationContext,
 } from '@foldkit-visuals/fluid/presentation'
 import { sidebarActionRowsView } from './actions'
+import { sidebarWorkspaceMenu } from './workspace'
 import { Button } from '@foldkit-visuals/fluid/button'
 import type {
   SidebarActionContext,
@@ -185,6 +186,7 @@ const render = (
                             animate: motion.node,
                             highlight,
                             mark: () => WorkspaceTile({ context: compact, children: ['A'] }, h),
+                            menu: (dropdown) => sidebarWorkspaceMenu(compact, dropdown, h),
                           },
                         }),
                       ),
@@ -287,9 +289,7 @@ const render = (
               sidebarSectionIds.map((id, sectionIndex) => {
                 const children =
                   configuration.state === 'loading'
-                    ? [0, 1, 2, 3, 4].map((index) =>
-                        SidebarMenuSkeleton({ index, showIcon: true }, h),
-                      )
+                    ? [0, 1, 2, 3].map((index) => SidebarMenuSkeleton({ index, showIcon: true }, h))
                     : content.items
                         .filter(
                           (item) =>

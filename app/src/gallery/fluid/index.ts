@@ -96,9 +96,12 @@ const implementation = {
       ...dateResult,
       steps: [
         ...(dateResult.steps ?? []),
-        ...['basic', 'copy', 'composer'].map((key) =>
+        ...['basic', 'tooltip-neighbor', 'tooltip-third', 'copy', 'composer'].map((key) =>
           Tooltips.requestAdd({
             key,
+            ...(['basic', 'tooltip-neighbor', 'tooltip-third'].includes(key)
+              ? { groupKey: 'playground-tooltip' }
+              : {}),
             options: { side: 'top' },
           }),
         ),

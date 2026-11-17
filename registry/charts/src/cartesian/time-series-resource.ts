@@ -256,18 +256,12 @@ export function mountTimeSeriesResource<
       delete element.dataset.bkmClip
     }
 
-    const model = timeSeriesHoverModel(
-      next,
-      props,
-      tooltip,
-      textWidth,
-      phases.compile !== undefined,
-    )
-
     const customOverlay = next.overlayModel
 
     overlay.update(
-      customOverlay === undefined ? model : measuredOverlayPill(customOverlay, textWidth),
+      customOverlay === undefined
+        ? timeSeriesHoverModel(next, props, tooltip, textWidth, phases.compile !== undefined)
+        : measuredOverlayPill(customOverlay, textWidth),
       overlayPlotOf(next),
       margin,
     )
