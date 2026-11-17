@@ -34,7 +34,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || inputs.scope != 'browser-contracts'
       - run: |
           bun run build
-          bun run --cwd app test:e2e test/tailwind-fluid-contracts.e2e.ts test/tooltip-contracts.e2e.ts
+          bun run --cwd app test:e2e test/tailwind-fluid-contracts.e2e.ts test/tooltip-contracts.e2e.ts test/tooltip-pointer-diagnostics.e2e.ts
         if: github.event_name == 'workflow_dispatch' && inputs.scope == 'browser-contracts'
       - run: bun run test:consumer
         if: github.event_name != 'workflow_dispatch' || inputs.scope != 'browser-contracts'
