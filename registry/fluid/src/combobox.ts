@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism200b4534. MIT, copyright2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism200b4534. MIT, copyright2026 Micka Touillaud. */
 import { modifyFields } from 'foldkit/struct'
 import { Array, Layer, Option } from 'effect'
 import { Update } from 'foldkit'
@@ -252,7 +252,6 @@ const update = Composition.makeUpdate({
       return Array.match(model.values, {
         onEmpty: () => Definition.makeNoopStep(),
         onNonEmpty: (values) => {
-          // Base UI indexes accepted values by its physical collection, including retained exits.
           const index = renderedChipsCount > 0 ? renderedChipsCount - 1 : values.length - 1
           return selectValues(
             Array.filter(values, (_, position) => position !== index),

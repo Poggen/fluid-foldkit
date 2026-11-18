@@ -1,7 +1,7 @@
 import { modifyFields } from 'foldkit/struct'
 import { HoverMode } from './hover-observation.js'
 import { resolvePresentation } from './presentation.js'
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { Effect, Layer, Schema } from 'effect'
 import { Block } from 'foldkit'
 import { childAttributes } from 'foldkit/html'
@@ -160,7 +160,7 @@ export const Paint = CarouselDotsBlock.makeCommand('Paint', {
   },
 })
 
-const paintSnapshot = (model: Model): CarouselPaint => ({
+const paintSnapshot: (model: Model) => CarouselPaint = (model: Model) => ({
   id: model.id,
   identity: model.clock.resourceIdentity,
   index: model.clock.value,
@@ -184,13 +184,14 @@ const Highlight = CarouselDotsBlock.makeRequiredFieldBinding(HoverHighlightBlock
 const Hover = CarouselDotsBlock.makeRequiredFieldBinding(HoverBlock, {
   field: 'hover',
   init: {
-    contextToArgs: (config: CarouselDotsConfig): [HoverConfig] => [
-      {
-        id: config.id,
-        axis: 'x',
-        ...(config.hoverMode === undefined ? {} : { mode: config.hoverMode }),
-      },
-    ],
+    contextToArgs: (config: CarouselDotsConfig) =>
+      [
+        {
+          id: config.id,
+          axis: 'x',
+          ...(config.hoverMode === undefined ? {} : { mode: config.hoverMode }),
+        },
+      ] satisfies [HoverConfig],
   },
 }).withOutMessagePolicy({
   fold: CarouselDotsBlock.makeOutMessageFold(HoverBlock, {
@@ -311,7 +312,7 @@ const makeView = (resources: typeof CarouselDotsResources.Service) =>
         model: model.hover,
         viewInputs: {
           className: cn('relative flex w-fit items-center', inputs.className),
-          // Source spreads caller props after hover.handlers: replace only the matching mouse event.
+
           mouseHandlers: {
             enter: !inputs.attributes?.some(({ attribute }) => attribute._tag === 'OnMouseEnter'),
             leave: !inputs.attributes?.some(({ attribute }) => attribute._tag === 'OnMouseLeave'),

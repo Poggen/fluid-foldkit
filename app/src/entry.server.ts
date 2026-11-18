@@ -58,5 +58,5 @@ export const renderPageEffect = (
     })
   })
 
-export const renderPage = (request: Request): Promise<Server.EntryResult> =>
+export const renderPage: (request: Request) => Promise<Server.EntryResult> = (request: Request) =>
   Effect.runPromise(renderPageEffect(request), { signal: request.signal })

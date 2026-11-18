@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { it } from '@effect/vitest'
 import { Effect, Layer, Schedule, Schema } from 'effect'
@@ -70,12 +71,7 @@ it.live('default composition owns Tooltip feedback, rearming, variants and clean
     if (animation === undefined || !Reflect.deleteProperty(Element.prototype, 'animate')) {
       throw new Error('Test requires scoped WAAPI capability removal')
     }
-    const write = vi.fn((_value: string) => Promise.resolve())
-    const clipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard')
-    Object.defineProperty(navigator, 'clipboard', {
-      configurable: true,
-      value: { writeText: write },
-    })
+    const write = vi.spyOn(navigator.clipboard, 'writeText')
     const host = document.createElement('div')
     const container = document.createElement('div')
     container.id = 'input-copy-control-test'
@@ -116,6 +112,9 @@ it.live('default composition owns Tooltip feedback, rearming, variants and clean
         expect(button().getAttribute('aria-label')).toBe('Copied')
         expect(button().textContent).toContain('invitation')
       })
+      expect(yield* Effect.promise(navigator.clipboard.readText.bind(navigator.clipboard))).toBe(
+        'invitation',
+      )
       host.querySelector('#default-copy')?.dispatchEvent(new MouseEvent('mouseleave'))
       yield* eventually(() => expect(popup()).toBeNull())
       yield* eventually(() => {
@@ -137,8 +136,7 @@ it.live('default composition owns Tooltip feedback, rearming, variants and clean
       yield* Effect.promise(handle.dispose.bind(handle))
       host.remove()
       Object.defineProperty(Element.prototype, 'animate', animation)
-      if (clipboard === undefined) Reflect.deleteProperty(navigator, 'clipboard')
-      else Object.defineProperty(navigator, 'clipboard', clipboard)
+      write.mockRestore()
     }
     expect(popup()).toBeNull()
   }),

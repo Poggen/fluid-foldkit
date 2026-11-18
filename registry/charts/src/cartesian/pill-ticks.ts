@@ -1,13 +1,16 @@
 import { keyStarts, NOT_MOTION } from '../kit/renderer-dom'
 
-const date = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
-
-export function writePillSameLabel(
+export const writePillSameLabel: (
   host: HTMLElement,
   times: ReadonlyArray<number>,
   time: number,
   px: (value: number) => number,
-): void {
+) => void = function writePillSameLabel(
+  host: HTMLElement,
+  times: ReadonlyArray<number>,
+  time: number,
+  px: (value: number) => number,
+) {
   const label = date.format(time)
   let index = 0
 
@@ -20,11 +23,15 @@ export function writePillSameLabel(
   for (; index < 4; index++) host.style.removeProperty(`--bkm-same${index}`)
 }
 
-export function pillTickStaticCss(
+export const pillTickStaticCss: (
+  scope: string,
+  tickerHalfWidth: number,
+  position?: 'pill' | 'focus',
+) => string = function pillTickStaticCss(
   scope: string,
   tickerHalfWidth: number,
   position: 'pill' | 'focus' = 'pill',
-): string {
+) {
   const sel = `${scope} text${keyStarts('x-tick-label:')}`
 
   const same = Array.from(
@@ -37,3 +44,5 @@ export function pillTickStaticCss(
 
   return `${sel}${NOT_MOTION}{--bkm-pill-transition:opacity .4s ease-in-out}@supports (opacity: attr(opacity type(<number>), 1)){${scope}[data-bkm-hover]${held} text${keyStarts('x-tick-label:')}{--bkm-pill-opacity:clamp(0, min(calc((abs(attr(x type(<number>)) - ${x}) - ${tickerHalfWidth}) / 20), ${same}), 1)!important}}`
 }
+
+const date = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })

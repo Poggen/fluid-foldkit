@@ -62,7 +62,7 @@ interface LiveBuilt {
   readonly introEaseCss: string
 }
 
-export function liveBuilt({
+export const liveBuilt: (options0: UseLiveBuiltArgs) => LiveBuilt = function liveBuilt({
   frame,
   width,
   margin,
@@ -83,9 +83,7 @@ export function liveBuilt({
   tooltipEnabled,
   formatValue,
   formatTime,
-}: UseLiveBuiltArgs): LiveBuilt {
-  // bklit's x labels are `numTicks` fixed slots at 0..100% of the live window; only their text re-derives as it rolls.
-  // The labels under the hover pill fade natively (tickLabels.opacity reads the pointer; see live-line/definition.ts).
+}: UseLiveBuiltArgs) {
   const xTickTimes = (() => {
     const start = frame?.xDomain[0] ?? 0
     const labelWidth =
@@ -96,14 +94,12 @@ export function liveBuilt({
       Math.min(xAxis?.numTicks ?? numXTicks, Math.floor(available / (labelWidth + 12)) + 1),
     )
 
-    // xDomain is the view at the end of the roll; the labels' clock starts rollMs earlier, at the sample (live-xlabels.ts).
     return Array.from(
       { length: n },
       (_, i) => start + (i * windowSecs * 1000) / (n - 1) - (frame?.rollMs ?? 0),
     )
   })()
 
-  // Only the left/right/top/bottom of bklit's hover area: the plot inside the *requested* margin (the native plot is wider).
   const hoverBounds = (() => ({
     left: margin.left,
     right: (width || 800) - margin.right,
@@ -111,10 +107,7 @@ export function liveBuilt({
     bottom: margin.top + innerHeight,
   }))()
 
-  // Left path cut in px, applied by CSS clip-path in the path's own coordinates (so it rides the rolling transform):
-  // the left pad rows are invisible; the path starts at the first real sample (bklit's fade mask is a cut at the dot).
   const pad = (() => {
-    // The drawn path spans rows[1..length-2] (see smoothRows): the end rows only seed its tangents.
     const rows = frame?.rows ?? []
     const first = rows.findIndex((r) => !r.pad)
     const start = rows.at(1)
@@ -130,7 +123,7 @@ export function liveBuilt({
 
   const headCss = (() => liveCss(lerpSpeed))()
   const introEase = (() => introEasing(lerpSpeed, frame?.rollMs ?? 600))()
-  // The same easing as a CSS timing function, for the tail's intro slide (live-css.ts).
+
   const introEaseCss = (() => sampledEasing(introEase))()
 
   const built = (() =>
@@ -176,6 +169,5 @@ export function liveBuilt({
         })
       : null)()
 
-  // First paint skips the entrance; every later update is the roll.
   return { built, hoverBounds, pad, headCss, introEaseCss }
 }

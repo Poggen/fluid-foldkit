@@ -1,6 +1,8 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { NavItemConfig } from './nav-menu-state.js'
-const navItems = (group: 'platform' | 'workspace'): ReadonlyArray<NavItemConfig> =>
+const navItems: (group: 'platform' | 'workspace') => ReadonlyArray<NavItemConfig> = (
+  group: 'platform' | 'workspace',
+) =>
   (group === 'platform'
     ? ['Home', 'Inbox', 'Calendar']
     : ['Notifications', 'Members', 'Settings']

@@ -1,5 +1,26 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Context, Effect, Function, Layer } from 'effect'
+
+const copyViaExecCommand: (document: Document, value: string) => boolean =
+  function copyViaExecCommand(document: Document, value: string) {
+    const textarea = document.createElement('textarea')
+    textarea.value = value
+    textarea.readOnly = true
+    textarea.className = 'fixed opacity-0 text-[16px]'
+    document.body.append(textarea)
+    textarea.select()
+    textarea.setSelectionRange(0, textarea.value.length)
+
+    try {
+      const fallback: CopyFallbackDocument = document
+
+      return fallback.execCommand?.('copy') === true
+    } catch {
+      return false
+    } finally {
+      textarea.remove()
+    }
+  }
 
 export class InputCopyResources extends Context.Service<
   InputCopyResources,
@@ -15,26 +36,6 @@ export class InputCopyResources extends Context.Service<
 
 interface CopyFallbackDocument {
   readonly execCommand?: (commandId: string) => boolean
-}
-
-function copyViaExecCommand(document: Document, value: string): boolean {
-  const textarea = document.createElement('textarea')
-  textarea.value = value
-  textarea.readOnly = true
-  textarea.className = 'fixed opacity-0 text-[16px]'
-  document.body.append(textarea)
-  textarea.select()
-  textarea.setSelectionRange(0, textarea.value.length)
-
-  try {
-    const fallback: CopyFallbackDocument = document
-
-    return fallback.execCommand?.('copy') === true
-  } catch {
-    return false
-  } finally {
-    textarea.remove()
-  }
 }
 
 /** Clipboard and timer authority stays inside the acquired handler service. */

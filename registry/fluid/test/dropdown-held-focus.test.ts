@@ -12,16 +12,21 @@ const subject = {
   block: Dropdown,
   layer: menuLayer.pipe(Layer.provide(DropdownResourcesServerLayer)),
 }
-const row = (id: string, index: number, kind: DropdownRow['kind'] = 'action'): DropdownRow => ({
-  id,
-  index,
-  label: id,
-  kind,
-  disabled: false,
-  available: true,
-  checked: false,
-  closeOnClick: true,
-})
+const row: (id: string, index: number, kind?: DropdownRow['kind']) => DropdownRow = (
+  id: string,
+  index: number,
+  kind: DropdownRow['kind'] = 'action',
+) =>
+  ({
+    id,
+    index,
+    label: id,
+    kind,
+    disabled: false,
+    available: true,
+    checked: false,
+    closeOnClick: true,
+  }) satisfies DropdownRow
 const held = row('submenu', 2, 'submenu')
 const pointerHandlers = (enabled: boolean) =>
   hoverTest.ControlHover({

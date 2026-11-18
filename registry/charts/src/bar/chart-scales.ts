@@ -8,6 +8,36 @@ import { barAxisId } from './model'
 import type { Domains } from '../cartesian/state'
 import { gridRowGuides, gridLineStyle } from '../cartesian/grid-guides'
 
+const valueScaleFor: (
+  argument0: BarScaleInputs,
+  yAxis: YAxisConfig | undefined,
+  grid: GridProps | undefined,
+  rowGuides: ReturnType<typeof gridRowGuides> | undefined,
+) => ChartPositionScaleOptions<BarValue> = function valueScaleFor(
+  { domain, horizontal }: BarScaleInputs,
+  yAxis: YAxisConfig | undefined,
+  grid: GridProps | undefined,
+  rowGuides: ReturnType<typeof gridRowGuides> | undefined,
+) {
+  let valueScale: ChartPositionScaleOptions<BarValue> = {
+    scale: scaleLinear().domain(domain),
+    grid:
+      grid !== undefined && (rowGuides?.native ?? grid.vertical !== false)
+        ? gridLineStyle(grid)
+        : false,
+    axis: false,
+  }
+
+  if (!horizontal) {
+    valueScale = {
+      ...valueScale,
+      side: yAxis?.orientation ?? 'left',
+    }
+  }
+
+  return valueScale
+}
+
 interface BarScaleInputs {
   readonly xAxis: BarXAxisProps | undefined
   readonly yAxis: BarYAxisProps | undefined
@@ -42,31 +72,6 @@ function categoryScaleFor(
   }
 
   return { categoryScale, tickValues }
-}
-
-function valueScaleFor(
-  { domain, horizontal }: BarScaleInputs,
-  yAxis: YAxisConfig | undefined,
-  grid: GridProps | undefined,
-  rowGuides: ReturnType<typeof gridRowGuides> | undefined,
-): ChartPositionScaleOptions<BarValue> {
-  let valueScale: ChartPositionScaleOptions<BarValue> = {
-    scale: scaleLinear().domain(domain),
-    grid:
-      grid !== undefined && (rowGuides?.native ?? grid.vertical !== false)
-        ? gridLineStyle(grid)
-        : false,
-    axis: false,
-  }
-
-  if (!horizontal) {
-    valueScale = {
-      ...valueScale,
-      side: yAxis?.orientation ?? 'left',
-    }
-  }
-
-  return valueScale
 }
 
 export function buildBarScales(input: BarScaleInputs) {

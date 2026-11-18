@@ -1,6 +1,6 @@
 import { modifyFields } from 'foldkit/struct'
 import { HoverMode } from './hover-observation.js'
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { Option, Schema, Layer } from 'effect'
 import { Block, Update } from 'foldkit'
 import { childAttributes } from 'foldkit/html'
@@ -89,13 +89,14 @@ export const ColorPickerPopoverBlock = Block.make('ColorPickerPopover', {
 const PickerInitial = ColorPickerPopoverBlock.makeRequiredFieldBinding(ColorPickerBlock, {
   field: 'picker',
   init: {
-    contextToArgs: (config: ColorPickerPopoverConfig): [ColorPickerConfig] => [
-      {
-        ...config,
-        id: `${config.id}-picker`,
-        value: config.value ?? config.defaultValue ?? '#6B97FF',
-      },
-    ],
+    contextToArgs: (config: ColorPickerPopoverConfig) =>
+      [
+        {
+          ...config,
+          id: `${config.id}-picker`,
+          value: config.value ?? config.defaultValue ?? '#6B97FF',
+        },
+      ] satisfies [ColorPickerConfig],
   },
 })
 
@@ -126,7 +127,7 @@ const Picker = PickerInitial.withOutMessagePolicy({
 const Popup = ColorPickerPopoverBlock.makeRequiredFieldBinding(ColorPopupBlock, {
   field: 'popup',
   init: {
-    contextToArgs: (config: ColorPickerPopoverConfig): [ColorPopupConfig] => {
+    contextToArgs: (config: ColorPickerPopoverConfig) => {
       const popup: ColorPopupConfig = { id: `${config.id}-popup`, kind: 'popover' }
       const configured = config.open === undefined ? popup : { ...popup, open: config.open }
 
@@ -134,7 +135,7 @@ const Popup = ColorPickerPopoverBlock.makeRequiredFieldBinding(ColorPopupBlock, 
         config.defaultOpen === undefined
           ? configured
           : { ...configured, defaultOpen: config.defaultOpen },
-      ]
+      ] satisfies [ColorPopupConfig]
     },
   },
 }).withOutMessagePolicy({
@@ -164,23 +165,22 @@ const Highlight = ColorPickerPopoverBlock.makeRequiredFieldBinding(HoverHighligh
 const Hover = ColorPickerPopoverBlock.makeRequiredFieldBinding(HoverBlock, {
   field: 'hover',
   init: {
-    contextToArgs: (
-      config: ColorPickerPopoverConfig,
-    ): [
-      {
-        id: string
-        axis: 'x'
-        mode?: HoverMode
-        gapClick: false
-      },
-    ] => [
-      {
-        id: `${config.id}-segments`,
-        axis: 'x',
-        gapClick: false,
-        ...(config.hoverMode === undefined ? {} : { mode: config.hoverMode }),
-      },
-    ],
+    contextToArgs: (config: ColorPickerPopoverConfig) =>
+      [
+        {
+          id: `${config.id}-segments`,
+          axis: 'x',
+          gapClick: false,
+          ...(config.hoverMode === undefined ? {} : { mode: config.hoverMode }),
+        },
+      ] satisfies [
+        {
+          id: string
+          axis: 'x'
+          mode?: HoverMode
+          gapClick: false
+        },
+      ],
   },
 }).withOutMessagePolicy({
   fold: ColorPickerPopoverBlock.makeOutMessageFold(HoverBlock, {

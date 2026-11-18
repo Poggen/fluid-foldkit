@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { it as effectIt } from '@effect/vitest'
 import { Data, Effect, Layer, Option, Schema, Schedule } from 'effect'

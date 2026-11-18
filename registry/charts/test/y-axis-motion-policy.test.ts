@@ -1,4 +1,5 @@
 // oxlint-disable no-comments/no-comments -- The genuine motion renderer acquires browser classes at module load.
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 // oxlint-enable no-comments/no-comments -- Resume the source comment policy.
 import { expect, test } from 'vitest'
@@ -8,7 +9,7 @@ import { Bar, YAxis } from '@foldkit-visuals/charts/bar'
 import { nativeObservations } from '../src/cartesian/native-resource'
 import { initialInteraction } from '../src/cartesian/state'
 import { fontTestEnvironment } from './font-test-environment'
-import { bar, barProps, rows, size } from './y-axis-source-fixture'
+import { bar, barProps, rows, size } from './y-axis-source.fixture'
 
 test('the real motion renderer delivers numeric axis guides to the existing Bar snap policy', () => {
   const environment = fontTestEnvironment()

@@ -57,7 +57,7 @@ export const CarouselDotsExampleBlock = Block.make('CarouselDotsExample', {
   view: { kind: 'Element' },
 })
 const Root = CarouselDotsExampleBlock
-const configOf = (model: Model): CarouselDotsConfig => ({
+const configOf: (model: Model) => CarouselDotsConfig = (model: Model) => ({
   ...exampleHoverConfig,
   id: model.dots.id,
   count: model.dots.clock.count,

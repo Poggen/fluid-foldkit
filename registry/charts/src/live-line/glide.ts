@@ -3,22 +3,16 @@ import { CROSSHAIR_SPRING } from '../kit/motion/springs'
 import type { Frame, RollClock } from './live-frame'
 import { rollEase, rollYAt } from './live-frame'
 
-/** bklit's crosshair spring: rule, dot and time pill follow the pointer on a `useSpring` of `tooltipSpring` 300/30 (chart-config-context.tsx:20; tooltip-indicator.tsx:110-118, tooltip-dot.tsx:58-62, live-x-axis.tsx:12,92),
- * velocity-carrying, rest thresholds motion's for px (motion-dom 12.27.0 spring/defaults.mjs). The renderer's guide motion cannot carry it: each roll frame restarts its tween at elapsed 0 (charts-core motion.ts:1088-1104, 3990), UPSTREAM-GAPS #43. */
-const CROSSHAIR_GLIDE = springOf(CROSSHAIR_SPRING, REST_PX)
+const glideAt: (a: GlideAxis, time: number) => ReturnType<typeof CROSSHAIR_GLIDE.sample> =
+  function glideAt(a: GlideAxis, time: number) {
+    return CROSSHAIR_GLIDE.sample(time - a.start, { from: a.from, to: a.to, velocity: a.velocity })
+  }
 
-interface GlideAxis {
-  from: number
-  to: number
-  velocity: number
-  start: number
-}
-
-function glideAt(a: GlideAxis, time: number): ReturnType<typeof CROSSHAIR_GLIDE.sample> {
-  return CROSSHAIR_GLIDE.sample(time - a.start, { from: a.from, to: a.to, velocity: a.velocity })
-}
-
-function retarget(a: GlideAxis, to: number, time: number): void {
+const retarget: (a: GlideAxis, to: number, time: number) => void = function retarget(
+  a: GlideAxis,
+  to: number,
+  time: number,
+) {
   const now = glideAt(a, time)
   a.from = now.value
   a.velocity = now.velocity
@@ -26,9 +20,7 @@ function retarget(a: GlideAxis, to: number, time: number): void {
   a.start = time
 }
 
-/** The drawn line's y at plot x (svg px) at frame time `time`, the target bklit's dot springs to (live-line-chart.tsx:229-269): the frame's rows at rest moved by what is left of the roll's transform (Frame.roll).
- * It is the chord between samples, used only as a difference: the marker's offset is the spring's lag behind it, 0 on the renderer's own marker. */
-function lineYAt(
+const lineYAt: (
   f: Frame,
   r: RollClock | null,
   time: number,
@@ -36,7 +28,15 @@ function lineYAt(
   top: number,
   height: number,
   x: number,
-): number {
+) => number = function lineYAt(
+  f: Frame,
+  r: RollClock | null,
+  time: number,
+  layout: { left: number; x0: number; pxPerMs: number },
+  top: number,
+  height: number,
+  x: number,
+) {
   const e = rollEase(r, time)
   const tAt = layout.x0 + (x - (r ? r.x * (1 - e) : 0) - layout.left) / (layout.pxPerMs || 1)
   const pts = f.rows.filter((row) => !row.pad)
@@ -72,6 +72,15 @@ function lineYAt(
   const ry = rollYAt(r, time)
 
   return ry.s * (top + ((y1 - v) * height) / (y1 - y0 || 1)) + ry.t
+}
+
+const CROSSHAIR_GLIDE = springOf(CROSSHAIR_SPRING, REST_PX)
+
+interface GlideAxis {
+  from: number
+  to: number
+  velocity: number
+  start: number
 }
 
 export interface GlideGeometry {

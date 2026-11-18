@@ -23,7 +23,6 @@ interface NativeBarInputs<Row> {
   readonly loading: boolean
 }
 
-/** One front-face scene, one physical entrance owner, independent of depth decoration presence. */
 const pointPosition = (
   frame: ReturnType<typeof projectBarFrame>,
   end: number,

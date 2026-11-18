@@ -89,7 +89,9 @@ export const controls = [
     values: [defaults.confirmLabel],
   },
 ] satisfies ReadonlyArray<Control<keyof Configuration>>
-export const controlsFor = (configuration: Configuration): ReadonlyArray<Control> =>
+export const controlsFor: (configuration: Configuration) => ReadonlyArray<Control> = (
+  configuration: Configuration,
+) =>
   controls.map((control) => {
     if (control.prop === 'cancelLabel') return { ...control, enabled: configuration.showActions }
     if (control.prop === 'confirmLabel') return { ...control, enabled: configuration.showActions }

@@ -1,17 +1,15 @@
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
 import type { Html, HtmlBuilder } from 'foldkit/html'
 import { cn } from './lib/utils.js'
 
-export interface TooltipShortcutProps {
-  readonly children: string | ReadonlyArray<string>
-  readonly className?: string
-}
-
 /** One inverted source keycap per key; arrays preserve names such as "Page Up". */
-export function TooltipShortcut<Message, Requirements>(
+export const TooltipShortcut: <Message, Requirements>(
   props: TooltipShortcutProps,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function TooltipShortcut<Message, Requirements>(
+  props: TooltipShortcutProps,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   const keys =
     typeof props.children === 'string'
       ? (props.children.match(/[⌘⇧⌥⌃]|[^⌘⇧⌥⌃+\s]+|\+$/g) ?? [])
@@ -32,5 +30,10 @@ export function TooltipShortcut<Message, Requirements>(
         [key],
       ),
     ),
-  )
+  ) satisfies Html
+}
+
+export interface TooltipShortcutProps {
+  readonly children: string | ReadonlyArray<string>
+  readonly className?: string
 }

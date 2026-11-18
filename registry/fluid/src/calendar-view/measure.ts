@@ -1,11 +1,15 @@
 import { Observation } from './state.js'
 import type { Rect } from './state.js'
 
-function layoutRect(
+const layoutRect: (
   window: Window & typeof globalThis,
   button: HTMLElement,
   container: HTMLElement,
-): typeof Rect.Type {
+) => typeof Rect.Type = function layoutRect(
+  window: Window & typeof globalThis,
+  button: HTMLElement,
+  container: HTMLElement,
+) {
   let top = button.offsetTop
   let left = button.offsetLeft
   let ancestor = button.offsetParent
@@ -23,11 +27,15 @@ function layoutRect(
   return { top, left, width: button.offsetWidth, height: button.offsetHeight }
 }
 
-function monthStride(
+const monthStride: (
   first: HTMLElement | undefined,
   second: HTMLElement | undefined,
   stacked: boolean,
-): number | null {
+) => number | null = function monthStride(
+  first: HTMLElement | undefined,
+  second: HTMLElement | undefined,
+  stacked: boolean,
+) {
   if (first === undefined || (stacked && second === undefined)) {
     return null
   }

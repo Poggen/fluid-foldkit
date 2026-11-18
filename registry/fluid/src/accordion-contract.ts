@@ -1,5 +1,5 @@
 import { HoverMode } from './hover-observation.js'
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { Layer, Schema } from 'effect'
 import { Block } from 'foldkit'
 import type { ChildAttribute, Html } from 'foldkit/html'

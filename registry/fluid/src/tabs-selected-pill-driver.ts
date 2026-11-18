@@ -5,6 +5,59 @@ import { animateTarget, HTMLVisualElement } from 'motion-dom'
 import { spring } from './lib/springs.js'
 import { SelectedPillTarget } from './tabs-selected-pill-state.js'
 
+/** Seed insertion only; retained patches must not overwrite the owner's current animated values. */
+export const seedSelectedPill: (vnode: Html, target: SelectedPillTarget) => Html =
+  function seedSelectedPill(vnode: Html, target: SelectedPillTarget) {
+    if (vnode === null) {
+      return null
+    }
+
+    const previous = vnode.data?.hook
+
+    return {
+      ...vnode,
+      data: {
+        ...vnode.data,
+        style: {
+          left: `${target.left}px`,
+          top: `${target.top}px`,
+          width: `${target.width}px`,
+          height: `${target.height}px`,
+          opacity: String(target.opacity),
+        },
+        hook: {
+          ...previous,
+          prepatch(oldNode, node) {
+            previous?.prepatch?.(oldNode, node)
+
+            if (!(oldNode.elm instanceof HTMLElement)) {
+              return
+            }
+
+            if (oldNode.elm.hasAttribute(liveLeaseAttribute)) {
+              if (oldNode.data?.style !== undefined) {
+                node.data = { ...node.data, style: oldNode.data.style }
+              }
+            } else {
+              const { style } = oldNode.elm
+
+              oldNode.data = {
+                ...oldNode.data,
+                style: {
+                  left: style.left,
+                  top: style.top,
+                  width: style.width,
+                  height: style.height,
+                  opacity: style.opacity,
+                },
+              }
+            }
+          },
+        },
+      },
+    }
+  }
+
 export const selectedPillInitializerAttribute = 'data-tabs-pill-initializer'
 
 const liveLeaseAttribute = 'data-tabs-pill-live-lease'
@@ -113,7 +166,6 @@ function mountSelectedPill(
       }
 
       if (element.getAttribute(liveLeaseAttribute) === lease) {
-        // Pause may finalize before or after the historical patch; return the node to its latest declared pose.
         const encoded = element.getAttribute(selectedPillInitializerAttribute)
 
         if (element.isConnected && encoded !== null) {
@@ -211,57 +263,4 @@ export function acquireSelectedPill(
         }
       }),
   )
-}
-
-/** Seed insertion only; retained patches must not overwrite the owner's current animated values. */
-export function seedSelectedPill(vnode: Html, target: SelectedPillTarget): Html {
-  if (vnode === null) {
-    return null
-  }
-
-  const previous = vnode.data?.hook
-
-  return {
-    ...vnode,
-    data: {
-      ...vnode.data,
-      style: {
-        left: `${target.left}px`,
-        top: `${target.top}px`,
-        width: `${target.width}px`,
-        height: `${target.height}px`,
-        opacity: String(target.opacity),
-      },
-      hook: {
-        ...previous,
-        prepatch(oldNode, node) {
-          previous?.prepatch?.(oldNode, node)
-
-          if (!(oldNode.elm instanceof HTMLElement)) {
-            return
-          }
-
-          if (oldNode.elm.hasAttribute(liveLeaseAttribute)) {
-            if (oldNode.data?.style !== undefined) {
-              node.data = { ...node.data, style: oldNode.data.style }
-            }
-          } else {
-            // A late pause finalizer can change the DOM after its VNode was recorded.
-            const { style } = oldNode.elm
-
-            oldNode.data = {
-              ...oldNode.data,
-              style: {
-                left: style.left,
-                top: style.top,
-                width: style.width,
-                height: style.height,
-                opacity: style.opacity,
-              },
-            }
-          }
-        },
-      },
-    },
-  }
 }

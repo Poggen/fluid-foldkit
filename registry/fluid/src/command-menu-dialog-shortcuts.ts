@@ -6,7 +6,7 @@ interface ShortcutOccurrence {
   readonly open: () => boolean
   readonly inScope: () => boolean
 }
-export const commandDialogCombo = (shortcut: string): string => {
+export const commandDialogCombo: (shortcut: string) => string = (shortcut: string) => {
   const parsed = parseShortcut(shortcut)
   return [
     parsed.mod && 'mod',

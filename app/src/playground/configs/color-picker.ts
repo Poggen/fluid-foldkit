@@ -42,4 +42,6 @@ export const controls = [
   },
   { kind: 'toggle', prop: 'hideEyedropper', group: 'State', initial: defaults.hideEyedropper },
 ] satisfies ReadonlyArray<Control<keyof Configuration>>
-export const controlsFor = (_configuration: Configuration): ReadonlyArray<Control> => controls
+export const controlsFor: (_configuration: Configuration) => ReadonlyArray<Control> = (
+  _configuration: Configuration,
+) => controls

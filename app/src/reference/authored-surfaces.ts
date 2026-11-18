@@ -8,7 +8,7 @@ import {
   previewCodeTabId,
   previewCodeTabsViewInputs,
 } from '../../../components/docs/preview-code-tabs'
-// Table examples derived from Fluid Functionalism cc276ca0. MIT.
+/* @license Table examples derived from Fluid Functionalism cc276ca0. MIT. */
 import { Layer, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { initAndInsert } from 'foldkit/binding'

@@ -17,16 +17,19 @@ import type { CandlestickProps } from '../candlestick/options'
 import type { ChartTooltipProps } from './tooltip-options'
 import type { SegmentBackgroundProps, SegmentLineProps } from './segment-options'
 
+const layer: <Kind extends string, Props>(
+  kind: Kind,
+  props: Props,
+) => ConfigurationLayer<Kind, Props> = function layer<Kind extends string, Props>(
+  kind: Kind,
+  props: Props,
+) {
+  return { kind, props } satisfies ConfigurationLayer<Kind, Props>
+}
+
 export interface ConfigurationLayer<Kind extends string, Props> {
   readonly kind: Kind
   readonly props: Props
-}
-
-function layer<Kind extends string, Props>(
-  kind: Kind,
-  props: Props,
-): ConfigurationLayer<Kind, Props> {
-  return { kind, props }
 }
 
 /** Native configuration carriers replace React child parsing with a checked discriminated union. */
@@ -65,9 +68,12 @@ export const TooltipDot = (props: Readonly<TooltipDotProps> = {}) => layer('tool
 export const TooltipIndicator = (props: Readonly<TooltipIndicatorProps> = {}) =>
   layer('tooltipIndicator', props)
 
-export const ChartTooltip = <Row = unknown>(
+export const ChartTooltip: <Row = unknown>(
+  props?: Readonly<ChartTooltipProps<Row>>,
+) => ConfigurationLayer<'tooltip', Readonly<ChartTooltipProps<Row>>> = <Row = unknown>(
   props: Readonly<ChartTooltipProps<Row>> = {},
-): ConfigurationLayer<'tooltip', Readonly<ChartTooltipProps<Row>>> => layer('tooltip', props)
+) =>
+  layer('tooltip', props) satisfies ConfigurationLayer<'tooltip', Readonly<ChartTooltipProps<Row>>>
 
 export const ProfitLossLine = (props: Readonly<ProfitLossLineProps>) =>
   layer('profitLossLine', props)

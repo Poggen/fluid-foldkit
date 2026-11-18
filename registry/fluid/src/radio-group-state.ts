@@ -1,5 +1,34 @@
 import { Option, Schema } from 'effect'
 
+export const radioSelectedIndex: (model: RadioSelection) => number = function radioSelectedIndex(
+  model: RadioSelection,
+) {
+  return Option.isSome(model.value)
+    ? model.values.findIndex(
+        (item) => Option.getOrUndefined(item.value) === Option.getOrUndefined(model.value),
+      )
+    : Option.getOrElse(model.selectedIndex, () => -1)
+}
+
+export const radioItemSelected: (model: RadioSelection, item: typeof RadioValue.Type) => boolean =
+  function radioItemSelected(model: RadioSelection, item: typeof RadioValue.Type) {
+    return Option.isSome(model.value) && Option.isSome(item.value)
+      ? model.value.value === item.value.value
+      : Option.getOrElse(
+          item.selected,
+          () => Option.getOrUndefined(model.selectedIndex) === item.index,
+        )
+  }
+
+export const radioHasSelection: (model: RadioSelection) => boolean = function radioHasSelection(
+  model: RadioSelection,
+) {
+  return (
+    radioSelectedIndex(model) >= 0 ||
+    model.values.some((item) => Option.getOrElse(item.selected, () => false))
+  )
+}
+
 export const RadioValue = Schema.Struct({
   index: Schema.Int,
   value: Schema.OptionFromNullOr(Schema.String),
@@ -23,28 +52,4 @@ export interface RadioSelection {
   readonly value: Option.Option<string>
   readonly selectedIndex: Option.Option<number>
   readonly values: ReadonlyArray<typeof RadioValue.Type>
-}
-
-export function radioSelectedIndex(model: RadioSelection): number {
-  return Option.isSome(model.value)
-    ? model.values.findIndex(
-        (item) => Option.getOrUndefined(item.value) === Option.getOrUndefined(model.value),
-      )
-    : Option.getOrElse(model.selectedIndex, () => -1)
-}
-
-export function radioItemSelected(model: RadioSelection, item: typeof RadioValue.Type): boolean {
-  return Option.isSome(model.value) && Option.isSome(item.value)
-    ? model.value.value === item.value.value
-    : Option.getOrElse(
-        item.selected,
-        () => Option.getOrUndefined(model.selectedIndex) === item.index,
-      )
-}
-
-export function radioHasSelection(model: RadioSelection): boolean {
-  return (
-    radioSelectedIndex(model) >= 0 ||
-    model.values.some((item) => Option.getOrElse(item.selected, () => false))
-  )
 }

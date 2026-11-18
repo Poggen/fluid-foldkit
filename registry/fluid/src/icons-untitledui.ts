@@ -1,8 +1,90 @@
-// Fluid's exact Untitled UI role adapter. No Untitled UI SVG data is distributed.
-// Consumers supply licensed native glyph renderers; see NOTICE
+/* @license Consumers supply licensed native glyph renderers; see NOTICE */
 import type { Html, HtmlBuilder } from 'foldkit/html'
 import { defaultIcons } from './icons.js'
 import type { Icon, IconMap } from './presentation.js'
+
+const adapt: (glyph: UntitleduiGlyph) => Icon = function adapt(glyph: UntitleduiGlyph) {
+  return (options, h) =>
+    glyph(
+      {
+        width: options.size,
+        height: options.size,
+        strokeWidth: options.strokeWidth,
+        className: options.className,
+      },
+      h,
+    )
+}
+
+/** Native consumer-owned glyphs are required; no substitute family is selected. */
+export const createUntitleduiIcons: (glyphs: UntitleduiGlyphs) => IconMap =
+  function createUntitleduiIcons(glyphs: UntitleduiGlyphs) {
+    return {
+      'chevron-right': adapt(glyphs.ChevronRight),
+      'chevron-down': adapt(glyphs.ChevronDown),
+      pipette: adapt(glyphs.Dropper),
+      x: adapt(glyphs.XClose),
+      copy: adapt(glyphs.Copy01),
+      menu: adapt(glyphs.Menu01),
+      dot: adapt(glyphs.Circle),
+      monitor: adapt(glyphs.Monitor01),
+      sun: adapt(glyphs.Sun),
+      moon: adapt(glyphs.Moon01),
+      'rectangle-horizontal': adapt(glyphs.Square),
+      circle: adapt(glyphs.Circle),
+      'square-library': adapt(glyphs.BookClosed),
+      clock: adapt(glyphs.Clock),
+      star: adapt(glyphs.Star01),
+      settings: adapt(glyphs.Settings01),
+      plus: adapt(glyphs.Plus),
+      'arrow-left': adapt(glyphs.ArrowLeft),
+      'arrow-right': adapt(glyphs.ArrowRight),
+      'arrow-up': adapt(glyphs.ArrowUp),
+      'arrow-down': adapt(glyphs.ArrowDown),
+      search: adapt(glyphs.SearchMd),
+      loader: adapt(glyphs.Loading01),
+      users: adapt(glyphs.Users01),
+      lock: adapt(glyphs.Lock01),
+      mail: adapt(glyphs.Mail01),
+      bell: adapt(glyphs.Bell01),
+      shield: adapt(glyphs.Shield01),
+      palette: adapt(glyphs.Palette),
+      lightbulb: adapt(glyphs.Lightbulb01),
+      rocket: adapt(glyphs.Rocket01),
+      heart: adapt(glyphs.Heart),
+      paintbrush: adapt(glyphs.Brush01),
+      brain: adapt(glyphs.CpuChip01),
+      globe: adapt(glyphs.Globe01),
+      user: adapt(glyphs.User01),
+      image: adapt(glyphs.Image01),
+      link: adapt(glyphs.Link01),
+      check: adapt(glyphs.Check),
+      'rotate-ccw': adapt(glyphs.RefreshCcw01),
+      home: adapt(glyphs.Home01),
+      'message-circle': adapt(glyphs.MessageCircle01),
+      inbox: adapt(glyphs.Inbox01),
+      pencil: adapt(glyphs.Pencil01),
+      scaling: adapt(glyphs.Scale01),
+      'skip-forward': adapt(glyphs.SkipForward),
+      'corner-down-right': adapt(glyphs.CornerDownRight),
+      'corner-down-left': adapt(glyphs.CornerDownLeft),
+      'panel-left': adapt(glyphs.LayoutLeft),
+      'panel-right': adapt(glyphs.LayoutRight),
+      'chevrons-up-down': adapt(glyphs.ChevronSelectorVertical),
+      'more-horizontal': adapt(glyphs.DotsHorizontal),
+      'more-vertical': adapt(glyphs.DotsVertical),
+      calendar: adapt(glyphs.Calendar),
+      folder: adapt(glyphs.Folder),
+      'sliders-horizontal': adapt(glyphs.Sliders01),
+      info: adapt(glyphs.InfoCircle),
+      square: adapt(glyphs.Square),
+      'circle-alert': adapt(glyphs.AlertCircle),
+      file: adapt(glyphs.File01),
+      minus: adapt(glyphs.Minus),
+      play: defaultIcons.play,
+      pause: defaultIcons.pause,
+    }
+  }
 
 export interface UntitleduiGlyphOptions {
   readonly width: number | undefined
@@ -76,86 +158,4 @@ export interface UntitleduiGlyphs {
   readonly Folder: UntitleduiGlyph
   readonly Sliders01: UntitleduiGlyph
   readonly InfoCircle: UntitleduiGlyph
-}
-
-function adapt(glyph: UntitleduiGlyph): Icon {
-  return (options, h) =>
-    glyph(
-      {
-        width: options.size,
-        height: options.size,
-        strokeWidth: options.strokeWidth,
-        className: options.className,
-      },
-      h,
-    )
-}
-
-/** Native consumer-owned glyphs are required; no substitute family is selected. */
-export function createUntitleduiIcons(glyphs: UntitleduiGlyphs): IconMap {
-  return {
-    'chevron-right': adapt(glyphs.ChevronRight),
-    'chevron-down': adapt(glyphs.ChevronDown),
-    pipette: adapt(glyphs.Dropper),
-    x: adapt(glyphs.XClose),
-    copy: adapt(glyphs.Copy01),
-    menu: adapt(glyphs.Menu01),
-    dot: adapt(glyphs.Circle),
-    monitor: adapt(glyphs.Monitor01),
-    sun: adapt(glyphs.Sun),
-    moon: adapt(glyphs.Moon01),
-    'rectangle-horizontal': adapt(glyphs.Square),
-    circle: adapt(glyphs.Circle),
-    'square-library': adapt(glyphs.BookClosed),
-    clock: adapt(glyphs.Clock),
-    star: adapt(glyphs.Star01),
-    settings: adapt(glyphs.Settings01),
-    plus: adapt(glyphs.Plus),
-    'arrow-left': adapt(glyphs.ArrowLeft),
-    'arrow-right': adapt(glyphs.ArrowRight),
-    'arrow-up': adapt(glyphs.ArrowUp),
-    'arrow-down': adapt(glyphs.ArrowDown),
-    search: adapt(glyphs.SearchMd),
-    loader: adapt(glyphs.Loading01),
-    users: adapt(glyphs.Users01),
-    lock: adapt(glyphs.Lock01),
-    mail: adapt(glyphs.Mail01),
-    bell: adapt(glyphs.Bell01),
-    shield: adapt(glyphs.Shield01),
-    palette: adapt(glyphs.Palette),
-    lightbulb: adapt(glyphs.Lightbulb01),
-    rocket: adapt(glyphs.Rocket01),
-    heart: adapt(glyphs.Heart),
-    paintbrush: adapt(glyphs.Brush01),
-    brain: adapt(glyphs.CpuChip01),
-    globe: adapt(glyphs.Globe01),
-    user: adapt(glyphs.User01),
-    image: adapt(glyphs.Image01),
-    link: adapt(glyphs.Link01),
-    check: adapt(glyphs.Check),
-    'rotate-ccw': adapt(glyphs.RefreshCcw01),
-    home: adapt(glyphs.Home01),
-    'message-circle': adapt(glyphs.MessageCircle01),
-    inbox: adapt(glyphs.Inbox01),
-    pencil: adapt(glyphs.Pencil01),
-    scaling: adapt(glyphs.Scale01),
-    'skip-forward': adapt(glyphs.SkipForward),
-    'corner-down-right': adapt(glyphs.CornerDownRight),
-    'corner-down-left': adapt(glyphs.CornerDownLeft),
-    'panel-left': adapt(glyphs.LayoutLeft),
-    'panel-right': adapt(glyphs.LayoutRight),
-    'chevrons-up-down': adapt(glyphs.ChevronSelectorVertical),
-    'more-horizontal': adapt(glyphs.DotsHorizontal),
-    'more-vertical': adapt(glyphs.DotsVertical),
-    calendar: adapt(glyphs.Calendar),
-    folder: adapt(glyphs.Folder),
-    'sliders-horizontal': adapt(glyphs.Sliders01),
-    info: adapt(glyphs.InfoCircle),
-    square: adapt(glyphs.Square),
-    'circle-alert': adapt(glyphs.AlertCircle),
-    file: adapt(glyphs.File01),
-    minus: adapt(glyphs.Minus),
-    play: defaultIcons.play,
-    pause: defaultIcons.pause,
-  }
 }

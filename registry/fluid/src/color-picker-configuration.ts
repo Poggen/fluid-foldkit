@@ -43,7 +43,6 @@ export const inMessageUpdate = ColorPickerComposition.makeInMessageUpdate({
         formatChanged ||
         Option.getOrNull(settings.formatOpen) !== Option.getOrNull(model.color.settings.formatOpen)
 
-      // Controlled value echoes retain HSV; avoid restarting unrelated child work for each sample.
       return ColorPickerBlock.makeStep(() =>
         Update.combineSteps([
           ColorPickerBlock.makeFieldsStep(() => ({ color: () => state })),

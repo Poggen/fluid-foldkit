@@ -1,7 +1,7 @@
 import { Number } from 'effect'
 import { modifyFields } from 'foldkit/struct'
 import { instantDate } from './calendar-domain/date-boundary.js'
-// Own DatePicker state only. Calendar delivery will use public Binding operations.
+
 import { minutesToTime, shiftEnd, timeToMinutes } from './date-picker-format.js'
 import { dateValue, restoreDate, type Selection } from './calendar-state.js'
 import {
@@ -118,8 +118,6 @@ export function transitionDatePicker(
         next.to !== null &&
         draft.from !== null
       ) {
-        // Source compares host-local calendar dates, not injected dateLib or
-        // millisecond equality. DateValue retains the original Date's zone.
         const from = restoreDate(next.from)
         const to = restoreDate(next.to)
         const start = restoreDate(draft.from)

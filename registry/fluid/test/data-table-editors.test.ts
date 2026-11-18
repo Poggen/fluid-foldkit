@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { it } from '@effect/vitest'
 import { Effect, Layer, Schedule, Schema } from 'effect'
@@ -108,7 +109,9 @@ const layer = Consumer.makeLayer({
 }).pipe(Layer.provide(EditorsLayer))
 const eventually = (assertion: () => void) =>
   Effect.try(assertion).pipe(Effect.retry({ times: 100, schedule: Schedule.spaced('15 millis') }))
-const element = <T extends HTMLElement>(selector: string): T => {
+const element: <T extends HTMLElement>(selector: string) => T = <T extends HTMLElement>(
+  selector: string,
+) => {
   const node = document.querySelector<T>(selector)
   if (node === null) throw new Error(`Missing ${selector}`)
   return node
@@ -246,5 +249,4 @@ it.live(
         else Object.defineProperty(document, 'fonts', fonts)
       }
     }),
-  15000,
 )

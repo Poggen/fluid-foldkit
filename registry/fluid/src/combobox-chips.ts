@@ -21,12 +21,17 @@ export const ComboboxChip = Schema.Struct({
 
 export type ComboboxChip = typeof ComboboxChip.Type
 
-export const reconcileComboboxChips = (
+export const reconcileComboboxChips: (
   previous: ReadonlyArray<ComboboxChip>,
   values: ReadonlyArray<string>,
   items: ReadonlyArray<SelectOption>,
   generation: number,
-): ReadonlyArray<ComboboxChip> => {
+) => ReadonlyArray<ComboboxChip> = (
+  previous: ReadonlyArray<ComboboxChip>,
+  values: ReadonlyArray<string>,
+  items: ReadonlyArray<SelectOption>,
+  generation: number,
+) => {
   const present = values.flatMap((value) => {
     const item = items.find((entry) => entry.value === value)
 

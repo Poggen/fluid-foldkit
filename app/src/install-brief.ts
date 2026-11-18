@@ -2,11 +2,11 @@ import type { ComponentPage } from '../../lib/catalogue'
 import { currentFontFamily, settingsQuery, type Settings } from './settings'
 import { release } from '../../lib/registry-release'
 
-export const buildInstallBrief = (
+export const buildInstallBrief: (
   origin: string,
   page: ComponentPage | undefined,
   settings: Settings,
-): string => {
+) => string = (origin: string, page: ComponentPage | undefined, settings: Settings) => {
   const base = new URL(origin).origin
   const title = page === undefined ? 'Fluid Functionalism and Bklit' : page.name
   const registry = (family: 'fluid' | 'charts') => `${base}/r/${family}/${release}/{name}.json`

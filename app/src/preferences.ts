@@ -80,7 +80,7 @@ const RowHover = PreferencesBlock.makeRequiredFieldBinding(HoverBlock, {
 const menuChanged = ({ open }: { readonly open: boolean }) =>
   Update.combineSteps([
     PreferencesBlock.makeFieldsStep(() => ({ isMenuOpen: () => open })),
-    // Closing waits for a fresh move; portalled menus never steer the settings highlight.
+
     RowHover.requestClear(),
     RowHighlight.requestHide(),
     RowHover.requestPointerHandlers({ enabled: !open }),

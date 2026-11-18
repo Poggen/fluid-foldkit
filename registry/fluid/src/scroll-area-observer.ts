@@ -1,4 +1,3 @@
-// DOM observations only. Scroll decisions and gesture ownership live in the checked Model.
 import { Effect, Queue, Stream } from 'effect'
 import { Schema } from 'effect'
 import { defineMessageUnion } from 'foldkit/message'

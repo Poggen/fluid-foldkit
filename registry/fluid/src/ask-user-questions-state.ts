@@ -1,7 +1,279 @@
 import { modifyFields } from 'foldkit/struct'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { HoverMode } from './hover-observation.js'
 import { Option, Schema } from 'effect'
+
+export const askQuestions: (
+  questions: ReadonlyArray<AskUserQuestion>,
+) => ReadonlyArray<typeof AskQuestion.Type> = function askQuestions(
+  questions: ReadonlyArray<AskUserQuestion>,
+) {
+  return questions.map((question, index) => ({
+    id: question.id ?? `q-${index}`,
+    title: question.title,
+    options: (question.options ?? []).map((option, i) => ({
+      id: option.id ?? `o-${i}`,
+      title: option.title,
+      description: option.description ?? '',
+    })),
+    multiSelect: question.multiSelect ?? false,
+    allowOther: question.freeText !== true && (question.allowOther ?? false),
+    otherPlaceholder: question.otherPlaceholder ?? 'Describe in your own words…',
+    skippable: question.skippable !== false,
+    nextLabel: Option.fromNullishOr(question.nextLabel),
+    layout: question.layout ?? 'inline',
+    chipPosition: question.chipPosition ?? 'right',
+    freeText: question.freeText ?? false,
+    freeTextPlaceholder: question.freeTextPlaceholder ?? 'Type your answer…',
+    freeTextMultiline: question.freeTextMultiline !== false,
+  }))
+}
+
+export const askInitial: (config: Omit<AskUserQuestionsConfig, 'id'>) => AskFlow =
+  function askInitial(config: Omit<AskUserQuestionsConfig, 'id'>) {
+    const internalIndex = config.defaultCurrentIndex ?? 0
+    const internalAnswers = config.defaultAnswers ?? {}
+
+    return {
+      questions: askQuestions(config.questions),
+      index: config.currentIndex ?? internalIndex,
+      internalIndex,
+      controlledIndex: config.currentIndex !== undefined,
+      answers: config.answers ?? internalAnswers,
+      internalAnswers,
+      writeSnapshot: config.answers ?? internalAnswers,
+      controlledAnswers: config.answers !== undefined,
+      focusedIndex: Option.none(),
+      activeIndex: Option.none(),
+      error: Option.none(),
+      generation: 0,
+      revision: 0,
+      multiline: false,
+      contentHeight: Option.none(),
+      isMac: false,
+    }
+  }
+
+export const askSafeIndex: (flow: AskFlow) => number = function askSafeIndex(flow: AskFlow) {
+  return Math.max(0, Math.min(flow.index, Math.max(0, flow.questions.length - 1)))
+}
+
+const preserveOtherText: (
+  answer: AskUserAnswer,
+  existing: AskUserAnswer | undefined,
+) => AskUserAnswer = function preserveOtherText(
+  answer: AskUserAnswer,
+  existing: AskUserAnswer | undefined,
+) {
+  return existing?.otherText === undefined ? answer : { ...answer, otherText: existing.otherText }
+}
+
+export const askSelected: (flow: AskFlow) => ReadonlyArray<number> = function askSelected(
+  flow: AskFlow,
+) {
+  const question = askCurrent(flow)
+
+  if (!question) {
+    return []
+  }
+
+  const answer = flow.answers[question.id]
+
+  return [
+    ...question.options.flatMap((option, index) =>
+      answer?.selectedIds.includes(option.id) === true ? [index] : [],
+    ),
+    ...(question.allowOther && (answer?.otherText?.length ?? 0) > 0
+      ? [question.options.length]
+      : []),
+  ]
+}
+
+const move: (flow: AskFlow, index: number) => AskResult = function move(
+  flow: AskFlow,
+  index: number,
+) {
+  const events: ReadonlyArray<AskEvent> = [AskEvent.cases.CurrentIndexChanged.make({ index })]
+
+  if (flow.controlledIndex) {
+    return { flow, events }
+  }
+
+  const moved = {
+    flow: modifyFields(flow, {
+      index: () => index,
+      internalIndex: () => index,
+      activeIndex: () => Option.none(),
+      focusedIndex: () => Option.none(),
+      error: () => Option.none(),
+      multiline: () => false,
+      generation: () => flow.generation + 1,
+    }),
+    events,
+  }
+
+  return Option.isSome(flow.focusedIndex) ? { ...moved, focus: 0 } : moved
+}
+
+const advanceQuestion: (flow: AskFlow, snapshot: AskAnswers) => AskResult =
+  function advanceQuestion(flow: AskFlow, snapshot: AskAnswers) {
+    return askSafeIndex(flow) >= flow.questions.length - 1
+      ? { flow, events: [AskEvent.cases.Completed.make({ answers: snapshot })] }
+      : move(flow, askSafeIndex(flow) + 1)
+  }
+
+const write: (flow: AskFlow, answer: AskUserAnswer) => AskResult = function write(
+  flow: AskFlow,
+  answer: AskUserAnswer,
+) {
+  const answers = { ...flow.writeSnapshot, [answer.questionId]: answer }
+
+  const updated = modifyFields(flow, {
+    writeSnapshot: () => answers,
+    revision: () => flow.revision + 1,
+  })
+
+  return {
+    flow: flow.controlledAnswers
+      ? updated
+      : modifyFields(updated, { answers: () => answers, internalAnswers: () => answers }),
+    events: [AskEvent.cases.AnswersChanged.make({ answers })],
+  }
+}
+
+const finish: (result: AskResult) => AskResult = function finish(result: AskResult) {
+  const advanced = advanceQuestion(result.flow, result.flow.writeSnapshot)
+
+  return { ...advanced, events: [...result.events, ...advanced.events] }
+}
+
+export const askSelect: (flow: AskFlow, index: number) => AskResult = function askSelect(
+  flow: AskFlow,
+  index: number,
+) {
+  const question = askCurrent(flow)
+  const option = question?.options[index]
+
+  if (!question || !option || question.freeText) {
+    return { flow, events: [] }
+  }
+
+  const existing = flow.writeSnapshot[question.id]
+  const selected = new Set(existing?.selectedIds)
+
+  if (question.multiSelect) {
+    if (selected.has(option.id)) {
+      selected.delete(option.id)
+    } else {
+      selected.add(option.id)
+    }
+  }
+
+  const result = write(
+    flow,
+    preserveOtherText(
+      {
+        questionId: question.id,
+        selectedIds: question.multiSelect ? [...selected] : [option.id],
+        skipped: false,
+      },
+      existing,
+    ),
+  )
+
+  return question.multiSelect ? result : finish(result)
+}
+
+export const askText: (flow: AskFlow, text: string) => AskResult = function askText(
+  flow: AskFlow,
+  text: string,
+) {
+  const question = askCurrent(flow)
+
+  if (!question) {
+    return { flow, events: [] }
+  }
+
+  const existing = flow.writeSnapshot[question.id]
+
+  if (text === (existing?.otherText ?? '')) {
+    return { flow, events: [] }
+  }
+
+  return write(modifyFields(flow, { error: () => Option.none() }), {
+    questionId: question.id,
+    selectedIds: existing?.selectedIds ?? [],
+    otherText: text,
+    skipped: false,
+  })
+}
+
+export const askSubmitText: (flow: AskFlow, error: string | null) => AskResult =
+  function askSubmitText(flow: AskFlow, error: string | null) {
+    const question = askCurrent(flow)
+
+    if (!question) {
+      return { flow, events: [] }
+    }
+
+    const existing = flow.writeSnapshot[question.id]
+    const text = (existing?.otherText ?? '').trim()
+
+    if (!text) {
+      return { flow, events: [] }
+    }
+
+    if (error !== null && error !== undefined && error !== '') {
+      return { flow: modifyFields(flow, { error: () => Option.some(error) }), events: [] }
+    }
+
+    return finish(
+      write(modifyFields(flow, { error: () => Option.none() }), {
+        questionId: question.id,
+        selectedIds: existing?.selectedIds ?? [],
+        otherText: text,
+        skipped: false,
+      }),
+    )
+  }
+
+export const askSkip: (flow: AskFlow) => AskResult = function askSkip(flow: AskFlow) {
+  const question = askCurrent(flow)
+
+  if (!question) {
+    return { flow, events: [] }
+  }
+
+  const existing = flow.writeSnapshot[question.id]
+
+  const result = write(
+    flow,
+    preserveOtherText(
+      {
+        questionId: question.id,
+        selectedIds: existing?.selectedIds ?? [],
+        skipped: true,
+      },
+      existing,
+    ),
+  )
+
+  return finish({
+    ...result,
+    events: [
+      ...result.events,
+      AskEvent.cases.Skipped.make({ questionId: question.id, index: askSafeIndex(flow) }),
+    ],
+  })
+}
+
+export const askContinue: (flow: AskFlow) => AskResult = function askContinue(flow: AskFlow) {
+  return advanceQuestion(flow, flow.answers)
+}
+
+export const askBack: (flow: AskFlow) => AskResult = function askBack(flow: AskFlow) {
+  return askSafeIndex(flow) > 0 ? move(flow, askSafeIndex(flow) - 1) : { flow, events: [] }
+}
 
 export interface AskUserOption {
   readonly id?: string
@@ -135,86 +407,8 @@ export interface AskUserQuestionsConfig {
   readonly defaultAnswers?: AskAnswers
 }
 
-export function askQuestions(
-  questions: ReadonlyArray<AskUserQuestion>,
-): ReadonlyArray<typeof AskQuestion.Type> {
-  return questions.map((question, index) => ({
-    id: question.id ?? `q-${index}`,
-    title: question.title,
-    options: (question.options ?? []).map((option, i) => ({
-      id: option.id ?? `o-${i}`,
-      title: option.title,
-      description: option.description ?? '',
-    })),
-    multiSelect: question.multiSelect ?? false,
-    allowOther: question.freeText !== true && (question.allowOther ?? false),
-    otherPlaceholder: question.otherPlaceholder ?? 'Describe in your own words…',
-    skippable: question.skippable !== false,
-    nextLabel: Option.fromNullishOr(question.nextLabel),
-    layout: question.layout ?? 'inline',
-    chipPosition: question.chipPosition ?? 'right',
-    freeText: question.freeText ?? false,
-    freeTextPlaceholder: question.freeTextPlaceholder ?? 'Type your answer…',
-    freeTextMultiline: question.freeTextMultiline !== false,
-  }))
-}
-
-export function askInitial(config: Omit<AskUserQuestionsConfig, 'id'>): AskFlow {
-  const internalIndex = config.defaultCurrentIndex ?? 0
-  const internalAnswers = config.defaultAnswers ?? {}
-
-  return {
-    questions: askQuestions(config.questions),
-    index: config.currentIndex ?? internalIndex,
-    internalIndex,
-    controlledIndex: config.currentIndex !== undefined,
-    answers: config.answers ?? internalAnswers,
-    internalAnswers,
-    writeSnapshot: config.answers ?? internalAnswers,
-    controlledAnswers: config.answers !== undefined,
-    focusedIndex: Option.none(),
-    activeIndex: Option.none(),
-    error: Option.none(),
-    generation: 0,
-    revision: 0,
-    multiline: false,
-    contentHeight: Option.none(),
-    isMac: false,
-  }
-}
-
-export function askSafeIndex(flow: AskFlow): number {
-  return Math.max(0, Math.min(flow.index, Math.max(0, flow.questions.length - 1)))
-}
-
 export function askCurrent(flow: AskFlow) {
   return flow.questions[askSafeIndex(flow)]
-}
-
-function preserveOtherText(
-  answer: AskUserAnswer,
-  existing: AskUserAnswer | undefined,
-): AskUserAnswer {
-  return existing?.otherText === undefined ? answer : { ...answer, otherText: existing.otherText }
-}
-
-export function askSelected(flow: AskFlow): ReadonlyArray<number> {
-  const question = askCurrent(flow)
-
-  if (!question) {
-    return []
-  }
-
-  const answer = flow.answers[question.id]
-
-  return [
-    ...question.options.flatMap((option, index) =>
-      answer?.selectedIds.includes(option.id) === true ? [index] : [],
-    ),
-    ...(question.allowOther && (answer?.otherText?.length ?? 0) > 0
-      ? [question.options.length]
-      : []),
-  ]
 }
 
 export const AskEvent = Schema.Union([
@@ -230,176 +424,4 @@ export interface AskResult {
   readonly flow: AskFlow
   readonly events: ReadonlyArray<AskEvent>
   readonly focus?: number
-}
-
-function move(flow: AskFlow, index: number): AskResult {
-  const events: ReadonlyArray<AskEvent> = [AskEvent.cases.CurrentIndexChanged.make({ index })]
-
-  if (flow.controlledIndex) {
-    return { flow, events }
-  }
-
-  const moved = {
-    flow: modifyFields(flow, {
-      index: () => index,
-      internalIndex: () => index,
-      activeIndex: () => Option.none(),
-      focusedIndex: () => Option.none(),
-      error: () => Option.none(),
-      multiline: () => false,
-      generation: () => flow.generation + 1,
-    }),
-    events,
-  }
-
-  return Option.isSome(flow.focusedIndex) ? { ...moved, focus: 0 } : moved
-}
-
-function advanceQuestion(flow: AskFlow, snapshot: AskAnswers): AskResult {
-  return askSafeIndex(flow) >= flow.questions.length - 1
-    ? { flow, events: [AskEvent.cases.Completed.make({ answers: snapshot })] }
-    : move(flow, askSafeIndex(flow) + 1)
-}
-
-function write(flow: AskFlow, answer: AskUserAnswer): AskResult {
-  const answers = { ...flow.writeSnapshot, [answer.questionId]: answer }
-
-  const updated = modifyFields(flow, {
-    writeSnapshot: () => answers,
-    revision: () => flow.revision + 1,
-  })
-
-  return {
-    flow: flow.controlledAnswers
-      ? updated
-      : modifyFields(updated, { answers: () => answers, internalAnswers: () => answers }),
-    events: [AskEvent.cases.AnswersChanged.make({ answers })],
-  }
-}
-
-function finish(result: AskResult): AskResult {
-  const advanced = advanceQuestion(result.flow, result.flow.writeSnapshot)
-
-  return { ...advanced, events: [...result.events, ...advanced.events] }
-}
-
-export function askSelect(flow: AskFlow, index: number): AskResult {
-  const question = askCurrent(flow)
-  const option = question?.options[index]
-
-  if (!question || !option || question.freeText) {
-    return { flow, events: [] }
-  }
-
-  const existing = flow.writeSnapshot[question.id]
-  const selected = new Set(existing?.selectedIds)
-
-  if (question.multiSelect) {
-    if (selected.has(option.id)) {
-      selected.delete(option.id)
-    } else {
-      selected.add(option.id)
-    }
-  }
-
-  const result = write(
-    flow,
-    preserveOtherText(
-      {
-        questionId: question.id,
-        selectedIds: question.multiSelect ? [...selected] : [option.id],
-        skipped: false,
-      },
-      existing,
-    ),
-  )
-
-  return question.multiSelect ? result : finish(result)
-}
-
-export function askText(flow: AskFlow, text: string): AskResult {
-  const question = askCurrent(flow)
-
-  if (!question) {
-    return { flow, events: [] }
-  }
-
-  const existing = flow.writeSnapshot[question.id]
-
-  if (text === (existing?.otherText ?? '')) {
-    return { flow, events: [] }
-  }
-
-  return write(modifyFields(flow, { error: () => Option.none() }), {
-    questionId: question.id,
-    selectedIds: existing?.selectedIds ?? [],
-    otherText: text,
-    skipped: false,
-  })
-}
-
-export function askSubmitText(flow: AskFlow, error: string | null): AskResult {
-  const question = askCurrent(flow)
-
-  if (!question) {
-    return { flow, events: [] }
-  }
-
-  const existing = flow.writeSnapshot[question.id]
-  const text = (existing?.otherText ?? '').trim()
-
-  if (!text) {
-    return { flow, events: [] }
-  }
-
-  if (error !== null && error !== undefined && error !== '') {
-    return { flow: modifyFields(flow, { error: () => Option.some(error) }), events: [] }
-  }
-
-  return finish(
-    write(modifyFields(flow, { error: () => Option.none() }), {
-      questionId: question.id,
-      selectedIds: existing?.selectedIds ?? [],
-      otherText: text,
-      skipped: false,
-    }),
-  )
-}
-
-export function askSkip(flow: AskFlow): AskResult {
-  const question = askCurrent(flow)
-
-  if (!question) {
-    return { flow, events: [] }
-  }
-
-  const existing = flow.writeSnapshot[question.id]
-
-  const result = write(
-    flow,
-    preserveOtherText(
-      {
-        questionId: question.id,
-        selectedIds: existing?.selectedIds ?? [],
-        skipped: true,
-      },
-      existing,
-    ),
-  )
-
-  return finish({
-    ...result,
-    events: [
-      ...result.events,
-      AskEvent.cases.Skipped.make({ questionId: question.id, index: askSafeIndex(flow) }),
-    ],
-  })
-}
-
-export function askContinue(flow: AskFlow): AskResult {
-  return advanceQuestion(flow, flow.answers)
-}
-
-export function askBack(flow: AskFlow): AskResult {
-  return askSafeIndex(flow) > 0 ? move(flow, askSafeIndex(flow) - 1) : { flow, events: [] }
 }

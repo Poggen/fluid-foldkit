@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { it } from '@effect/vitest'
 import { Effect, Layer, Schema } from 'effect'
@@ -60,9 +61,11 @@ it.live('source popup metadata follows real anchor positioning, flipping and sco
     const host = document.createElement('div')
     host.append(container)
     document.body.append(host)
+    // oxlint-disable-next-line landmines-testing/no-test-doubles -- Finite viewport metrics exercise boundary flipping; real anchored layout keeper: host-geometry-contracts.e2e.ts.
     const viewportWidth = vi
       .spyOn(document.documentElement, 'clientWidth', 'get')
       .mockReturnValue(window.innerWidth)
+    // oxlint-disable-next-line landmines-testing/no-test-doubles -- Finite viewport metrics exercise boundary flipping; real anchored layout keeper: host-geometry-contracts.e2e.ts.
     const viewportHeight = vi
       .spyOn(document.documentElement, 'clientHeight', 'get')
       .mockReturnValue(window.innerHeight)

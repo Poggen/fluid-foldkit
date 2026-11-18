@@ -5,54 +5,29 @@ import { tooltipSetter } from './chart-context'
 import { DEFAULT_Y_AXIS_ID } from './series'
 import { isNumber } from '../kit/guards'
 
-export const timeScale = (
-  domain: readonly [Date, Date],
-  innerWidth: number,
-): ScaleTime<number, number> =>
-  scaleUtc()
-    .domain([...domain])
-    .range([0, innerWidth])
-
-export function valueScale(
+export const valueScale: (
+  domain: readonly [number, number],
+  innerHeight: number,
+  nice?: boolean,
+) => ScaleLinear<number, number> = function (
   domain: readonly [number, number],
   innerHeight: number,
   nice = false,
-): ScaleLinear<number, number> {
+) {
   const scale = scaleLinear()
     .domain([...domain])
     .range([innerHeight, 0])
 
-  return nice ? scale.nice() : scale
-}
-
-export interface FocusedRow<Row> {
-  readonly row: Row
-  readonly index: number
-}
-
-export interface BridgeInput<Row, Action> {
-  readonly data: ReadonlyArray<Row>
-  readonly margin: ChartStableContextValue<Row>['margin']
-  readonly size: { readonly width: number; readonly height: number }
-  readonly containerRef: ChartStableContextValue<Row>['containerRef']
-  readonly ready: boolean
-  readonly xScale: ChartStableContextValue<Row>['xScale']
-  readonly yScales: ChartStableContextValue<Row>['yScales']
-  readonly lines: ChartStableContextValue<Row>['lines']
-  readonly animationDuration: number
-  readonly xAccessor: (row: Row) => Date
-  readonly dateLabels: ReadonlyArray<string>
-  readonly focused: FocusedRow<Row> | null
-  readonly xAt?: (focused: FocusedRow<Row>) => number
-  readonly extras?: Partial<ChartContextValue<Row, Action>>
-  readonly focusRow: (index: number | null) => Action
-  readonly referenceAreas?: ChartStableContextValue<Row>['referenceAreas']
+  return (nice ? scale.nice() : scale) satisfies ScaleLinear<number, number>
 }
 
 /** Derived presentation only. The checked parent owns inputs, focus and operation capabilities. */
-export function useBridgedContext<Row extends Readonly<Record<string, unknown>>, Action>(
+export const useBridgedContext: <Row extends Readonly<Record<string, unknown>>, Action>(
   input: BridgeInput<Row, Action>,
-): ChartContextValue<Row, Action> {
+) => ChartContextValue<Row, Action> = function useBridgedContext<
+  Row extends Readonly<Record<string, unknown>>,
+  Action,
+>(input: BridgeInput<Row, Action>) {
   const { data, margin, size, containerRef, xScale, yScales, lines, focused, xAccessor } = input
   const innerWidth = Math.max(0, size.width - margin.left - margin.right)
   const innerHeight = Math.max(0, size.height - margin.top - margin.bottom)
@@ -63,10 +38,10 @@ export function useBridgedContext<Row extends Readonly<Record<string, unknown>>,
     scaleLinear().domain([0, 100]).range([innerHeight, 0])
 
   const yDomainTargetByAxis = Object.fromEntries(
-    Object.entries(yScales).map(([id, scale]): [string, readonly [number, number]] => {
+    Object.entries(yScales).map(([id, scale]) => {
       const [min = 0, max = 0] = scale.domain()
 
-      return [id, [min, max]]
+      return [id, [min, max]] satisfies [string, readonly [number, number]]
     }),
   )
 
@@ -117,5 +92,37 @@ export function useBridgedContext<Row extends Readonly<Record<string, unknown>>,
     ...input.extras,
     tooltipData,
     setTooltipData: tooltipSetter(input.focusRow),
-  }
+  } satisfies ChartContextValue<Row, Action>
+}
+
+export const timeScale: (
+  domain: readonly [Date, Date],
+  innerWidth: number,
+) => ScaleTime<number, number> = (domain: readonly [Date, Date], innerWidth: number) =>
+  scaleUtc()
+    .domain([...domain])
+    .range([0, innerWidth])
+
+export interface FocusedRow<Row> {
+  readonly row: Row
+  readonly index: number
+}
+
+export interface BridgeInput<Row, Action> {
+  readonly data: ReadonlyArray<Row>
+  readonly margin: ChartStableContextValue<Row>['margin']
+  readonly size: { readonly width: number; readonly height: number }
+  readonly containerRef: ChartStableContextValue<Row>['containerRef']
+  readonly ready: boolean
+  readonly xScale: ChartStableContextValue<Row>['xScale']
+  readonly yScales: ChartStableContextValue<Row>['yScales']
+  readonly lines: ChartStableContextValue<Row>['lines']
+  readonly animationDuration: number
+  readonly xAccessor: (row: Row) => Date
+  readonly dateLabels: ReadonlyArray<string>
+  readonly focused: FocusedRow<Row> | null
+  readonly xAt?: (focused: FocusedRow<Row>) => number
+  readonly extras?: Partial<ChartContextValue<Row, Action>>
+  readonly focusRow: (index: number | null) => Action
+  readonly referenceAreas?: ChartStableContextValue<Row>['referenceAreas']
 }

@@ -29,7 +29,8 @@ export const DrawingElementBase =
   typeof HTMLElement === 'undefined'
     ? undefined
     : class extends HTMLElement {
-        acquire(_clock: () => number): () => void {
+        acquire(_clock: () => number): () => void
+        acquire(_clock: () => number): never {
           throw new TypeError(`${this.localName} must implement resource acquisition`)
         }
       }
@@ -57,12 +58,11 @@ export const cartesianEffectsLayer = (registration: () => void) =>
       Layer.effect(
         CartesianRegistration,
         Effect.sync(() => {
-          // Restored Models can render a mounted drawing before any Prepare Mount runs.
           registration()
           return registration
         }),
       ),
     ),
-    // Each recipe closes over a different registration capability.
+
     Layer.fresh,
   )

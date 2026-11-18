@@ -4,28 +4,33 @@ import type { RegisteredLineConfig } from './context-types'
 import { niced } from './domains'
 import { axisId } from './series'
 
-export type YDomain = [number, number]
+export const getPrimaryYScale: <Scale extends ScaleLinear<number, number>>(
+  yScales: Readonly<Record<string, Scale>>,
+  fallback: Scale,
+) => Scale = function getPrimaryYScale<Scale extends ScaleLinear<number, number>>(
+  yScales: Readonly<Record<string, Scale>>,
+  fallback: Scale,
+) {
+  return (yScales.left ?? Object.values(yScales)[0] ?? fallback) satisfies Scale
+}
 
-export const niceYDomain = (domain: YDomain): YDomain => niced(domain)
-
-export function shouldTweenYDomain(
+export const shouldTweenYDomain: (
   from: readonly [number, number],
   to: readonly [number, number],
-): boolean {
+) => boolean = function shouldTweenYDomain(
+  from: readonly [number, number],
+  to: readonly [number, number],
+) {
   const span = Math.max(Math.abs(to[1] - to[0]), Math.abs(from[1] - from[0]), 1)
 
   return Math.abs(to[0] - from[0]) / span >= 0.02 || Math.abs(to[1] - from[1]) / span >= 0.02
 }
 
-export const isLoadingChromePhase = (phase: ChartPhase): boolean =>
-  phase === 'loading' || phase === 'revealingLoading'
-
-export const isYDomainTweenPhase = (phase: ChartPhase): boolean =>
-  phase === 'gridTweenLoading' || phase === 'gridTweenReady'
-
-export function mergeYDomainRecords(
+export const mergeYDomainRecords: (
   ...records: ReadonlyArray<Readonly<Record<string, YDomain>>>
-): Record<string, YDomain> {
+) => Record<string, YDomain> = function mergeYDomainRecords(
+  ...records: ReadonlyArray<Readonly<Record<string, YDomain>>>
+) {
   const merged: Record<string, YDomain> = {}
 
   for (const record of records)
@@ -34,10 +39,13 @@ export function mergeYDomainRecords(
   return merged
 }
 
-export function computeYDomainsByAxis(options: {
+export const computeYDomainsByAxis: (options: {
   readonly lines: ReadonlyArray<RegisteredLineConfig>
   readonly resolveDomain: (dataKeys: Array<string>) => YDomain
-}): Record<string, YDomain> {
+}) => Record<string, YDomain> = function computeYDomainsByAxis(options: {
+  readonly lines: ReadonlyArray<RegisteredLineConfig>
+  readonly resolveDomain: (dataKeys: Array<string>) => YDomain
+}) {
   const keysByAxis = new Map<string, Array<string>>()
 
   for (const line of options.lines) {
@@ -53,9 +61,12 @@ export function computeYDomainsByAxis(options: {
   return domains
 }
 
-export function getPrimaryYScale<Scale extends ScaleLinear<number, number>>(
-  yScales: Readonly<Record<string, Scale>>,
-  fallback: Scale,
-): Scale {
-  return yScales.left ?? Object.values(yScales)[0] ?? fallback
-}
+export type YDomain = [number, number]
+
+export const niceYDomain: (domain: YDomain) => YDomain = (domain: YDomain) => niced(domain)
+
+export const isLoadingChromePhase: (phase: ChartPhase) => boolean = (phase: ChartPhase) =>
+  phase === 'loading' || phase === 'revealingLoading'
+
+export const isYDomainTweenPhase: (phase: ChartPhase) => boolean = (phase: ChartPhase) =>
+  phase === 'gridTweenLoading' || phase === 'gridTweenReady'

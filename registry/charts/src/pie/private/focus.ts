@@ -2,7 +2,6 @@ import type { ChartFocusStrategy, ChartPoint } from '@tanstack/charts'
 
 const TAU = Math.PI * 2
 
-// Annulus focus: the nearest-point resolution drops focus for thin rings or pop-outs, so the static sectors are hit-tested instead.
 interface AnnulusTarget {
   readonly index: number
   readonly innerRadius: number
@@ -26,12 +25,15 @@ interface AnnularFocusOptions<TDatum> {
 
 const EDGE_EPSILON = 1e-9
 
-const insideSector = (target: Readonly<AnnulusTarget>, radius: number, angle: number): boolean => {
+const insideSector: (target: Readonly<AnnulusTarget>, radius: number, angle: number) => boolean = (
+  target: Readonly<AnnulusTarget>,
+  radius: number,
+  angle: number,
+) => {
   if (radius < target.innerRadius || radius > target.outerRadius) {
     return false
   }
 
-  // The apex belongs to every sector (each painted path runs through it); the angle there is undefined.
   if (radius < EDGE_EPSILON) {
     return true
   }
@@ -43,24 +45,28 @@ const insideSector = (target: Readonly<AnnulusTarget>, radius: number, angle: nu
   }
 
   const wrapped = (((angle - target.startAngle) % TAU) + TAU) % TAU
-  // A pointer on a shared edge counts as inside both neighbours (SVG fill hit-testing is edge-inclusive); float noise must not decide.
+
   const offset = wrapped > TAU - EDGE_EPSILON ? 0 : wrapped
 
   return offset <= sweep + EDGE_EPSILON
 }
 
-const createAnnularFocus = <TDatum>(
+const createAnnularFocus: <TDatum>(
   options: Readonly<AnnularFocusOptions<TDatum>>,
-): ChartFocusStrategy<TDatum, number, number> => {
+) => ChartFocusStrategy<TDatum, number, number> = <TDatum>(
+  options: Readonly<AnnularFocusOptions<TDatum>>,
+) => {
   const { center, targets, indexOf, focusable, navigable, scaleOf, hovered } = options
 
   type Point = ChartPoint<TDatum, number, number>
 
-  // The engine passes the same `points` array until the scene changes: bucket once per array, so a move does not filter every point.
   let bucketed: ReadonlyArray<Point> | null = null
   let buckets = new Map<number, Array<Point>>()
 
-  const ofIndex = (points: ReadonlyArray<Point>, index: number): Array<Point> => {
+  const ofIndex: (points: ReadonlyArray<Point>, index: number) => Array<Point> = (
+    points: ReadonlyArray<Point>,
+    index: number,
+  ) => {
     if (bucketed !== points) {
       buckets = new Map()
 
@@ -85,7 +91,6 @@ const createAnnularFocus = <TDatum>(
     return buckets.get(index)?.slice() ?? []
   }
 
-  // Later targets paint on top; test them first.
   const reversed = targets.toReversed()
 
   return {
@@ -125,7 +130,7 @@ const createAnnularFocus = <TDatum>(
 
       return []
     },
-  }
+  } satisfies ChartFocusStrategy<TDatum, number, number>
 }
 
 export { createAnnularFocus, insideSector }

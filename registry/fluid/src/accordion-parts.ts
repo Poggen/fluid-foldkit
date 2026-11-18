@@ -1,5 +1,5 @@
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { Predicate } from 'effect'
 import type { ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
 import { accordionTriggerId } from './accordion-identifiers.js'
@@ -14,81 +14,15 @@ import { accordionPanelMotion } from './accordion-panel-motion.js'
 import { accordionMotionUpdate } from './accordion-observer.js'
 import type { AccordionItemState, AccordionTint } from './accordion-state.js'
 
-type ItemMountAttribute<Message, Requirements> = Extract<
-  NonNullable<Parameters<HtmlBuilder<Message, Requirements>['div']>[0]>[number],
-  { readonly __childAttribute: true }
->
-
-export interface AccordionContext<MountAttribute = ChildAttribute> extends Presentation {
-  readonly disclosure: (
-    input: Readonly<{
-      value: string
-      isOpen: boolean
-      disabled: boolean
-    }>,
-    render: (
-      attributes: Readonly<{
-        button: ReadonlyArray<ChildAttribute>
-        panel: ReadonlyArray<ChildAttribute>
-      }>,
-    ) => Html,
-  ) => Html
-  readonly itemMount: ReadonlyArray<MountAttribute>
-  readonly id: string
-  readonly grouped: boolean
-  readonly disabled: boolean
-  readonly type: 'single' | 'multiple'
-  readonly collapsible: boolean
-  readonly orientation: 'vertical' | 'horizontal'
-  readonly highlight: 'item' | 'trigger'
-  readonly reduceMotion: boolean
-  readonly values: ReadonlyArray<string>
-  readonly items: ReadonlyArray<AccordionItemState>
-  readonly tints: ReadonlyArray<AccordionTint>
-  readonly hovered: ReadonlyArray<AccordionTint>
-  readonly pointerValue: string | null
-  readonly activeIndex: number | null
-  readonly animate: (node: Html, options: MotionOptions) => Html
-  readonly tintAttributes: (
-    value: string,
-    generation: number,
-    hover: boolean,
-  ) => ReadonlyArray<ChildAttribute>
-}
-
-type PartAttribute<Message, Requirements> = NonNullable<
-  Parameters<HtmlBuilder<Message, Requirements>['div']>[0]
->[number]
-
-export interface AccordionPartProps<Message, Requirements = never> {
-  readonly value: string
-  readonly children?: ReadonlyArray<Html | string>
-  readonly className?: string
-  readonly attributes?: ReadonlyArray<PartAttribute<Message, Requirements>>
-}
-
-export interface AccordionItemProps<Message, Requirements = never> extends Omit<
-  AccordionPartProps<Message, Requirements>,
-  'children'
-> {
-  readonly children?:
-    | ReadonlyArray<Html | string>
-    | ((
-        context: NoInfer<AccordionContext<ItemMountAttribute<Message, Requirements>>>,
-      ) => ReadonlyArray<Html | string>)
-  readonly index?: number
-  readonly disabled?: boolean
-  readonly highlight?: 'item' | 'trigger'
-}
-
-const itemFor = (context: Pick<AccordionContext, 'items'>, value: string) =>
-  context.items.find((item) => item.value === value)
-
-function scopeItem<Message, Requirements>(
+const scopeItem: <Message, Requirements>(
   props: AccordionItemProps<Message, Requirements>,
   item: AccordionItemState | undefined,
   open: boolean,
-): AccordionItemState {
+) => AccordionItemState = function scopeItem<Message, Requirements>(
+  props: AccordionItemProps<Message, Requirements>,
+  item: AccordionItemState | undefined,
+  open: boolean,
+) {
   const ownDisabled = props.disabled ?? item?.disabled ?? false
   const highlight = props.highlight ?? item?.highlight ?? 'item'
 
@@ -103,14 +37,18 @@ function scopeItem<Message, Requirements>(
     toggling: item?.toggling ?? false,
     hidden: item?.hidden ?? !open,
     generation: item?.generation ?? 0,
-  }
+  } satisfies AccordionItemState
 }
 
-export function AccordionItem<Message, Requirements>(
+export const AccordionItem: <Message, Requirements>(
   props: NoInfer<AccordionItemProps<Message, Requirements>>,
   context: NoInfer<AccordionContext<ItemMountAttribute<Message, Requirements>>>,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function AccordionItem<Message, Requirements>(
+  props: NoInfer<AccordionItemProps<Message, Requirements>>,
+  context: NoInfer<AccordionContext<ItemMountAttribute<Message, Requirements>>>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   const item = itemFor(context, props.value)
   const open = item?.open ?? context.values.includes(props.value)
   const scopedItem = scopeItem(props, item, open)
@@ -171,15 +109,20 @@ export function AccordionItem<Message, Requirements>(
         : null,
       ...children,
     ],
-  )
+  ) satisfies Html
 }
 
-function renderTriggerOverlay<Message, Requirements>(
+const renderTriggerOverlay: <Message, Requirements>(
   props: AccordionPartProps<Message, Requirements>,
   context: AccordionContext<ItemMountAttribute<Message, Requirements>>,
   h: HtmlBuilder<Message, Requirements>,
   trigger: Html,
-): Html {
+) => Html = function renderTriggerOverlay<Message, Requirements>(
+  props: AccordionPartProps<Message, Requirements>,
+  context: AccordionContext<ItemMountAttribute<Message, Requirements>>,
+  h: HtmlBuilder<Message, Requirements>,
+  trigger: Html,
+) {
   const { shape } = resolvePresentation(context)
   const item = itemFor(context, props.value)
 
@@ -229,14 +172,18 @@ function renderTriggerOverlay<Message, Requirements>(
       hover ? overlay(hover, false) : null,
       trigger,
     ],
-  )
+  ) satisfies Html
 }
 
-export function AccordionTrigger<Message, Requirements>(
+export const AccordionTrigger: <Message, Requirements>(
   props: NoInfer<AccordionPartProps<Message, Requirements>>,
   context: NoInfer<AccordionContext<ItemMountAttribute<Message, Requirements>>>,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function AccordionTrigger<Message, Requirements>(
+  props: NoInfer<AccordionPartProps<Message, Requirements>>,
+  context: NoInfer<AccordionContext<ItemMountAttribute<Message, Requirements>>>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   const { size, shape, icons, reducedMotion } = resolvePresentation(context)
   const item = itemFor(context, props.value)
   const open = item?.open ?? context.values.includes(props.value)
@@ -354,17 +301,21 @@ export function AccordionTrigger<Message, Requirements>(
         ...(index === null ? [] : hoverItemAttributes(index, false, context.activeIndex)),
       ],
       [trigger],
-    )
+    ) satisfies Html
   }
 
-  return renderTriggerOverlay(props, context, h, trigger)
+  return renderTriggerOverlay(props, context, h, trigger) satisfies Html
 }
 
-export function AccordionContent<Message, Requirements>(
+export const AccordionContent: <Message, Requirements>(
   props: NoInfer<AccordionPartProps<Message, Requirements>>,
   context: NoInfer<AccordionContext<ItemMountAttribute<Message, Requirements>>>,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function AccordionContent<Message, Requirements>(
+  props: NoInfer<AccordionPartProps<Message, Requirements>>,
+  context: NoInfer<AccordionContext<ItemMountAttribute<Message, Requirements>>>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   const item = itemFor(context, props.value)
   const { size, reducedMotion } = resolvePresentation(context)
   const open = item?.open ?? context.values.includes(props.value)
@@ -441,5 +392,75 @@ export function AccordionContent<Message, Requirements>(
         [motion],
       )
     },
-  )
+  ) satisfies Html
 }
+
+type ItemMountAttribute<Message, Requirements> = Extract<
+  NonNullable<Parameters<HtmlBuilder<Message, Requirements>['div']>[0]>[number],
+  { readonly __childAttribute: true }
+>
+
+export interface AccordionContext<MountAttribute = ChildAttribute> extends Presentation {
+  readonly disclosure: (
+    input: Readonly<{
+      value: string
+      isOpen: boolean
+      disabled: boolean
+    }>,
+    render: (
+      attributes: Readonly<{
+        button: ReadonlyArray<ChildAttribute>
+        panel: ReadonlyArray<ChildAttribute>
+      }>,
+    ) => Html,
+  ) => Html
+  readonly itemMount: ReadonlyArray<MountAttribute>
+  readonly id: string
+  readonly grouped: boolean
+  readonly disabled: boolean
+  readonly type: 'single' | 'multiple'
+  readonly collapsible: boolean
+  readonly orientation: 'vertical' | 'horizontal'
+  readonly highlight: 'item' | 'trigger'
+  readonly reduceMotion: boolean
+  readonly values: ReadonlyArray<string>
+  readonly items: ReadonlyArray<AccordionItemState>
+  readonly tints: ReadonlyArray<AccordionTint>
+  readonly hovered: ReadonlyArray<AccordionTint>
+  readonly pointerValue: string | null
+  readonly activeIndex: number | null
+  readonly animate: (node: Html, options: MotionOptions) => Html
+  readonly tintAttributes: (
+    value: string,
+    generation: number,
+    hover: boolean,
+  ) => ReadonlyArray<ChildAttribute>
+}
+
+type PartAttribute<Message, Requirements> = NonNullable<
+  Parameters<HtmlBuilder<Message, Requirements>['div']>[0]
+>[number]
+
+export interface AccordionPartProps<Message, Requirements = never> {
+  readonly value: string
+  readonly children?: ReadonlyArray<Html | string>
+  readonly className?: string
+  readonly attributes?: ReadonlyArray<PartAttribute<Message, Requirements>>
+}
+
+export interface AccordionItemProps<Message, Requirements = never> extends Omit<
+  AccordionPartProps<Message, Requirements>,
+  'children'
+> {
+  readonly children?:
+    | ReadonlyArray<Html | string>
+    | ((
+        context: NoInfer<AccordionContext<ItemMountAttribute<Message, Requirements>>>,
+      ) => ReadonlyArray<Html | string>)
+  readonly index?: number
+  readonly disabled?: boolean
+  readonly highlight?: 'item' | 'trigger'
+}
+
+const itemFor = (context: Pick<AccordionContext, 'items'>, value: string) =>
+  context.items.find((item) => item.value === value)

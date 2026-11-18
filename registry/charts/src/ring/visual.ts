@@ -49,7 +49,7 @@ export function createRingVisual(
 
   const opacity = () => (hovered !== null && hovered !== ring.index ? 0.35 : 1)
 
-  const motionProps = (): MotionNodeOptions => ({
+  const motionProps: () => MotionNodeOptions = () => ({
     animate: { scale: hoverScale(), opacity: opacity() },
     transition: {
       scale: { type: 'spring', stiffness: 400, damping: 25 },
@@ -96,7 +96,6 @@ export function createRingVisual(
       element.append(path)
     }
 
-    // Source raw SVG styles are captured when this physical group first appears.
     initialFilter ??=
       ring.showGlow !== false && hovered === ring.index
         ? `drop-shadow(0 0 12px ${ringColor(props.data, ring)})`

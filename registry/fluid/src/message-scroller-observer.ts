@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
 import { animateSingleValue } from 'motion-dom'
 import { spring } from './lib/springs.js'
 import { EXIT_COMPLETE_EVENT } from './motion.js'
@@ -10,10 +10,10 @@ export interface MessageScrollerObservation {
 export const MESSAGE_SCROLLER_END_THRESHOLD = 24
 const scrollKeys = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '])
 
-export function observeMessageScroller(
+export const observeMessageScroller: (
   root: Element,
   emit: MessageScrollerObservation,
-): () => void {
+) => () => void = function observeMessageScroller(root: Element, emit: MessageScrollerObservation) {
   const window = root.ownerDocument.defaultView
   const viewport = root.querySelector<HTMLElement>('[data-message-viewport]')
   const spacer = root.querySelector<HTMLElement>('[data-message-spacer]')

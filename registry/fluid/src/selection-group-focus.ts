@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 /** Source scopes keyboard movement to the visible row, excluding the hidden primitive. */
 export function focusSelectionRow(id: string, index: number, select = false, primitive = false) {
   const root = globalThis.document.querySelector(`#${id}`)

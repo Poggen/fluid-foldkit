@@ -1,6 +1,6 @@
 import { observeMenuResultsHeight } from './menu-results-height.js'
 import { dropdownPanelKeys } from './dropdown-panel-keys.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Effect, Option, Queue, Schema, Stream } from 'effect'
 import { frame, cancelFrame } from 'motion-dom'
 import { DropdownObservation, DROPDOWN_ANIMATION_COMPLETE } from './dropdown-observation.js'
@@ -13,37 +13,27 @@ import type {
 import { DROPDOWN_SEARCH_CHANGE } from './dropdown-parts.js'
 import { DropdownRow } from './dropdown-state.js'
 import { mountDropdownPositioner } from './dropdown-position.js'
-type RowMetadata = Omit<DropdownRow, 'available'>
-type RowReading = { readonly element: HTMLElement; readonly metadata: RowMetadata }
-
-const selector = '[data-fluid-dropdown-row]'
-const rowKind = (row: HTMLElement): DropdownRow['kind'] => {
-  if (row.dataset.kind === 'submenu') {
-    return 'submenu'
-  }
-  if (row.getAttribute('role') === 'menuitemcheckbox') {
-    return 'checkbox'
-  }
-  return row.getAttribute('role') === 'menuitemradio' ? 'radio' : 'action'
-}
-const changeSearch = (field: HTMLInputElement, value: string) => {
-  field.dispatchEvent(new CustomEvent(DROPDOWN_SEARCH_CHANGE, { detail: value }))
-}
-const rowFor = (target: EventTarget | null) =>
-  target instanceof Element ? target.closest<HTMLElement>(selector) : null
-export function observeDropdownPanel(
+export const observeDropdownPanel: (
   document: Document,
   branches: DropdownBranchRegistry,
   options: DropdownResourceOptions,
   panels: Map<string, HTMLElement>,
   input: DropdownMountInput,
-): Stream.Stream<DropdownPanelObservation> {
+) => Stream.Stream<DropdownPanelObservation> = function observeDropdownPanel(
+  document: Document,
+  branches: DropdownBranchRegistry,
+  options: DropdownResourceOptions,
+  panels: Map<string, HTMLElement>,
+  input: DropdownMountInput,
+) {
   return input.viewStateChanges.pipe(
     Stream.switchMap((state) =>
       state === 'Paused'
         ? Stream.never
         : Stream.callback<DropdownPanelObservation>((queue) => {
-            const send = (signal: DropdownPanelObservation): void => {
+            const send: (signal: DropdownPanelObservation) => void = (
+              signal: DropdownPanelObservation,
+            ) => {
               Queue.offerUnsafe(queue, signal)
             }
             return Effect.gen(function* () {
@@ -89,7 +79,7 @@ export function observeDropdownPanel(
                   ? row.checkVisibility()
                   : styles.display !== 'none' && styles.display !== 'contents'
               }
-              const readMetadata = (): ReadonlyArray<RowReading> =>
+              const readMetadata: () => ReadonlyArray<RowReading> = () =>
                 rows().map((row) => ({
                   element: row,
                   metadata: {
@@ -124,30 +114,37 @@ export function observeDropdownPanel(
                     previous.closeOnClick === current.closeOnClick
                   )
                 })
-              const emitRows = (readings = readMetadata()): void => {
-                const measured = readings.map(({ element, metadata }): DropdownRow => ({
-                  ...metadata,
-                  available: available(element),
-                }))
+              const emitRows: (readings?: readonly RowReading[]) => void = (
+                readings = readMetadata(),
+              ) => {
+                const measured = readings.map(
+                  ({ element, metadata }) =>
+                    ({
+                      ...metadata,
+                      available: available(element),
+                    }) satisfies DropdownRow,
+                )
                 if (observedRows !== undefined && sameRows(observedRows, measured)) {
                   return
                 }
                 observedRows = measured
                 send(DropdownObservation.MeasuredRows({ rows: measured }))
               }
-              const readFrame = (): void => {
+              const readFrame: () => void = () => {
                 if (!readPending) return
                 readPending = false
                 if (!disposed && element.isConnected) {
                   emitRows()
                 }
               }
-              const flushRows = (readings = readMetadata()): void => {
+              const flushRows: (readings?: readonly RowReading[]) => void = (
+                readings = readMetadata(),
+              ) => {
                 cancelFrame(readFrame)
                 readPending = false
                 emitRows(readings)
               }
-              const scheduleRows = (): void => {
+              const scheduleRows: () => void = () => {
                 if (!readPending) {
                   readPending = true
                   frame.read(readFrame)
@@ -161,7 +158,7 @@ export function observeDropdownPanel(
                     throw new Error(`Duplicate Dropdown id ${id}`)
                   }
                   panels.set(id, panel)
-                  // Body portals cannot participate in a native dialog's modal top layer.
+
                   if (!input.inline) {
                     ;(htmlTrigger?.closest('dialog[open]') ?? document.body).append(element)
                   }
@@ -216,7 +213,7 @@ export function observeDropdownPanel(
                     const open = isOpen()
                     const opening = open && !wasOpen
                     const readings = readMetadata()
-                    // Metadata also serves non-input operations while a panel is closing.
+
                     if (opening || !sameMetadata(readings)) {
                       flushRows(readings)
                     } else {
@@ -263,7 +260,6 @@ export function observeDropdownPanel(
                       }
                     }
                     outer = window?.requestAnimationFrame(() => {
-                      // Base Select's focus manager uses one frame after mount.
                       if (htmlTrigger?.dataset.triggerPressEvent === 'mousedown') {
                         focusInitial()
                       } else {
@@ -411,8 +407,6 @@ export function observeDropdownPanel(
                       htmlTrigger?.isConnected === true
                     ) {
                       queueMicrotask(() => {
-                        // The renderer may still be removing the focused option.
-                        // Restore after removal without stealing a later explicit focus.
                         if (
                           htmlTrigger.isConnected &&
                           (document.activeElement === document.body ||
@@ -434,3 +428,22 @@ export function observeDropdownPanel(
     ),
   )
 }
+
+type RowMetadata = Omit<DropdownRow, 'available'>
+type RowReading = { readonly element: HTMLElement; readonly metadata: RowMetadata }
+
+const selector = '[data-fluid-dropdown-row]'
+const rowKind: (row: HTMLElement) => DropdownRow['kind'] = (row: HTMLElement) => {
+  if (row.dataset.kind === 'submenu') {
+    return 'submenu'
+  }
+  if (row.getAttribute('role') === 'menuitemcheckbox') {
+    return 'checkbox'
+  }
+  return row.getAttribute('role') === 'menuitemradio' ? 'radio' : 'action'
+}
+const changeSearch = (field: HTMLInputElement, value: string) => {
+  field.dispatchEvent(new CustomEvent(DROPDOWN_SEARCH_CHANGE, { detail: value }))
+}
+const rowFor = (target: EventTarget | null) =>
+  target instanceof Element ? target.closest<HTMLElement>(selector) : null

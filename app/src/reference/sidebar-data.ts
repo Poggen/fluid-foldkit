@@ -1,4 +1,4 @@
-// Fluid Functionalism cc276ca0 Sidebar documentation data. MIT.
+/* @license Fluid Functionalism cc276ca0 Sidebar documentation data. MIT. */
 import type { IconName } from '@foldkit-visuals/fluid/icons'
 
 /**
@@ -74,8 +74,6 @@ export const AI_NAV: ReadonlyArray<{
   },
 ]
 
-/** Level 1 rows that own a level 2 sub-tree — the nesting example.
- *  Two branches so more than one can be open at once. */
 /** The nesting example: Aurora AI's wiki, Notion-style. Three sections in
  *  three states — Private folded to its label, Shared open with its
  *  branches closed, Recent open down to level 2. */

@@ -1,6 +1,29 @@
 import { Schema } from 'effect'
 import type { Html } from 'foldkit/html'
 
+/** Native fragments retain text-node structure instead of adding wrapper elements. */
+export const legendChildren: (content: LegendContent) => ReadonlyArray<Html | string> = function (
+  content: LegendContent,
+) {
+  if (content === undefined || content === null || isBoolean(content)) {
+    return []
+  }
+
+  if (isNumber(content) || isBigInt(content)) {
+    return [String(content)]
+  }
+
+  if (isText(content)) {
+    return [content]
+  }
+
+  if (isLegendFragment(content)) {
+    return content.flatMap(legendChildren)
+  }
+
+  return [content]
+}
+
 export type LegendContent =
   | Html
   | string
@@ -22,24 +45,3 @@ const isArray = Schema.is(Schema.Array(Schema.Unknown))
 
 const isLegendFragment = (value: LegendContent): value is ReadonlyArray<LegendContent> =>
   isArray(value)
-
-/** Native fragments retain text-node structure instead of adding wrapper elements. */
-export function legendChildren(content: LegendContent): ReadonlyArray<Html | string> {
-  if (content === undefined || content === null || isBoolean(content)) {
-    return []
-  }
-
-  if (isNumber(content) || isBigInt(content)) {
-    return [String(content)]
-  }
-
-  if (isText(content)) {
-    return [content]
-  }
-
-  if (isLegendFragment(content)) {
-    return content.flatMap(legendChildren)
-  }
-
-  return [content]
-}

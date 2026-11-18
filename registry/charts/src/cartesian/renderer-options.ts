@@ -1,11 +1,13 @@
 import type { ChartRendererHostOptions, ChartValue } from '@tanstack/charts'
 
-export function sameRendererOptions<Row, X extends ChartValue, Y extends ChartValue>(
+export const sameRendererOptions: <Row, X extends ChartValue, Y extends ChartValue>(
   previous: ChartRendererHostOptions<Row, X, Y> | undefined,
   next: ChartRendererHostOptions<Row, X, Y>,
-): boolean {
-  return (
-    previous !== undefined &&
+) => boolean = function sameRendererOptions<Row, X extends ChartValue, Y extends ChartValue>(
+  previous: ChartRendererHostOptions<Row, X, Y> | undefined,
+  next: ChartRendererHostOptions<Row, X, Y>,
+) {
+  return (previous !== undefined &&
     previous.definition === next.definition &&
     previous.renderer === next.renderer &&
     previous.width === next.width &&
@@ -22,6 +24,5 @@ export function sameRendererOptions<Row, X extends ChartValue, Y extends ChartVa
     previous.onFocusChange === next.onFocusChange &&
     previous.onFocusGroupChange === next.onFocusGroupChange &&
     previous.onSelect === next.onSelect &&
-    previous.onTooltipBodyChange === next.onTooltipBodyChange
-  )
+    previous.onTooltipBodyChange === next.onTooltipBodyChange) satisfies boolean
 }

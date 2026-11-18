@@ -22,7 +22,7 @@ check(
   'Keep the qualified native Effect and TypeScript checkers',
 )
 check(rootManifest.includes('"@effect/tsgo": "0.67.0"'), 'Keep the qualified Effect lint toolchain')
-const walk = (directory: string): string[] =>
+const walk: (directory: string) => string[] = (directory: string) =>
   readdirSync(directory, { withFileTypes: true }).flatMap((entry) =>
     entry.isDirectory()
       ? walk(path.join(directory, entry.name))

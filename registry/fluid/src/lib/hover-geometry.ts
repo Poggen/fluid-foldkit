@@ -1,36 +1,13 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 
 import { geometryFromArray, integerGeometryEntries } from './indexed-geometry.js'
 import type { IndexedGeometry } from './indexed-geometry.js'
 
-export interface ItemRect {
-  top: number
-  height: number
-  left: number
-  width: number
-}
-
-export interface PickNearestInput {
-  axis: 'x' | 'y' | 'xy'
-  /** The pointer, in viewport coordinates. */
-  point: { x: number; y: number }
-  /** Item rects in the container's layout space (sparse: unregistered slots
-   *  are undefined). */
-  rects: ReadonlyArray<ItemRect | undefined>
-  /** The container's bounding rect and live scroll / border offsets, which
-   *  map layout rects into the pointer's viewport space. */
-  containerRect: { left: number; top: number; width: number; height: number }
-  scroll: { x: number; y: number }
-  border: { x: number; y: number }
-  /** Layout size of the container, so a cumulative ancestor `transform:
-   *  scale` (a popup mid scale-in) can be factored out per axis. */
-  layoutSize: { width: number; height: number }
-  /** Skips an item without unregistering it. */
-  isDisabled?: (index: number) => boolean
-}
-
-function viewportItemRect(
+const viewportItemRect: (
+  rect: ItemRect,
+  argument1: Pick<PickNearestInput, 'containerRect' | 'scroll' | 'border' | 'layoutSize'>,
+) => ItemRect = function viewportItemRect(
   rect: ItemRect,
   {
     containerRect,
@@ -38,7 +15,7 @@ function viewportItemRect(
     border,
     layoutSize,
   }: Pick<PickNearestInput, 'containerRect' | 'scroll' | 'border' | 'layoutSize'>,
-): ItemRect {
+) {
   const scaleX = layoutSize.width > 0 ? containerRect.width / layoutSize.width : 1
   const scaleY = layoutSize.height > 0 ? containerRect.height / layoutSize.height : 1
 
@@ -50,7 +27,9 @@ function viewportItemRect(
   }
 }
 
-export function pickNearestIndexed({
+export const pickNearestIndexed: (
+  argument0: Omit<PickNearestInput, 'rects'> & { geometry: IndexedGeometry },
+) => number | null = function pickNearestIndexed({
   axis,
   point,
   geometry,
@@ -59,7 +38,7 @@ export function pickNearestIndexed({
   border,
   layoutSize,
   isDisabled,
-}: Omit<PickNearestInput, 'rects'> & { geometry: IndexedGeometry }): number | null {
+}: Omit<PickNearestInput, 'rects'> & { geometry: IndexedGeometry }) {
   let closestIndex: number | null = null
   let closestDistance = Infinity
   let containingIndex: number | null = null
@@ -111,6 +90,42 @@ export function pickNearestIndexed({
   return containingIndex ?? closestIndex
 }
 
+export const resolveActivator: (element: HTMLElement) => HTMLElement = function resolveActivator(
+  element: HTMLElement,
+) {
+  if (element.matches(ACTIVATOR_SELECTOR) || element.hasAttribute('tabindex')) {
+    return element
+  }
+
+  return element.querySelector<HTMLElement>(ACTIVATOR_SELECTOR) ?? element
+}
+
+export interface ItemRect {
+  top: number
+  height: number
+  left: number
+  width: number
+}
+
+export interface PickNearestInput {
+  axis: 'x' | 'y' | 'xy'
+  /** The pointer, in viewport coordinates. */
+  point: { x: number; y: number }
+  /** Item rects in the container's layout space (sparse: unregistered slots
+   *  are undefined). */
+  rects: ReadonlyArray<ItemRect | undefined>
+  /** The container's bounding rect and live scroll / border offsets, which
+   *  map layout rects into the pointer's viewport space. */
+  containerRect: { left: number; top: number; width: number; height: number }
+  scroll: { x: number; y: number }
+  border: { x: number; y: number }
+  /** Layout size of the container, so a cumulative ancestor `transform:
+   *  scale` (a popup mid scale-in) can be factored out per axis. */
+  layoutSize: { width: number; height: number }
+  /** Skips an item without unregistering it. */
+  isDisabled?: (index: number) => boolean
+}
+
 export function isOwnEvent(e: { currentTarget?: EventTarget | null; target?: EventTarget | null }) {
   const { currentTarget, target } = e
 
@@ -128,13 +143,8 @@ export const ACTIVE_INDEX_ATTR = 'data-fluid-hover-active-index'
 export const ACTIVATOR_SELECTOR =
   "a[href], button, [role='menuitem'], [role='menuitemradio'], [role='menuitemcheckbox'], [role='option'], [role='radio'], [role='checkbox'], [role='tab'], [role='link'], [role='button']"
 
-export function resolveActivator(element: HTMLElement): HTMLElement {
-  if (element.matches(ACTIVATOR_SELECTOR) || element.hasAttribute('tabindex')) {
-    return element
-  }
-
-  return element.querySelector<HTMLElement>(ACTIVATOR_SELECTOR) ?? element
-}
-
-export const pickNearest = ({ rects, ...input }: PickNearestInput): number | null =>
-  pickNearestIndexed({ ...input, geometry: geometryFromArray(rects) })
+export const pickNearest: (argument0: PickNearestInput) => number | null = ({
+  rects,
+  ...input
+}: PickNearestInput) =>
+  pickNearestIndexed({ ...input, geometry: geometryFromArray(rects) }) satisfies number | null

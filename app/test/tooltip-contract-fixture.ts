@@ -11,10 +11,13 @@ import {
 } from '@foldkit-visuals/fluid/tooltip'
 import { createTargetMotionScope } from '@foldkit-visuals/fluid/motion/target'
 
-function svgContent<Message, Requirements>(
+const svgContent: <Message, Requirements>(
   key: string,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function svgContent<Message, Requirements>(
+  key: string,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   return h.span(
     [h.Id(`label-${key}`)],
     [
@@ -64,7 +67,7 @@ function svgContent<Message, Requirements>(
       ),
       h.a([h.Id(`navigation-${key}`), h.Href('#tooltip-navigation-target')], ['Link']),
     ],
-  )
+  ) satisfies Html
 }
 
 const Message = defineMessageUnion({

@@ -90,9 +90,9 @@ const decodeCandidate = (input: unknown) =>
     (configuration) => configuration._tag !== 'slider' || configuration.min < configuration.max,
   )
 
-export const normalizeConfiguration = (
+export const normalizeConfiguration: (
   configuration: PlaygroundConfiguration,
-): PlaygroundConfiguration =>
+) => PlaygroundConfiguration = (configuration: PlaygroundConfiguration) =>
   configuration._tag === 'slider' ? Slider.normalize(configuration) : configuration
 
 export const FluidConfiguration = Schema.Union([
@@ -136,9 +136,9 @@ export const FluidConfiguration = Schema.Union([
 ])
 export type FluidConfiguration = typeof FluidConfiguration.Type
 
-export const controlsForConfiguration = (
+export const controlsForConfiguration: (
   configuration: PlaygroundConfiguration,
-): ReadonlyArray<Control> => {
+) => ReadonlyArray<Control> = (configuration: PlaygroundConfiguration) => {
   return Match.value(configuration).pipe(
     Match.tagsExhaustive({
       button: (configuration) => Button.controlsFor(configuration),
@@ -184,7 +184,9 @@ export const controlsForConfiguration = (
   )
 }
 
-export const defaultsForPage = (page: ComponentPage): PlaygroundConfiguration => {
+export const defaultsForPage: (page: ComponentPage) => PlaygroundConfiguration = (
+  page: ComponentPage,
+) => {
   if (page.family === 'charts') return Chart.make({ _tag: 'chart', slug: page.slug, options: {} })
   return Match.value(page.slug)
     .pipe(
@@ -239,13 +241,14 @@ const legacyAppearance = (options: PreviewOptions) => ({
   ...(options.hover === undefined ? {} : { hover: options.hover }),
 })
 
-export const configurationForPage = (
+export const configurationForPage: (
   page: ComponentPage,
-  legacy: PreviewOptions = {},
-): PlaygroundConfiguration => {
+  legacy?: PreviewOptions,
+) => PlaygroundConfiguration = (page: ComponentPage, legacy: PreviewOptions = {}) => {
   const initial = defaultsForPage(page)
-  if (initial._tag === 'chart') return { ...initial, options: legacy }
-  if (initial._tag === 'none') return initial
+  if (initial._tag === 'chart')
+    return { ...initial, options: legacy } satisfies PlaygroundConfiguration
+  if (initial._tag === 'none') return initial satisfies PlaygroundConfiguration
   const candidate = {
     ...initial,
     ...legacy,
@@ -279,14 +282,20 @@ export const configurationForPage = (
         }
       : {}),
   }
-  return normalizeConfiguration(Option.getOrElse(decodeCandidate(candidate), () => initial))
+  return normalizeConfiguration(
+    Option.getOrElse(decodeCandidate(candidate), () => initial),
+  ) satisfies PlaygroundConfiguration
 }
 
-export const updateConfiguration = (
+export const updateConfiguration: (
   configuration: PlaygroundConfiguration,
   prop: string,
   value: string | number | boolean,
-): PlaygroundConfiguration => {
+) => PlaygroundConfiguration = (
+  configuration: PlaygroundConfiguration,
+  prop: string,
+  value: string | number | boolean,
+) => {
   if (
     configuration._tag === 'date-picker' &&
     prop === 'type' &&
@@ -321,7 +330,9 @@ export const updateConfiguration = (
 
 export const serializeConfiguration = (configuration: PlaygroundConfiguration) =>
   JSON.stringify(normalizeConfiguration(configuration))
-export const decodeConfiguration = (serialized: string): Option.Option<PlaygroundConfiguration> => {
+export const decodeConfiguration: (serialized: string) => Option.Option<PlaygroundConfiguration> = (
+  serialized: string,
+) => {
   try {
     return Option.map(decodeCandidate(JSON.parse(serialized)), normalizeConfiguration)
   } catch {
@@ -329,16 +340,18 @@ export const decodeConfiguration = (serialized: string): Option.Option<Playgroun
   }
 }
 
-export const configurationQuery = (configuration: PlaygroundConfiguration): string =>
+export const configurationQuery: (configuration: PlaygroundConfiguration) => string = (
+  configuration: PlaygroundConfiguration,
+) =>
   configuration._tag === 'none'
     ? ''
     : `props=${encodeURIComponent(serializeConfiguration(configuration))}`
 
-export const configurationUrl = (
+export const configurationUrl: (
   href: string,
   path: string,
   configuration: PlaygroundConfiguration,
-): string => {
+) => string = (href: string, path: string, configuration: PlaygroundConfiguration) => {
   const url = new URL(href)
   if (url.pathname !== path) return href
   if (configuration._tag === 'none') url.searchParams.delete('props')

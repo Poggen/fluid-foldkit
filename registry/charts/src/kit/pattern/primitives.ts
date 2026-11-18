@@ -14,20 +14,15 @@ import type {
   PatternOrientationType,
 } from './types'
 
-const background = (
-  props: PatternStyleProps,
-  width: number,
-  height: number,
-  className?: string,
-): ReadonlyArray<PatternShape> =>
-  props.background !== undefined && props.background !== ''
-    ? [{ kind: 'rect', key: 'background', width, height, fill: props.background, className }]
-    : []
-
-const layer = (props: PatternResource): PatternLayer => ({ kind: 'pattern', props })
-
-export function PatternCircles(props: PatternCirclesProps): PatternLayer {
-  const circle = (key: string, cx: number, cy: number, complement: boolean): PatternShape => ({
+export const PatternCircles: (props: PatternCirclesProps) => PatternLayer = function PatternCircles(
+  props: PatternCirclesProps,
+) {
+  const circle: (key: string, cx: number, cy: number, complement: boolean) => PatternShape = (
+    key: string,
+    cx: number,
+    cy: number,
+    complement: boolean,
+  ) => ({
     kind: 'circle',
     key,
     cx,
@@ -66,7 +61,130 @@ export function PatternCircles(props: PatternCirclesProps): PatternLayer {
   })
 }
 
-const pathForOrientation = (height: number, orientation: PatternOrientationType): string => {
+export const PatternLines: (props: PatternLinesProps) => PatternLayer = function PatternLines(
+  props: PatternLinesProps,
+) {
+  const input: PatternOrientationType | ReadonlyArray<PatternOrientationType> =
+    props.orientation ?? ['vertical']
+
+  const orientations = isOrientationList(input) ? input : [input]
+
+  return layer({
+    id: props.id,
+    width: props.width,
+    height: props.height,
+    shapes: [
+      ...background(props, props.width, props.height, 'visx-pattern-line-background'),
+      ...orientations.map(
+        (orientation, index) =>
+          ({
+            kind: 'path',
+            key: `visx-${props.id}-line-${orientation}-${index}`,
+            path: pathForOrientation(props.height, orientation),
+            className: joinClasses('visx-pattern-line', props.className),
+            fill: undefined,
+            stroke: props.stroke,
+            strokeWidth: props.strokeWidth,
+            strokeDasharray: props.strokeDasharray,
+            strokeLinecap: props.strokeLinecap ?? 'square',
+            shapeRendering: props.shapeRendering ?? 'auto',
+          }) satisfies PatternShape,
+      ),
+    ],
+  })
+}
+
+const pathPattern: (
+  props: PatternPathProps,
+  width: number,
+  height: number,
+  path: string,
+  className: string,
+) => PatternLayer = function pathPattern(
+  props: PatternPathProps,
+  width: number,
+  height: number,
+  path: string,
+  className: string,
+) {
+  return layer({
+    id: props.id,
+    width,
+    height,
+    shapes: [
+      ...background(props, width, height),
+      {
+        kind: 'path',
+        key: 'path',
+        path,
+        className: joinClasses('visx-pattern-path', className, props.className),
+        fill: props.fill ?? 'transparent',
+        stroke: props.stroke,
+        strokeWidth: props.strokeWidth,
+        strokeDasharray: props.strokeDasharray,
+        strokeLinecap: props.strokeLinecap ?? 'square',
+        shapeRendering: props.shapeRendering ?? 'auto',
+      },
+    ],
+  })
+}
+
+export const PatternHexagons: (props: PatternHexagonsProps) => PatternLayer =
+  function PatternHexagons(props: PatternHexagonsProps) {
+    const h = props.height
+    const size = props.size ?? DEFAULT_HEXAGON_SIZE
+    const squareRoot = Math.sqrt(size)
+
+    return pathPattern(
+      props,
+      size,
+      squareRoot,
+      `M ${h},0 l ${h},0 l ${h / 2},${(h * squareRoot) / 2} l ${-h / 2},${(h * squareRoot) / 2} l ${-h},0 l ${-h / 2},${(-h * squareRoot) / 2} Z M 0,${(h * squareRoot) / 2} l ${h / 2},0 M ${3 * h},${(h * squareRoot) / 2} l ${-h / 2},0`,
+      'visx-pattern-hexagon',
+    )
+  }
+
+export const PatternWaves: (props: PatternWavesProps) => PatternLayer = function PatternWaves(
+  props: PatternWavesProps,
+) {
+  const h = props.height
+
+  return pathPattern(
+    props,
+    props.width,
+    h,
+    `M 0 ${h / 2} c ${h / 8} ${-h / 4} , ${(h * 3) / 8} ${-h / 4} , ${h / 2} 0
+             c ${h / 8} ${h / 4} , ${(h * 3) / 8} ${h / 4} , ${h / 2} 0 M ${-h / 2} ${h / 2}
+             c ${h / 8} ${h / 4} , ${(h * 3) / 8} ${h / 4} , ${h / 2} 0 M ${h} ${h / 2}
+             c ${h / 8} ${-h / 4} , ${(h * 3) / 8} ${-h / 4} , ${h / 2} 0`,
+    'visx-pattern-wave',
+  )
+}
+
+const background: (
+  props: PatternStyleProps,
+  width: number,
+  height: number,
+  className?: string,
+) => ReadonlyArray<PatternShape> = (
+  props: PatternStyleProps,
+  width: number,
+  height: number,
+  className?: string,
+) =>
+  props.background !== undefined && props.background !== ''
+    ? [{ kind: 'rect', key: 'background', width, height, fill: props.background, className }]
+    : []
+
+const layer: (props: PatternResource) => PatternLayer = (props: PatternResource) => ({
+  kind: 'pattern',
+  props,
+})
+
+const pathForOrientation: (height: number, orientation: PatternOrientationType) => string = (
+  height: number,
+  orientation: PatternOrientationType,
+) => {
   switch (orientation) {
     case 'horizontal': {
       return `M 0,${height / 2} l ${height},0`
@@ -96,90 +214,3 @@ const pathForOrientation = (height: number, orientation: PatternOrientationType)
 const isOrientationList = (
   value: PatternOrientationType | ReadonlyArray<PatternOrientationType>,
 ): value is ReadonlyArray<PatternOrientationType> => Array.isArray(value)
-
-export function PatternLines(props: PatternLinesProps): PatternLayer {
-  const input: PatternOrientationType | ReadonlyArray<PatternOrientationType> =
-    props.orientation ?? ['vertical']
-
-  const orientations = isOrientationList(input) ? input : [input]
-
-  return layer({
-    id: props.id,
-    width: props.width,
-    height: props.height,
-    shapes: [
-      ...background(props, props.width, props.height, 'visx-pattern-line-background'),
-      ...orientations.map((orientation, index): PatternShape => ({
-        kind: 'path',
-        key: `visx-${props.id}-line-${orientation}-${index}`,
-        path: pathForOrientation(props.height, orientation),
-        className: joinClasses('visx-pattern-line', props.className),
-        fill: undefined,
-        stroke: props.stroke,
-        strokeWidth: props.strokeWidth,
-        strokeDasharray: props.strokeDasharray,
-        strokeLinecap: props.strokeLinecap ?? 'square',
-        shapeRendering: props.shapeRendering ?? 'auto',
-      })),
-    ],
-  })
-}
-
-function pathPattern(
-  props: PatternPathProps,
-  width: number,
-  height: number,
-  path: string,
-  className: string,
-): PatternLayer {
-  return layer({
-    id: props.id,
-    width,
-    height,
-    shapes: [
-      ...background(props, width, height),
-      {
-        kind: 'path',
-        key: 'path',
-        path,
-        className: joinClasses('visx-pattern-path', className, props.className),
-        fill: props.fill ?? 'transparent',
-        stroke: props.stroke,
-        strokeWidth: props.strokeWidth,
-        strokeDasharray: props.strokeDasharray,
-        strokeLinecap: props.strokeLinecap ?? 'square',
-        shapeRendering: props.shapeRendering ?? 'auto',
-      },
-    ],
-  })
-}
-
-export function PatternHexagons(props: PatternHexagonsProps): PatternLayer {
-  const h = props.height
-  const size = props.size ?? DEFAULT_HEXAGON_SIZE
-  const squareRoot = Math.sqrt(size)
-
-  // Source tile dimensions intentionally differ from the authored path's height.
-  return pathPattern(
-    props,
-    size,
-    squareRoot,
-    `M ${h},0 l ${h},0 l ${h / 2},${(h * squareRoot) / 2} l ${-h / 2},${(h * squareRoot) / 2} l ${-h},0 l ${-h / 2},${(-h * squareRoot) / 2} Z M 0,${(h * squareRoot) / 2} l ${h / 2},0 M ${3 * h},${(h * squareRoot) / 2} l ${-h / 2},0`,
-    'visx-pattern-hexagon',
-  )
-}
-
-export function PatternWaves(props: PatternWavesProps): PatternLayer {
-  const h = props.height
-
-  return pathPattern(
-    props,
-    props.width,
-    h,
-    `M 0 ${h / 2} c ${h / 8} ${-h / 4} , ${(h * 3) / 8} ${-h / 4} , ${h / 2} 0
-             c ${h / 8} ${h / 4} , ${(h * 3) / 8} ${h / 4} , ${h / 2} 0 M ${-h / 2} ${h / 2}
-             c ${h / 8} ${h / 4} , ${(h * 3) / 8} ${h / 4} , ${h / 2} 0 M ${h} ${h / 2}
-             c ${h / 8} ${-h / 4} , ${(h * 3) / 8} ${-h / 4} , ${h / 2} 0`,
-    'visx-pattern-wave',
-  )
-}

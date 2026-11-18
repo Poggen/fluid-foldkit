@@ -1,6 +1,6 @@
 import { systemPages } from './system'
 export { systemPages } from './system'
-// Fluid descriptions derived from cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Fluid descriptions derived from cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 export interface ComponentPage {
   readonly slug: string
   readonly name: string

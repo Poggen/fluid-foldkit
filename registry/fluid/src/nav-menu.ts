@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { modifyFields } from 'foldkit/struct'
 import { HoverMode } from './hover-observation.js'
 import { Layer, Schema, Option, Data } from 'effect'
@@ -103,14 +103,15 @@ const Highlight = NavMenuBlock.makeRequiredFieldBinding(HoverHighlightBlock, {
 const HoverRequests = NavMenuBlock.makeRequiredFieldBinding(HoverBlock, {
   field: 'hover',
   init: {
-    contextToArgs: (config: NavMenuConfig): [HoverConfig] => [
-      {
-        id: `${config.id}-hover`,
-        axis: 'y',
-        gapClick: false,
-        ...(config.hoverMode === undefined ? {} : { mode: config.hoverMode }),
-      },
-    ],
+    contextToArgs: (config: NavMenuConfig) =>
+      [
+        {
+          id: `${config.id}-hover`,
+          axis: 'y',
+          gapClick: false,
+          ...(config.hoverMode === undefined ? {} : { mode: config.hoverMode }),
+        },
+      ] satisfies [HoverConfig],
   },
 })
 

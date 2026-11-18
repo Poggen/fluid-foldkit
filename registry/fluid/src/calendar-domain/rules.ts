@@ -1,4 +1,4 @@
-// Fluid 200b4534 + react-day-picker 10.0.2, MIT; see packet attribution.
+/* @license Fluid 200b4534 + react-day-picker 10.0.2, MIT; see packet attribution. */
 import { instantDate, zonedDate } from './date-boundary.js'
 import type { Clock } from 'effect/Clock'
 import { DateLib, defaultLocale } from './date-library.js'
@@ -13,66 +13,28 @@ import type { ModifierOptions } from './modifiers.js'
 import { createNoonOverrides } from './noon.js'
 import { convertMatchersToTimeZone, toTimeZone } from './time-zone.js'
 
-export interface CalendarRuleOptions extends ModifierOptions {
-  readonly booked?: Matcher | Array<Matcher>
-  readonly available?: Matcher | Array<Matcher>
-  readonly locale?: Partial<CalendarLocale>
-  readonly timeZone?: string
-  readonly noonSafe?: boolean
-  readonly numerals?: DateLibOptions['numerals']
-  readonly weekStartsOn?: DateLibOptions['weekStartsOn']
-  readonly firstWeekContainsDate?: DateLibOptions['firstWeekContainsDate']
-  readonly useAdditionalWeekYearTokens?: boolean
-  readonly useAdditionalDayOfYearTokens?: boolean
-  readonly dateLib?: Partial<DateLib>
-  readonly labels?: Partial<CalendarLabels>
-  readonly formatters?: Partial<CalendarFormatters>
-  readonly showWeekNumber?: boolean
-  readonly hideWeekdays?: boolean
-  readonly hideNavigation?: boolean
-  readonly lang?: string
-  readonly reverseYears?: boolean
-  readonly dir?: string
-}
-
-export function dayNumber(date: Date): number {
+export const dayNumber: (date: Date) => number = function dayNumber(date: Date) {
   return Math.round(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000)
 }
 
-export const WEEK_COL_RATIO = 0.75
+const matcherList: (matcher: Matcher | Array<Matcher> | undefined) => Array<Matcher> =
+  function matcherList(matcher: Matcher | Array<Matcher> | undefined) {
+    if (matcher === undefined) {
+      return []
+    }
 
-function matcherList(matcher: Matcher | Array<Matcher> | undefined): Array<Matcher> {
-  if (matcher === undefined) {
-    return []
+    return Array.isArray(matcher) ? matcher : [matcher]
   }
 
-  return Array.isArray(matcher) ? matcher : [matcher]
-}
-
-export function resolveDayMatchers({
-  booked,
-  available,
-  disabled,
-}: Pick<CalendarRuleOptions, 'booked' | 'available' | 'disabled'>) {
-  const outside: Array<Matcher> =
-    available === undefined ? [] : [(date: Date) => !dateMatchModifiers(date, available)]
-
-  const unavailable = [...matcherList(disabled), ...outside]
-
-  return {
-    disabled: [...matcherList(booked), ...unavailable],
-    modifiers: {
-      booked: booked ?? false,
-      unavailable: unavailable.length > 0 ? unavailable : false,
-    },
-  }
-}
-
-export function resolveWeekNumbering(
+export const resolveWeekNumbering: (
   show: boolean | undefined,
   starts: DateLibOptions['weekStartsOn'],
   iso: boolean | undefined,
-): boolean {
+) => boolean = function resolveWeekNumbering(
+  show: boolean | undefined,
+  starts: DateLibOptions['weekStartsOn'],
+  iso: boolean | undefined,
+) {
   if (iso !== undefined) {
     return iso
   }
@@ -84,7 +46,9 @@ export function resolveWeekNumbering(
   return starts === undefined || starts === 1
 }
 
-function dateSettings(input: CalendarRuleOptions): DateLibOptions {
+const dateSettings: (input: CalendarRuleOptions) => DateLibOptions = function dateSettings(
+  input: CalendarRuleOptions,
+) {
   let settings: DateLibOptions = { locale: { ...defaultLocale, ...input.locale } }
 
   const weekStartsOn = input.broadcastCalendar === true ? 1 : input.weekStartsOn
@@ -116,6 +80,104 @@ function dateSettings(input: CalendarRuleOptions): DateLibOptions {
   return settings
 }
 
+const calendarModifierOptions: (input: CalendarRuleOptions, dateLib: DateLib) => ModifierOptions =
+  function calendarModifierOptions(input: CalendarRuleOptions, dateLib: DateLib) {
+    const matching = resolveDayMatchers(input)
+
+    const zone = (date: Date) =>
+      hasTimeZone(input.timeZone) ? toTimeZone(date, input.timeZone) : date
+
+    const convert = (matcher: Matcher | Array<Matcher> | undefined) =>
+      hasTimeZone(input.timeZone) ? convertMatchersToTimeZone(matcher, input.timeZone) : matcher
+
+    const custom = { ...matching.modifiers, ...input.modifiers }
+
+    const modifiers: Record<string, Matcher | Array<Matcher> | undefined> = {}
+
+    for (const [name, matcher] of Object.entries(custom)) {
+      modifiers[name] = convert(matcher)
+    }
+
+    const { month, defaultMonth, startMonth, endMonth, hidden, ...otherOptions } = input
+
+    const convertedHidden = convert(hidden)
+
+    let options: ModifierOptions = { ...otherOptions }
+
+    if (month !== undefined) {
+      options = { ...options, month: zone(month) }
+    }
+
+    if (defaultMonth !== undefined) {
+      options = { ...options, defaultMonth: zone(defaultMonth) }
+    }
+
+    if (startMonth !== undefined) {
+      options = { ...options, startMonth: zone(startMonth) }
+    }
+
+    if (endMonth !== undefined) {
+      options = { ...options, endMonth: zone(endMonth) }
+    }
+
+    options = {
+      ...options,
+      today: input.today === undefined ? dateLib.today() : zone(input.today),
+      ISOWeek: resolveWeekNumbering(input.showWeekNumber, input.weekStartsOn, input.ISOWeek),
+      showOutsideDays: (input.numberOfMonths ?? 1) > 1 ? false : (input.showOutsideDays ?? true),
+      disabled: convert(matching.disabled) ?? matching.disabled,
+    }
+
+    if (convertedHidden !== undefined) {
+      options = { ...options, hidden: convertedHidden }
+    }
+
+    return { ...options, modifiers }
+  }
+
+export interface CalendarRuleOptions extends ModifierOptions {
+  readonly booked?: Matcher | Array<Matcher>
+  readonly available?: Matcher | Array<Matcher>
+  readonly locale?: Partial<CalendarLocale>
+  readonly timeZone?: string
+  readonly noonSafe?: boolean
+  readonly numerals?: DateLibOptions['numerals']
+  readonly weekStartsOn?: DateLibOptions['weekStartsOn']
+  readonly firstWeekContainsDate?: DateLibOptions['firstWeekContainsDate']
+  readonly useAdditionalWeekYearTokens?: boolean
+  readonly useAdditionalDayOfYearTokens?: boolean
+  readonly dateLib?: Partial<DateLib>
+  readonly labels?: Partial<CalendarLabels>
+  readonly formatters?: Partial<CalendarFormatters>
+  readonly showWeekNumber?: boolean
+  readonly hideWeekdays?: boolean
+  readonly hideNavigation?: boolean
+  readonly lang?: string
+  readonly reverseYears?: boolean
+  readonly dir?: string
+}
+
+export const WEEK_COL_RATIO = 0.75
+
+export function resolveDayMatchers({
+  booked,
+  available,
+  disabled,
+}: Pick<CalendarRuleOptions, 'booked' | 'available' | 'disabled'>) {
+  const outside: Array<Matcher> =
+    available === undefined ? [] : [(date: Date) => !dateMatchModifiers(date, available)]
+
+  const unavailable = [...matcherList(disabled), ...outside]
+
+  return {
+    disabled: [...matcherList(booked), ...unavailable],
+    modifiers: {
+      booked: booked ?? false,
+      unavailable: unavailable.length > 0 ? unavailable : false,
+    },
+  }
+}
+
 function hasTimeZone(timeZone: string | undefined): timeZone is string {
   return timeZone !== undefined && timeZone !== ''
 }
@@ -142,60 +204,6 @@ function calendarDateLibrary(input: CalendarRuleOptions, clock: Clock) {
       return today
     },
   })
-}
-
-function calendarModifierOptions(input: CalendarRuleOptions, dateLib: DateLib): ModifierOptions {
-  const matching = resolveDayMatchers(input)
-
-  const zone = (date: Date) =>
-    hasTimeZone(input.timeZone) ? toTimeZone(date, input.timeZone) : date
-
-  const convert = (matcher: Matcher | Array<Matcher> | undefined) =>
-    hasTimeZone(input.timeZone) ? convertMatchersToTimeZone(matcher, input.timeZone) : matcher
-
-  const custom = { ...matching.modifiers, ...input.modifiers }
-
-  const modifiers: Record<string, Matcher | Array<Matcher> | undefined> = {}
-
-  for (const [name, matcher] of Object.entries(custom)) {
-    modifiers[name] = convert(matcher)
-  }
-
-  const { month, defaultMonth, startMonth, endMonth, hidden, ...otherOptions } = input
-
-  const convertedHidden = convert(hidden)
-
-  let options: ModifierOptions = { ...otherOptions }
-
-  if (month !== undefined) {
-    options = { ...options, month: zone(month) }
-  }
-
-  if (defaultMonth !== undefined) {
-    options = { ...options, defaultMonth: zone(defaultMonth) }
-  }
-
-  if (startMonth !== undefined) {
-    options = { ...options, startMonth: zone(startMonth) }
-  }
-
-  if (endMonth !== undefined) {
-    options = { ...options, endMonth: zone(endMonth) }
-  }
-
-  options = {
-    ...options,
-    today: input.today === undefined ? dateLib.today() : zone(input.today),
-    ISOWeek: resolveWeekNumbering(input.showWeekNumber, input.weekStartsOn, input.ISOWeek),
-    showOutsideDays: (input.numberOfMonths ?? 1) > 1 ? false : (input.showOutsideDays ?? true),
-    disabled: convert(matching.disabled) ?? matching.disabled,
-  }
-
-  if (convertedHidden !== undefined) {
-    options = { ...options, hidden: convertedHidden }
-  }
-
-  return { ...options, modifiers }
 }
 
 export function createCalendarRules(input: CalendarRuleOptions, clock: Clock) {

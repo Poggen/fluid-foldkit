@@ -6,6 +6,39 @@ import type { SweepObservation } from './observations'
 import type { Interaction } from './state'
 import type { TimeSeriesProps } from './root-options'
 
+export const nativeObservations: (element: HTMLElement) => NativeObservation =
+  function nativeObservations(element: HTMLElement) {
+    return {
+      sweep: (event) => {
+        element.dispatchEvent(new CustomEvent('sweep-observed', { detail: event }))
+      },
+      drag: (kind, x, index) => {
+        element.dispatchEvent(new CustomEvent('drag-observed', { detail: { kind, x, index } }))
+      },
+      domains: (current, target, viewport) => {
+        element.dispatchEvent(
+          new CustomEvent('domains-observed', {
+            detail: viewport === undefined ? { current, target } : { current, target, viewport },
+          }),
+        )
+      },
+      timing: (generation, elapsed, at) => {
+        element.dispatchEvent(
+          new CustomEvent('phase-timing', { detail: { generation, elapsed, at } }),
+        )
+      },
+      deadline: (generation) => {
+        element.dispatchEvent(new CustomEvent('phase-deadline', { detail: { generation } }))
+      },
+      revealed: (generation) => {
+        element.dispatchEvent(new CustomEvent('reveal-completed', { detail: { generation } }))
+      },
+      candidates: (indices) => {
+        element.dispatchEvent(new CustomEvent('candidates-observed', { detail: { indices } }))
+      },
+    }
+  }
+
 export interface NativeObservation {
   readonly sweep: (event: SweepObservation) => void
   readonly drag: (kind: 'start' | 'move' | 'end', x: number, index: number) => void
@@ -72,36 +105,4 @@ export interface CartesianResourceInputs<
     clock: () => number,
     tooltipExtension?: ChartTooltipExtension,
   ) => DomChartDefinition<SceneDatum, XValue, YValue>
-}
-
-export function nativeObservations(element: HTMLElement): NativeObservation {
-  return {
-    sweep: (event) => {
-      element.dispatchEvent(new CustomEvent('sweep-observed', { detail: event }))
-    },
-    drag: (kind, x, index) => {
-      element.dispatchEvent(new CustomEvent('drag-observed', { detail: { kind, x, index } }))
-    },
-    domains: (current, target, viewport) => {
-      element.dispatchEvent(
-        new CustomEvent('domains-observed', {
-          detail: viewport === undefined ? { current, target } : { current, target, viewport },
-        }),
-      )
-    },
-    timing: (generation, elapsed, at) => {
-      element.dispatchEvent(
-        new CustomEvent('phase-timing', { detail: { generation, elapsed, at } }),
-      )
-    },
-    deadline: (generation) => {
-      element.dispatchEvent(new CustomEvent('phase-deadline', { detail: { generation } }))
-    },
-    revealed: (generation) => {
-      element.dispatchEvent(new CustomEvent('reveal-completed', { detail: { generation } }))
-    },
-    candidates: (indices) => {
-      element.dispatchEvent(new CustomEvent('candidates-observed', { detail: { indices } }))
-    },
-  }
 }

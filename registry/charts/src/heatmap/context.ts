@@ -1,6 +1,14 @@
 import type { HeatmapLinearScale, HeatmapTimeScale } from './scales'
 import type { ChartStyle as CSSProperties } from '../cartesian/content-types'
 
+/** Native contexts are explicit values, so callers cannot read an unrelated ambient chart. */
+export const useHeatmap: (value: HeatmapContextValue | undefined) => HeatmapContextValue =
+  function useHeatmap(value: HeatmapContextValue | undefined) {
+    if (value === undefined) throw new Error('Heatmap components require a native Heatmap context.')
+
+    return value
+  }
+
 type RefObject<T> = { readonly current: T }
 
 import type { ChartPhase } from '../kit/motion/phase'
@@ -174,13 +182,6 @@ export type {
   HeatmapSeparatorStyle,
   HeatmapYAxisConfig,
   HeatmapContextValue,
-}
-
-/** Native contexts are explicit values, so callers cannot read an unrelated ambient chart. */
-export function useHeatmap(value: HeatmapContextValue | undefined): HeatmapContextValue {
-  if (value === undefined) throw new Error('Heatmap components require a native Heatmap context.')
-
-  return value
 }
 
 export function HeatmapProvider({

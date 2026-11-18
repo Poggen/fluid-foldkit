@@ -1,5 +1,3 @@
-// Identity and contextual scope hooks consumed by native resources, utility variants and browser tests.
-// These names intentionally generate no CSS. New utilities still require Tailwind discovery.
 export const designSystemHooks = [
   'accent-swatch',
   'authored-button-variants',

@@ -51,66 +51,80 @@ export const nestedDisclosure: (
 export const nestedRowKind: NonNullable<NavMenuViewInputs['kind']> = (item) =>
   ['projects', 'design', 'reports'].includes(item.value) ? 'action' : 'link'
 
-export const nestedSidebarRows = <Message>(
+export const nestedSidebarRows: <Message>(
   props: NestedSidebarState & {
     readonly animate: SidebarMenuSubProps['animate']
   },
   context: NavMenuContent,
   h: HtmlBuilder<Message>,
-): ReadonlyArray<Html> => [
-  context.row('projects', {
-    children: [
-      SidebarMenuSub(
-        {
-          open: props.branchOpen,
-          attributes: [h.Id('nested-projects')],
-          animate: props.animate,
-          children: [
-            context.row('design', {
-              children: [
-                SidebarMenuSub(
-                  {
-                    open: props.detailsOpen,
-                    attributes: [h.Id('nested-details')],
-                    animate: props.animate,
-                    children: [context.row('tokens'), context.row('components')],
-                  },
-                  h,
-                ),
-              ],
-            }),
-            context.row('roadmap'),
-            context.row('changelog'),
-          ],
-        },
-        h,
-      ),
-    ],
-  }),
-  context.row('reports', {
-    children: [
-      SidebarMenuSub(
-        {
-          open: props.reportsOpen,
-          attributes: [h.Id('nested-reports')],
-          animate: props.animate,
-          children: [context.row('activity')],
-        },
-        h,
-      ),
-    ],
-  }),
-  context.row('archive'),
-]
+) => ReadonlyArray<Html> = <Message>(
+  props: NestedSidebarState & {
+    readonly animate: SidebarMenuSubProps['animate']
+  },
+  context: NavMenuContent,
+  h: HtmlBuilder<Message>,
+) =>
+  [
+    context.row('projects', {
+      children: [
+        SidebarMenuSub(
+          {
+            open: props.branchOpen,
+            attributes: [h.Id('nested-projects')],
+            animate: props.animate,
+            children: [
+              context.row('design', {
+                children: [
+                  SidebarMenuSub(
+                    {
+                      open: props.detailsOpen,
+                      attributes: [h.Id('nested-details')],
+                      animate: props.animate,
+                      children: [context.row('tokens'), context.row('components')],
+                    },
+                    h,
+                  ),
+                ],
+              }),
+              context.row('roadmap'),
+              context.row('changelog'),
+            ],
+          },
+          h,
+        ),
+      ],
+    }),
+    context.row('reports', {
+      children: [
+        SidebarMenuSub(
+          {
+            open: props.reportsOpen,
+            attributes: [h.Id('nested-reports')],
+            animate: props.animate,
+            children: [context.row('activity')],
+          },
+          h,
+        ),
+      ],
+    }),
+    context.row('archive'),
+  ] satisfies ReadonlyArray<Html>
 
-export const sidebarNestedContent = <Message>(
+export const sidebarNestedContent: <Message>(
   props: NestedSidebarState & {
     readonly animate: SidebarMenuSubProps['animate']
     readonly onGroupToggle: (open: boolean) => Message
     readonly nav: Html
   },
   h: HtmlBuilder<Message>,
-): Html =>
+) => Html = <Message>(
+  props: NestedSidebarState & {
+    readonly animate: SidebarMenuSubProps['animate']
+    readonly onGroupToggle: (open: boolean) => Message
+    readonly nav: Html
+  },
+  h: HtmlBuilder<Message>,
+) =>
   h.div(
     [h.Class('w-64'), h.DataAttribute('parity-nested-sidebar', '')],
     [
@@ -127,4 +141,4 @@ export const sidebarNestedContent = <Message>(
         h,
       ),
     ],
-  )
+  ) satisfies Html

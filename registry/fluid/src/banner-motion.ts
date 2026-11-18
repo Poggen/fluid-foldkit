@@ -1,5 +1,5 @@
 import { constant } from 'effect/Function'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Effect, FiberSet, Layer } from 'effect'
 import type { Html, VNode } from 'foldkit/html'
 import {
@@ -58,7 +58,6 @@ export interface BannerAnimation {
 
 type FollowCompletion = (settled: Promise<unknown>, complete: () => void) => void
 
-// Group completion also covers instant values, preserving Source callback ordering.
 function animate(
   value: MotionValue<number>,
   target: number,
@@ -297,6 +296,42 @@ export function createBannerMotionScope() {
       nodes.set(vnode.elm, mount(vnode.elm, animation, followCompletion))
     }
   }
+  const node: (vnode: Html, animation: BannerAnimation) => Html = (
+    vnode: Html,
+    animation: BannerAnimation,
+  ) => {
+    if (vnode === null) {
+      return null satisfies Html
+    }
+
+    const previous = vnode.data?.hook
+
+    return {
+      ...vnode,
+      data: {
+        ...vnode.data,
+        hook: {
+          ...previous,
+          insert(node) {
+            previous?.insert?.(node)
+            synchronize(node, animation)
+          },
+          postpatch(oldNode, node) {
+            previous?.postpatch?.(oldNode, node)
+            synchronize(node, animation)
+          },
+          destroy(node) {
+            if (node.elm instanceof HTMLElement) {
+              nodes.get(node.elm)?.dispose()
+              nodes.delete(node.elm)
+            }
+
+            previous?.destroy?.(node)
+          },
+        },
+      },
+    } satisfies Html
+  }
 
   return {
     layer: Layer.effectDiscard(
@@ -330,39 +365,7 @@ export function createBannerMotionScope() {
         )
       }),
     ),
-    node: (vnode: Html, animation: BannerAnimation): Html => {
-      if (vnode === null) {
-        return null
-      }
-
-      const previous = vnode.data?.hook
-
-      return {
-        ...vnode,
-        data: {
-          ...vnode.data,
-          hook: {
-            ...previous,
-            insert(node) {
-              previous?.insert?.(node)
-              synchronize(node, animation)
-            },
-            postpatch(oldNode, node) {
-              previous?.postpatch?.(oldNode, node)
-              synchronize(node, animation)
-            },
-            destroy(node) {
-              if (node.elm instanceof HTMLElement) {
-                nodes.get(node.elm)?.dispose()
-                nodes.delete(node.elm)
-              }
-
-              previous?.destroy?.(node)
-            },
-          },
-        },
-      }
-    },
+    node,
   }
 }
 

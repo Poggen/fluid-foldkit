@@ -1,12 +1,129 @@
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
 import { fontWeights } from './lib/font-weight.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { Attribute, ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
 import { typeClass } from './lib/type-scale.js'
 import { cn } from './lib/utils.js'
 import { surfaceClasses } from './lib/surface-classes.js'
 import { resolvePresentation } from './presentation.js'
 import type { Presentation } from './presentation.js'
+
+export const DialogHeader: <Message, Requirements>(
+  props: DialogPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) => Html = function DialogHeader<Message, Requirements>(
+  props: DialogPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
+  const attributes = [
+    h.Class(cn('flex flex-col gap-1.5 mb-4', props.className)),
+    ...(props.attributes ?? []),
+  ]
+
+  return (props.render?.(attributes, props.children) ??
+    h.div(attributes, [...props.children])) satisfies Html
+}
+
+export const DialogFooter: <Message, Requirements>(
+  props: DialogPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) => Html = function DialogFooter<Message, Requirements>(
+  props: DialogPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
+  const attributes = [
+    h.Class(cn('flex justify-end gap-2 mt-6', props.className)),
+    ...(props.attributes ?? []),
+  ]
+
+  return (props.render?.(attributes, props.children) ??
+    h.div(attributes, [...props.children])) satisfies Html
+}
+
+export const DialogTitle: <Message, Requirements>(
+  props: DialogNamedPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) => Html = function DialogTitle<Message, Requirements>(
+  props: DialogNamedPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
+  const { size } = resolvePresentation(props)
+
+  const attributes = sourceStyleAttributes({ fontVariationSettings: fontWeights.semibold }, [
+    h.Class(cn(typeClass('title', size.variant), 'text-foreground', props.className)),
+    h.Id(`${props.dialogId}-dialog-title`),
+    h.DataAttribute('fluid-dialog-title', ''),
+    ...(props.attributes ?? []),
+  ])
+
+  return (props.render?.(attributes, props.children) ??
+    h.h2(attributes, [...props.children])) satisfies Html
+}
+
+export const DialogDescription: <Message, Requirements>(
+  props: DialogNamedPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) => Html = function DialogDescription<Message, Requirements>(
+  props: DialogNamedPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
+  const { size } = resolvePresentation(props)
+
+  const attributes = [
+    h.Id(`${props.dialogId}-dialog-description`),
+    h.DataAttribute('fluid-dialog-description', ''),
+    h.Class(cn(typeClass('body', size.variant), 'text-muted-foreground', props.className)),
+    ...(props.attributes ?? []),
+  ]
+
+  return (props.render?.(attributes, props.children) ??
+    h.p(attributes, [...props.children])) satisfies Html
+}
+
+export const DialogTrigger: <Message, Requirements>(
+  props: DialogPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) => Html = function DialogTrigger<Message, Requirements>(
+  props: DialogPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
+  const attributes = [h.Type('button'), ...(props.attributes ?? [])]
+
+  return (props.render?.(attributes, props.children) ??
+    h.button(attributes, [...props.children])) satisfies Html
+}
+
+export const DialogClose: <Message, Requirements>(
+  props: DialogPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) => Html = function DialogClose<Message, Requirements>(
+  props: DialogPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
+  const attributes = [
+    h.Type('button'),
+    h.DataAttribute('fluid-dialog-close', ''),
+    ...(props.attributes ?? []),
+  ]
+
+  return (props.render?.(attributes, props.children) ??
+    h.button(attributes, [...props.children])) satisfies Html
+}
+
+export const DialogContent: <Message, Requirements>(
+  props: DialogContentProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) => Html = function DialogContent<Message, Requirements>(
+  props: DialogContentProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
+  const attributes = [h.Class(dialogContentClass(props)), ...(props.attributes ?? [])]
+
+  return (props.render?.(attributes, props.children, props.key) ??
+    (props.key === undefined
+      ? h.div(attributes, [...props.children])
+      : h.keyed('div')(props.key, attributes, [...props.children]))) satisfies Html
+}
 
 export interface DialogPartProps<Message, Requirements = never> extends Presentation {
   readonly children: ReadonlyArray<Html | string>
@@ -25,62 +142,6 @@ export interface DialogNamedPartProps<Message, Requirements = never> extends Dia
   readonly dialogId: string
 }
 
-export function DialogHeader<Message, Requirements>(
-  props: DialogPartProps<Message, Requirements>,
-  h: HtmlBuilder<Message, Requirements>,
-): Html {
-  const attributes = [
-    h.Class(cn('flex flex-col gap-1.5 mb-4', props.className)),
-    ...(props.attributes ?? []),
-  ]
-
-  return props.render?.(attributes, props.children) ?? h.div(attributes, [...props.children])
-}
-
-export function DialogFooter<Message, Requirements>(
-  props: DialogPartProps<Message, Requirements>,
-  h: HtmlBuilder<Message, Requirements>,
-): Html {
-  const attributes = [
-    h.Class(cn('flex justify-end gap-2 mt-6', props.className)),
-    ...(props.attributes ?? []),
-  ]
-
-  return props.render?.(attributes, props.children) ?? h.div(attributes, [...props.children])
-}
-
-export function DialogTitle<Message, Requirements>(
-  props: DialogNamedPartProps<Message, Requirements>,
-  h: HtmlBuilder<Message, Requirements>,
-): Html {
-  const { size } = resolvePresentation(props)
-
-  const attributes = sourceStyleAttributes({ fontVariationSettings: fontWeights.semibold }, [
-    h.Class(cn(typeClass('title', size.variant), 'text-foreground', props.className)),
-    h.Id(`${props.dialogId}-dialog-title`),
-    h.DataAttribute('fluid-dialog-title', ''),
-    ...(props.attributes ?? []),
-  ])
-
-  return props.render?.(attributes, props.children) ?? h.h2(attributes, [...props.children])
-}
-
-export function DialogDescription<Message, Requirements>(
-  props: DialogNamedPartProps<Message, Requirements>,
-  h: HtmlBuilder<Message, Requirements>,
-): Html {
-  const { size } = resolvePresentation(props)
-
-  const attributes = [
-    h.Id(`${props.dialogId}-dialog-description`),
-    h.DataAttribute('fluid-dialog-description', ''),
-    h.Class(cn(typeClass('body', size.variant), 'text-muted-foreground', props.className)),
-    ...(props.attributes ?? []),
-  ]
-
-  return props.render?.(attributes, props.children) ?? h.p(attributes, [...props.children])
-}
-
 export interface DialogContentProps<Message, Requirements = never> extends Omit<
   DialogPartProps<Message, Requirements>,
   'size' | 'render'
@@ -95,28 +156,6 @@ export interface DialogContentProps<Message, Requirements = never> extends Omit<
   readonly size?: 'sm' | 'lg' | 'xl'
   readonly position?: 'center' | 'top'
   readonly scoped?: boolean
-}
-
-export function DialogTrigger<Message, Requirements>(
-  props: DialogPartProps<Message, Requirements>,
-  h: HtmlBuilder<Message, Requirements>,
-): Html {
-  const attributes = [h.Type('button'), ...(props.attributes ?? [])]
-
-  return props.render?.(attributes, props.children) ?? h.button(attributes, [...props.children])
-}
-
-export function DialogClose<Message, Requirements>(
-  props: DialogPartProps<Message, Requirements>,
-  h: HtmlBuilder<Message, Requirements>,
-): Html {
-  const attributes = [
-    h.Type('button'),
-    h.DataAttribute('fluid-dialog-close', ''),
-    ...(props.attributes ?? []),
-  ]
-
-  return props.render?.(attributes, props.children) ?? h.button(attributes, [...props.children])
 }
 
 export const dialogContentClass = (
@@ -138,20 +177,6 @@ export const dialogContentClass = (
     width === 'xl' && (compact ? 'max-w-[800px]' : 'max-w-[880px]'),
     shape.container,
     props.className,
-  )
-}
-
-export function DialogContent<Message, Requirements>(
-  props: DialogContentProps<Message, Requirements>,
-  h: HtmlBuilder<Message, Requirements>,
-): Html {
-  const attributes = [h.Class(dialogContentClass(props)), ...(props.attributes ?? [])]
-
-  return (
-    props.render?.(attributes, props.children, props.key) ??
-    (props.key === undefined
-      ? h.div(attributes, [...props.children])
-      : h.keyed('div')(props.key, attributes, [...props.children]))
   )
 }
 

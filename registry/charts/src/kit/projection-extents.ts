@@ -5,7 +5,10 @@ interface ProjectionValueBounds {
   maxValue: number
 }
 
-const trackProjectionValue = (bounds: ProjectionValueBounds, value: number): void => {
+const trackProjectionValue: (bounds: ProjectionValueBounds, value: number) => void = (
+  bounds: ProjectionValueBounds,
+  value: number,
+) => {
   if (value < bounds.minValue) {
     bounds.minValue = value
   }
@@ -15,10 +18,9 @@ const trackProjectionValue = (bounds: ProjectionValueBounds, value: number): voi
   }
 }
 
-/** @internal */
-const projectionValueExtents = (
+const projectionValueExtents: (
   paths: Array<Array<ProjectionPoint>>,
-): { minValue: number; maxValue: number } | null => {
+) => { minValue: number; maxValue: number } | null = (paths: Array<Array<ProjectionPoint>>) => {
   const bounds: ProjectionValueBounds = {
     maxValue: Number.NEGATIVE_INFINITY,
     minValue: Number.POSITIVE_INFINITY,
@@ -42,7 +44,10 @@ interface ProjectionTimeBounds {
   maxTime: number
 }
 
-const trackProjectionTime = (bounds: ProjectionTimeBounds, time: number): void => {
+const trackProjectionTime: (bounds: ProjectionTimeBounds, time: number) => void = (
+  bounds: ProjectionTimeBounds,
+  time: number,
+) => {
   if (time < bounds.minTime) {
     bounds.minTime = time
   }
@@ -52,10 +57,9 @@ const trackProjectionTime = (bounds: ProjectionTimeBounds, time: number): void =
   }
 }
 
-/** @internal */
-const projectionDateExtents = (
+const projectionDateExtents: (
   paths: Array<Array<ProjectionPoint>>,
-): { minTime: number; maxTime: number } | null => {
+) => { minTime: number; maxTime: number } | null = (paths: Array<Array<ProjectionPoint>>) => {
   const bounds: ProjectionTimeBounds = {
     maxTime: Number.NEGATIVE_INFINITY,
     minTime: Number.POSITIVE_INFINITY,

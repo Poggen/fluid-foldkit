@@ -1,25 +1,10 @@
 import { Schema } from 'effect'
 import { sourceDate } from '../cartesian/source-date'
 
-/** Source's opaque metadata facade; never a chart Model or engine row codec. */
-export interface SplitProfitLossSegmentsOptions {
-  data: Array<Record<string, unknown>>
-  dataKey: string
-  xDataKey?: string
-  xAccessor: (row: Record<string, unknown>) => Date
-}
-
-/** Crossings overwrite dynamic keys and therefore cannot truthfully promise the caller's Row type. */
-export interface SplitProfitLossSegment {
-  data: Array<Record<string, unknown>>
-  isPositive: boolean
-}
-
-type SegmentSign = 'positive' | 'negative'
-
-const isNumber = Schema.is(Schema.Number)
-
-function resolveSign(value: number, fallback: SegmentSign): SegmentSign {
+const resolveSign: (value: number, fallback: SegmentSign) => SegmentSign = function resolveSign(
+  value: number,
+  fallback: SegmentSign,
+) {
   if (value > 0) {
     return 'positive'
   }
@@ -27,31 +12,34 @@ function resolveSign(value: number, fallback: SegmentSign): SegmentSign {
   return value < 0 ? 'negative' : fallback
 }
 
-function findInitialSign(data: Array<Record<string, unknown>>, dataKey: string): SegmentSign {
-  for (const row of data) {
-    const value = row[dataKey]
+const findInitialSign: (data: Array<Record<string, unknown>>, dataKey: string) => SegmentSign =
+  function findInitialSign(data: Array<Record<string, unknown>>, dataKey: string) {
+    for (const row of data) {
+      const value = row[dataKey]
 
-    if (isNumber(value)) {
-      if (value > 0) {
-        return 'positive'
-      }
+      if (isNumber(value)) {
+        if (value > 0) {
+          return 'positive'
+        }
 
-      if (value < 0) {
-        return 'negative'
+        if (value < 0) {
+          return 'negative'
+        }
       }
     }
+
+    return 'positive'
   }
 
-  return 'positive'
-}
-
 /** Pure synchronous Source boundary. Metadata is only read, grouped, shallow-spread and returned. */
-export function splitProfitLossSegments({
+export const splitProfitLossSegments: (
+  argument0: SplitProfitLossSegmentsOptions,
+) => Array<SplitProfitLossSegment> = function splitProfitLossSegments({
   data,
   dataKey,
   xDataKey = 'date',
   xAccessor,
-}: SplitProfitLossSegmentsOptions): Array<SplitProfitLossSegment> {
+}: SplitProfitLossSegmentsOptions) {
   const { 0: firstPoint } = data
 
   if (!firstPoint) {
@@ -104,14 +92,12 @@ export function splitProfitLossSegments({
         initialB !== 0 &&
         Math.sign(initialA) !== Math.sign(initialB)
       ) {
-        // These are deliberately fresh reads: Source's erased casts permit getter drift/coercion.
         const freshA = a[dataKey]
         const freshB = b[dataKey]
         const t = freshA / (freshA - freshB)
         const start = xAccessor(a).getTime()
         const end = xAccessor(b).getTime()
 
-        // Spread must precede timestamp arithmetic/Date construction and the final zero overwrite.
         crossing = { ...a, [xDataKey]: sourceDate(start + t * (end - start)), [dataKey]: 0 }
       }
     } else {
@@ -137,3 +123,21 @@ export function splitProfitLossSegments({
 
   return segments
 }
+
+/** Source's opaque metadata facade; never a chart Model or engine row codec. */
+export interface SplitProfitLossSegmentsOptions {
+  data: Array<Record<string, unknown>>
+  dataKey: string
+  xDataKey?: string
+  xAccessor: (row: Record<string, unknown>) => Date
+}
+
+/** Crossings overwrite dynamic keys and therefore cannot truthfully promise the caller's Row type. */
+export interface SplitProfitLossSegment {
+  data: Array<Record<string, unknown>>
+  isPositive: boolean
+}
+
+type SegmentSign = 'positive' | 'negative'
+
+const isNumber = Schema.is(Schema.Number)

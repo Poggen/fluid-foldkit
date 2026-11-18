@@ -1,45 +1,11 @@
-// Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT.
+/* @license Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT. */
 import { clockwiseFraction } from './arcs'
 import type { ArcDatum } from './arcs'
 
-/**
- * Progress of a staggered animation: 0 until `delay`, then linear over `duration`.
- * @internal
- */
-export function localProgress(progress: number, delay: number, duration: number): number {
-  if (progress <= delay) {
-    return 0
-  }
-
-  if (duration <= 0) {
-    return 1
-  }
-
-  return Math.min(1, (progress - delay) / duration)
-}
-
-/**
- * Enter delay (seconds) of one sunburst segment.
- * @internal
- */
-export interface SunburstSegmentEnterDelays {
-  delay: number
-}
-
-/** @internal */
-export interface SunburstEnterTiming {
-  segmentDelays: Map<string, SunburstSegmentEnterDelays>
-  maxDelay: number
-}
-
-/**
- * Per-segment enter delays: each ring starts later than the one inside it and segments follow clockwise.
- * @internal
- */
-export function buildSunburstEnterTiming(
+export const buildSunburstEnterTiming: (
   arcs: Array<ArcDatum>,
-  staggerScale = 1,
-): SunburstEnterTiming {
+  staggerScale?: number,
+) => SunburstEnterTiming = function (arcs: Array<ArcDatum>, staggerScale = 1) {
   const scale = Math.max(0.25, staggerScale)
   const byDepth = new Map<number, Array<ArcDatum>>()
 
@@ -63,29 +29,13 @@ export function buildSunburstEnterTiming(
     }
   }
 
-  return { segmentDelays, maxDelay }
+  return { segmentDelays, maxDelay } satisfies SunburstEnterTiming
 }
 
-/**
- * Legacy Source compatibility API; prefer buildSunburstEnterTiming.
- * @internal
- */
-export interface SunburstRevealSchedule {
-  ringStarts: Map<number, number>
-  ringDuration: number
-  segmentsCompleteAt: number
-  labelsStart: number
-  labelDuration: number
-}
-
-/**
- * Legacy Source compatibility API; prefer buildSunburstEnterTiming.
- * @internal
- */
-export function buildRevealSchedule(
+export const buildRevealSchedule: (
   arcs: Array<ArcDatum>,
-  staggerScale = 1,
-): SunburstRevealSchedule {
+  staggerScale?: number,
+) => SunburstRevealSchedule = function (arcs: Array<ArcDatum>, staggerScale = 1) {
   const timing = buildSunburstEnterTiming(arcs, staggerScale)
   const ringStarts = new Map<number, number>()
 
@@ -103,13 +53,46 @@ export function buildRevealSchedule(
     segmentsCompleteAt: timing.maxDelay,
     labelsStart: timing.maxDelay + 0.12,
     labelDuration: 0.2,
-  }
+  } satisfies SunburstRevealSchedule
 }
 
-/**
- * Legacy Source ring-sweep API; prefer buildSunburstEnterTiming.
- * @internal
- */
+export const localProgress: (progress: number, delay: number, duration: number) => number =
+  function localProgress(progress: number, delay: number, duration: number) {
+    if (progress <= delay) {
+      return 0
+    }
+
+    if (duration <= 0) {
+      return 1
+    }
+
+    return Math.min(1, (progress - delay) / duration)
+  }
+
+export const buildRevealDelays: (arcs: Array<ArcDatum>) => Map<string, number> =
+  function buildRevealDelays(arcs: Array<ArcDatum>) {
+    const timing = buildSunburstEnterTiming(arcs)
+
+    return new Map(arcs.map((arc) => [arc.id, timing.segmentDelays.get(arc.id)?.delay ?? 0]))
+  }
+
+export interface SunburstSegmentEnterDelays {
+  delay: number
+}
+
+export interface SunburstEnterTiming {
+  segmentDelays: Map<string, SunburstSegmentEnterDelays>
+  maxDelay: number
+}
+
+export interface SunburstRevealSchedule {
+  ringStarts: Map<number, number>
+  ringDuration: number
+  segmentsCompleteAt: number
+  labelsStart: number
+  labelDuration: number
+}
+
 export function segmentRevealFromRingSweep(ringProgress: number, a0: number, a1: number) {
   const radial = Math.min(1, Math.max(0, ringProgress))
   const startF = clockwiseFraction(a0)
@@ -124,14 +107,4 @@ export function segmentRevealFromRingSweep(ringProgress: number, a0: number, a1:
   }
 
   return { angular: (ringProgress - startF) / Math.max(endF - startF, 1e-9), radial }
-}
-
-/**
- * Legacy Source compatibility API; prefer buildSunburstEnterTiming.
- * @internal
- */
-export function buildRevealDelays(arcs: Array<ArcDatum>): Map<string, number> {
-  const timing = buildSunburstEnterTiming(arcs)
-
-  return new Map(arcs.map((arc) => [arc.id, timing.segmentDelays.get(arc.id)?.delay ?? 0]))
 }

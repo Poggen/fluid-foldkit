@@ -6,8 +6,9 @@ const keep = (key: string) =>
   (/^(?:showcase\.|foldkit\.|browser\.)/u.test(key) &&
     !/model|payload|argument|text|value/iu.test(key))
 
-// Native Command spans attach arguments. Remove payload attributes before network export.
-export const metadataOnly = (data: OtlpTracer.TraceData): OtlpTracer.TraceData => ({
+export const metadataOnly: (data: OtlpTracer.TraceData) => OtlpTracer.TraceData = (
+  data: OtlpTracer.TraceData,
+) => ({
   ...data,
   resourceSpans: data.resourceSpans.map((resource) => ({
     ...resource,

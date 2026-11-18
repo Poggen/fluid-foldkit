@@ -1,5 +1,5 @@
 import type { EnterTransition } from '../kit/motion/phase'
-// Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT.
+/* @license Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT. */
 import { defineChart } from '@tanstack/charts/scene'
 
 import type {
@@ -30,7 +30,6 @@ import type { SectorTrail, SunburstNativeNode } from './sunburst-mark'
 
 const EXIT_MS = 320
 
-/** What `sectorMotion` hands the renderer: a tween or nothing (the caller falls back to the zoom tween). */
 type SectorMotion =
   | { readonly delay?: number; readonly transition: ChartMotionTransition }
   | undefined
@@ -73,9 +72,9 @@ interface DefinitionInput {
   readonly hoveredId: () => string | null
 }
 
-export const buildDefinition = (
+export const buildDefinition: (
   input: Readonly<DefinitionInput>,
-): DomChartDefinition<SunburstDatum, number, number> => {
+) => DomChartDefinition<SunburstDatum, number, number> = (input: Readonly<DefinitionInput>) => {
   const {
     model,
     focus,
@@ -108,8 +107,9 @@ export const buildDefinition = (
   const authored = new Set(segmentRoles.map((role) => role.index))
   const enter = buildEnterDelays(arcs, enterStaggerScale)
   const hubFraction = hubScale(focus.depth)
-  const hubRadius = (radius: number): number => (radius / Math.max(1, maxDepth)) * hubFraction
-  // bklit keeps ring thickness tied to the deepest level of the whole tree, so a shallow branch does not stretch to the rim.
+  const hubRadius: (radius: number) => number = (radius: number) =>
+    (radius / Math.max(1, maxDepth)) * hubFraction
+
   let subtreeRings = 1
 
   for (const arc of arcs) {
@@ -118,18 +118,18 @@ export const buildDefinition = (
     }
   }
 
-  const ringWidthOf = (radius: number): number =>
+  const ringWidthOf: (radius: number) => number = (radius: number) =>
     (radius - hubRadius(radius)) / Math.max(1, maxDepth - focus.depth)
 
-  // bklit's centre disc fill (sunburst-center.tsx:30-33): the background at the root, else the focus's category colour; it switches at once.
   const hubFill =
     focus.depth === 0
       ? sunburstCssVars.background
       : (defaultSunburstColors[focus.categoryIndex % defaultSunburstColors.length] ??
         sunburstCssVars.slice1)
 
-  const sectorMotion = (context: ChartMotionContext<SunburstDatum>): SectorMotion => {
-    // Only the centre disc is native motion now; sectors and labels are tweened by the sector layer (sunburst-layer.ts).
+  const sectorMotion: (context: ChartMotionContext<SunburstDatum>) => SectorMotion = (
+    context: ChartMotionContext<SunburstDatum>,
+  ) => {
     if (context.phase === 'enter') {
       return {
         delay: isIntro() ? (enter.delays.get(context.datum?.id ?? '') ?? 0) : 0,
@@ -144,8 +144,11 @@ export const buildDefinition = (
     return undefined
   }
 
-  // Transparent hit geometry shares the actual presented Motion progress; hover changes only its visual sibling.
-  const swept = (datum: SunburstDatum, x: number, y: number): boolean => {
+  const swept: (datum: SunburstDatum, x: number, y: number) => boolean = (
+    datum: SunburstDatum,
+    x: number,
+    y: number,
+  ) => {
     const at = center()
     const entry = feed.presented.get(datum.id)
     if (entry === undefined || at === null) return isHub(datum)
@@ -163,7 +166,6 @@ export const buildDefinition = (
     return sweep <= span && radius >= inner && radius <= outer
   }
   const presentedAt = (x: number, y: number) => {
-    // Reverse paint order: inner rings and lower arc indexes are painted above their descendants.
     for (const [id] of [...feed.presented].toReversed()) {
       const arc = arcById.get(id),
         point = registry.get(id)
@@ -210,7 +212,6 @@ export const buildDefinition = (
 
         const outer = hubRadius(layout.radius) + ringWidthOf(layout.radius) * subtreeRings
 
-        // d3 arc angles, as the native sunburst feeds them: the polar layout's own start and end.
         return sectorArc(
           {
             endAngle: layout.endAngle,
@@ -242,13 +243,14 @@ export const buildDefinition = (
 
   const polarMarks = hasCenter ? [sunburstMark, hubMark(hubRadius, hubFill)] : [sunburstMark]
 
-  const motion = (context: ChartMotionContext<SunburstDatum>): SectorMotion =>
+  const motion: (context: ChartMotionContext<SunburstDatum>) => SectorMotion = (
+    context: ChartMotionContext<SunburstDatum>,
+  ) =>
     sectorMotion(context) ?? {
       transition: { duration: ZOOM_MS, easing: ZOOM_EASING, type: 'tween' },
     }
 
   return defineChart({
-    // Drilled in, the view's root is not drawn as an arc (the hub disc stands for it), so its point is no keyboard stop.
     focus: createSunburstFocus<SunburstDatum>({
       orderOf: (datum) => {
         if (isHub(datum)) {
@@ -257,7 +259,6 @@ export const buildDefinition = (
 
         const arc = arcById.get(datum.id)
 
-        // Only the sectors drawn in this view: descendants of the view's root. Arcs elsewhere in the tree keep zero-size points.
         return arc === undefined ||
           !authored.has(arc.arcIndex) ||
           !arc.id.startsWith(`${focus.id} / `)
@@ -269,14 +270,14 @@ export const buildDefinition = (
       exactAt: (x, y) => {
         return presentedAt(x, y)
       },
-      // Over the hub, gaps and empty corners a move keeps the last sector hovered; the native chart would drop focus there.
+
       heldAt: (x, y) => {
         if (!moving() || presentedAt(x, y) !== null) return undefined
         const id = hoveredId()
         return id === null ? null : (registry.get(id) ?? null)
       },
     }),
-    // `change` runs before `onSelect` for both pointer and keyboard selects (renderer.ts:830,868).
+
     selection: {
       change: (_point, source) => {
         noteSource(source)
@@ -295,7 +296,7 @@ export const buildDefinition = (
         startAngle: START_ANGLE,
       }),
     ],
-    // Only a controlled hoveredIndex drives focus through the controller; pointer focus is the renderer's own.
+
     ...(controlled ? { cursor: { controller, match: 'xy', mode: 'focus', use: cursorHost } } : {}),
     motion,
     scales: { x: null, y: null },

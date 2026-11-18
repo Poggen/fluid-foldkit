@@ -1,5 +1,3 @@
-// Pie hover as static scoped CSS keyed on the host `data-hover="<index>"`, so a hover never rebuilds the definition; the pop is a transform on each arc's <g>.
-// Each authored role owns its geometry variables; repeated data indices share hover authority.
 import type { SpringDriver } from './spring-driver'
 import { HOVER_SPRING } from '../../kit/motion/springs'
 import { isMotionNode } from '../../kit/renderer-dom'
@@ -10,7 +8,7 @@ const RING_HOVER_SCALE = 1.03
 
 const RING_PUSHED_SCALE = 1.02
 
-const baseCss = (host: string, fade: number): string =>
+const baseCss: (host: string, fade: number) => string = (host: string, fade: number) =>
   `${host}[data-hover] g.bkm-pie-arc{--bkm-pie-opacity:${fade}}`
 
 const PIE_HOST = '[data-bkm-chart="pie"]'
@@ -20,7 +18,11 @@ interface PieHoverVars {
   readonly grow: string
 }
 
-const buildPieCss = (fade: number, rows: ReadonlyArray<PieHoverRow>, host = PIE_HOST): string => {
+const buildPieCss: (fade: number, rows: ReadonlyArray<PieHoverRow>, host?: string) => string = (
+  fade: number,
+  rows: ReadonlyArray<PieHoverRow>,
+  host = PIE_HOST,
+) => {
   let css = baseCss(host, fade)
 
   for (const row of rows) {
@@ -32,7 +34,7 @@ const buildPieCss = (fade: number, rows: ReadonlyArray<PieHoverRow>, host = PIE_
     }
   }
 
-  return css
+  return css satisfies string
 }
 
 interface PieHoverRow {
@@ -56,10 +58,13 @@ interface PieGrowGeometry<TRow extends PieHoverRow> {
 
 /** Per-slice hover geometry, set once on the host: `--bkm-tf<i>` is the whole hover transform (translate along the mid-angle, or a uniform scale for a pie `grow`),
  * `--bkm-gd<i>` the grown donut outline. Returns the vars plus the `data-bkm-grow` index list that scopes the donut `d` rule. */
-const pieHoverVars = <TRow extends PieHoverRow>(
+const pieHoverVars: <TRow extends PieHoverRow>(
   rows: ReadonlyArray<TRow>,
   geometry: Readonly<PieGrowGeometry<TRow>>,
-): PieHoverVars => {
+) => PieHoverVars = <TRow extends PieHoverRow>(
+  rows: ReadonlyArray<TRow>,
+  geometry: Readonly<PieGrowGeometry<TRow>>,
+) => {
   const vars: Record<string, string> = {}
   const grow: Array<number> = []
 
@@ -97,15 +102,18 @@ const pieHoverVars = <TRow extends PieHoverRow>(
     }
   }
 
-  return { grow: grow.join(' '), vars }
+  return { grow: grow.join(' '), vars } satisfies PieHoverVars
 }
 
 /** The hover springs of a pie: on a hover change the previous and the new slice each retarget from their live position and velocity
  * (translate px, pie-grow scale, donut-grow outer radius); rest/hot values are the static rules above. */
-const createPieHoverSprings = (
+const createPieHoverSprings: (
   rows: ReadonlyArray<PieHoverRow>,
   springDriver: SpringDriver,
-): ((host: HTMLElement, previous: number | null, next: number | null) => void) => {
+) => (host: HTMLElement, previous: number | null, next: number | null) => void = (
+  rows: ReadonlyArray<PieHoverRow>,
+  springDriver: SpringDriver,
+) => {
   const byIndex = new Map<number, Array<PieHoverRow>>()
 
   for (const row of rows) {
@@ -114,10 +122,12 @@ const createPieHoverSprings = (
     }
   }
 
-  // Slice groups resolved by our own className once, then reused while still mounted (the renderer swaps nodes on a scene change).
   const groups = new Map<number, Element>()
 
-  const groupOf = (host: HTMLElement, index: number): Element | null => {
+  const groupOf: (host: HTMLElement, index: number) => Element | null = (
+    host: HTMLElement,
+    index: number,
+  ) => {
     const cached = groups.get(index)
 
     if (cached?.isConnected === true) {
@@ -135,21 +145,25 @@ const createPieHoverSprings = (
     return found
   }
 
-  const retarget = (
+  const retarget: (
     host: HTMLElement,
     row: PieHoverRow,
     hovered: number | null,
     previous: number | null,
-  ): void => {
+  ) => void = (
+    host: HTMLElement,
+    row: PieHoverRow,
+    hovered: number | null,
+    previous: number | null,
+  ) => {
     const index = row.sliceIndex
     const group = groupOf(host, row.roleIndex)
 
-    // Groups are found by our own `className` (gaps #20/#36: no transform channel in `states`); a mid-tween node keeps its tween (#50).
     if (group === null || isMotionNode(group)) {
       return
     }
 
-    const hot = (state: number | null): boolean => state === index
+    const hot: (state: number | null) => boolean = (state: number | null) => state === index
 
     if (row.effect === 'translate') {
       const mid = (row.startAngle + row.endAngle) / 2

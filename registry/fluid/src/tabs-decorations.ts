@@ -9,15 +9,7 @@ import type { resolvePresentation } from './presentation.js'
 import type { TabsContext } from './tabs-parts.js'
 import type { TabsLogicalState } from './tabs-state.js'
 
-type Presentation = ReturnType<typeof resolvePresentation>
-
-export function tabsExitAttribute<Message>(message: Message) {
-  const Events = Data.taggedEnum<Extract<Attribute<Message>, { readonly _tag: 'OnCustomEvent' }>>()
-
-  return Events.OnCustomEvent({ name: EXIT_COMPLETE_EVENT, f: () => Option.some(message) })
-}
-
-export function tabsDecorations<Message, Requirements>(
+export const tabsDecorations: <Message, Requirements>(
   model: TabsLogicalState & { readonly hover: HoverSnapshot },
   h: HtmlBuilder<Message, Requirements>,
   options: {
@@ -28,7 +20,18 @@ export function tabsDecorations<Message, Requirements>(
     readonly reducedMotion: Presentation['reducedMotion']
     readonly completion: (kind: 'hover' | 'focus', generation: number) => Attribute<Message>
   },
-): ReadonlyArray<Html> {
+) => ReadonlyArray<Html> = function tabsDecorations<Message, Requirements>(
+  model: TabsLogicalState & { readonly hover: HoverSnapshot },
+  h: HtmlBuilder<Message, Requirements>,
+  options: {
+    readonly hoverMode?: HoverMode
+    readonly selectedPill: Html
+    readonly animate: TabsContext['animate']
+    readonly shape: Presentation['shape']
+    readonly reducedMotion: Presentation['reducedMotion']
+    readonly completion: (kind: 'hover' | 'focus', generation: number) => Attribute<Message>
+  },
+) {
   const selected = rectAt(model.hover.itemRects, model.selectedIndex)
 
   const slots = (['hover', 'focus'] satisfies ReadonlyArray<'hover' | 'focus'>).map((kind) => {
@@ -94,5 +97,13 @@ export function tabsDecorations<Message, Requirements>(
     )
   })
 
-  return [options.selectedPill, ...slots]
+  return [options.selectedPill, ...slots] satisfies ReadonlyArray<Html>
+}
+
+type Presentation = ReturnType<typeof resolvePresentation>
+
+export function tabsExitAttribute<Message>(message: Message) {
+  const Events = Data.taggedEnum<Extract<Attribute<Message>, { readonly _tag: 'OnCustomEvent' }>>()
+
+  return Events.OnCustomEvent({ name: EXIT_COMPLETE_EVENT, f: () => Option.some(message) })
 }

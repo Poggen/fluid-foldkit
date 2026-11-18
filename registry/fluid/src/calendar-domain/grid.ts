@@ -1,52 +1,40 @@
 import { weekStart, weekEnd, monthWeekEnd } from './week-bounds.js'
-// Adapted from react-day-picker 10.0.2, MIT © 2014-2026 Giampaolo Bellavite and contributors.
-// Full license: NOTICE
+/* @license Adapted from react-day-picker 10.0.2, MIT © 2014-2026 Giampaolo Bellavite and contributors. */
+/* @license Full license: NOTICE */
 import type { DateLib } from './date-library.js'
 import type { NavigationOptions } from './navigation.js'
 
-export interface CalendarDay {
-  readonly date: Date
-  readonly displayMonth: Date
-  readonly outside: boolean
-  readonly isoDate: string
-  readonly displayMonthId: string
-  readonly dateMonthId: string
-}
-
-export interface CalendarWeek {
-  readonly weekNumber: number
-  readonly days: Array<CalendarDay>
-}
-
-export interface CalendarMonth {
-  readonly date: Date
-  readonly weeks: Array<CalendarWeek>
-}
-
-export function calendarDay(date: Date, displayMonth: Date, dateLib: DateLib): CalendarDay {
-  return {
-    date,
-    displayMonth,
-    outside: !dateLib.isSameMonth(date, displayMonth),
-    isoDate: dateLib.format(date, 'yyyy-MM-dd'),
-    displayMonthId: dateLib.format(displayMonth, 'yyyy-MM'),
-    dateMonthId: dateLib.format(date, 'yyyy-MM'),
+export const calendarDay: (date: Date, displayMonth: Date, dateLib: DateLib) => CalendarDay =
+  function calendarDay(date: Date, displayMonth: Date, dateLib: DateLib) {
+    return {
+      date,
+      displayMonth,
+      outside: !dateLib.isSameMonth(date, displayMonth),
+      isoDate: dateLib.format(date, 'yyyy-MM-dd'),
+      displayMonthId: dateLib.format(displayMonth, 'yyyy-MM'),
+      dateMonthId: dateLib.format(date, 'yyyy-MM'),
+    }
   }
-}
 
-export function sameCalendarDay(left: CalendarDay, right: CalendarDay, dateLib: DateLib): boolean {
-  return (
-    dateLib.isSameDay(left.date, right.date) &&
-    dateLib.isSameMonth(left.displayMonth, right.displayMonth)
-  )
-}
+export const sameCalendarDay: (left: CalendarDay, right: CalendarDay, dateLib: DateLib) => boolean =
+  function sameCalendarDay(left: CalendarDay, right: CalendarDay, dateLib: DateLib) {
+    return (
+      dateLib.isSameDay(left.date, right.date) &&
+      dateLib.isSameMonth(left.displayMonth, right.displayMonth)
+    )
+  }
 
-export function getDates(
+export const getDates: (
   displayMonths: [Date, ...Array<Date>],
   maxDate: Date | undefined,
   props: NavigationOptions,
   dateLib: DateLib,
-): Array<Date> {
+) => Array<Date> = function getDates(
+  displayMonths: [Date, ...Array<Date>],
+  maxDate: Date | undefined,
+  props: NavigationOptions,
+  dateLib: DateLib,
+) {
   const [firstMonth] = displayMonths
 
   const lastMonth = displayMonths.at(-1) ?? firstMonth
@@ -90,12 +78,17 @@ export function getDates(
   return dates
 }
 
-export function getMonths(
+export const getMonths: (
   displayMonths: Array<Date>,
   dates: Array<Date>,
   props: NavigationOptions,
   dateLib: DateLib,
-): Array<CalendarMonth> {
+) => Array<CalendarMonth> = function getMonths(
+  displayMonths: Array<Date>,
+  dates: Array<Date>,
+  props: NavigationOptions,
+  dateLib: DateLib,
+) {
   const months: Array<CalendarMonth> = []
 
   for (const month of displayMonths) {
@@ -138,12 +131,17 @@ export function getMonths(
   return props.reverseMonths === true ? months.toReversed() : months
 }
 
-export function getWeekdays(
+export const getWeekdays: (
   dateLib: DateLib,
   ISOWeek: boolean | undefined,
   broadcastCalendar: boolean | undefined,
   today: Date | undefined,
-): Array<Date> {
+) => Array<Date> = function getWeekdays(
+  dateLib: DateLib,
+  ISOWeek: boolean | undefined,
+  broadcastCalendar: boolean | undefined,
+  today: Date | undefined,
+) {
   const referenceToday = today ?? dateLib.today()
 
   const start = weekStart(
@@ -159,4 +157,23 @@ export function getWeekdays(
   }
 
   return days
+}
+
+export interface CalendarDay {
+  readonly date: Date
+  readonly displayMonth: Date
+  readonly outside: boolean
+  readonly isoDate: string
+  readonly displayMonthId: string
+  readonly dateMonthId: string
+}
+
+export interface CalendarWeek {
+  readonly weekNumber: number
+  readonly days: Array<CalendarDay>
+}
+
+export interface CalendarMonth {
+  readonly date: Date
+  readonly weeks: Array<CalendarWeek>
 }

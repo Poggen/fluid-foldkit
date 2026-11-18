@@ -1,6 +1,3 @@
-// Funnel mark: one custom mark whose `resolveLayout` lays the whole funnel out in pixels from the final chart bounds (gaps, whole-pixel stage edges,
-// label and pill geometry), so the definition never depends on a measured width. Each stage is a group of ring areas and a label group; the
-// hover dim, pop-out and entrance are static CSS (funnel.css) on the stage groups' classes, never a rebuild.
 import { createMark } from '@tanstack/charts'
 import type {
   ChartBounds,
@@ -75,13 +72,15 @@ interface FunnelMarkConfig {
   } | null
 }
 
-// bklit's segment edge: one cubic per edge, control points at 55% of the stage length along the stage axis (d3 bump: 50%).
-// Written as path strings, so the funnel needs neither TanStack's d3 curve adapters nor d3-shape.
 const BKLIT_CONTROL = 0.55
 
 type Pt = readonly [number, number]
 
-const edgeRun = (points: ReadonlyArray<Pt>, axis: 'x' | 'y', first: 'M' | 'L'): string => {
+const edgeRun: (points: ReadonlyArray<Pt>, axis: 'x' | 'y', first: 'M' | 'L') => string = (
+  points: ReadonlyArray<Pt>,
+  axis: 'x' | 'y',
+  first: 'M' | 'L',
+) => {
   let d = ''
 
   for (let i = 0; i < points.length; i++) {
@@ -110,37 +109,43 @@ const edgeRun = (points: ReadonlyArray<Pt>, axis: 'x' | 'y', first: 'M' | 'L'): 
   return d
 }
 
-// d3's area order: the first edge forward, the second back, closed.
-const edgeArea = (forward: ReadonlyArray<Pt>, back: ReadonlyArray<Pt>, axis: 'x' | 'y'): string =>
-  `${edgeRun(forward, axis, 'M')}${edgeRun([...back].reverse(), axis, 'L')}Z`
+const edgeArea: (forward: ReadonlyArray<Pt>, back: ReadonlyArray<Pt>, axis: 'x' | 'y') => string = (
+  forward: ReadonlyArray<Pt>,
+  back: ReadonlyArray<Pt>,
+  axis: 'x' | 'y',
+) => `${edgeRun(forward, axis, 'M')}${edgeRun([...back].reverse(), axis, 'L')}Z`
 
-// Label type (Tailwind text-sm / text-xs): the size/weight each kind is drawn and measured in.
 const HALF_EXTENT = 0.44
 
 const RING_SHRINK = 0.35
 
 const HOVER_POP = 0.12
 
-// bklit label metrics (Tailwind text-sm / text-xs line heights, pill padding, grouped gap-1.5).
 const BAND_INSET = 0.75
 
-const funnelGradientId = (stage: number): string => `funnel-stage-${stage}`
+const funnelGradientId: (stage: number) => string = (stage: number) => `funnel-stage-${stage}`
 
-const ringOpacity = (layer: number, layers: number): number =>
+const ringOpacity: (layer: number, layers: number) => number = (layer: number, layers: number) =>
   0.18 + (layer / (layers - 1 || 1)) * 0.65
 
-const ringScale = (layer: number, layers: number): number => 1 - (layer / layers) * RING_SHRINK
+const ringScale: (layer: number, layers: number) => number = (layer: number, layers: number) =>
+  1 - (layer / layers) * RING_SHRINK
 
-const popExtra = (layer: number, layers: number): number =>
+const popExtra: (layer: number, layers: number) => number = (layer: number, layers: number) =>
   (layer / Math.max(layers - 1, 1)) * HOVER_POP
 
-const stageColor = (stage: FunnelStageInput, fallback: string): string =>
-  stage.gradient?.[0]?.color ?? stage.color ?? fallback
+const stageColor: (stage: FunnelStageInput, fallback: string) => string = (
+  stage: FunnelStageInput,
+  fallback: string,
+) => stage.gradient?.[0]?.color ?? stage.color ?? fallback
 
-const buildFunnelGradients = (
+const buildFunnelGradients: (
   stages: ReadonlyArray<FunnelStageInput>,
   horizontal: boolean,
-): ReadonlyArray<ChartLinearGradient> =>
+) => ReadonlyArray<ChartLinearGradient> = (
+  stages: ReadonlyArray<FunnelStageInput>,
+  horizontal: boolean,
+) =>
   stages.flatMap((stage, index) => {
     const stops = stage.gradient
 
@@ -173,22 +178,22 @@ interface RingFillInput {
   readonly patternPrefix: string | undefined
 }
 
-const ringFill = ({
+const ringFill: (argument0: Readonly<RingFillInput>) => string = ({
   base,
   gradientId,
   index,
   innermost,
   patternPrefix,
-}: Readonly<RingFillInput>): string => {
+}: Readonly<RingFillInput>) => {
   if (innermost && patternPrefix !== undefined) {
-    return `url(#${patternPrefix}-${index})`
+    return `url(#${patternPrefix}-${index})` satisfies string
   }
 
   if (innermost && gradientId !== undefined) {
-    return `url(#${gradientId})`
+    return `url(#${gradientId})` satisfies string
   }
 
-  return base
+  return base satisfies string
 }
 
 interface FunnelGeometry {
@@ -203,11 +208,11 @@ interface FunnelGeometry {
   readonly stageStart: (index: number) => number
 }
 
-const funnelGeometry = (
+const funnelGeometry: (
   config: FunnelMarkConfig,
   width: number,
   height: number,
-): FunnelGeometry => {
+) => FunnelGeometry = (config: FunnelMarkConfig, width: number, height: number) => {
   const { stages, horizontal } = config
   const W = Math.max(1, width)
   const H = Math.max(1, height)
@@ -224,10 +229,8 @@ const funnelGeometry = (
   const gapData = Math.min(0.5, config.gapPx / unitPx)
   const cellPx = (1 - (gapData * (count - 1)) / count) * unitPx
   const gapPx = gapData * unitPx
-  const cellStart = (index: number): number => index * (cellPx + gapPx)
+  const cellStart: (index: number) => number = (index: number) => index * (cellPx + gapPx)
 
-  // bklit paints each stage in its own svg, whose origin Chrome snaps to a whole pixel while the shape keeps its fractional size, so
-  // stage edges (and the 1px gap columns between them) land on pixel boundaries.
   return {
     H,
     W,
@@ -245,7 +248,11 @@ interface Frame {
   readonly y: number
 }
 
-const group = (key: string, className: string, children: ReadonlyArray<SceneNode>): SceneNode => ({
+const group: (key: string, className: string, children: ReadonlyArray<SceneNode>) => SceneNode = (
+  key: string,
+  className: string,
+  children: ReadonlyArray<SceneNode>,
+) => ({
   children,
   className,
   key,
@@ -260,7 +267,13 @@ interface RingInput {
   readonly layer: number
 }
 
-const ringArea = ({ config, geo, frame, index, layer }: Readonly<RingInput>): SceneArea => {
+const ringArea: (argument0: Readonly<RingInput>) => SceneArea = ({
+  config,
+  geo,
+  frame,
+  index,
+  layer,
+}: Readonly<RingInput>) => {
   const { horizontal, layers, curved } = config
   const stage = config.stages[index]
 
@@ -278,8 +291,7 @@ const ringArea = ({ config, geo, frame, index, layer }: Readonly<RingInput>): Sc
   const half0 = startNorm * scale
   const half1 = endNorm * scale
 
-  // Two edges along the stage axis: [low side, high side] of the cross axis.
-  const at = (pos: number, cross: number): Pt =>
+  const at: (pos: number, cross: number) => Pt = (pos: number, cross: number) =>
     horizontal ? [frame.x + pos, frame.y + cross] : [frame.x + cross, frame.y + pos]
 
   const first: Array<Pt> = [at(pos0, mid - half0), at(pos1, mid - half1)]
@@ -301,17 +313,22 @@ const ringArea = ({ config, geo, frame, index, layer }: Readonly<RingInput>): Sc
       }),
       fillOpacity: ringOpacity(layer, layers),
     },
-  }
+  } satisfies SceneArea
 }
 
-// The focus points of a stage: its outer ring's two cell ends (focus.ts filters on `layer`).
-const stagePoints = (
+const stagePoints: (
   config: FunnelMarkConfig,
   geo: FunnelGeometry,
   frame: Frame,
   id: string,
   index: number,
-): Array<FunnelPoint> => {
+) => Array<FunnelPoint> = (
+  config: FunnelMarkConfig,
+  geo: FunnelGeometry,
+  frame: Frame,
+  id: string,
+  index: number,
+) => {
   const stage = config.stages[index]
 
   if (stage === undefined) throw new RangeError('Funnel stage outside data')
@@ -333,11 +350,15 @@ const stagePoints = (
   }))
 }
 
-const gridNodes = (
+const gridNodes: (
   config: FunnelMarkConfig,
   geo: FunnelGeometry,
   frame: Frame,
-): { readonly bands: Array<SceneNode>; readonly lines: Array<SceneNode> } => {
+) => { readonly bands: Array<SceneNode>; readonly lines: Array<SceneNode> } = (
+  config: FunnelMarkConfig,
+  geo: FunnelGeometry,
+  frame: Frame,
+) => {
   const { grid, horizontal } = config
   const bands: Array<SceneNode> = []
   const lines: Array<SceneNode> = []
@@ -369,7 +390,6 @@ const gridNodes = (
     }
   }
 
-  // bklit: one line per gap between stages, at the gap centre, spanning the whole cross axis, above the stages.
   if (grid?.lines === true) {
     for (let index = 0; index < geo.count - 1; index += 1) {
       const centre = geo.cellStart(index) + geo.cellPx + geo.gapPx / 2
@@ -407,15 +427,20 @@ const gridNodes = (
   return { bands, lines }
 }
 
-const funnelScene = (
+const funnelScene: (
   config: FunnelMarkConfig,
   id: string,
   chart: ChartBounds,
   layout: ChartLayoutOptions,
-): MarkScene<FunnelDatum, number, number> => {
+) => MarkScene<FunnelDatum, number, number> = (
+  config: FunnelMarkConfig,
+  id: string,
+  chart: ChartBounds,
+  layout: ChartLayoutOptions,
+) => {
   const geo = funnelGeometry(config, chart.width, chart.height)
   const frame: Frame = { x: chart.x, y: chart.y }
-  // Label text is measured in the face it is drawn in: the host's computed font (the pill sizes from it).
+
   const fontFamily = layout.typography?.fontFamily ?? FALLBACK_FONT
 
   const fonts = {
@@ -493,7 +518,7 @@ const funnelScene = (
 }
 
 /** The funnel as one mark: its scene is built in `resolveLayout` from the final plot bounds, with no entrance or update motion of its own (funnel.css). */
-const createFunnelMark = (config: FunnelMarkConfig): FunnelMark => {
+const createFunnelMark: (config: FunnelMarkConfig) => FunnelMark = (config: FunnelMarkConfig) => {
   const id = 'funnel'
 
   return createMark<FunnelDatum, number, number>(

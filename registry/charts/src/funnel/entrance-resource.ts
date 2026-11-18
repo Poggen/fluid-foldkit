@@ -77,7 +77,6 @@ export function createFunnelEntrance(onComplete: (index: number) => void) {
             if (stage.complete) {
               stage.element.style.removeProperty('scale')
             } else {
-              // Source useTransform([0, 1], [0, 1]) clamps the rendered scale, even for an overshooting spring.
               stage.element.style.scale = String(Math.max(0, Math.min(1, progress.get())))
             }
           },

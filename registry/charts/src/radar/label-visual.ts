@@ -35,7 +35,7 @@ export function createRadarLabelVisual(
   const releaseX = x.on('change', position)
   const releaseY = y.on('change', position)
 
-  const options = (node: SceneLabel): RadarMotionProps => ({
+  const options: (node: SceneLabel) => RadarMotionProps = (node: SceneLabel) => ({
     style: { x, y },
     animate: { opacity: 1, x: node.x, y: node.y },
     transition: animate

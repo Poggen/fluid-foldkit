@@ -1,10 +1,63 @@
 import { modifyFields } from 'foldkit/struct'
 import { HoverMode } from './hover-observation.js'
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { rectAt } from './lib/indexed-geometry.js'
 import { Schema, Number } from 'effect'
 import { Rect } from './hover-observation.js'
 import type { HoverSnapshot } from './hover-observation.js'
+
+export const accordionItems: (
+  items: ReadonlyArray<AccordionItemConfig>,
+  values: ReadonlyArray<string>,
+  previous: ReadonlyArray<AccordionItemState>,
+  generation: number,
+) => ReadonlyArray<AccordionItemState> = function accordionItems(
+  items: ReadonlyArray<AccordionItemConfig>,
+  values: ReadonlyArray<string>,
+  previous: ReadonlyArray<AccordionItemState>,
+  generation: number,
+) {
+  return items.map((item) => {
+    const prior = previous.find((row) => row.value === item.value)
+    const open = values.includes(item.value)
+
+    return prior
+      ? {
+          ...prior,
+          ...item,
+          open,
+          hidden: open ? false : prior.hidden,
+          toggling: prior.open !== open || prior.toggling,
+          generation: prior.open === open ? prior.generation : generation,
+        }
+      : {
+          ...item,
+          open,
+          initialOpen: open,
+          triggerId: null,
+          toggling: false,
+          hidden: !open,
+          generation,
+        }
+  })
+}
+
+export const accordionToggle: (
+  model: AccordionState,
+  value: string,
+) => ReadonlyArray<string> | null = function accordionToggle(model: AccordionState, value: string) {
+  const item = model.items.find((candidate) => candidate.value === value)
+
+  if (!item || item.disabled || model.disabled || model.disabledTriggers.includes(value)) {
+    return null
+  }
+
+  if (model.values.includes(value)) {
+    return model.values.filter((selected) => selected !== value)
+  }
+
+  return model.type === 'single' ? [value] : [...model.values, value]
+}
 
 export const AccordionItemState = Schema.Struct({
   value: Schema.String,
@@ -105,62 +158,14 @@ export const AccordionConfig = Schema.Struct({
 
 export type AccordionConfig = typeof AccordionConfig.Type
 
-export const accordionValues = (
+export const accordionValues: (
   value: string | ReadonlyArray<string> | undefined,
-): ReadonlyArray<string> => {
+) => ReadonlyArray<string> = (value: string | ReadonlyArray<string> | undefined) => {
   if (Schema.is(Schema.String)(value)) {
     return value.length > 0 ? [value] : []
   }
 
   return value ?? []
-}
-
-export function accordionItems(
-  items: ReadonlyArray<AccordionItemConfig>,
-  values: ReadonlyArray<string>,
-  previous: ReadonlyArray<AccordionItemState>,
-  generation: number,
-): ReadonlyArray<AccordionItemState> {
-  return items.map((item) => {
-    const prior = previous.find((row) => row.value === item.value)
-    const open = values.includes(item.value)
-
-    return prior
-      ? {
-          ...prior,
-          ...item,
-          open,
-          hidden: open ? false : prior.hidden,
-          toggling: prior.open !== open || prior.toggling,
-          generation: prior.open === open ? prior.generation : generation,
-        }
-      : {
-          ...item,
-          open,
-          initialOpen: open,
-          triggerId: null,
-          toggling: false,
-          hidden: !open,
-          generation,
-        }
-  })
-}
-
-export function accordionToggle(
-  model: AccordionState,
-  value: string,
-): ReadonlyArray<string> | null {
-  const item = model.items.find((candidate) => candidate.value === value)
-
-  if (!item || item.disabled || model.disabled || model.disabledTriggers.includes(value)) {
-    return null
-  }
-
-  if (model.values.includes(value)) {
-    return model.values.filter((selected) => selected !== value)
-  }
-
-  return model.type === 'single' ? [value] : [...model.values, value]
 }
 
 export function accordionTints(model: AccordionState, activeIndex: number | null) {
@@ -211,9 +216,11 @@ export const AccordionRootProperties = Schema.Struct({
   highlight: accordionFields.highlight,
 })
 
-export const accordionRootProperties = (
+export const accordionRootProperties: (
   config: Omit<AccordionConfig, 'id' | 'items' | 'defaultValue' | 'grouped'>,
-): typeof AccordionRootProperties.Type => ({
+) => typeof AccordionRootProperties.Type = (
+  config: Omit<AccordionConfig, 'id' | 'items' | 'defaultValue' | 'grouped'>,
+) => ({
   type: config.type ?? 'single',
   controlledValue: config.value === undefined ? null : accordionValues(config.value),
   callback: config.onValueChange ?? false,
@@ -236,16 +243,26 @@ export function configureAccordionRoot(
     (props.type === 'single'
       ? accordionValues(model.internalSingleValue)
       : model.internalMultipleValues)
+  const type: () => AccordionState['type'] = () => props.type satisfies AccordionState['type']
+
+  const orientationCallback: () => AccordionState['orientation'] = () =>
+    props.orientation satisfies AccordionState['orientation']
+
+  const direction: () => AccordionState['direction'] = () =>
+    props.direction satisfies AccordionState['direction']
+
+  const highlight: () => AccordionState['highlight'] = () =>
+    props.highlight satisfies AccordionState['highlight']
 
   return {
-    type: (): AccordionState['type'] => props.type,
+    type,
     callback: () => props.callback,
     collapsible: () => props.collapsible,
     disabled: () => props.disabled,
-    orientation: (): AccordionState['orientation'] => props.orientation,
-    direction: (): AccordionState['direction'] => props.direction,
+    orientation: orientationCallback,
+    direction,
     loopFocus: () => props.loopFocus,
-    highlight: (): AccordionState['highlight'] => props.highlight,
+    highlight,
     controlled: () => controlledValue !== null,
     values: () => values,
     items: () => accordionItems(model.items, values, model.items, model.generation + 1),

@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { observeDropdownTrigger } from './dropdown-trigger-resources.js'
 import type { DropdownTriggerInput } from './dropdown-trigger-resources.js'
 import { observeDropdownPanel } from './dropdown-panel-observer.js'

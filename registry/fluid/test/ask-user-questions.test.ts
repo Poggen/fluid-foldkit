@@ -1,6 +1,7 @@
 import { SelectionBackgroundsBlock, test as selectionTest } from '../src/selection-backgrounds.js'
 import { Validate } from '../src/ask-user-questions-block.js'
 import { AskEvent } from '../src/ask-user-questions-state.js'
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { describe, expect } from 'vitest'
 import { it as test } from '@effect/vitest'

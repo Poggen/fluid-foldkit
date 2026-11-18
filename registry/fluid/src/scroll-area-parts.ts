@@ -1,5 +1,5 @@
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Option } from 'effect'
 import type { ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
 import type { Presentation } from './presentation.js'
@@ -7,33 +7,17 @@ import { resolvePresentation } from './presentation.js'
 import { cn } from './lib/utils.js'
 import { scrollAxisMetrics, scrollBarPolicy, type ScrollAreaModel } from './scroll-area-state.js'
 
-export interface ScrollAreaProps extends Presentation {
-  readonly className?: string
-  readonly viewportClassName?: string
-  readonly attributes?: ReadonlyArray<ChildAttribute>
-  readonly viewportAttributes?: ReadonlyArray<ChildAttribute>
-  readonly children: ReadonlyArray<Html>
-  readonly content?: () => ReadonlyArray<Html>
-  readonly horizontalBarAttributes?: ReadonlyArray<ChildAttribute>
-  readonly verticalBarAttributes?: ReadonlyArray<ChildAttribute>
-  readonly keepMountedHorizontal?: boolean
-  readonly keepMountedVertical?: boolean
-  readonly scrollBar?: (axis: 'x' | 'y', defaultBar: Html) => Html
-}
-
-export interface ScrollBarProps extends Presentation {
-  readonly orientation?: 'vertical' | 'horizontal'
-  readonly className?: string
-  readonly attributes?: ReadonlyArray<ChildAttribute>
-  readonly keepMounted?: boolean
-}
-
-export function ScrollBar<Message, R>(
+export const ScrollBar: <Message, R>(
   model: ScrollAreaModel,
   props: ScrollBarProps,
   h: HtmlBuilder<Message, R>,
   corner?: boolean,
-): Html {
+) => Html = function ScrollBar<Message, R>(
+  model: ScrollAreaModel,
+  props: ScrollBarProps,
+  h: HtmlBuilder<Message, R>,
+  corner?: boolean,
+) {
   const axis = props.orientation === 'horizontal' ? 'x' : 'y'
   const vertical = axis === 'y'
   const metric = scrollAxisMetrics(model, axis)
@@ -41,7 +25,7 @@ export function ScrollBar<Message, R>(
   const { overflow } = policy
 
   if (!policy.mounted) {
-    return h.empty
+    return h.empty satisfies Html
   }
 
   const other = scrollBarPolicy(model, axis === 'x' ? 'y' : 'x')
@@ -101,15 +85,20 @@ export function ScrollBar<Message, R>(
           ]),
         ]
       : [],
-  )
+  ) satisfies Html
 }
 
-export function scrollAreaView<Message, R>(
+export const scrollAreaView: <Message, R>(
   model: ScrollAreaModel,
   props: ScrollAreaProps,
   attributes: NonNullable<Parameters<HtmlBuilder<Message, R>['div']>[0]>,
   h: HtmlBuilder<Message, R>,
-): Html {
+) => Html = function scrollAreaView<Message, R>(
+  model: ScrollAreaModel,
+  props: ScrollAreaProps,
+  attributes: NonNullable<Parameters<HtmlBuilder<Message, R>['div']>[0]>,
+  h: HtmlBuilder<Message, R>,
+) {
   const children = props.content?.() ?? props.children
   const orientation = model.settings.orientation
 
@@ -210,5 +199,26 @@ export function scrollAreaView<Message, R>(
         ? [h.div([h.Class('absolute end-0 bottom-0 w-[10px] h-[10px]')])]
         : []),
     ],
-  )
+  ) satisfies Html
+}
+
+export interface ScrollAreaProps extends Presentation {
+  readonly className?: string
+  readonly viewportClassName?: string
+  readonly attributes?: ReadonlyArray<ChildAttribute>
+  readonly viewportAttributes?: ReadonlyArray<ChildAttribute>
+  readonly children: ReadonlyArray<Html>
+  readonly content?: () => ReadonlyArray<Html>
+  readonly horizontalBarAttributes?: ReadonlyArray<ChildAttribute>
+  readonly verticalBarAttributes?: ReadonlyArray<ChildAttribute>
+  readonly keepMountedHorizontal?: boolean
+  readonly keepMountedVertical?: boolean
+  readonly scrollBar?: (axis: 'x' | 'y', defaultBar: Html) => Html
+}
+
+export interface ScrollBarProps extends Presentation {
+  readonly orientation?: 'vertical' | 'horizontal'
+  readonly className?: string
+  readonly attributes?: ReadonlyArray<ChildAttribute>
+  readonly keepMounted?: boolean
 }

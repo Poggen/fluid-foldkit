@@ -1,16 +1,15 @@
-// Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT.
-// Pointer-in-shape focus for sankey: nodes first (last painted wins), then flows (topmost wins), by exact containment; keyboard order is the
-// laid-out reading order, nodes column by column then flows by source column and y (the default nearest-segment pick mis-picks across bends).
+/* @license Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT. */
+
 import type { ChartFocusStrategy, ChartPoint } from '@tanstack/charts'
 import { isRecord } from '../kit/guards'
 import { Predicate } from 'effect'
 import type { TooltipBodyPoint } from './private/native-tooltip'
 
-const SANKEY_NODE_POINT_MARK_ID = 'sankey:sankey-node-'
-
-const SANKEY_LINK_POINT_MARK_ID = 'sankey:flow'
-
-export function sankeyTooltipKey({ markId, datum, datumIndex }: TooltipBodyPoint): string {
+export const sankeyTooltipKey: (argument0: TooltipBodyPoint) => string = function sankeyTooltipKey({
+  markId,
+  datum,
+  datumIndex,
+}: TooltipBodyPoint) {
   if (!isRecord(datum)) return 'none'
   if (markId.startsWith(SANKEY_NODE_POINT_MARK_ID) && Predicate.isNumber(datum.key))
     return `node:${datum.key}`
@@ -18,6 +17,10 @@ export function sankeyTooltipKey({ markId, datum, datumIndex }: TooltipBodyPoint
     return `link:${Predicate.isNumber(datum.sourceIndex) ? datum.sourceIndex : datumIndex}`
   return 'none'
 }
+
+const SANKEY_NODE_POINT_MARK_ID = 'sankey:sankey-node-'
+
+const SANKEY_LINK_POINT_MARK_ID = 'sankey:flow'
 
 interface NodeBox {
   readonly x0: number
@@ -36,9 +39,10 @@ interface FlowBox {
   readonly width: number
 }
 
-const num = (value: unknown): number => (typeof value === 'number' ? value : Number.NaN)
+const num: (value: unknown) => number = (value: unknown) =>
+  typeof value === 'number' ? value : Number.NaN
 
-const readNode = (datum: unknown): NodeBox | null => {
+const readNode: (datum: unknown) => NodeBox | null = (datum: unknown) => {
   if (!isRecord(datum)) {
     return null
   }
@@ -57,7 +61,7 @@ const readNode = (datum: unknown): NodeBox | null => {
   }
 }
 
-const readFlow = (datum: unknown): FlowBox | null => {
+const readFlow: (datum: unknown) => FlowBox | null = (datum: unknown) => {
   if (!isRecord(datum)) {
     return null
   }
@@ -71,7 +75,6 @@ const readFlow = (datum: unknown): FlowBox | null => {
   }
 }
 
-// curveBumpX centreline x(t) = x1 + dx*(1.5t(1-t) + t^3), y(t) = y1 + dy*(3t^2 - 2t^3), hit by true point-to-segment distance (SVG butt caps).
 const CURVE_SEGMENTS = 48
 
 interface Centre {
@@ -79,12 +82,16 @@ interface Centre {
   readonly y: number
 }
 
-const centreAt = (flow: FlowBox, t: number): Centre => ({
+const centreAt: (flow: FlowBox, t: number) => Centre = (flow: FlowBox, t: number) => ({
   x: flow.x1 + (flow.x2 - flow.x1) * (1.5 * t * (1 - t) + t ** 3),
   y: flow.y1 + (flow.y2 - flow.y1) * (3 * t * t - 2 * t ** 3),
 })
 
-const distanceToCentre = (flow: FlowBox, px: number, py: number): number => {
+const distanceToCentre: (flow: FlowBox, px: number, py: number) => number = (
+  flow: FlowBox,
+  px: number,
+  py: number,
+) => {
   let best = Number.POSITIVE_INFINITY
   let prev = centreAt(flow, 0)
 
@@ -107,11 +114,17 @@ const distanceToCentre = (flow: FlowBox, px: number, py: number): number => {
   return best
 }
 
-const inBox = (box: NodeBox, x: number, y: number): boolean =>
-  x >= box.x0 && x <= box.x1 && y >= box.y0 && y <= box.y1
+const inBox: (box: NodeBox, x: number, y: number) => boolean = (
+  box: NodeBox,
+  x: number,
+  y: number,
+) => x >= box.x0 && x <= box.x1 && y >= box.y0 && y <= box.y1
 
-// bklit's node is a rounded <rect> (sankey-node.tsx:240-251): SVG hit-testing excludes the corners and the right edge, where the link starts (sankey-link.tsx).
-const inRoundedRect = (box: NodeBox, x: number, y: number): boolean => {
+const inRoundedRect: (box: NodeBox, x: number, y: number) => boolean = (
+  box: NodeBox,
+  x: number,
+  y: number,
+) => {
   if (x < box.x0 || x >= box.x1 || y < box.y0 || y > box.y1) {
     return false
   }
@@ -123,10 +136,18 @@ const inRoundedRect = (box: NodeBox, x: number, y: number): boolean => {
   return dx * dx + dy * dy <= r * r
 }
 
-const hitNode = (box: NodeBox | null, x: number, y: number): boolean =>
+const hitNode: (box: NodeBox | null, x: number, y: number) => boolean = (
+  box: NodeBox | null,
+  x: number,
+  y: number,
+) =>
   box !== null && (inRoundedRect(box, x, y) || box.labelBoxes.some((label) => inBox(label, x, y)))
 
-const hitFlow = (flow: FlowBox | null, x: number, y: number): boolean => {
+const hitFlow: (flow: FlowBox | null, x: number, y: number) => boolean = (
+  flow: FlowBox | null,
+  x: number,
+  y: number,
+) => {
   if (flow === null || x < Math.min(flow.x1, flow.x2) || x > Math.max(flow.x1, flow.x2)) {
     return false
   }
@@ -134,9 +155,12 @@ const hitFlow = (flow: FlowBox | null, x: number, y: number): boolean => {
   return distanceToCentre(flow, x, y) <= Math.max(1, flow.width) / 2
 }
 
-const midY = (box: NodeBox): number => (box.y0 + box.y1) / 2
+const midY: (box: NodeBox) => number = (box: NodeBox) => (box.y0 + box.y1) / 2
 
-const nodeOrder = (left: NodeBox | null, right: NodeBox | null): number => {
+const nodeOrder: (left: NodeBox | null, right: NodeBox | null) => number = (
+  left: NodeBox | null,
+  right: NodeBox | null,
+) => {
   if (left === null || right === null) {
     return 0
   }
@@ -144,7 +168,10 @@ const nodeOrder = (left: NodeBox | null, right: NodeBox | null): number => {
   return left.x0 - right.x0 || midY(left) - midY(right)
 }
 
-const flowOrder = (left: FlowBox | null, right: FlowBox | null): number => {
+const flowOrder: (left: FlowBox | null, right: FlowBox | null) => number = (
+  left: FlowBox | null,
+  right: FlowBox | null,
+) => {
   if (left === null || right === null) {
     return 0
   }
@@ -152,18 +179,22 @@ const flowOrder = (left: FlowBox | null, right: FlowBox | null): number => {
   return left.x1 - right.x1 || left.y1 - right.y1 || left.y2 - right.y2
 }
 
-const createSankeyFocus = <TDatum>(
+const createSankeyFocus: <TDatum>(
   presented?: (markId: string, datumIndex: number, x: number, y: number) => boolean | null,
-): ChartFocusStrategy<TDatum, number, number> => {
-  const nodesOf = (
+) => ChartFocusStrategy<TDatum, number, number> = <TDatum>(
+  presented?: (markId: string, datumIndex: number, x: number, y: number) => boolean | null,
+) => {
+  const nodesOf: (
     points: ReadonlyArray<ChartPoint<TDatum, number, number>>,
-  ): Array<ChartPoint<TDatum, number, number>> =>
-    points.filter((point) => point.markId.startsWith(SANKEY_NODE_POINT_MARK_ID))
+  ) => Array<ChartPoint<TDatum, number, number>> = (
+    points: ReadonlyArray<ChartPoint<TDatum, number, number>>,
+  ) => points.filter((point) => point.markId.startsWith(SANKEY_NODE_POINT_MARK_ID))
 
-  const linksOf = (
+  const linksOf: (
     points: ReadonlyArray<ChartPoint<TDatum, number, number>>,
-  ): Array<ChartPoint<TDatum, number, number>> =>
-    points.filter((point) => point.markId.startsWith(SANKEY_LINK_POINT_MARK_ID))
+  ) => Array<ChartPoint<TDatum, number, number>> = (
+    points: ReadonlyArray<ChartPoint<TDatum, number, number>>,
+  ) => points.filter((point) => point.markId.startsWith(SANKEY_LINK_POINT_MARK_ID))
 
   const semantic = (points: ReadonlyArray<ChartPoint<TDatum, number, number>>) => {
     const owned = new Map<string, ChartPoint<TDatum, number, number>>()
@@ -185,7 +216,6 @@ const createSankeyFocus = <TDatum>(
       ),
     ],
     resolve: (points, { x, y }) => {
-      // SVG hit testing gives the last authored carrier precedence, including labels on repeated node roles.
       for (const point of points.toReversed()) {
         const hit = presented?.(point.markId, point.datumIndex, x, y)
         if (hit === true) return [point]
@@ -204,7 +234,7 @@ const createSankeyFocus = <TDatum>(
 
       return []
     },
-  }
+  } satisfies ChartFocusStrategy<TDatum, number, number>
 }
 
 export { createSankeyFocus, hitFlow, SANKEY_LINK_POINT_MARK_ID, SANKEY_NODE_POINT_MARK_ID }

@@ -1,4 +1,4 @@
-// Exact frozen Fluid role mappings; SVG notices are retained in NOTICE
+/* @license Exact frozen Fluid role mappings; SVG notices are retained in NOTICE */
 import type { IconMap } from './presentation.js'
 import { icon as icon0 } from './icons-phosphor/chevron-right.js'
 import { icon as icon1 } from './icons-phosphor/chevron-down.js'

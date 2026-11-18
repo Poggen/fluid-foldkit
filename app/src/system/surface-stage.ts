@@ -1,4 +1,4 @@
-// Adapted from Fluid Functionalism f8014098 surfaces teaching examples. MIT, copyright 2026 Micka Touillaud.
+/* @license Adapted from Fluid Functionalism f8014098 surfaces teaching examples. MIT, copyright 2026 Micka Touillaud. */
 import { Layer, Option, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { childAttributes } from 'foldkit/html'

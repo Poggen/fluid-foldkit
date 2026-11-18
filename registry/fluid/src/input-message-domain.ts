@@ -1,5 +1,109 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Schema } from 'effect'
+
+const suggestionKeyIntent: (state: MessageKeyState, key: string) => MessageKeyIntent | undefined =
+  function suggestionKeyIntent(state: MessageKeyState, key: string) {
+    if (key === 'ArrowDown') {
+      return {
+        kind: 'Highlight',
+        index:
+          state.activeSuggestion === null
+            ? 0
+            : Math.min(state.activeSuggestion + 1, state.suggestions.length - 1),
+      }
+    }
+
+    if (state.activeSuggestion === null) {
+      return undefined
+    }
+
+    if (key === 'ArrowUp') {
+      return {
+        kind: 'Highlight',
+        index: state.activeSuggestion === 0 ? null : state.activeSuggestion - 1,
+      }
+    }
+
+    if (key === 'Escape') {
+      return { kind: 'Highlight', index: null }
+    }
+
+    const text = state.suggestions[state.activeSuggestion]
+
+    return key === 'Enter' && text !== undefined ? { kind: 'Fill', text } : undefined
+  }
+
+const historyKeyIntent: (state: MessageKeyState, key: MessageKey) => MessageKeyIntent | undefined =
+  function historyKeyIntent(state: MessageKeyState, key: MessageKey) {
+    if (key.key === 'ArrowUp' && !state.value.slice(0, key.selectionStart).includes('\n')) {
+      const index = (state.historyIndex ?? state.history.length) - 1
+      const text = state.history[index]
+
+      return index >= 0 && text !== undefined
+        ? {
+            kind: 'History',
+            index,
+            text,
+            savedDraft: state.historyIndex === null ? state.value : state.draftBeforeHistory,
+          }
+        : { kind: 'Native' }
+    }
+
+    if (
+      key.key === 'ArrowDown' &&
+      state.historyIndex !== null &&
+      !state.value.slice(key.selectionEnd).includes('\n')
+    ) {
+      const next = state.historyIndex + 1
+
+      return {
+        kind: 'History',
+        index: next >= state.history.length ? null : next,
+        text: state.history[next] ?? state.draftBeforeHistory,
+        savedDraft: state.draftBeforeHistory,
+      }
+    }
+
+    return undefined
+  }
+
+/** The DOM observer uses the same independent input snapshot, without owning logical state. */
+export const messageKeyIntent: (state: MessageKeyState, key: MessageKey) => MessageKeyIntent =
+  function messageKeyIntent(state: MessageKeyState, key: MessageKey) {
+    if (key.composing) {
+      return { kind: 'Native' }
+    }
+
+    const plain = !key.shift && !key.alt && !key.meta && !key.ctrl
+
+    if (state.suggestions.length > 0 && state.value === '' && plain) {
+      const intent = suggestionKeyIntent(state, key.key)
+
+      if (intent !== undefined) {
+        return intent
+      }
+    }
+
+    if (
+      key.key === 'Tab' &&
+      !key.shift &&
+      state.placeholderSuggestion !== null &&
+      state.placeholderSuggestion !== '' &&
+      state.value === ''
+    ) {
+      return { kind: 'Fill', text: state.placeholderSuggestion }
+    }
+
+    if (state.history.length > 0 && plain) {
+      const intent = historyKeyIntent(state, key)
+
+      if (intent !== undefined) {
+        return intent
+      }
+    }
+
+    return key.key === 'Enter' && !key.shift ? { kind: 'Submit' } : { kind: 'Native' }
+  }
 
 /** Browser File values live in the resource registry; checked Models retain identities only. */
 export const MessageFile = Schema.Struct({
@@ -121,107 +225,6 @@ export type MessageKeyIntent =
       readonly savedDraft: string
     }
   | { readonly kind: 'Submit' }
-
-function suggestionKeyIntent(state: MessageKeyState, key: string): MessageKeyIntent | undefined {
-  if (key === 'ArrowDown') {
-    return {
-      kind: 'Highlight',
-      index:
-        state.activeSuggestion === null
-          ? 0
-          : Math.min(state.activeSuggestion + 1, state.suggestions.length - 1),
-    }
-  }
-
-  if (state.activeSuggestion === null) {
-    return undefined
-  }
-
-  if (key === 'ArrowUp') {
-    return {
-      kind: 'Highlight',
-      index: state.activeSuggestion === 0 ? null : state.activeSuggestion - 1,
-    }
-  }
-
-  if (key === 'Escape') {
-    return { kind: 'Highlight', index: null }
-  }
-
-  const text = state.suggestions[state.activeSuggestion]
-
-  return key === 'Enter' && text !== undefined ? { kind: 'Fill', text } : undefined
-}
-
-function historyKeyIntent(state: MessageKeyState, key: MessageKey): MessageKeyIntent | undefined {
-  if (key.key === 'ArrowUp' && !state.value.slice(0, key.selectionStart).includes('\n')) {
-    const index = (state.historyIndex ?? state.history.length) - 1
-    const text = state.history[index]
-
-    return index >= 0 && text !== undefined
-      ? {
-          kind: 'History',
-          index,
-          text,
-          savedDraft: state.historyIndex === null ? state.value : state.draftBeforeHistory,
-        }
-      : { kind: 'Native' }
-  }
-
-  if (
-    key.key === 'ArrowDown' &&
-    state.historyIndex !== null &&
-    !state.value.slice(key.selectionEnd).includes('\n')
-  ) {
-    const next = state.historyIndex + 1
-
-    return {
-      kind: 'History',
-      index: next >= state.history.length ? null : next,
-      text: state.history[next] ?? state.draftBeforeHistory,
-      savedDraft: state.draftBeforeHistory,
-    }
-  }
-
-  return undefined
-}
-
-/** The DOM observer uses the same independent input snapshot, without owning logical state. */
-export function messageKeyIntent(state: MessageKeyState, key: MessageKey): MessageKeyIntent {
-  if (key.composing) {
-    return { kind: 'Native' }
-  }
-
-  const plain = !key.shift && !key.alt && !key.meta && !key.ctrl
-
-  if (state.suggestions.length > 0 && state.value === '' && plain) {
-    const intent = suggestionKeyIntent(state, key.key)
-
-    if (intent !== undefined) {
-      return intent
-    }
-  }
-
-  if (
-    key.key === 'Tab' &&
-    !key.shift &&
-    state.placeholderSuggestion !== null &&
-    state.placeholderSuggestion !== '' &&
-    state.value === ''
-  ) {
-    return { kind: 'Fill', text: state.placeholderSuggestion }
-  }
-
-  if (state.history.length > 0 && plain) {
-    const intent = historyKeyIntent(state, key)
-
-    if (intent !== undefined) {
-      return intent
-    }
-  }
-
-  return key.key === 'Enter' && !key.shift ? { kind: 'Submit' } : { kind: 'Native' }
-}
 
 export const inputMessageRemoveTooltipKey = (ownerId: string, itemId: string) =>
   `${ownerId}-remove-${encodeURIComponent(itemId)}`

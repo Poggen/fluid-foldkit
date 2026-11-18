@@ -59,14 +59,15 @@ export const FluidPresentationExampleBlock = Block.make('FluidPresentationExampl
 const Provider = FluidPresentationExampleBlock.makeRequiredFieldBinding(PresentationProviderBlock, {
   field: 'provider',
   init: {
-    contextToArgs: (): [PresentationProviderConfig] => [
-      {
-        ...exampleHoverConfig,
-        id: 'provider-demo',
-        defaultShape: examplePresentation.shape ?? 'pill',
-        defaultSize: 'compact',
-      },
-    ],
+    contextToArgs: () =>
+      [
+        {
+          ...exampleHoverConfig,
+          id: 'provider-demo',
+          defaultShape: examplePresentation.shape ?? 'pill',
+          defaultSize: 'compact',
+        },
+      ] satisfies [PresentationProviderConfig],
   },
 })
 

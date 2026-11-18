@@ -4,6 +4,57 @@ import type { CartesianSnapshot } from './definition'
 import type { IndicatorFadeEdges } from './tooltip-options'
 import { Predicate } from 'effect'
 
+export const overlaySpotOf: <Row>(
+  dot: OverlayDot<Row>,
+  row: Row,
+  plot: OverlayPlot,
+  key: number,
+  top: number,
+) => { readonly dx: number; readonly y: number } | undefined = function overlaySpotOf<Row>(
+  dot: OverlayDot<Row>,
+  row: Row,
+  plot: OverlayPlot,
+  key: number,
+  top: number,
+) {
+  if (dot.at) {
+    const spot = dot.at(row, plot, key)
+
+    return (
+      spot && Number.isFinite(spot.y) ? { dx: spot.dx, y: top + spot.y } : undefined
+    ) satisfies { readonly dx: number; readonly y: number } | undefined
+  }
+
+  const value = dot.valueOf(row)
+  const domain = plot.yDomains[dot.yAxis]
+
+  if (value === undefined || !Number.isFinite(value) || !domain) {
+    return undefined satisfies { readonly dx: number; readonly y: number } | undefined
+  }
+
+  return {
+    dx: 0,
+    y:
+      top +
+      plot.innerHeight -
+      ((value - domain[0]) / (domain[1] - domain[0] || 1)) * plot.innerHeight,
+  } satisfies { readonly dx: number; readonly y: number } | undefined
+}
+
+export const canRetainHover: <Row>(
+  previous: HoverOverlayModel<Row> | null,
+  next: HoverOverlayModel<Row> | null,
+  samePresentation: boolean,
+) => boolean = function canRetainHover<Row>(
+  previous: HoverOverlayModel<Row> | null,
+  next: HoverOverlayModel<Row> | null,
+  samePresentation: boolean,
+) {
+  return (samePresentation &&
+    previous?.sourceMotion === true &&
+    next?.sourceMotion === true) satisfies boolean
+}
+
 /** What the overlay reads of a draw: the host height, the plot size and the resolved domains (x in ms). */
 export interface OverlayPlot {
   readonly height: number
@@ -13,13 +64,16 @@ export interface OverlayPlot {
   readonly yDomains: Readonly<Record<string, readonly [number, number]>>
 }
 
-export const overlayPlotOf = <Row>(snapshot: CartesianSnapshot<Row>): OverlayPlot => ({
-  height: snapshot.height,
-  innerWidth: snapshot.innerWidth,
-  innerHeight: snapshot.innerHeight,
-  xDomain: [snapshot.domains.x[0].getTime(), snapshot.domains.x[1].getTime()],
-  yDomains: snapshot.domains.y,
-})
+export const overlayPlotOf: <Row>(snapshot: CartesianSnapshot<Row>) => OverlayPlot = <Row>(
+  snapshot: CartesianSnapshot<Row>,
+) =>
+  ({
+    height: snapshot.height,
+    innerWidth: snapshot.innerWidth,
+    innerHeight: snapshot.innerHeight,
+    xDomain: [snapshot.domains.x[0].getTime(), snapshot.domains.x[1].getTime()],
+    yDomains: snapshot.domains.y,
+  }) satisfies OverlayPlot
 
 /** One shape of a dot, centred on the point, SVG-style (stroke centred on the edge): a circle of radius `r`, or with `corner` a rounded square of half-extent `r` (bklit's "ring" tooltip dot). */
 export interface OverlayShape {
@@ -101,43 +155,6 @@ export function hoverPresentationKey<Row>(model: HoverOverlayModel<Row> | null, 
           })),
         },
   )
-}
-
-export function overlaySpotOf<Row>(
-  dot: OverlayDot<Row>,
-  row: Row,
-  plot: OverlayPlot,
-  key: number,
-  top: number,
-): { readonly dx: number; readonly y: number } | undefined {
-  if (dot.at) {
-    const spot = dot.at(row, plot, key)
-
-    return spot && Number.isFinite(spot.y) ? { dx: spot.dx, y: top + spot.y } : undefined
-  }
-
-  const value = dot.valueOf(row)
-  const domain = plot.yDomains[dot.yAxis]
-
-  if (value === undefined || !Number.isFinite(value) || !domain) {
-    return undefined
-  }
-
-  return {
-    dx: 0,
-    y:
-      top +
-      plot.innerHeight -
-      ((value - domain[0]) / (domain[1] - domain[0] || 1)) * plot.innerHeight,
-  }
-}
-
-export function canRetainHover<Row>(
-  previous: HoverOverlayModel<Row> | null,
-  next: HoverOverlayModel<Row> | null,
-  samePresentation: boolean,
-): boolean {
-  return samePresentation && previous?.sourceMotion === true && next?.sourceMotion === true
 }
 
 export function overlayXOf<Row>(model: HoverOverlayModel<Row>, plot: OverlayPlot, time: number) {

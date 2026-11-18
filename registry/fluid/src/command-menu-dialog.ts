@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Effect, Layer, Option, Queue, Schema, Stream } from 'effect'
 import { Block } from 'foldkit'
 import type { ChildAttribute, Html } from 'foldkit/html'
@@ -252,7 +252,7 @@ const plans = <const Key extends symbol, const ChildKey extends symbol>(
             },
           }),
         ),
-        // Mount args are captured once; rekey only the listener when its shortcut changes.
+
         h.span(
           [
             h.Key(JSON.stringify([Option.getOrNull(model.shortcut), model.scopeId])),

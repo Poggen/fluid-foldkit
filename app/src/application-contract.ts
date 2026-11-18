@@ -35,6 +35,7 @@ export const Message = defineMessageUnion({
   },
   CompletedNavigate: {},
   CompletedApply: {},
+  ReleasedStartupInput: {},
   SettledSettingsUrl: { revision: Schema.Natural },
   ObservedSystemTheme: { theme: ResolvedTheme },
   CompletedThemeTransition: { revision: Schema.Natural },

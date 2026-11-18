@@ -1,11 +1,14 @@
 import { fontWeights } from './lib/font-weight.js'
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import type { Html, HtmlBuilder } from 'foldkit/html'
 
-function ShortcutKbd<Message, Requirements>(
+const ShortcutKbd: <Message, Requirements>(
   key: string,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function ShortcutKbd<Message, Requirements>(
+  key: string,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   return h.kbd(
     [
       h.Class(
@@ -13,18 +16,18 @@ function ShortcutKbd<Message, Requirements>(
       ),
     ],
     [key],
-  )
+  ) satisfies Html
 }
 
-export function sidebarShortcutKey(shortcut: string | null, side: 'left' | 'right'): string {
-  return shortcut ?? (side === 'right' ? ']' : '[')
-}
-
-export function SidebarToggleTooltipContent<Message, Requirements>(
+export const SidebarToggleTooltipContent: <Message, Requirements>(
   open: boolean,
   shortcutKey: string,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function SidebarToggleTooltipContent<Message, Requirements>(
+  open: boolean,
+  shortcutKey: string,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   return h.span(
     [h.Class('flex items-center gap-1.5')],
     [
@@ -34,13 +37,16 @@ export function SidebarToggleTooltipContent<Message, Requirements>(
       ),
       ShortcutKbd(shortcutKey, h),
     ],
-  )
+  ) satisfies Html
 }
 
-export function SidebarRailTooltipContent<Message, Requirements>(
+export const SidebarRailTooltipContent: <Message, Requirements>(
   shortcutKey: string,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function SidebarRailTooltipContent<Message, Requirements>(
+  shortcutKey: string,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   return h.span(
     [h.Class('flex flex-col items-start gap-2')],
     [
@@ -65,5 +71,10 @@ export function SidebarRailTooltipContent<Message, Requirements>(
         ],
       ),
     ],
-  )
+  ) satisfies Html
 }
+
+export const sidebarShortcutKey: (shortcut: string | null, side: 'left' | 'right') => string =
+  function sidebarShortcutKey(shortcut: string | null, side: 'left' | 'right') {
+    return shortcut ?? (side === 'right' ? ']' : '[')
+  }

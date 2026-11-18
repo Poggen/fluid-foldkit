@@ -49,17 +49,19 @@ const Group = AuthoredFormsBlock.makeRequiredFieldBinding(InputGroupExampleBlock
 const Forms = AuthoredFormsBlock.makeRequiredFieldBinding(FormDocsBlock, {
   field: 'forms',
   init: {
-    contextToArgs: (): [typeof FormConfig.Type] => [
-      { family: 'input', embedded: true, shape: 'sharp', size: 'default' },
-    ],
+    contextToArgs: () =>
+      [{ family: 'input', embedded: true, shape: 'sharp', size: 'default' }] satisfies [
+        typeof FormConfig.Type,
+      ],
   },
 })
 const Field = AuthoredFormsBlock.makeRequiredFieldBinding(FieldDocsBlock, {
   field: 'field',
   init: {
-    contextToArgs: (): [typeof FieldConfig.Type] => [
-      { embedded: true, shape: 'sharp', size: 'default', hoverMode: 'fluid' },
-    ],
+    contextToArgs: () =>
+      [{ embedded: true, shape: 'sharp', size: 'default', hoverMode: 'fluid' }] satisfies [
+        typeof FieldConfig.Type,
+      ],
   },
 })
 const AuthoredFormsComposition = AuthoredFormsBlock.makeComposition({

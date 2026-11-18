@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { modifyFields } from 'foldkit/struct'
 import { Option, Number } from 'effect'
 import type { Block } from 'foldkit'
@@ -15,7 +15,7 @@ export const dialogPlans = <const Key extends symbol>(
 
   type Model = typeof Model.Type
 
-  const accept = (model: Model, open: boolean): Model =>
+  const accept: (model: Model, open: boolean) => Model = (model: Model, open: boolean) =>
     model.isOpen === open
       ? model
       : modifyFields(model, {

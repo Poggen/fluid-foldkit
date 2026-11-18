@@ -85,7 +85,7 @@ const tableSections: Record<(typeof dataScenes)[number], readonly [string, strin
 const outputSample =
   '$ bun run build\n\nvite building for production…\n✓ client bundle built\n✓ server bundle built\n  wrote foldkit.build.json'
 const sectionTitle = (scene: string) => dataScenes.find((key) => key === scene)
-const scenesFor = (slug: string): ReadonlyArray<string> =>
+const scenesFor: (slug: string) => ReadonlyArray<string> = (slug: string) =>
   slug === 'data-table'
     ? dataScenes
     : slug === 'code-block'

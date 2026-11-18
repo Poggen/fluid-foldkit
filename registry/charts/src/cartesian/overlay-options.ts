@@ -1,4 +1,3 @@
-// Native typed options transposed from the pinned Bklit public contracts.
 import type { ChartContent } from './content-types'
 import type { CurveFactory } from 'd3-shape'
 import type { SeriesPointMarkerStyle } from './series-options'
@@ -126,10 +125,6 @@ export interface ProjectionLineEndMarkerProps {
   readonly radius?: number
 }
 
-/**
- * Props of `LineSeriesTerminalMarker`, a ring on the last data point of a series; it is the usual anchor for a `ProjectionLine`.
- */
-// bklit line-series-terminal-marker.tsx:8 LineSeriesTerminalMarkerProps.
 export interface LineSeriesTerminalMarkerProps {
   /** Key of the series in the chart data. The ring sits on the last row's value. */
   readonly dataKey: string

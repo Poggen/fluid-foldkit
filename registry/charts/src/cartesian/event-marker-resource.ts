@@ -12,57 +12,35 @@ import type { Spring } from '../kit/motion/springs'
 import type { ChartMarker } from './overlay-options'
 import type { CartesianLayer } from './layers'
 
-type MarkerShadow = readonly [spread: number, offsetY: number, blurRadius: number, alpha: number]
-
-const cssTimeMs = (value: string): number => {
-  const first = value.split(',')[0]?.trim() ?? ''
-  const n = leadingFloat(first)
-
-  if (!Number.isFinite(n)) {
-    return 0
-  }
-
-  return first.endsWith('ms') ? n : n * 1000
-}
-
-const runAction = (marker: Readonly<ChartMarker>): void => {
-  if (marker.onClick !== undefined) {
-    marker.onClick()
-
-    return
-  }
-
-  if (marker.href === undefined || marker.href === '') {
-    return
-  }
-
-  if (marker.target === '_blank') {
-    window.open(marker.href, '_blank', 'noopener,noreferrer')
-  } else {
-    window.location.href = marker.href
-  }
-}
-
 /** Renderer resources own delegated listeners and velocity-preserving WAAPI springs. */
-export function mountEventMarkerResource<Row>(
+export const mountEventMarkerResource: <Row>(
   element: HTMLElement,
   children: () => ReadonlyArray<CartesianLayer<Row>>,
   clock: () => number,
-): () => void {
+) => () => void = function mountEventMarkerResource<Row>(
+  element: HTMLElement,
+  children: () => ReadonlyArray<CartesianLayer<Row>>,
+  clock: () => number,
+) {
   const springDriver = createSpringDriver(clock)
   const ACT_HOVER_SCALE = 1.15
   const ACT_PRESS_SCALE = 0.95
   const ITEM_STAGGER_MS = 40
   const GROUP = '.bkm-evt-cluster'
 
-  const play = (
+  const play: (
+    el: Element,
+    spring: Spring,
+    hot: boolean,
+    frame: (value: number) => Keyframe,
+    delay?: number,
+  ) => void = (
     el: Element,
     spring: Spring,
     hot: boolean,
     frame: (value: number) => Keyframe,
     delay = 0,
-  ): void => {
-    // An element the native renderer is tweening keeps that tween; the static rule applies once the marker is gone.
+  ) => {
     if (isMotionNode(el)) {
       return
     }
@@ -70,11 +48,10 @@ export function mountEventMarkerResource<Row>(
     springDriver.play({ delay, el, frame, rest: 0, spring, target: hot ? 1 : 0 })
   }
 
-  const springCluster = (group: Element, hot: boolean): void => {
+  const springCluster: (group: Element, hot: boolean) => void = (group: Element, hot: boolean) => {
     const body = group.querySelector('.bkm-evt-body')
 
     if (body !== null) {
-      // The group's entrance delay (animationDuration + groupIndex * 100ms) also delays every hover change of the body.
       const lag = cssTimeMs(getComputedStyle(body).animationDelay)
       play(
         body,
@@ -118,15 +95,13 @@ export function mountEventMarkerResource<Row>(
     }
   }
 
-  const clusterOf = (node: EventTarget | null): Element | null =>
+  const clusterOf: (node: EventTarget | null) => Element | null = (node: EventTarget | null) =>
     node instanceof Element ? node.closest(GROUP) : null
 
   const ACT = '.bkm-evt-act'
 
-  const actOf = (node: EventTarget | null): Element | null =>
+  const actOf: (node: EventTarget | null) => Element | null = (node: EventTarget | null) =>
     node instanceof Element ? node.closest(ACT) : null
-  // Disc shadow as two blurred circles (styles.css `.bkm-evt-sh*`): tailwind shadow-lg at rest, bklit's whileHover "0 4px 20px rgba(0,0,0,0.25)" hot.
-  // Per layer [spread, offset y, blur radius, alpha]; the circle's `r` is the rest radius, and the hot radius is that minus the rest spread.
 
   const REST_SHADOW: readonly [MarkerShadow, MarkerShadow] = [
     [-3, 10, 15, 0.1],
@@ -146,10 +121,14 @@ export function mountEventMarkerResource<Row>(
     ['.bkm-evt-sh2', 1],
   ]
 
-  const shadowFrame = (layer: 0 | 1, rest: number, t: number): Keyframe => {
+  const shadowFrame: (layer: 0 | 1, rest: number, t: number) => Keyframe = (
+    layer: 0 | 1,
+    rest: number,
+    t: number,
+  ) => {
     const [s0, y0, b0, a0] = REST_SHADOW[layer]
     const [s1, y1, b1, a1] = HOT_SHADOW[layer]
-    const mix = (v0: number, v1: number): number => v0 + (v1 - v0) * t
+    const mix: (v0: number, v1: number) => number = (v0: number, v1: number) => v0 + (v1 - v0) * t
 
     return {
       cy: `${mix(y0, y1)}px`,
@@ -159,7 +138,10 @@ export function mountEventMarkerResource<Row>(
     }
   }
 
-  const actScale = (hover: boolean, pressed: boolean): number => {
+  const actScale: (hover: boolean, pressed: boolean) => number = (
+    hover: boolean,
+    pressed: boolean,
+  ) => {
     if (pressed) {
       return ACT_PRESS_SCALE
     }
@@ -167,8 +149,11 @@ export function mountEventMarkerResource<Row>(
     return hover ? ACT_HOVER_SCALE : 1
   }
 
-  /** Springs an actionable disc to its hover / press state: scale 1 / 1.15 / 0.95 (press wins over hover, as motion's whileTap) and the shadow lift (hover only). */
-  const springAct = (act: Element, hover: boolean, pressed: boolean): void => {
+  const springAct: (act: Element, hover: boolean, pressed: boolean) => void = (
+    act: Element,
+    hover: boolean,
+    pressed: boolean,
+  ) => {
     const scale = actScale(hover, pressed)
     springDriver.play({
       el: act,
@@ -183,7 +168,7 @@ export function mountEventMarkerResource<Row>(
 
       if (sh instanceof SVGElement) {
         const rest = Number(sh.getAttribute('r'))
-        // gaps #48 / #20: the radius is a renderer-set attribute and reconcile strips inline style, so the hot value is the `.bkm-evt-act:hover` rule in styles.css.
+
         springDriver.play({
           el: sh,
           frame: (v) => shadowFrame(layer, rest, v),
@@ -195,19 +180,18 @@ export function mountEventMarkerResource<Row>(
     }
   }
 
-  /** bklit MarkerCircleHTML.handleClick (marker-group.tsx:476-487): onClick wins, else href in this tab or (target "_blank") a new one with noopener,noreferrer. */
-  // The actionable disc's documented `className` (SceneNodeBase.className, types.ts:1477-1486) carries its marker indices (kit/cartesian/overlays.ts).
   const ACT_INDEX = /(?:^|\s)bkm-evt-act-(?<list>\d+)-(?<group>\d+)-(?<item>\d+)(?:\s|$)/u
 
-  /** Delegated cluster enter / leave and actionable-disc hover / press / click on the chart host (hover itself stays :hover CSS).
-   * `getLists` returns the items of every ChartMarkers child, in order (the `mi` of the scene keys). Returns the cleanup. */
-  const installMarkerSprings = (
+  const installMarkerSprings: (
     host: HTMLElement,
     getLists: () => ReadonlyArray<ReadonlyArray<Readonly<ChartMarker>>>,
-  ): (() => void) => {
+  ) => () => void = (
+    host: HTMLElement,
+    getLists: () => ReadonlyArray<ReadonlyArray<Readonly<ChartMarker>>>,
+  ) => {
     let pressed: Element | null = null
 
-    const onOver = (event: MouseEvent): void => {
+    const onOver: (event: MouseEvent) => void = (event: MouseEvent) => {
       const nextAct = actOf(event.target)
       const prevAct = actOf(event.relatedTarget)
 
@@ -236,9 +220,8 @@ export function mountEventMarkerResource<Row>(
         springCluster(next, true)
       }
     }
-    // Leaving the host altogether fires no mouseover inside it.
 
-    const onOut = (event: MouseEvent): void => {
+    const onOut: (event: MouseEvent) => void = (event: MouseEvent) => {
       if (event.relatedTarget instanceof Node && host.contains(event.relatedTarget)) {
         return
       }
@@ -256,7 +239,7 @@ export function mountEventMarkerResource<Row>(
       }
     }
 
-    const onDown = (event: PointerEvent): void => {
+    const onDown: (event: PointerEvent) => void = (event: PointerEvent) => {
       const act = actOf(event.target)
 
       if (act === null || event.button !== 0) {
@@ -266,9 +249,8 @@ export function mountEventMarkerResource<Row>(
       pressed = act
       springAct(act, true, true)
     }
-    // motion's whileTap ends on the release anywhere, not on leaving the disc.
 
-    const onUp = (): void => {
+    const onUp: () => void = () => {
       const act = pressed
       pressed = null
 
@@ -277,7 +259,7 @@ export function mountEventMarkerResource<Row>(
       }
     }
 
-    const onClick = (event: MouseEvent): void => {
+    const onClick: (event: MouseEvent) => void = (event: MouseEvent) => {
       const act = actOf(event.target)
       const match = ACT_INDEX.exec(act?.getAttribute('class') ?? '')
 
@@ -318,8 +300,39 @@ export function mountEventMarkerResource<Row>(
     markerSets(children()).map((set) => set.items),
   )
 
-  return () => {
+  return (() => {
     release()
     springDriver.destroy()
+  }) satisfies () => void
+}
+
+type MarkerShadow = readonly [spread: number, offsetY: number, blurRadius: number, alpha: number]
+
+const cssTimeMs: (value: string) => number = (value: string) => {
+  const first = value.split(',')[0]?.trim() ?? ''
+  const n = leadingFloat(first)
+
+  if (!Number.isFinite(n)) {
+    return 0
+  }
+
+  return first.endsWith('ms') ? n : n * 1000
+}
+
+const runAction: (marker: Readonly<ChartMarker>) => void = (marker: Readonly<ChartMarker>) => {
+  if (marker.onClick !== undefined) {
+    marker.onClick()
+
+    return
+  }
+
+  if (marker.href === undefined || marker.href === '') {
+    return
+  }
+
+  if (marker.target === '_blank') {
+    window.open(marker.href, '_blank', 'noopener,noreferrer')
+  } else {
+    window.location.href = marker.href
   }
 }

@@ -42,7 +42,7 @@ it('routes a sector scene through its custom renderer after adding portable SSR'
     }
     const defaultRenderer = motion()
     const composed = resolveChartRenderer(scene, defaultRenderer)
-    // Renderer identity is the public host's resource lifetime: changing it remounts every layer on update.
+
     expect(resolveChartRenderer(scene, defaultRenderer)).toBe(composed)
     const output = composed.prerender(scene, { ariaLabel: 'Sector' })
     expect(calls).toBe(1)

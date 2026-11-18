@@ -29,20 +29,20 @@ import { TimeFieldAction, transitionTimeField } from './date-picker-time-state.j
 const Highlight = TimeFieldBlock.makeRequiredFieldBinding(HoverHighlightBlock, {
   field: 'highlight',
   init: {
-    contextToArgs: (
-      config: typeof TimeFieldConfig.Type,
-    ): [{ readonly id: string; readonly mode: HoverMode }] => [
-      { id: `${config.id}-highlight`, mode: config.hoverMode ?? 'fluid' },
-    ],
+    contextToArgs: (config: typeof TimeFieldConfig.Type) =>
+      [{ id: `${config.id}-highlight`, mode: config.hoverMode ?? 'fluid' }] satisfies [
+        { readonly id: string; readonly mode: HoverMode },
+      ],
   },
 })
 
 const Hover = TimeFieldBlock.makeRequiredFieldBinding(HoverBlock, {
   field: 'hover',
   init: {
-    contextToArgs: (config: typeof TimeFieldConfig.Type): [HoverConfig] => [
-      { id: `${config.id}-list`, axis: 'y', gapClick: true, mode: config.hoverMode ?? 'fluid' },
-    ],
+    contextToArgs: (config: typeof TimeFieldConfig.Type) =>
+      [
+        { id: `${config.id}-list`, axis: 'y', gapClick: true, mode: config.hoverMode ?? 'fluid' },
+      ] satisfies [HoverConfig],
   },
 }).withOutMessagePolicy({
   fold: TimeFieldBlock.makeOutMessageFold(HoverBlock, {
@@ -61,9 +61,8 @@ const Hover = TimeFieldBlock.makeRequiredFieldBinding(HoverBlock, {
 const Scroll = TimeFieldBlock.makeRequiredFieldBinding(ScrollAreaBlock, {
   field: 'scroll',
   init: {
-    contextToArgs: (config: typeof TimeFieldConfig.Type): [ScrollAreaConfig] => [
-      { id: `${config.id}-scroll` },
-    ],
+    contextToArgs: (config: typeof TimeFieldConfig.Type) =>
+      [{ id: `${config.id}-scroll` }] satisfies [ScrollAreaConfig],
   },
 }).withOutMessagePolicy({
   fold: TimeFieldBlock.makeOutMessageFold(ScrollAreaBlock, {
@@ -74,21 +73,20 @@ const Scroll = TimeFieldBlock.makeRequiredFieldBinding(ScrollAreaBlock, {
 const RawPopup = TimeFieldBlock.makeRequiredFieldBinding(PopupBlock, {
   field: 'popup',
   init: {
-    contextToArgs: (config: typeof TimeFieldConfig.Type): [PopupConfig, boolean, boolean] => [
-      {
-        id: `${config.id}-popup`,
-        anchorId: config.id,
+    contextToArgs: (config: typeof TimeFieldConfig.Type) =>
+      [
+        {
+          id: `${config.id}-popup`,
+          anchorId: config.id,
 
-        kind: 'anchor',
-        align: 'start',
-      },
-      false,
-      false,
-    ],
+          kind: 'anchor',
+          align: 'start',
+        },
+        false,
+        false,
+      ] satisfies [PopupConfig, boolean, boolean],
   },
 })
-// Configuration and user input share child synchronization; only user input
-// can commit a value. The public Configured message keeps that channel silent.
 
 const synchronizeField = (
   action: TimeFieldAction,
@@ -246,8 +244,6 @@ export interface TimeFieldViewInputs extends Presentation {
   readonly suffix?: Html
 }
 
-// Both frozen DatePicker wrappers share the Radix ScrollArea imported by
-// DatePickerCore; only their popup positioning/dismissal policies differ.
 const view = Composition.makeView.withInputs<TimeFieldViewInputs>((model, inputs, h) => {
   const shape = popupShape(resolvePresentation(inputs).shape.variant)
   const { field } = model

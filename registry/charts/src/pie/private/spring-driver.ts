@@ -1,5 +1,3 @@
-// Velocity-preserving hover springs on WAAPI: each change samples the running animation and replays a fresh spring from it; rest/hot stay static CSS.
-// UPSTREAM-GAPS #31 (mark `states` repaint the scene on hover) and #50 (callers skip mid-tween nodes).
 import type { ChartSpringState } from '@tanstack/charts/spring'
 import { restOf, springOf } from '../../kit/motion/spring-curve'
 import type { Spring } from '../../kit/motion/springs'
@@ -18,12 +16,11 @@ interface SpringState {
   readonly target: number
   readonly x0: number
   readonly v0: number
-  /** Milliseconds the animation waits (holding its first frame) before the spring starts. */
+
   readonly delay: number
   readonly animation: SpringClock | null
 }
 
-/** What `live` needs of a running spring: a clock and a way to stop it (a WAAPI `Animation` fits, so does a frame-driven one). */
 interface SpringClock {
   readonly playState: AnimationPlayState
   readonly currentTime: CSSNumberish | null
@@ -57,12 +54,11 @@ interface SpringDriver {
   readonly destroy: () => void
 }
 
-/** One rAF loop for every frame-driven spring: each step returns false once its spring has ended. */
 const createFrameLoop = () => {
   const steps = new Set<() => boolean>()
   let pending = 0
 
-  const tick = (): void => {
+  const tick: () => void = () => {
     pending = 0
 
     for (const step of steps) {
@@ -92,22 +88,27 @@ const createFrameLoop = () => {
   }
 }
 
-const toKebab = (name: string): string =>
+const toKebab: (name: string) => string = (name: string) =>
   name.replaceAll(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)
 
-const createSpringDriver = (clock: () => number): SpringDriver => {
+const createSpringDriver: (clock: () => number) => SpringDriver = (clock: () => number) => {
   const states = new WeakMap<Element, SpringState>()
   const active = new Set<SpringClock>()
   const runFrames = createFrameLoop()
 
-  /** A spring played as inline style, one write per animation frame, sampling the precomputed curve (`values`, one per FRAME_MS). Reproduces motion's frame-driven x/y spring on bklit's pie slice (repos/bklit-ui/packages/ui/src/charts/pie-slice.tsx:150-157, stiffness 400 / damping 25). */
-  const playFrames = (
+  const playFrames: (
     el: Element,
     values: ReadonlyArray<number>,
     duration: number,
     target: number,
     frame: SpringJob['frame'],
-  ): SpringClock => {
+  ) => SpringClock = (
+    el: Element,
+    values: ReadonlyArray<number>,
+    duration: number,
+    target: number,
+    frame: SpringJob['frame'],
+  ) => {
     if (!(el instanceof HTMLElement) && !(el instanceof SVGElement))
       return { playState: 'idle', currentTime: 0, cancel: () => undefined }
     const style = el.style
@@ -115,13 +116,13 @@ const createSpringDriver = (clock: () => number): SpringDriver => {
     const start = clock()
     let playState: AnimationPlayState = 'running'
 
-    const clear = (): void => {
+    const clear: () => void = () => {
       for (const key of keys) {
         style.removeProperty(key)
       }
     }
 
-    const write = (value: number): void => {
+    const write: (value: number) => void = (value: number) => {
       for (const [key, css] of Object.entries(frame(value))) {
         style.setProperty(toKebab(key), String(css))
       }
@@ -143,7 +144,7 @@ const createSpringDriver = (clock: () => number): SpringDriver => {
       },
     }
 
-    const step = (): boolean => {
+    const step: () => boolean = () => {
       if (playState !== 'running') {
         return false
       }
@@ -174,8 +175,7 @@ const createSpringDriver = (clock: () => number): SpringDriver => {
     return animationClock
   }
 
-  /** Live value and velocity of an element: from its running animation's clock, or at rest on its last target when none is running. */
-  const live = (el: Element, rest: number): LiveSample => {
+  const live: (el: Element, rest: number) => LiveSample = (el: Element, rest: number) => {
     const state = states.get(el)
     const animation = state?.animation
 
@@ -190,7 +190,6 @@ const createSpringDriver = (clock: () => number): SpringDriver => {
 
     const seconds = (Number(animation.currentTime ?? 0) - state.delay) / 1000
 
-    // Still inside the delay: the element holds the state the spring will start from.
     if (seconds <= 0) {
       return { value: state.target + state.x0, velocity: state.v0 }
     }
@@ -235,7 +234,7 @@ const createSpringDriver = (clock: () => number): SpringDriver => {
 
       const native = springOf(spring, thresholds)
       const state: ChartSpringState = { from: x0, to: 0, velocity: start.velocity }
-      // One pass samples the curve and finds its settle time (the first frame at rest).
+
       const values: Array<number> = []
       let duration = MAX_MS
 
@@ -283,7 +282,7 @@ const createSpringDriver = (clock: () => number): SpringDriver => {
       const release = () => active.delete(animation)
       animation.addEventListener('finish', release, { once: true })
       animation.addEventListener('cancel', release, { once: true })
-      // After the last keyframe the element falls back to the static CSS rule, which holds the same target.
+
       states.set(el, { animation, delay, spring, target, v0: start.velocity, x0 })
     },
   }

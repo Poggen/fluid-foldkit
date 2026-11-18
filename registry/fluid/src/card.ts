@@ -1,7 +1,7 @@
 import { sourceChildStyleAttributes } from './lib/source-style-attributes.js'
 import { modifyFields } from 'foldkit/struct'
 import { HoverMode } from './hover-observation.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Layer, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { defineInMessageUnion, defineMessageUnion } from 'foldkit/message'
@@ -18,73 +18,13 @@ import { createPresentationContext, resolvePresentation } from './presentation.j
 import type { Presentation } from './presentation.js'
 import type { CardBorder, CardContext, CardOrientation } from './card-parts.js'
 
-export {
-  CardGroupRefs,
-  makeCardGroupRefsLayer,
-  CardGroupRefsServerLayer,
-  CardGroupRefsDefaultLayer,
-} from './card-resources.js'
-
-export type { CardGroupRef } from './card-resources.js'
-
-export {
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardAction,
-  CardContent,
-  CardFooter,
-  CardMedia,
-  CardImage,
-  CardFeature,
-  CardButton,
-} from './card-parts.js'
-
-export type {
-  CardOrientation,
-  CardBorder,
-  CardLogo,
-  CardContext,
-  CardPartProps,
-  CardMediaProps,
-  CardImageProps,
-  CardFeatureProps,
-  CardButtonVariant,
-  CardButtonProps,
-} from './card-parts.js'
-
-export interface CardGroupContext extends CardContext {
-  readonly columns: number
-  readonly count: number
-  readonly separated: boolean
-  readonly outlined: boolean
-  readonly activeIndex: number | null
-  readonly selectedIndex: number
-  readonly itemAttributes: HoverViewState['itemAttributes']
-}
-
-export interface CardProps<Message, Requirements = never> extends Presentation {
-  readonly onClick?: Message
-  readonly href?: string
-  readonly external?: boolean
-  readonly label?: string
-  readonly selected?: boolean
-  readonly disabled?: boolean
-  readonly dismissible?: boolean
-  readonly dismissOnHover?: boolean
-  readonly onDismiss?: Message
-  readonly index?: number
-  readonly className?: string
-  readonly attributes?: Parameters<HtmlBuilder<Message, Requirements>['div']>[0]
-  readonly group?: CardGroupContext
-  readonly image?: (context: CardContext) => Html
-  readonly children: (context: CardContext) => ReadonlyArray<Html | string>
-}
-
-export function Card<Message, Requirements = never>(
+export const Card: <Message, Requirements = never>(
   props: CardProps<Message, Requirements>,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function Card<Message, Requirements = never>(
+  props: CardProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   const inherited = { ...props.group, ...props }
   const { shape, size, icons } = resolvePresentation(inherited)
   const compact = size.variant === 'compact'
@@ -272,7 +212,70 @@ export function Card<Message, Requirements = never>(
       : null,
   ]
 
-  return h.div(attributes(), content())
+  return h.div(attributes(), content()) satisfies Html
+}
+
+export {
+  CardGroupRefs,
+  makeCardGroupRefsLayer,
+  CardGroupRefsServerLayer,
+  CardGroupRefsDefaultLayer,
+} from './card-resources.js'
+
+export type { CardGroupRef } from './card-resources.js'
+
+export {
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardAction,
+  CardContent,
+  CardFooter,
+  CardMedia,
+  CardImage,
+  CardFeature,
+  CardButton,
+} from './card-parts.js'
+
+export type {
+  CardOrientation,
+  CardBorder,
+  CardLogo,
+  CardContext,
+  CardPartProps,
+  CardMediaProps,
+  CardImageProps,
+  CardFeatureProps,
+  CardButtonVariant,
+  CardButtonProps,
+} from './card-parts.js'
+
+export interface CardGroupContext extends CardContext {
+  readonly columns: number
+  readonly count: number
+  readonly separated: boolean
+  readonly outlined: boolean
+  readonly activeIndex: number | null
+  readonly selectedIndex: number
+  readonly itemAttributes: HoverViewState['itemAttributes']
+}
+
+export interface CardProps<Message, Requirements = never> extends Presentation {
+  readonly onClick?: Message
+  readonly href?: string
+  readonly external?: boolean
+  readonly label?: string
+  readonly selected?: boolean
+  readonly disabled?: boolean
+  readonly dismissible?: boolean
+  readonly dismissOnHover?: boolean
+  readonly onDismiss?: Message
+  readonly index?: number
+  readonly className?: string
+  readonly attributes?: Parameters<HtmlBuilder<Message, Requirements>['div']>[0]
+  readonly group?: CardGroupContext
+  readonly image?: (context: CardContext) => Html
+  readonly children: (context: CardContext) => ReadonlyArray<Html | string>
 }
 
 const Model = Schema.Struct({

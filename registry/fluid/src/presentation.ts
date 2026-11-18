@@ -4,6 +4,40 @@ import { shapeMap, type ShapeVariant } from './lib/shape.js'
 import { sizeMap, type SizeVariant } from './lib/size.js'
 import { defaultIcons, type IconName } from './icons.js'
 
+export const createPresentationContext: (
+  options?: Presentation & {
+    readonly icons?: IconMap
+    readonly reducedMotion?: PresentationValues['reducedMotion']
+    readonly prefersReducedMotion?: boolean
+    readonly hasShapeProvider?: boolean
+    readonly hasSizeProvider?: boolean
+  },
+) => PresentationContext = function createPresentationContext(
+  options: Presentation & {
+    readonly icons?: IconMap
+    readonly reducedMotion?: PresentationValues['reducedMotion']
+    readonly prefersReducedMotion?: boolean
+    readonly hasShapeProvider?: boolean
+    readonly hasSizeProvider?: boolean
+  } = {},
+) {
+  const resolved = resolvePresentation(options)
+
+  const value: PresentationValues = {
+    hoverMode: resolved.hoverMode,
+    shape: resolved.shape.variant,
+    size: resolved.size.variant,
+    surface: resolved.surface,
+    icons: options.icons ?? resolved.icons,
+    reducedMotion: options.reducedMotion ?? resolved.reducedMotion,
+    prefersReducedMotion: options.prefersReducedMotion ?? resolved.prefersReducedMotion,
+    hasShapeProvider: options.hasShapeProvider ?? resolved.hasShapeProvider,
+    hasSizeProvider: options.hasSizeProvider ?? resolved.hasSizeProvider,
+  }
+
+  return () => value
+}
+
 export interface IconOptions {
   readonly size?: number
   readonly strokeWidth?: number
@@ -51,30 +85,4 @@ export function resolvePresentation(options: Presentation = {}) {
     hasShapeProvider: inherited?.hasShapeProvider ?? false,
     hasSizeProvider: inherited?.hasSizeProvider ?? false,
   }
-}
-
-export function createPresentationContext(
-  options: Presentation & {
-    readonly icons?: IconMap
-    readonly reducedMotion?: PresentationValues['reducedMotion']
-    readonly prefersReducedMotion?: boolean
-    readonly hasShapeProvider?: boolean
-    readonly hasSizeProvider?: boolean
-  } = {},
-): PresentationContext {
-  const resolved = resolvePresentation(options)
-
-  const value: PresentationValues = {
-    hoverMode: resolved.hoverMode,
-    shape: resolved.shape.variant,
-    size: resolved.size.variant,
-    surface: resolved.surface,
-    icons: options.icons ?? resolved.icons,
-    reducedMotion: options.reducedMotion ?? resolved.reducedMotion,
-    prefersReducedMotion: options.prefersReducedMotion ?? resolved.prefersReducedMotion,
-    hasShapeProvider: options.hasShapeProvider ?? resolved.hasShapeProvider,
-    hasSizeProvider: options.hasSizeProvider ?? resolved.hasSizeProvider,
-  }
-
-  return () => value
 }

@@ -1,5 +1,5 @@
 import { sourceStyleAttributes } from '../lib/source-style-attributes.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Option } from 'effect'
 import { childAttributes } from 'foldkit/html'
 import { spring } from '../lib/springs.js'

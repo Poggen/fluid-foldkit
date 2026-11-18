@@ -16,19 +16,26 @@ export interface BuildState<Row> {
   readonly plRules: Array<ProfitLossRule>
 }
 
-export const pushDecorative = <Row>(marks: Array<SeriesMark<Row>>, mark: SeriesMark<Row>): void => {
+export const pushDecorative: <Row>(marks: Array<SeriesMark<Row>>, mark: SeriesMark<Row>) => void = <
+  Row,
+>(
+  marks: Array<SeriesMark<Row>>,
+  mark: SeriesMark<Row>,
+) => {
   marks.push(decorative(mark))
 }
 
-export const keyAttr = (value: string): string => value.replaceAll(/["\\\n]/g, String.raw`\$&`)
+export const keyAttr: (value: string) => string = (value: string) =>
+  value.replaceAll(/["\\\n]/g, String.raw`\$&`)
 
-export const yScaleForAxis = (
-  value: string | number | undefined,
-): { readonly yScale: YScaleId } => {
+export const yScaleForAxis: (value: string | number | undefined) => {
+  readonly yScale: YScaleId
+} = (value: string | number | undefined) => {
   const id = axisId(value)
 
   return { yScale: id === DEFAULT_Y_AXIS_ID ? 'y' : `y:${id}` }
 }
 
-export const yScaleOf = (series: ResolvedSeries): { readonly yScale: YScaleId } =>
-  yScaleForAxis(series.yAxisId)
+export const yScaleOf: (series: ResolvedSeries) => { readonly yScale: YScaleId } = (
+  series: ResolvedSeries,
+) => yScaleForAxis(series.yAxisId)

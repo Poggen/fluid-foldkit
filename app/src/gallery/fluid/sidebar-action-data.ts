@@ -21,10 +21,10 @@ export const sidebarActionItems: Readonly<
   ],
 }
 
-export const sidebarActionRows = (
+export const sidebarActionRows: (
   position: 'header' | 'footer',
   count: number,
-): ReadonlyArray<NavItemConfig> =>
+) => ReadonlyArray<NavItemConfig> = (position: 'header' | 'footer', count: number) =>
   sidebarActionItems[position].slice(0, count).map(({ label }) => ({
     value: label,
     label,

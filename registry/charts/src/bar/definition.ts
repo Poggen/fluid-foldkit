@@ -39,41 +39,7 @@ import { barOverlay } from './overlay'
 import type { HoverOverlayModel } from '../cartesian/hover-overlay'
 import { barFocusStrategy } from './focus'
 
-export interface BarSnapshot<Row> {
-  readonly frontCss: string
-  readonly overlay: HoverOverlayModel<Row> | null
-  readonly data: ReadonlyArray<Row>
-  readonly datums: ReadonlyArray<BarDatum<Row>>
-  readonly categories: ReadonlyArray<string>
-  readonly margin: Margin
-  readonly width: number
-  readonly height: number
-  readonly valueDomain: readonly [number, number]
-  readonly valueDomains: Domains
-  readonly bandWidth: number
-  readonly pulseClips: ReadonlyArray<PulseClip>
-  readonly depthTargets: ReadonlyArray<DepthMotionTarget>
-  readonly categoryStarts: ReadonlyArray<number>
-  readonly labelXs: ReadonlyArray<number>
-  readonly focusXs: ReadonlyArray<number>
-  readonly hover: ReadonlyArray<HoverTarget>
-  readonly tickPositions: ReadonlyArray<number>
-  readonly gridAttrs: ReturnType<typeof gridHostAttrs>
-}
-
-export type BarValue = string | number
-
-export type BarMark<Row> = ChartMark<
-  BarDatum<Row>,
-  BarValue,
-  BarValue,
-  BarValue,
-  BarValue,
-  'x',
-  YScaleId
->
-
-export function buildBarDefinition<Row extends Readonly<Record<string, unknown>>>(
+export const buildBarDefinition: <Row extends Readonly<Record<string, unknown>>>(
   data: ReadonlyArray<Row>,
   options: {
     readonly id: string
@@ -83,7 +49,19 @@ export function buildBarDefinition<Row extends Readonly<Record<string, unknown>>
     readonly onBuilt?: (snapshot: BarSnapshot<Row>) => void
     readonly clock?: () => number
   },
-): DomChartDefinition<BarDatum<Row>, BarValue, BarValue> {
+) => DomChartDefinition<BarDatum<Row>, BarValue, BarValue> = function buildBarDefinition<
+  Row extends Readonly<Record<string, unknown>>,
+>(
+  data: ReadonlyArray<Row>,
+  options: {
+    readonly id: string
+    readonly tooltipExtension?: ChartTooltipExtension
+    readonly props: BarChartProps<Row>
+    readonly state: Interaction
+    readonly onBuilt?: (snapshot: BarSnapshot<Row>) => void
+    readonly clock?: () => number
+  },
+) {
   const { props: sourceProps, state } = options
   const props = { ...sourceProps, children: flattenBarLayers(sourceProps.children) }
 
@@ -136,13 +114,16 @@ export function buildBarDefinition<Row extends Readonly<Record<string, unknown>>
 
   let plot = { left: margin.left, top: margin.top, width: 0, height: 0 }
 
-  const chart = ({
+  const chart: (argument0: {
+    width: number
+    height: number
+  }) => ChartSpec<ReadonlyArray<BarMark<Row>>> = ({
     width,
     height,
   }: {
     width: number
     height: number
-  }): ChartSpec<ReadonlyArray<BarMark<Row>>> => {
+  }) => {
     const innerWidth = width - margin.left - margin.right
     const innerHeight = height - margin.top - margin.bottom
     plot = { left: margin.left, top: margin.top, width: innerWidth, height: innerHeight }
@@ -281,7 +262,7 @@ export function buildBarDefinition<Row extends Readonly<Record<string, unknown>>
       scales: horizontal
         ? { x: valueScale, y: categoryScale }
         : { x: categoryScale, y: valueScale, ...valueScales },
-    }
+    } satisfies ChartSpec<ReadonlyArray<BarMark<Row>>>
   }
 
   const chartOptions = {
@@ -325,5 +306,39 @@ export function buildBarDefinition<Row extends Readonly<Record<string, unknown>>
     ReadonlyArray<BarMark<Row>>,
     ChartSpec<ReadonlyArray<BarMark<Row>>>,
     typeof chartOptions
-  >({ chart }, chartOptions)
+  >({ chart }, chartOptions) satisfies DomChartDefinition<BarDatum<Row>, BarValue, BarValue>
 }
+
+export interface BarSnapshot<Row> {
+  readonly frontCss: string
+  readonly overlay: HoverOverlayModel<Row> | null
+  readonly data: ReadonlyArray<Row>
+  readonly datums: ReadonlyArray<BarDatum<Row>>
+  readonly categories: ReadonlyArray<string>
+  readonly margin: Margin
+  readonly width: number
+  readonly height: number
+  readonly valueDomain: readonly [number, number]
+  readonly valueDomains: Domains
+  readonly bandWidth: number
+  readonly pulseClips: ReadonlyArray<PulseClip>
+  readonly depthTargets: ReadonlyArray<DepthMotionTarget>
+  readonly categoryStarts: ReadonlyArray<number>
+  readonly labelXs: ReadonlyArray<number>
+  readonly focusXs: ReadonlyArray<number>
+  readonly hover: ReadonlyArray<HoverTarget>
+  readonly tickPositions: ReadonlyArray<number>
+  readonly gridAttrs: ReturnType<typeof gridHostAttrs>
+}
+
+export type BarValue = string | number
+
+export type BarMark<Row> = ChartMark<
+  BarDatum<Row>,
+  BarValue,
+  BarValue,
+  BarValue,
+  BarValue,
+  'x',
+  YScaleId
+>

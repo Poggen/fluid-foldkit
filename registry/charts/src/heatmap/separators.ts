@@ -37,9 +37,11 @@ export interface HeatmapColumnSeparatorsConfig {
 }
 
 /** The parsed separator config, or `null` when `config` is absent or invalid. */
-export const normalizeHeatmapSeparatorConfig = (
+export const normalizeHeatmapSeparatorConfig: (
   config: Readonly<HeatmapColumnSeparatorsConfig> | undefined,
-): HeatmapSeparatorParsedConfig | null => {
+) => HeatmapSeparatorParsedConfig | null = (
+  config: Readonly<HeatmapColumnSeparatorsConfig> | undefined,
+) => {
   if (!config) {
     return null
   }
@@ -61,14 +63,10 @@ export const normalizeHeatmapSeparatorConfig = (
   }
 }
 
-/**
- * Column indices (0-based) where a vertical separator is drawn (fixed interval).
- * @internal
- */
-export const getHeatmapSeparatorColumnIndices = (
+export const getHeatmapSeparatorColumnIndices: (
   columnCount: number,
   every: number,
-): Array<number> => {
+) => Array<number> = (columnCount: number, every: number) => {
   if (every <= 0 || columnCount <= every) {
     return []
   }
@@ -84,8 +82,7 @@ export const getHeatmapSeparatorColumnIndices = (
 
 const MONTHS_PER_QUARTER = 3
 
-/** Calendar quarter (1-4) for Jan-Mar, Apr-Jun, Jul-Sep, Oct-Dec. */
-const getCalendarQuarter = (date: Readonly<Date>): number =>
+const getCalendarQuarter: (date: Readonly<Date>) => number = (date: Readonly<Date>) =>
   Math.floor(date.getMonth() / MONTHS_PER_QUARTER) + 1
 
 const QUARTER_1_START_MONTH = 0
@@ -103,13 +100,11 @@ const CALENDAR_QUARTER_START_MONTHS = [
   QUARTER_4_START_MONTH,
 ]
 
-/** Quarter starts for one calendar year inside a millisecond window `(startTime, endTime]`. */
-// Quarter starts for one calendar year inside `(gridStart, gridEnd]`.
-const collectQuarterStartDatesForYear = (
+const collectQuarterStartDatesForYear: (
   year: number,
   startTime: number,
   endTime: number,
-): Array<Date> => {
+) => Array<Date> = (year: number, startTime: number, endTime: number) => {
   const dates: Array<Date> = []
 
   for (const month of CALENDAR_QUARTER_START_MONTHS) {
@@ -124,10 +119,10 @@ const collectQuarterStartDatesForYear = (
   return dates
 }
 
-const getCalendarQuarterStartDatesBetween = (
+const getCalendarQuarterStartDatesBetween: (
   gridStart: Readonly<Date>,
   gridEnd: Readonly<Date>,
-): Array<Date> => {
+) => Array<Date> = (gridStart: Readonly<Date>, gridEnd: Readonly<Date>) => {
   const startTime = gridStart.getTime()
   const endTime = gridEnd.getTime()
   const dates: Array<Date> = []
@@ -139,11 +134,10 @@ const getCalendarQuarterStartDatesBetween = (
   return dates
 }
 
-/** Week column index whose Sun-Sat span contains `date`; `undefined` when none does. */
-const findHeatmapColumnIndexForDate = (
+const findHeatmapColumnIndexForDate: (
   columns: ReadonlyArray<HeatmapColumn>,
   date: Readonly<Date>,
-): number | undefined => {
+) => number | undefined = (columns: ReadonlyArray<HeatmapColumn>, date: Readonly<Date>) => {
   const target = copyCalendarDate(date)
   target.setHours(0, 0, 0, 0)
   const targetTime = target.getTime()
@@ -165,13 +159,15 @@ const findHeatmapColumnIndexForDate = (
   return columnIndex === -1 ? undefined : columnIndex
 }
 
-/** Display/inferred/extent fallback chain for the quarter-separator range start. */
-// Display/inferred/extent fallback chain for the quarter-separator range start.
-const resolveQuarterRangeStart = (
+const resolveQuarterRangeStart: (
   columns: Array<HeatmapColumn>,
   extentStart: Readonly<Date>,
   currentDate: Readonly<Date>,
-): Readonly<Date> => {
+) => Readonly<Date> = (
+  columns: Array<HeatmapColumn>,
+  extentStart: Readonly<Date>,
+  currentDate: Readonly<Date>,
+) => {
   const displayRange = resolveHeatmapDisplayRange(columns, currentDate)
 
   return displayRange.start ?? inferHeatmapCalendarRangeStart(columns, currentDate) ?? extentStart
@@ -182,8 +178,9 @@ interface QuarterSeparatorSeed {
   readonly usedColumns: Set<number>
 }
 
-// First quarter group plus its claimed column; later groups append after it.
-const createQuarterSeparatorSeed = (quarterRangeStart: Readonly<Date>): QuarterSeparatorSeed => {
+const createQuarterSeparatorSeed: (quarterRangeStart: Readonly<Date>) => QuarterSeparatorSeed = (
+  quarterRangeStart: Readonly<Date>,
+) => {
   const quarter = getCalendarQuarter(quarterRangeStart)
 
   const groups: Array<HeatmapSeparatorGroup> = [
@@ -206,8 +203,9 @@ interface AppendQuarterSeparatorGroupParams {
   readonly usedColumns: Set<number>
 }
 
-// One quarter-start date becomes a group unless its column is taken or is the seed column.
-const appendQuarterSeparatorGroup = (params: Readonly<AppendQuarterSeparatorGroupParams>): void => {
+const appendQuarterSeparatorGroup: (params: Readonly<AppendQuarterSeparatorGroupParams>) => void = (
+  params: Readonly<AppendQuarterSeparatorGroupParams>,
+) => {
   const { columns, groups, quarterStart, usedColumns } = params
   const columnIndex = findHeatmapColumnIndexForDate(columns, quarterStart)
 
@@ -232,9 +230,9 @@ interface AppendQuarterSeparatorGroupsParams {
   readonly usedColumns: Set<number>
 }
 
-const appendQuarterSeparatorGroups = (
+const appendQuarterSeparatorGroups: (
   params: Readonly<AppendQuarterSeparatorGroupsParams>,
-): void => {
+) => void = (params: Readonly<AppendQuarterSeparatorGroupsParams>) => {
   const { columns, gridEnd, groups, quarterRangeStart, usedColumns } = params
   const quarterStarts = getCalendarQuarterStartDatesBetween(quarterRangeStart, gridEnd)
 
@@ -243,10 +241,13 @@ const appendQuarterSeparatorGroups = (
   }
 }
 
-const buildHeatmapQuarterSeparatorGroups = (
+const buildHeatmapQuarterSeparatorGroups: (
   columns: Array<HeatmapColumn>,
   currentDate: Readonly<Date>,
-): Array<HeatmapSeparatorGroup> => {
+) => Array<HeatmapSeparatorGroup> = (
+  columns: Array<HeatmapColumn>,
+  currentDate: Readonly<Date>,
+) => {
   if (columns.length === 0) {
     return []
   }
@@ -275,13 +276,15 @@ const buildHeatmapQuarterSeparatorGroups = (
   return groups
 }
 
-/** The resolved separator layout, or `null` when separators are disabled or have no effect. */
-// Quarter-grouped separators; null when separators are disabled or have no effect.
-const resolveQuarterSeparatorLayout = (
+const resolveQuarterSeparatorLayout: (
   config: Readonly<HeatmapSeparatorParsedConfig>,
   columns: Array<HeatmapColumn>,
   currentDate: Readonly<Date>,
-): HeatmapSeparatorLayout | null => {
+) => HeatmapSeparatorLayout | null = (
+  config: Readonly<HeatmapSeparatorParsedConfig>,
+  columns: Array<HeatmapColumn>,
+  currentDate: Readonly<Date>,
+) => {
   const groups = buildHeatmapQuarterSeparatorGroups(columns, currentDate)
 
   if (groups.length === 0) {
@@ -299,11 +302,15 @@ const resolveQuarterSeparatorLayout = (
   return { atColumns, groups, spacing: config.spacing }
 }
 
-export const resolveHeatmapSeparatorLayout = (
+export const resolveHeatmapSeparatorLayout: (
   config: Readonly<HeatmapSeparatorParsedConfig> | null,
   columns: Array<HeatmapColumn>,
   currentDate: Readonly<Date>,
-): HeatmapSeparatorLayout | null => {
+) => HeatmapSeparatorLayout | null = (
+  config: Readonly<HeatmapSeparatorParsedConfig> | null,
+  columns: Array<HeatmapColumn>,
+  currentDate: Readonly<Date>,
+) => {
   if (!config) {
     return null
   }
@@ -312,7 +319,6 @@ export const resolveHeatmapSeparatorLayout = (
     return resolveQuarterSeparatorLayout(config, columns, currentDate)
   }
 
-  // Bind before the guard so the positive-count narrowing carries to the call below.
   const every = config.every ?? 0
 
   if (every <= 0) {
@@ -338,15 +344,17 @@ interface HeatmapSeparatorLineYSpan {
 }
 
 /** Vertical span for a separator line in plot coordinates. */
-export const getHeatmapSeparatorLineY = ({
+export const getHeatmapSeparatorLineY: (
+  argument0: Readonly<HeatmapSeparatorLineYParams>,
+) => HeatmapSeparatorLineYSpan = ({
   innerHeight,
   marginTop,
   startOffset,
   paddingY = 0,
-}: Readonly<HeatmapSeparatorLineYParams>): HeatmapSeparatorLineYSpan => {
+}: Readonly<HeatmapSeparatorLineYParams>) => {
   const y1 = (startOffset ?? marginTop) - marginTop + paddingY
 
-  return { y1, y2: Math.max(innerHeight - paddingY, y1) }
+  return { y1, y2: Math.max(innerHeight - paddingY, y1) } satisfies HeatmapSeparatorLineYSpan
 }
 
 /** Separator line style. */
@@ -355,15 +363,18 @@ export type HeatmapSeparatorStrokeStyle = 'solid' | 'dashed'
 const DEFAULT_DASHED_STROKE_DASHARRAY = '4,4'
 
 /** The stroke dasharray for `strokeStyle` (an explicit `strokeDasharray` overrides), or `undefined` for a solid line. */
-export const resolveHeatmapSeparatorStrokeDasharray = (
+export const resolveHeatmapSeparatorStrokeDasharray: (
+  strokeStyle?: HeatmapSeparatorStrokeStyle,
+  strokeDasharray?: string,
+) => string | undefined = (
   strokeStyle: HeatmapSeparatorStrokeStyle = 'solid',
   strokeDasharray?: string,
-): string | undefined => {
+) => {
   if (strokeStyle !== 'dashed') {
-    return undefined
+    return undefined satisfies string | undefined
   }
 
-  return strokeDasharray ?? DEFAULT_DASHED_STROKE_DASHARRAY
+  return (strokeDasharray ?? DEFAULT_DASHED_STROKE_DASHARRAY) satisfies string | undefined
 }
 
 /** Vertical stroke gradient for separator lines (`from` -> optional `via` -> `to`). */
@@ -385,25 +396,28 @@ interface HeatmapSeparatorGradientStop {
 const DEFAULT_GRADIENT_STOP_OPACITY = 1
 
 /** Builds SVG gradient stops for a vertical separator line. */
-export const buildHeatmapSeparatorGradientStops = (
+export const buildHeatmapSeparatorGradientStops: (
+  gradient: Readonly<HeatmapSeparatorGradient>,
+  strokeOpacity?: number,
+) => Array<HeatmapSeparatorGradientStop> = (
   gradient: Readonly<HeatmapSeparatorGradient>,
   strokeOpacity = 1,
-): Array<HeatmapSeparatorGradientStop> => {
-  const scaleOpacity = (
+) => {
+  const scaleOpacity: (value: number | undefined, fallback?: number) => number = (
     value: number | undefined,
     fallback: number = DEFAULT_GRADIENT_STOP_OPACITY,
-  ): number => (value ?? fallback) * strokeOpacity
+  ) => ((value ?? fallback) * strokeOpacity) satisfies number
 
   if (gradient.via !== undefined) {
     return [
       { color: gradient.from, offset: '0%', opacity: scaleOpacity(gradient.fromOpacity) },
       { color: gradient.via, offset: '50%', opacity: scaleOpacity(gradient.viaOpacity) },
       { color: gradient.to, offset: '100%', opacity: scaleOpacity(gradient.toOpacity) },
-    ]
+    ] satisfies Array<HeatmapSeparatorGradientStop>
   }
 
   return [
     { color: gradient.from, offset: '0%', opacity: scaleOpacity(gradient.fromOpacity) },
     { color: gradient.to, offset: '100%', opacity: scaleOpacity(gradient.toOpacity) },
-  ]
+  ] satisfies Array<HeatmapSeparatorGradientStop>
 }

@@ -49,6 +49,7 @@ import { Update, Url } from 'foldkit'
 import { UrlRequest } from 'foldkit/navigation'
 import {
   Apply,
+  ReleaseStartupInput,
   PrepareRoute,
   CopyInstall,
   FinishCopyFeedback,
@@ -392,6 +393,7 @@ const update = ApplicationComposition.makeUpdate.compose(
     ),
     SettledSettingsUrl: settledSettingsUrl,
     CompletedNavigate: ApplicationBlock.makeNoopStep(),
+    ReleasedStartupInput: ApplicationBlock.makeNoopStep(),
     CompletedApply: ApplicationBlock.makeNoopStep(),
     CompletedShapeTransition: finishShapeTransition,
     ClickedCopyInstall: clickedCopyInstall,
@@ -404,6 +406,9 @@ const update = ApplicationComposition.makeUpdate.compose(
         : Update.combineSteps([
             ApplicationBlock.makeFieldsStep(() => ({ columns: () => columns })),
             informPageViewport(columns),
+            ...(model.columns === null
+              ? [ApplicationBlock.makeCommandsStep(() => [ReleaseStartupInput()])]
+              : []),
             ...(columns === 3 ? [MobileNavigation.requestClose()] : []),
           ]),
     ),
@@ -454,6 +459,7 @@ const plans = Effect.gen(function* () {
       Navigate.layer,
       PrepareRoute.layer,
       Apply.layer,
+      ReleaseStartupInput.layer,
       CopyInstall.layer,
       FinishCopyFeedback.layer,
       FinishShapeTransition.layer,

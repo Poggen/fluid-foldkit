@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { childAttributes } from 'foldkit/html'
 import type { Html } from 'foldkit/html'
 import { ColorPickerBlock, Message, Tooltips } from './color-picker-block.js'
@@ -14,7 +14,7 @@ import type { TooltipButtonRenderer } from './tooltip-native/interaction.js'
 
 type Model = typeof ColorPickerBlock.Model.Type
 
-const swatchButton = (
+const swatchButton: (
   swatch: ColorPickerSwatch,
   selectedIndex: number,
   activeIndex: Model['swatches']['activeIndex'],
@@ -22,7 +22,15 @@ const swatchButton = (
   variant: ShapeVariant,
   button: TooltipButtonRenderer,
   h: ColorPickerViewBuilder,
-): Html => {
+) => Html = (
+  swatch: ColorPickerSwatch,
+  selectedIndex: number,
+  activeIndex: Model['swatches']['activeIndex'],
+  isPressed: boolean,
+  variant: ShapeVariant,
+  button: TooltipButtonRenderer,
+  h: ColorPickerViewBuilder,
+) => {
   const shape = shapeMap[variant]
   const lit = activeIndex === swatch.index
   const pressed = lit && isPressed
@@ -71,7 +79,7 @@ const swatchButton = (
   )
 }
 
-export const renderSwatchTriggers = (
+export const renderSwatchTriggers: (
   tooltips: Model['tooltips'],
   swatches: Model['color']['settings']['swatches'],
   pickerId: string,
@@ -80,7 +88,16 @@ export const renderSwatchTriggers = (
   pressed: boolean,
   shape: ShapeVariant,
   h: ColorPickerViewBuilder,
-): Html => {
+) => Html = (
+  tooltips: Model['tooltips'],
+  swatches: Model['color']['settings']['swatches'],
+  pickerId: string,
+  selectedIndex: number,
+  activeIndex: Model['swatches']['activeIndex'],
+  pressed: boolean,
+  shape: ShapeVariant,
+  h: ColorPickerViewBuilder,
+) => {
   const descriptors = colorPickerSwatches(pickerId, swatches)
   const byKey = new Map(descriptors.map((swatch) => [swatch.key, swatch]))
 

@@ -5,11 +5,11 @@ import { GroupVisual, visualOwner } from './group-visual.js'
 import type { GroupSide, TransferGeometry } from './group-visual.js'
 import type { PresentationModel } from './state.js'
 
-export const finishGroupHold = (
+export const finishGroupHold: (
   model: PresentationModel,
   groupKey: string,
   generation: number,
-): PresentationModel => {
+) => PresentationModel = (model: PresentationModel, groupKey: string, generation: number) => {
   const group = model.groups[groupKey]
   const visual = group?.visual
   if (group === undefined || visual?._tag !== 'Holding' || visual.generation !== generation)
@@ -30,7 +30,7 @@ export const finishGroupHold = (
   })
 }
 
-export const captureGroupTransfer = (
+export const captureGroupTransfer: (
   model: PresentationModel,
   key: string,
   measured: {
@@ -40,7 +40,17 @@ export const captureGroupTransfer = (
     readonly toSide: GroupSide
     readonly geometry: TransferGeometry
   },
-): PresentationModel => {
+) => PresentationModel = (
+  model: PresentationModel,
+  key: string,
+  measured: {
+    readonly generation: number
+    readonly connected: boolean
+    readonly fromSide: GroupSide
+    readonly toSide: GroupSide
+    readonly geometry: TransferGeometry
+  },
+) => {
   const row = model.rows[key]
   const group = row === undefined ? undefined : model.groups[row.groupKey]
   const transfer = group?.visual
@@ -86,11 +96,11 @@ export const captureGroupTransfer = (
   })
 }
 
-export const settleGroupTransfer = (
+export const settleGroupTransfer: (
   model: PresentationModel,
   key: string,
   generation: number,
-): PresentationModel => {
+) => PresentationModel = (model: PresentationModel, key: string, generation: number) => {
   const row = model.rows[key]
   const group = row === undefined ? undefined : model.groups[row.groupKey]
   if (
@@ -110,12 +120,17 @@ export const settleGroupTransfer = (
   })
 }
 
-export const placeGroup = (
+export const placeGroup: (
   model: PresentationModel,
   key: string,
   generation: number,
   side: GroupSide,
-): PresentationModel => {
+) => PresentationModel = (
+  model: PresentationModel,
+  key: string,
+  generation: number,
+  side: GroupSide,
+) => {
   const row = model.rows[key]
   const group = row === undefined ? undefined : model.groups[row.groupKey]
   if (
@@ -136,7 +151,10 @@ export const placeGroup = (
   })
 }
 
-export const removeGroupVisual = (visual: GroupVisual, key: string): GroupVisual => {
+export const removeGroupVisual: (visual: GroupVisual, key: string) => GroupVisual = (
+  visual: GroupVisual,
+  key: string,
+) => {
   if (visual._tag === 'Transferring') {
     if (visual.to === key) return GroupVisual.Empty({ generation: visual.generation + 1 })
     if (visual.from === key && Option.isNone(visual.geometry))
@@ -199,11 +217,11 @@ export const configureGroup = (
   return { settings, timeoutChanged, cooling, generation, nextGroup }
 }
 
-export const completeGroupExit = (
+export const completeGroupExit: (
   model: PresentationModel,
   key: string,
   generation: number,
-): PresentationModel => {
+) => PresentationModel = (model: PresentationModel, key: string, generation: number) => {
   const row = model.rows[key]
   if (
     row === undefined ||

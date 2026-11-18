@@ -70,12 +70,11 @@ export const brushEffectsLayer = (registration: () => void) =>
       Layer.effect(
         BrushRegistration,
         Effect.sync(() => {
-          // Restored Models can render a mounted drawing before any Prepare Mount runs.
           registration()
           return registration
         }),
       ),
     ),
-    // Each recipe closes over a different registration capability.
+
     Layer.fresh,
   )

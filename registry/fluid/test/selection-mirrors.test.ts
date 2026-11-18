@@ -1,8 +1,25 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { it } from '@effect/vitest'
 import { Effect } from 'effect'
-import { describe, expect, vi } from 'vitest'
+import { describe, expect } from 'vitest'
 import { MIRROR_TARGETS_ATTRIBUTE, observeSelectionMirrors } from '../src/selection-mirrors.js'
+
+const afterChange = (ready: () => boolean, change: () => void) =>
+  Effect.callback<void>((resume) => {
+    const check = () => {
+      if (ready()) resume(Effect.void)
+    }
+    const observer = new MutationObserver(check)
+    observer.observe(document.documentElement, {
+      attributes: true,
+      childList: true,
+      subtree: true,
+    })
+    change()
+    check()
+    return Effect.sync(() => observer.disconnect())
+  })
 
 describe('selection mirror presentation', () => {
   it.live(
@@ -20,19 +37,30 @@ describe('selection mirror presentation', () => {
         const release = observeSelectionMirrors(source, [host.id])
         expect(host.querySelector('[data-selection-mirror]')?.hasAttribute('inert')).toBe(true)
         expect(host.querySelector('[id]')).toBeNull()
-        shape.style.top = '72px'
-        yield* Effect.sleep(10)
+        yield* afterChange(
+          () =>
+            host.querySelector<HTMLElement>('[data-selection-mirror] > div')?.style.top === '72px',
+          () => {
+            shape.style.top = '72px'
+          },
+        )
         expect(host.querySelector<HTMLElement>('[data-selection-mirror] > div')?.style.top).toBe(
           '72px',
         )
-        source.setAttribute(`data-${MIRROR_TARGETS_ATTRIBUTE}`, '[]')
-        yield* Effect.sleep(10)
+        yield* afterChange(
+          () => host.children.length === 0,
+          () => source.setAttribute(`data-${MIRROR_TARGETS_ATTRIBUTE}`, '[]'),
+        )
         expect(host.children.length).toBe(0)
-        source.setAttribute(`data-${MIRROR_TARGETS_ATTRIBUTE}`, JSON.stringify([host.id]))
-        yield* Effect.sleep(10)
+        yield* afterChange(
+          () => host.querySelector('[data-selection-mirror]') !== null,
+          () => source.setAttribute(`data-${MIRROR_TARGETS_ATTRIBUTE}`, JSON.stringify([host.id])),
+        )
         expect(host.querySelector('[data-selection-mirror]')).not.toBeNull()
-        host.remove()
-        yield* Effect.sleep(10)
+        yield* afterChange(
+          () => host.children.length === 0,
+          () => host.remove(),
+        )
         expect(host.children.length).toBe(0)
         release()
         source.remove()
@@ -44,21 +72,14 @@ describe('selection mirror presentation', () => {
       const elements: Array<HTMLElement> = []
       let callbacks = 0
       let capped = false
-      const NativeObserver = MutationObserver
-      vi.stubGlobal(
-        'MutationObserver',
-        class extends NativeObserver {
-          constructor(callback: MutationCallback) {
-            super((records, observer) => {
-              callbacks += 1
-              if (callbacks >= 60) {
-                capped = true
-                for (const release of releases) release()
-              } else callback(records, observer)
-            })
-          }
-        },
-      )
+      const watchdog = new MutationObserver(() => {
+        callbacks += 1
+        if (callbacks >= 60) {
+          capped = true
+          for (const release of releases) release()
+        }
+      })
+      watchdog.observe(document.documentElement, { childList: true, subtree: true })
       try {
         const owners = [0, 1].map((index) => {
           const source = document.createElement('div')
@@ -73,14 +94,19 @@ describe('selection mirror presentation', () => {
         })
         const [first, second] = owners
         if (first === undefined || second === undefined) throw new Error('Both owners are required')
-        yield* Effect.sleep(10)
         expect(capped).toBe(false)
         const secondCopy = second.host.querySelector('[data-selection-mirror] > div')
         const unrelated = document.createElement('div')
-        document.body.append(unrelated)
         elements.push(unrelated)
-        first.shape.style.top = '24px'
-        yield* Effect.sleep(10)
+        yield* afterChange(
+          () =>
+            first.host.querySelector<HTMLElement>('[data-selection-mirror] > div')?.style.top ===
+            '24px',
+          () => {
+            document.body.append(unrelated)
+            first.shape.style.top = '24px'
+          },
+        )
         expect(capped).toBe(false)
         expect(
           first.host.querySelector<HTMLElement>('[data-selection-mirror] > div')?.style.top,
@@ -88,9 +114,13 @@ describe('selection mirror presentation', () => {
         expect(second.host.querySelector('[data-selection-mirror] > div')).toBe(secondCopy)
         const replacement = document.createElement('div')
         replacement.id = first.host.id
-        first.host.replaceWith(replacement)
         elements.push(replacement)
-        yield* Effect.sleep(10)
+        yield* afterChange(
+          () =>
+            replacement.querySelector<HTMLElement>('[data-selection-mirror] > div')?.style.top ===
+            '24px',
+          () => first.host.replaceWith(replacement),
+        )
         expect(first.host.children).toHaveLength(0)
         expect(
           replacement.querySelector<HTMLElement>('[data-selection-mirror] > div')?.style.top,
@@ -98,9 +128,9 @@ describe('selection mirror presentation', () => {
         expect(second.host.querySelector('[data-selection-mirror] > div')).toBe(secondCopy)
         expect(capped).toBe(false)
       } finally {
+        watchdog.disconnect()
         for (const release of releases) release()
         for (const element of elements) element.remove()
-        vi.unstubAllGlobals()
       }
     }),
   )

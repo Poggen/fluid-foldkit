@@ -188,6 +188,7 @@ for (const field of [
         })
         .toBe(field.expected)
       await expect(input).toHaveValue(field.value)
+      await expect(input).toBeFocused()
       const preview = page
         .getByRole('region', { name: 'Playground', exact: true })
         .locator('.reference-preview')

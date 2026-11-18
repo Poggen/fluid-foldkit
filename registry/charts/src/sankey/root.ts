@@ -18,13 +18,16 @@ import { resourceHtml, scopePatterns } from './resources'
 import { sankeyContext } from './context'
 import type { SankeyActions, SankeyContextValue } from './context'
 
-function nativeContent({
+const nativeContent: (argument0: {
+  title: string
+  rows: ReadonlyArray<{ color: string; label: string; value: string }>
+}) => ReadonlyArray<Html> = function nativeContent({
   title,
   rows,
 }: {
   title: string
   rows: ReadonlyArray<{ color: string; label: string; value: string }>
-}): ReadonlyArray<Html> {
+}) {
   const titleHtml = h.div(
     [
       h.Class(
@@ -74,83 +77,70 @@ function nativeContent({
   return [titleHtml, h.div([h.Class('ts-chart-tooltip__rows'), h.AriaHidden(true)], rowHtml)]
 }
 
-function tooltipGraph(props: SankeyChartProps, state: State) {
-  const width = state.width || 630
-  const height = state.height || width / ratio(props.aspectRatio ?? '2 / 1')
+export const sankeyTooltip: (props: SankeyChartProps, state: State) => NativeContent =
+  function sankeyTooltip(props: SankeyChartProps, state: State) {
+    const { data, tooltip } = sankeyPlan(props)
+    const index = state.tooltipIndex
+    const format = tooltip?.formatValue ?? formatSankeyInt
 
-  return sankeyContext(
-    props,
-    { ...state, width, height },
-    {
-      focusNode: () => {
-        /* Static tooltip layout does not request focus. */
-      },
-      focusLink: () => {
-        /* Static tooltip layout does not request focus. */
-      },
-    },
-    null,
-  ).graph
-}
-
-export function sankeyTooltip(props: SankeyChartProps, state: State): NativeContent {
-  const { data, tooltip } = sankeyPlan(props)
-  const index = state.tooltipIndex
-  const format = tooltip?.formatValue ?? formatSankeyInt
-
-  if (index === null) {
-    return h.empty
-  }
-
-  if (state.tooltipKind === 'link') {
-    const link = data.links.at(index)
-
-    if (link === undefined) {
+    if (index === null) {
       return h.empty
     }
 
-    if (tooltip?.linkContent !== undefined) {
+    if (state.tooltipKind === 'link') {
+      const link = data.links.at(index)
+
+      if (link === undefined) {
+        return h.empty
+      }
+
+      if (tooltip?.linkContent !== undefined) {
+        const graph = tooltipGraph(props, state)
+        const laidOut = graph.links.at(index)
+
+        if (laidOut !== undefined) {
+          return tooltip.linkContent({ link: laidOut, index })
+        }
+      }
+
+      return nativeContent({
+        title: `${data.nodes.at(link.source)?.name ?? `Node ${link.source}`} → ${data.nodes.at(link.target)?.name ?? `Node ${link.target}`}`,
+        rows: [
+          { color: 'var(--chart-foreground-muted)', label: 'Flow', value: format(link.value) },
+        ],
+      })
+    }
+
+    const node = data.nodes.at(index)
+
+    if (node === undefined) {
+      return h.empty
+    }
+
+    const value = Math.max(
+      data.links.reduce((sum, link) => sum + (link.source === index ? link.value : 0), 0),
+      data.links.reduce((sum, link) => sum + (link.target === index ? link.value : 0), 0),
+    )
+
+    if (tooltip?.nodeContent !== undefined) {
       const graph = tooltipGraph(props, state)
-      const laidOut = graph.links.at(index)
+      const laidOut = graph.nodes.at(index)
 
       if (laidOut !== undefined) {
-        return tooltip.linkContent({ link: laidOut, index })
+        return tooltip.nodeContent({ node: laidOut, index })
       }
     }
 
     return nativeContent({
-      title: `${data.nodes.at(link.source)?.name ?? `Node ${link.source}`} → ${data.nodes.at(link.target)?.name ?? `Node ${link.target}`}`,
-      rows: [{ color: 'var(--chart-foreground-muted)', label: 'Flow', value: format(link.value) }],
+      title: node.name,
+      rows: [{ color: 'var(--chart-line-primary)', label: 'Sessions', value: format(value) }],
     })
   }
 
-  const node = data.nodes.at(index)
-
-  if (node === undefined) {
-    return h.empty
-  }
-
-  const value = Math.max(
-    data.links.reduce((sum, link) => sum + (link.source === index ? link.value : 0), 0),
-    data.links.reduce((sum, link) => sum + (link.target === index ? link.value : 0), 0),
-  )
-
-  if (tooltip?.nodeContent !== undefined) {
-    const graph = tooltipGraph(props, state)
-    const laidOut = graph.nodes.at(index)
-
-    if (laidOut !== undefined) {
-      return tooltip.nodeContent({ node: laidOut, index })
-    }
-  }
-
-  return nativeContent({
-    title: node.name,
-    rows: [{ color: 'var(--chart-line-primary)', label: 'Sessions', value: format(value) }],
-  })
-}
-
-export function sankeyServer(props: SankeyChartProps, state: State): Html {
+export const sankeyServer: (props: SankeyChartProps, state: State) => Html = function sankeyServer(
+  props: SankeyChartProps,
+  state: State,
+) {
   const width = state.width || 630
   const height = state.height || width / ratio(props.aspectRatio ?? '2 / 1')
   const runtime = createChartRuntime<SankeyDatum, number, number>()
@@ -165,9 +155,7 @@ export function sankeyServer(props: SankeyChartProps, state: State): Html {
         sankeyDefinition(
           props,
           state.id,
-          () => {
-            /* Static SVG has no interaction owner. */
-          },
+          () => {},
           () => 0,
           plan,
           feed,
@@ -216,6 +204,90 @@ export function sankeyServer(props: SankeyChartProps, state: State): Html {
   )
 }
 
+export const SankeyChart: (argument0: { readonly name: string }) => SankeyChartRecipe =
+  function SankeyChart({ name }: { readonly name: string }) {
+    const { namespace, contract, plans } = sankeyRecipe(name)
+
+    return {
+      namespace,
+      contract,
+      plans,
+      context: sankeyContext,
+      inputs: <Action>(
+        id: string,
+        props: SankeyChartProps,
+        actions: SankeyActions<Action>,
+        render?: (context: SankeyContextValue<Action>) => Html,
+      ) => {
+        let root: HTMLDivElement | null = null
+
+        return {
+          mount: (element, state, observe, clock) => {
+            const host = new SankeyHost(element, state, props, observe, clock)
+            const { root: hostRoot } = host
+            root = hostRoot
+
+            return host
+          },
+          configure: (host) => {
+            if (!(host instanceof SankeyHost)) {
+              throw new TypeError('Sankey native host required')
+            }
+
+            host.configure(props)
+          },
+          server: (state) => sankeyServer(props, state),
+          content: (state) => [
+            h.div(
+              [h.Id(`${id}-tooltip`), h.Class('ts-chart-tooltip')],
+              [
+                h.div(
+                  [
+                    h.Class(
+                      'ts-chart-tooltip__body min-w-[140px] overflow-hidden rounded-lg text-chart-tooltip-foreground shadow-lg bg-chart-tooltip-background backdrop-blur-md',
+                    ),
+                    h.DataAttribute(
+                      'bkm-tooltip-body-key',
+                      state.tooltipIndex === null
+                        ? 'none'
+                        : `${state.tooltipKind}:${state.tooltipIndex}`,
+                    ),
+                    h.DataAttribute(
+                      'bkm-sankey-custom-content',
+                      String(
+                        state.tooltipKind === 'node'
+                          ? sankeyPlan(props).tooltip?.nodeContent !== undefined
+                          : state.tooltipKind === 'link' &&
+                              sankeyPlan(props).tooltip?.linkContent !== undefined,
+                      ),
+                    ),
+                  ],
+                  contentChildren(sankeyTooltip(props, state)),
+                ),
+              ],
+            ),
+            render?.(sankeyContext(props, state, actions, root)) ?? h.empty,
+          ],
+        } satisfies Inputs
+      },
+    }
+  }
+
+function tooltipGraph(props: SankeyChartProps, state: State) {
+  const width = state.width || 630
+  const height = state.height || width / ratio(props.aspectRatio ?? '2 / 1')
+
+  return sankeyContext(
+    props,
+    { ...state, width, height },
+    {
+      focusNode: () => {},
+      focusLink: () => {},
+    },
+    null,
+  ).graph
+}
+
 export interface SankeyChartRecipe extends ReturnType<typeof sankeyRecipe> {
   readonly context: typeof sankeyContext
   readonly inputs: <Action>(
@@ -224,72 +296,4 @@ export interface SankeyChartRecipe extends ReturnType<typeof sankeyRecipe> {
     actions: SankeyActions<Action>,
     render?: (context: SankeyContextValue<Action>) => Html,
   ) => Inputs
-}
-
-export function SankeyChart({ name }: { readonly name: string }): SankeyChartRecipe {
-  const { namespace, contract, plans } = sankeyRecipe(name)
-
-  return {
-    namespace,
-    contract,
-    plans,
-    context: sankeyContext,
-    inputs: <Action>(
-      id: string,
-      props: SankeyChartProps,
-      actions: SankeyActions<Action>,
-      render?: (context: SankeyContextValue<Action>) => Html,
-    ): Inputs => {
-      let root: HTMLDivElement | null = null
-
-      return {
-        mount: (element, state, observe, clock) => {
-          const host = new SankeyHost(element, state, props, observe, clock)
-          const { root: hostRoot } = host
-          root = hostRoot
-
-          return host
-        },
-        configure: (host) => {
-          if (!(host instanceof SankeyHost)) {
-            throw new TypeError('Sankey native host required')
-          }
-
-          host.configure(props)
-        },
-        server: (state) => sankeyServer(props, state),
-        content: (state) => [
-          h.div(
-            [h.Id(`${id}-tooltip`), h.Class('ts-chart-tooltip')],
-            [
-              h.div(
-                [
-                  h.Class(
-                    'ts-chart-tooltip__body min-w-[140px] overflow-hidden rounded-lg text-chart-tooltip-foreground shadow-lg bg-chart-tooltip-background backdrop-blur-md',
-                  ),
-                  h.DataAttribute(
-                    'bkm-tooltip-body-key',
-                    state.tooltipIndex === null
-                      ? 'none'
-                      : `${state.tooltipKind}:${state.tooltipIndex}`,
-                  ),
-                  h.DataAttribute(
-                    'bkm-sankey-custom-content',
-                    String(
-                      state.tooltipKind === 'node'
-                        ? sankeyPlan(props).tooltip?.nodeContent !== undefined
-                        : state.tooltipKind === 'link' &&
-                            sankeyPlan(props).tooltip?.linkContent !== undefined,
-                    ),
-                  ),
-                ],
-                contentChildren(sankeyTooltip(props, state)),
-              ),
-            ],
-          ),
-          render?.(sankeyContext(props, state, actions, root)) ?? h.empty,
-        ],
-      }
-    },
-  }
 }

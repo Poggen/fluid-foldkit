@@ -4,4 +4,4 @@ export interface SankeyPaintFeed {
   readonly linkKeys: Map<string, string>
   hit?: (markId: string, datumIndex: number, x: number, y: number) => boolean | null
 }
-export const createPaintFeed = (): SankeyPaintFeed => ({ gradients: [], linkKeys: new Map() })
+export const createPaintFeed: () => SankeyPaintFeed = () => ({ gradients: [], linkKeys: new Map() })

@@ -39,7 +39,7 @@ export class RingHost implements PolarHost<RingData> {
     this.#focused = focused
     this.#host = mountPolar(element, data, focused, observe, clock, this.#frame(), observeSize)
   }
-  #frame(): PolarFrame<RingData, RingArcRow> {
+  #frame() {
     const props = this.#props
 
     let frame: PolarFrame<RingData, RingArcRow> = {
@@ -118,7 +118,7 @@ export class RingHost implements PolarHost<RingData> {
       frame = { ...frame, onHoverChange: props.onHoverChange }
     }
 
-    return frame
+    return frame satisfies PolarFrame<RingData, RingArcRow>
   }
 
   configure(props: RingChartProps) {

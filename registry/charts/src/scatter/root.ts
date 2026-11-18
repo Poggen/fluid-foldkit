@@ -12,32 +12,33 @@ import { resolveScatterSeries } from './series'
 import { buildScatterDefinition } from './definition'
 import type { ScatterChartProps } from './options'
 
-function presentation<Row>(props: ScatterChartProps<Row>): TimeSeriesProps<Row> {
-  const { onPhaseChange } = props
-  const rest = Struct.omit(props, ['enterTransition', 'onPhaseChange'])
+const presentation: <Row>(props: ScatterChartProps<Row>) => TimeSeriesProps<Row> =
+  function presentation<Row>(props: ScatterChartProps<Row>) {
+    const { onPhaseChange } = props
+    const rest = Struct.omit(props, ['enterTransition', 'onPhaseChange'])
 
-  return {
-    ...rest,
-    animationDuration: props.animationDuration ?? 1100,
-    yDomainTween: false,
-    children: [
-      ...props.children,
-      ...resolveScatterSeries(props.children).map((series) =>
-        Line({
-          dataKey: series.dataKey,
-          stroke: series.tooltipColor,
-          yAxisId: series.yAxisId,
-          showHighlight: false,
-        }),
-      ),
-    ],
-    onPhaseChange: (phase) => {
-      if (phase === 'loading' || phase === 'revealing' || phase === 'ready') {
-        onPhaseChange?.(phase)
-      }
-    },
+    return {
+      ...rest,
+      animationDuration: props.animationDuration ?? 1100,
+      yDomainTween: false,
+      children: [
+        ...props.children,
+        ...resolveScatterSeries(props.children).map((series) =>
+          Line({
+            dataKey: series.dataKey,
+            stroke: series.tooltipColor,
+            yAxisId: series.yAxisId,
+            showHighlight: false,
+          }),
+        ),
+      ],
+      onPhaseChange: (phase) => {
+        if (phase === 'loading' || phase === 'revealing' || phase === 'ready') {
+          onPhaseChange?.(phase)
+        }
+      },
+    } satisfies TimeSeriesProps<Row>
   }
-}
 
 export function ScatterChart<
   RowSchema extends ChartRowSchema & { readonly Type: Readonly<Record<string, unknown>> },

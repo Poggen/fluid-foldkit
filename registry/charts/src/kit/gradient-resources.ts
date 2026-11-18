@@ -2,24 +2,20 @@ import type { ChartGradient } from '@tanstack/charts'
 import { inertHtml } from 'foldkit/html'
 import type { Html } from 'foldkit/html'
 
-const clampUnit = (value: number): number =>
-  Number.isNaN(value) ? 0 : Math.max(0, Math.min(1, value))
-
-const number = (value: number): string => String(Math.round(value * 100) / 100)
-
-const percent = (value: number): string => `${number(clampUnit(value) * 100)}%`
-
-export function scopedGradientId(prefix: string, id: string): string {
+export const scopedGradientId: (prefix: string, id: string) => string = function scopedGradientId(
+  prefix: string,
+  id: string,
+) {
   const safePrefix = prefix.replaceAll(/[^a-zA-Z0-9_-]/gu, '')
 
   return safePrefix === '' ? id : `${safePrefix}-${id}`
 }
 
 /** Native engine resource semantics, rendered through the owning Foldkit VDOM. */
-export function gradientResourceView(
+export const gradientResourceView: (
   gradients: ReadonlyArray<ChartGradient>,
   prefix: string,
-): Html {
+) => Html = function gradientResourceView(gradients: ReadonlyArray<ChartGradient>, prefix: string) {
   const h = inertHtml
 
   if (gradients.length === 0) {
@@ -78,3 +74,10 @@ export function gradientResourceView(
     }),
   )
 }
+
+const clampUnit: (value: number) => number = (value: number) =>
+  Number.isNaN(value) ? 0 : Math.max(0, Math.min(1, value))
+
+const number: (value: number) => string = (value: number) => String(Math.round(value * 100) / 100)
+
+const percent: (value: number) => string = (value: number) => `${number(clampUnit(value) * 100)}%`

@@ -1,6 +1,6 @@
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
 import { fontWeights } from './lib/font-weight.js'
-// Source ColorPicker's Base UI popup behavior, composed with installed native anchorSetup.
+
 import { modifyFields } from 'foldkit/struct'
 import { Effect, Layer, Option, Schema, Match, Number } from 'effect'
 import { ColorPickerEnvironment } from './color-picker-environment.js'

@@ -124,9 +124,10 @@ export const FluidSidebarShowcaseBlock = Block.make('FluidSidebarShowcase', {
 export const Sidebar = FluidSidebarShowcaseBlock.makeRequiredFieldBinding(SidebarBlock, {
   field: 'sidebar',
   init: {
-    contextToArgs: (): [SidebarConfig] => [
-      { id: 'showcase-sidebar', peek: 'hover', variant: 'inset', persist: !sourcePreset },
-    ],
+    contextToArgs: () =>
+      [
+        { id: 'showcase-sidebar', peek: 'hover', variant: 'inset', persist: !sourcePreset },
+      ] satisfies [SidebarConfig],
   },
 }).withOutMessagePolicy({
   fold: FluidSidebarShowcaseBlock.makeOutMessageFold(SidebarBlock, {

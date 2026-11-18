@@ -18,24 +18,24 @@ export class HoverMotion {
     clock: () => number,
     source: boolean,
     property: 'transform' | 'left' = 'transform',
-  ): HoverGlide {
+  ) {
     if (!source) {
-      return new Glide(element, spring, count, css, this.#ticker, clock)
+      return new Glide(element, spring, count, css, this.#ticker, clock) satisfies HoverGlide
     }
 
     const follow = new SourceFollow(element, spring, count, css, property)
     this.#source.add(follow)
 
-    return follow
+    return follow satisfies HoverGlide
   }
 
-  stopSource(): void {
+  stopSource() {
     for (const follow of this.#source) {
       follow.stop()
     }
   }
 
-  clear(): void {
+  clear() {
     this.#ticker.clear()
 
     for (const follow of this.#source) {

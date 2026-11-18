@@ -1,4 +1,5 @@
 import { acquireHover, eventually } from './companion-hover-program.js'
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { geometryFromArray } from '../src/lib/indexed-geometry.js'
 import { expect } from 'vitest'
@@ -241,7 +242,6 @@ it.effect(
 )
 
 const acquireMouseCarousel = Effect.gen(function* mouseCarouselProgram() {
-  // happy-dom eagerly rejects canceled WAAPI finished promises; exercise Motion's real JS fallback.
   yield* Effect.acquireRelease(
     Effect.sync(() => {
       const descriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'animate')

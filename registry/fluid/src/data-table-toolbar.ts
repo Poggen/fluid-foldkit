@@ -1,8 +1,8 @@
 import { DataTableSearchField } from './data-table-search-view.js'
 import { DataTableSavedViews } from './data-table-saved-views.js'
 import type { DataTableViewBuilder } from './data-table-definition.js'
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import type { Html } from 'foldkit/html'
 import type { MotionScope } from './motion.js'
 import { DataTableColumnsMenu } from './data-table-columns-view.js'
@@ -13,12 +13,17 @@ import { Button } from './button.js'
 import { resolvePresentation } from './presentation.js'
 import { dataTablePageCount, dataTableRoots, dataTableSelectedRows } from './data-table-state.js'
 
-export function DataTableToolbar(
+export const DataTableToolbar: (
   model: DataTableModel,
   inputs: DataTableViewInputs,
   h: DataTableViewBuilder,
   motion: MotionScope,
-): Html {
+) => Html = function DataTableToolbar(
+  model: DataTableModel,
+  inputs: DataTableViewInputs,
+  h: DataTableViewBuilder,
+  motion: MotionScope,
+) {
   const { icons } = resolvePresentation(inputs)
   return h.div(
     [h.Class('flex flex-wrap items-center justify-between gap-2')],
@@ -70,11 +75,15 @@ export function DataTableToolbar(
   )
 }
 
-export function DataTablePagination(
+export const DataTablePagination: (
   model: DataTableModel,
   inputs: DataTableViewInputs,
   h: DataTableViewBuilder,
-): Html {
+) => Html = function DataTablePagination(
+  model: DataTableModel,
+  inputs: DataTableViewInputs,
+  h: DataTableViewBuilder,
+) {
   const { icons, size } = resolvePresentation(inputs)
   const total = dataTableRoots(model).length
   const pages = dataTablePageCount(model)

@@ -1,7 +1,7 @@
 import { Predicate } from 'effect'
 import { callbackDate } from './date-boundary.js'
-// Adapted from react-day-picker 10.0.2, MIT © 2014-2026 Giampaolo Bellavite and contributors.
-// Full license: NOTICE
+/* @license Adapted from react-day-picker 10.0.2, MIT © 2014-2026 Giampaolo Bellavite and contributors. */
+/* @license Full license: NOTICE */
 import { defaultDateLib } from './date-library.js'
 import type { DateLib } from './date-library.js'
 import type {
@@ -14,36 +14,17 @@ import type {
   ClosedDateRange,
 } from './matcher-types.js'
 
-export function isDateInterval(matcher: Matcher): matcher is DateInterval {
-  return Predicate.isObjectOrArray(matcher) && 'before' in matcher && 'after' in matcher
-}
-
-export function isDateRange(value: Matcher): value is DateRange {
-  return Predicate.isObjectOrArray(value) && 'from' in value
-}
-
-export function isDateAfterType(value: Matcher): value is DateAfter {
-  return Predicate.isObjectOrArray(value) && 'after' in value
-}
-
-export function isDateBeforeType(value: Matcher): value is DateBefore {
-  return Predicate.isObjectOrArray(value) && 'before' in value
-}
-
-export function isDayOfWeekType(value: Matcher): value is DayOfWeek {
-  return Predicate.isObjectOrArray(value) && 'dayOfWeek' in value
-}
-
-export function isDatesArray(value: Matcher, dateLib: DateLib): value is Array<Date> {
-  return Array.isArray(value) && value.every(dateLib.isDate)
-}
-
-export function rangeIncludesDate(
+export const rangeIncludesDate: (
+  range: DateRange,
+  date: Date,
+  excludeEnds?: boolean,
+  dateLib?: DateLib,
+) => boolean = function (
   range: DateRange,
   date: Date,
   excludeEnds = false,
   dateLib = defaultDateLib,
-): boolean {
+) {
   let { from, to } = range
 
   const { differenceInCalendarDays, isSameDay } = dateLib
@@ -59,62 +40,68 @@ export function rangeIncludesDate(
       differenceInCalendarDays(date, from) >= (excludeEnds ? 1 : 0) &&
       differenceInCalendarDays(to, date) >= (excludeEnds ? 1 : 0)
 
-    return isInRange
+    return isInRange satisfies boolean
   }
 
   if (!excludeEnds && to !== undefined) {
-    return isSameDay(to, date)
+    return isSameDay(to, date) satisfies boolean
   }
 
   if (!excludeEnds && from !== undefined) {
-    return isSameDay(from, date)
+    return isSameDay(from, date) satisfies boolean
   }
 
-  return false
+  return false satisfies boolean
 }
 
-export function rangeOverlaps(
+export const rangeOverlaps: (
+  rangeLeft: ClosedDateRange,
+  rangeRight: ClosedDateRange,
+  dateLib?: DateLib,
+) => boolean = function (
   rangeLeft: ClosedDateRange,
   rangeRight: ClosedDateRange,
   dateLib = defaultDateLib,
-): boolean {
-  return (
-    rangeIncludesDate(rangeLeft, rangeRight.from, false, dateLib) ||
+) {
+  return (rangeIncludesDate(rangeLeft, rangeRight.from, false, dateLib) ||
     rangeIncludesDate(rangeLeft, rangeRight.to, false, dateLib) ||
     rangeIncludesDate(rangeRight, rangeLeft.from, false, dateLib) ||
-    rangeIncludesDate(rangeRight, rangeLeft.to, false, dateLib)
-  )
+    rangeIncludesDate(rangeRight, rangeLeft.to, false, dateLib)) satisfies boolean
 }
 
-export function rangeContainsDayOfWeek(
+export const rangeContainsDayOfWeek: (
+  range: ClosedDateRange,
+  dayOfWeek: number | Array<number>,
+  dateLib?: DateLib,
+) => boolean = function (
   range: ClosedDateRange,
   dayOfWeek: number | Array<number>,
   dateLib = defaultDateLib,
-): boolean {
+) {
   const dayOfWeekArr = Array.isArray(dayOfWeek) ? dayOfWeek : [dayOfWeek]
 
   let date = range.from
 
   const totalDays = dateLib.differenceInCalendarDays(range.to, range.from)
-  // iterate at maximum one week or the total days if the range is shorter than one week
+
   const totalDaysLimit = Math.min(totalDays, 6)
 
   for (let i = 0; i <= totalDaysLimit; i += 1) {
     if (dayOfWeekArr.includes(date.getDay())) {
-      return true
+      return true satisfies boolean
     }
 
     date = dateLib.addDays(date, 1)
   }
 
-  return false
+  return false satisfies boolean
 }
 
-export function dateMatchModifiers(
+export const dateMatchModifiers: (
   date: Date,
   matchers: Matcher | Array<Matcher>,
-  dateLib = defaultDateLib,
-): boolean {
+  dateLib?: DateLib,
+) => boolean = function (date: Date, matchers: Matcher | Array<Matcher>, dateLib = defaultDateLib) {
   const matchersArr = Array.isArray(matchers) ? matchers : [matchers]
 
   const { isSameDay, differenceInCalendarDays, isAfter } = dateLib
@@ -169,16 +156,20 @@ export function dateMatchModifiers(
     }
 
     return false
-  })
+  }) satisfies boolean
 }
 
-export function rangeContainsModifiers(
+export const rangeContainsModifiers: (
+  range: ClosedDateRange,
+  modifiers: Matcher | Array<Matcher>,
+  dateLib?: DateLib,
+) => boolean = function (
   range: ClosedDateRange,
   modifiers: Matcher | Array<Matcher>,
   dateLib = defaultDateLib,
-): boolean {
+) {
   const matchers = Array.isArray(modifiers) ? modifiers : [modifiers]
-  // Defer function matchers evaluation as they are the least performant.
+
   const nonFunctionMatchers = matchers.filter((matcher) => !Predicate.isFunction(matcher))
 
   const nonFunctionMatchersResult = nonFunctionMatchers.some((matcher) => {
@@ -237,7 +228,7 @@ export function rangeContainsModifiers(
   })
 
   if (nonFunctionMatchersResult) {
-    return true
+    return true satisfies boolean
   }
 
   const functionMatchers = matchers.filter((matcher): matcher is (date: Date) => boolean =>
@@ -253,12 +244,36 @@ export function rangeContainsModifiers(
       const currentDate = date
 
       if (functionMatchers.some((matcher) => matcher(callbackDate(currentDate)))) {
-        return true
+        return true satisfies boolean
       }
 
       date = dateLib.addDays(date, 1)
     }
   }
 
-  return false
+  return false satisfies boolean
+}
+
+export function isDateInterval(matcher: Matcher): matcher is DateInterval {
+  return Predicate.isObjectOrArray(matcher) && 'before' in matcher && 'after' in matcher
+}
+
+export function isDateRange(value: Matcher): value is DateRange {
+  return Predicate.isObjectOrArray(value) && 'from' in value
+}
+
+export function isDateAfterType(value: Matcher): value is DateAfter {
+  return Predicate.isObjectOrArray(value) && 'after' in value
+}
+
+export function isDateBeforeType(value: Matcher): value is DateBefore {
+  return Predicate.isObjectOrArray(value) && 'before' in value
+}
+
+export function isDayOfWeekType(value: Matcher): value is DayOfWeek {
+  return Predicate.isObjectOrArray(value) && 'dayOfWeek' in value
+}
+
+export function isDatesArray(value: Matcher, dateLib: DateLib): value is Array<Date> {
+  return Array.isArray(value) && value.every(dateLib.isDate)
 }

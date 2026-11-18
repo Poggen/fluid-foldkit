@@ -3,14 +3,21 @@ import type { CartesianSnapshot } from './definition'
 import type { Interaction } from './state'
 import type { NativeObservation } from './native-resource'
 
-export function pointerObservations<Row, SceneDatum>(
+export const pointerObservations: <Row, SceneDatum>(
   element: HTMLElement,
   host: ChartRendererHost<SceneDatum, Date, number>,
   snapshot: () => CartesianSnapshot<Row> | undefined,
   state: () => Interaction | undefined,
   observe: NativeObservation,
   data: () => ReadonlyArray<Row>,
-): () => void {
+) => () => void = function pointerObservations<Row, SceneDatum>(
+  element: HTMLElement,
+  host: ChartRendererHost<SceneDatum, Date, number>,
+  snapshot: () => CartesianSnapshot<Row> | undefined,
+  state: () => Interaction | undefined,
+  observe: NativeObservation,
+  data: () => ReadonlyArray<Row>,
+) {
   let activePointerId: number | null = null
 
   const point = (event: MouseEvent) => {
@@ -98,7 +105,7 @@ export function pointerObservations<Row, SceneDatum>(
   window.addEventListener('pointerup', end)
   window.addEventListener('pointercancel', end)
 
-  return () => {
+  return (() => {
     activePointerId = null
     element.removeEventListener('pointerdown', down, true)
     element.removeEventListener('pointermove', move, true)
@@ -106,5 +113,5 @@ export function pointerObservations<Row, SceneDatum>(
     element.removeEventListener('pointerleave', end)
     window.removeEventListener('pointerup', end)
     window.removeEventListener('pointercancel', end)
-  }
+  }) satisfies () => void
 }

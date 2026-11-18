@@ -25,7 +25,7 @@ export function mountReorderDrag(visual: HTMLVisualElement, owner: ReorderDragOw
   let mountedAxis: ReorderAxis | undefined
   let disposed = false
 
-  const read = (axis: ReorderAxis): number => {
+  const read: (axis: ReorderAxis) => number = (axis: ReorderAxis) => {
     const value: unknown = (axis === 'x' ? x : y).get()
 
     return Schema.is(Schema.Finite)(value) ? value : 0

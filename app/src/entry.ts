@@ -59,8 +59,9 @@ const dropdowns = Layer.unwrap(
     return DropdownResourcesLayer(document, branches)
   }),
 ).pipe(Layer.provide(dialogs))
+const presentation = presentationEffects(document, window)
 const environment = Layer.succeed(SiteEnvironment, {
-  ...presentationEffects(document, window),
+  ...presentation,
   origin: location.origin,
   isMac: /Mac|iPhone|iPad|iPod/u.test(navigator.platform),
   settingsShortcuts: Stream.callback<SettingsShortcut>((queue) =>
@@ -130,6 +131,7 @@ const environment = Layer.succeed(SiteEnvironment, {
       (release) => Effect.sync(release),
     ).pipe(Effect.flatMap(() => Effect.never)),
   ),
+  releaseStartupInput: Effect.sync(() => releaseEarlyInput(window)),
   apply: (settings, fontFailed) =>
     Render.afterCommit.pipe(
       Effect.andThen(
@@ -141,7 +143,6 @@ const environment = Layer.succeed(SiteEnvironment, {
                 : 'light'
               : settings.theme
           publishRootPresentation(document.documentElement, settings, theme, fontFailed)
-          releaseEarlyInput(window)
         }),
       ),
     ),
@@ -165,7 +166,8 @@ const hydrate = (diagnostics?: ReturnType<typeof createBrowserDiagnostics>) =>
           model.systemThemeKnown,
           previousModel.systemTheme,
           model.systemTheme,
-        ),
+        ) &&
+        presentation.prepareNativeThemeTransition(),
       layer: application.layer,
       devTools: { dispatch: true },
       ...(diagnostics === undefined ? {} : { slow: diagnostics.slow }),

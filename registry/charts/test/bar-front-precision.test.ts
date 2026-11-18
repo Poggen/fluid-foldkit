@@ -1,4 +1,5 @@
 // oxlint-disable no-comments/no-comments -- The real renderer and Motion require browser classes at module acquisition.
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 // oxlint-enable no-comments/no-comments -- Resume the source comment policy.
 
@@ -39,7 +40,9 @@ const props: BarChartProps<typeof Row.Type> = {
   children: [Bar({ dataKey: 'value', lineCap: 3.123456, staggerDelay: 0 })],
 }
 
-const fronts = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<SceneRect> =>
+const fronts: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<SceneRect> = (
+  nodes: ReadonlyArray<SceneNode>,
+) =>
   nodes.flatMap((node) => {
     if (node.kind === 'group') {
       return fronts(node.children)
@@ -80,7 +83,7 @@ const pixels = (value: string) => {
   return Number(value.slice(0, -2))
 }
 
-const current = (node: Element, field: string): string => {
+const current: (node: Element, field: string) => string = (node: Element, field: string) => {
   const root = node.closest('[data-bkm-kit]')
   const view = node.ownerDocument.defaultView
 

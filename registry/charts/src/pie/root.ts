@@ -10,16 +10,15 @@ import type { PolarControl, PolarInputs } from './private/block'
 import type { PieData, PieChartProps } from './options'
 import { PieHost } from './host'
 
-export const polarControl = (props: { readonly hoveredIndex?: number | null }): PolarControl => ({
-  controlled: props.hoveredIndex !== undefined,
-  index: Option.fromNullishOr(props.hoveredIndex),
-})
-
-export function pieInputs<Row extends PieData = PieData>(
+export const pieInputs: <Row extends PieData = PieData>(
+  id: string,
+  props: PieChartProps,
+  containerRef?: ContainerRef,
+) => PolarInputs<Row> = function pieInputs<Row extends PieData = PieData>(
   id: string,
   props: PieChartProps,
   containerRef: ContainerRef = createContainerRef(),
-): PolarInputs<Row> {
+) {
   const inputs: PolarInputs<Row> = {
     mount: (element, data, focus, observe, clock, observeSize) =>
       new PieHost(element, props, id, data, focus, observe, clock, observeSize, containerRef),
@@ -102,8 +101,17 @@ export function pieInputs<Row extends PieData = PieData>(
     },
   }
 
-  return props.size === undefined ? inputs : { ...inputs, size: props.size }
+  return (
+    props.size === undefined ? inputs : { ...inputs, size: props.size }
+  ) satisfies PolarInputs<Row>
 }
+
+export const polarControl: (props: {
+  readonly hoveredIndex?: number | null
+}) => PolarControl = (props: { readonly hoveredIndex?: number | null }) => ({
+  controlled: props.hoveredIndex !== undefined,
+  index: Option.fromNullishOr(props.hoveredIndex),
+})
 
 export function PieChart<RowSchema extends Schema.Codec<PieData, Schema.Json>>({
   name,

@@ -23,7 +23,9 @@ export type { ImportIdentity, ImportIdentityOptions } from './origin-mutation.ts
 
 type RuleContext = Context
 
-export const isStringModule = (node: ESTree.Expression): string | null => {
+export const isStringModule: (node: ESTree.Expression) => string | null = (
+  node: ESTree.Expression,
+) => {
   const expression = unwrapExpression(node)
 
   if (expression.type === 'Literal' && typeof expression.value === 'string') {
@@ -39,9 +41,9 @@ export const isStringModule = (node: ESTree.Expression): string | null => {
   return null
 }
 
-export const importedName = (
+export const importedName: (
   node: ESTree.ImportDeclaration['specifiers'][number],
-): string | null => {
+) => string | null = (node: ESTree.ImportDeclaration['specifiers'][number]) => {
   if (node.type !== 'ImportSpecifier') {
     return null
   }
@@ -53,7 +55,9 @@ export const importedName = (
   return node.imported.value
 }
 
-const importBindingIdentity = (definition: Definition): ImportIdentity | null => {
+const importBindingIdentity: (definition: Definition) => ImportIdentity | null = (
+  definition: Definition,
+) => {
   const { parent } = definition.node
 
   if (definition.type !== 'ImportBinding' || parent?.type !== 'ImportDeclaration') {
@@ -120,15 +124,18 @@ export const isTypeOnlyDefinition = (definition: Definition) => {
   )
 }
 
-export const isDeclaredLocally = (name: string, scope: Scope | null): boolean =>
+export const isDeclaredLocally: (name: string, scope: Scope | null) => boolean = (
+  name: string,
+  scope: Scope | null,
+) =>
   scope !== null &&
   ((scope.set.get(name)?.defs.some((definition) => !isTypeOnlyDefinition(definition)) ?? false) ||
     isDeclaredLocally(name, scope.upper))
 
-export const immutableInitializer = (
+export const immutableInitializer: (
   identifier: ESTree.IdentifierReference,
   context: RuleContext,
-): ESTree.Expression | null => {
+) => ESTree.Expression | null = (identifier: ESTree.IdentifierReference, context: RuleContext) => {
   const variable = variableOf(identifier.name, context.sourceCode.getScope(identifier))
   const definition = variable?.defs.at(0)
 
@@ -151,7 +158,10 @@ export const immutableInitializer = (
   return bindings?.unsupported === false && target?.path.length === 0 ? bindings.source : null
 }
 
-const isIdentityVariable = (variable: Variable, options: ImportIdentityOptions): boolean => {
+const isIdentityVariable: (variable: Variable, options: ImportIdentityOptions) => boolean = (
+  variable: Variable,
+  options: ImportIdentityOptions,
+) => {
   if (!isStableVariable(variable)) {
     return false
   }
@@ -169,11 +179,15 @@ const isIdentityVariable = (variable: Variable, options: ImportIdentityOptions):
   )
 }
 
-const isModuleRequireBinding = (
+const isModuleRequireBinding: (
   source: ESTree.Expression,
   projection: readonly string[] | undefined,
   scope: Scope | null,
-): boolean => {
+) => boolean = (
+  source: ESTree.Expression,
+  projection: readonly string[] | undefined,
+  scope: Scope | null,
+) => {
   const initializer = unwrapExpression(source)
 
   return (
@@ -184,19 +198,30 @@ const isModuleRequireBinding = (
   )
 }
 
-const resolveImportIdentity = (
+const resolveImportIdentity: (
+  expression: ESTree.Node,
+  scope: Scope | null,
+  context: RuleContext,
+  options: ImportIdentityOptions,
+  seen?: Set<ESTree.Node>,
+  variables?: Set<Variable>,
+) => ImportIdentity | null = (
   expression: ESTree.Node,
   scope: Scope | null,
   context: RuleContext,
   options: ImportIdentityOptions,
   seen = new Set<Definition['node']>(),
   variables = new Set<Variable>(),
-): ImportIdentity | null => {
-  const requireFunction = (
+) => {
+  const requireFunction: (
+    candidate: ESTree.Expression,
+    candidateScope: Scope | null,
+    visited?: Set<ESTree.Node>,
+  ) => boolean = (
     candidate: ESTree.Expression,
     candidateScope: Scope | null,
     visited = new Set<Definition['node']>(),
-  ): boolean => {
+  ) => {
     const requireBinding = (name: string, bindingScope: Scope | null) => {
       const variable = variableOf(name, bindingScope)
 
@@ -241,16 +266,14 @@ const resolveImportIdentity = (
     const target = unwrapExpression(candidate)
 
     if (target.type === 'Identifier') {
-      return requireBinding(target.name, candidateScope)
+      return requireBinding(target.name, candidateScope) satisfies boolean
     }
 
     if (target.type === 'MemberExpression') {
-      return (
-        staticPropertyName(target) === 'require' &&
+      return (staticPropertyName(target) === 'require' &&
         target.object.type === 'Identifier' &&
         target.object.name === 'module' &&
-        !isDeclaredLocally('module', candidateScope)
-      )
+        !isDeclaredLocally('module', candidateScope)) satisfies boolean
     }
 
     if (target.type === 'CallExpression') {
@@ -263,19 +286,17 @@ const resolveImportIdentity = (
         variables,
       )
 
-      return (
-        identity?.name === 'createRequire' &&
-        (identity.module === 'module' || identity.module === 'node:module')
-      )
+      return (identity?.name === 'createRequire' &&
+        (identity.module === 'module' || identity.module === 'node:module')) satisfies boolean
     }
 
-    return false
+    return false satisfies boolean
   }
 
-  const loadedModuleIdentity = (
+  const loadedModuleIdentity: (
     candidate: ESTree.Expression,
     candidateScope: Scope | null,
-  ): ImportIdentity | null => {
+  ) => ImportIdentity | null = (candidate: ESTree.Expression, candidateScope: Scope | null) => {
     const target = unwrapExpression(candidate)
 
     if (target.type === 'AwaitExpression') {
@@ -307,10 +328,10 @@ const resolveImportIdentity = (
     return module === null ? null : { module, name: null }
   }
 
-  const projectIdentity = (
+  const projectIdentity: (
     identity: ImportIdentity | null,
     path: readonly string[],
-  ): ImportIdentity | null => {
+  ) => ImportIdentity | null = (identity: ImportIdentity | null, path: readonly string[]) => {
     let current = identity
 
     for (const name of path) {
@@ -327,7 +348,10 @@ const resolveImportIdentity = (
     return current
   }
 
-  const importIdentityForVariable = (name: string, variable: Variable): ImportIdentity | null => {
+  const importIdentityForVariable: (name: string, variable: Variable) => ImportIdentity | null = (
+    name: string,
+    variable: Variable,
+  ) => {
     const [definition] = variable.defs
 
     if (definition === undefined || seen.has(definition.node)) {
@@ -384,13 +408,22 @@ const resolveImportIdentity = (
   }
 
   if (isExpressionWrapper(expression)) {
-    return resolveImportIdentity(expression.expression, scope, context, options, seen, variables)
+    return resolveImportIdentity(
+      expression.expression,
+      scope,
+      context,
+      options,
+      seen,
+      variables,
+    ) satisfies ImportIdentity | null
   }
 
   if (expression.type === 'Identifier') {
     const variable = variableOf(expression.name, scope)
 
-    return variable === undefined ? null : importIdentityForVariable(expression.name, variable)
+    return (
+      variable === undefined ? null : importIdentityForVariable(expression.name, variable)
+    ) satisfies ImportIdentity | null
   }
 
   if (
@@ -398,41 +431,47 @@ const resolveImportIdentity = (
     expression.type === 'AwaitExpression' ||
     expression.type === 'ImportExpression'
   ) {
-    return loadedModuleIdentity(expression, scope)
+    return loadedModuleIdentity(expression, scope) satisfies ImportIdentity | null
   }
 
   if (expression.type === 'MemberExpression') {
     const projection = staticProjection(expression)
 
     if (projection === null) {
-      return null
+      return null satisfies ImportIdentity | null
     }
 
     return projectIdentity(
       resolveImportIdentity(projection.source, scope, context, options, seen, variables),
       projection.path,
-    )
+    ) satisfies ImportIdentity | null
   }
 
-  return null
+  return null satisfies ImportIdentity | null
 }
 
-export const importIdentity = (
+export const importIdentity: (
+  expression: ESTree.Expression,
+  scope: Scope | null,
+  context: RuleContext,
+  options: ImportIdentityOptions,
+  seen?: Set<ESTree.Node>,
+) => ImportIdentity | null = (
   expression: ESTree.Expression,
   scope: Scope | null,
   context: RuleContext,
   options: ImportIdentityOptions,
   seen = new Set<Definition['node']>(),
-): ImportIdentity | null => {
+) => {
   const variables = new Set<Variable>()
   const identity = resolveImportIdentity(expression, scope, context, options, seen, variables)
 
   if (identity === null || options.immutableAliasesOnly !== true) {
-    return identity
+    return identity satisfies ImportIdentity | null
   }
 
   if ([...variables].some((variable) => hasLexicalMutation(variable, context))) {
-    return null
+    return null satisfies ImportIdentity | null
   }
 
   const resolve = (node: ESTree.Node) =>
@@ -449,5 +488,7 @@ export const importIdentity = (
     }),
   ]
 
-  return hasOriginMutation(origins, context, options, resolve) ? null : identity
+  return (
+    hasOriginMutation(origins, context, options, resolve) ? null : identity
+  ) satisfies ImportIdentity | null
 }

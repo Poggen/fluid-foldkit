@@ -1,6 +1,4 @@
-// Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT.
-// Sunburst data model matching bklit's `buildArcs`: node ids (" / " joined names), arc order, trails, category indexes.
-// Geometry is the native `sunburst` mark's; angles here serve the exported helpers and enter ordering.
+/* @license Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT. */
 
 import { isFiniteNumber } from '../kit/guards'
 import { TAU } from './private/tau'
@@ -22,7 +20,6 @@ export interface SunburstNode {
   children?: Array<SunburstNode>
 }
 
-/** @internal */
 export interface ArcDatum {
   id: string
   name: string
@@ -39,7 +36,6 @@ export interface ArcDatum {
   fill?: string | undefined
 }
 
-/** @internal */
 export interface Focus {
   id: string
   name: string
@@ -54,17 +50,16 @@ const TOP = -Math.PI / 2
 
 export const ID_SEP = ' / '
 
-const nodeId = (parentId: string | null, name: string): string =>
-  parentId === null ? name : `${parentId}${ID_SEP}${name}`
+const nodeId: (parentId: string | null, name: string) => string = (
+  parentId: string | null,
+  name: string,
+) => (parentId === null ? name : `${parentId}${ID_SEP}${name}`)
 
-/** @internal */
-export const sumValues = (node: SunburstNode): number => {
+export const sumValues: (node: SunburstNode) => number = (node: SunburstNode) => {
   if (node.children !== undefined && node.children.length > 0) {
     return node.children.reduce((sum, child) => sum + sumValues(child), 0)
   }
 
-  // A leaf that is negative or not a finite number (bklit lays NaN angles out and draws nothing) takes no angle; the native
-  // sunburst throws on it.
   return isFiniteNumber(node.value) && node.value > 0 ? node.value : 0
 }
 
@@ -86,7 +81,10 @@ interface LayoutParams {
   readonly trail: ReadonlyArray<string>
 }
 
-const layoutNode = (params: Readonly<LayoutParams>, ctx: BuildContext): void => {
+const layoutNode: (params: Readonly<LayoutParams>, ctx: BuildContext) => void = (
+  params: Readonly<LayoutParams>,
+  ctx: BuildContext,
+) => {
   const { node, id, depth, a0, a1, parentId, categoryIndex, trail } = params
   const value = sumValues(node)
   const children = node.children ?? []
@@ -136,7 +134,7 @@ const layoutNode = (params: Readonly<LayoutParams>, ctx: BuildContext): void => 
   }
 }
 
-const toRadians = (normalized: number): number => TOP + normalized * TAU
+const toRadians: (normalized: number) => number = (normalized: number) => TOP + normalized * TAU
 
 export interface SunburstModel {
   readonly arcs: Array<ArcDatum>
@@ -146,8 +144,7 @@ export interface SunburstModel {
   readonly rootId: string
 }
 
-/** @internal */
-export const buildArcs = (data: SunburstNode): SunburstModel => {
+export const buildArcs: (data: SunburstNode) => SunburstModel = (data: SunburstNode) => {
   const ctx: BuildContext = { arcIndex: 0, arcs: [], focusById: new Map(), maxDepth: 0 }
   layoutNode(
     {
@@ -182,11 +179,7 @@ export const buildArcs = (data: SunburstNode): SunburstModel => {
   }
 }
 
-/**
- * Normalized clockwise angle from 12 o'clock (0 to 1).
- * @internal
- */
-export const clockwiseFraction = (angle: number): number => {
+export const clockwiseFraction: (angle: number) => number = (angle: number) => {
   let normalized = angle - TOP
 
   if (normalized < 0) {
@@ -196,7 +189,6 @@ export const clockwiseFraction = (angle: number): number => {
   return normalized / TAU
 }
 
-// Drill-down hub (the zoom-out disc) is smaller than a ring and shrinks per extra drill level.
 const DRILL_CENTER_SCALE = 0.65
 
 const DRILL_CENTER_DEPTH_SHRINK = 0.08
@@ -204,7 +196,7 @@ const DRILL_CENTER_DEPTH_SHRINK = 0.08
 const DRILL_CENTER_MIN_SCALE = 0.45
 
 /** Hub radius as a fraction of one ring width at the root; 0 at the root view. */
-export const hubScale = (focusDepth: number): number => {
+export const hubScale: (focusDepth: number) => number = (focusDepth: number) => {
   if (focusDepth === 0) {
     return 0
   }
@@ -220,8 +212,11 @@ export interface RingOptions {
   ringWidth: number
 }
 
-/** @internal */
-export const ringOptions = (focusDepth: number, maxDepth: number, radius: number): RingOptions => {
+export const ringOptions: (focusDepth: number, maxDepth: number, radius: number) => RingOptions = (
+  focusDepth: number,
+  maxDepth: number,
+  radius: number,
+) => {
   const oneLevel = radius / Math.max(1, maxDepth)
   const centerR = oneLevel * hubScale(focusDepth)
   const visibleRings = Math.max(1, maxDepth - focusDepth)
@@ -234,11 +229,11 @@ const HOVER_GROW_RING_BUDGET = 0.28
 const HOVER_GROW_SEGMENT_CAP = 0.1
 
 /** bklit: scale hover grow so deep paths and wide drill-down rings stay within budget. */
-export const hoverGrowForPathSegment = (
+export const hoverGrowForPathSegment: (
   hoverPop: number,
   ringWidth: number,
   pathLength: number,
-): number =>
+) => number = (hoverPop: number, ringWidth: number, pathLength: number) =>
   Math.min(
     hoverPop,
     ringWidth * HOVER_GROW_SEGMENT_CAP,
@@ -246,12 +241,16 @@ export const hoverGrowForPathSegment = (
   )
 
 /** bklit: inset reserved around the chart so the hover grow stays inside the view box. */
-export const defaultSunburstGrowPadding = (maxDepth = 1, size = 440, hoverPop = 8): number => {
+export const defaultSunburstGrowPadding: (
+  maxDepth?: number,
+  size?: number,
+  hoverPop?: number,
+) => number = (maxDepth = 1, size = 440, hoverPop = 8) => {
   const rootRingWidth = size / 2 / Math.max(1, maxDepth)
   const pathLength = Math.max(1, maxDepth - 1)
   const segmentGrow = hoverGrowForPathSegment(hoverPop, rootRingWidth, pathLength)
 
-  return Math.ceil(segmentGrow * pathLength + segmentGrow)
+  return Math.ceil(segmentGrow * pathLength + segmentGrow) satisfies number
 }
 
 const ENTER_RING_STEP_MS = 120
@@ -266,10 +265,10 @@ export interface SunburstEnterDelays {
 }
 
 /** bklit's ring-then-clockwise enter stagger, in milliseconds. */
-export const buildEnterDelays = (
+export const buildEnterDelays: (
   arcs: ReadonlyArray<ArcDatum>,
   staggerScale: number,
-): SunburstEnterDelays => {
+) => SunburstEnterDelays = (arcs: ReadonlyArray<ArcDatum>, staggerScale: number) => {
   const scale = Math.max(MIN_STAGGER_SCALE, staggerScale)
   const byDepth = new Map<number, Array<ArcDatum>>()
 
@@ -300,7 +299,7 @@ export interface SunburstRow {
   readonly value: number
 }
 
-export const buildRows = (model: SunburstModel): Array<SunburstRow> => {
+export const buildRows: (model: SunburstModel) => Array<SunburstRow> = (model: SunburstModel) => {
   const rows: Array<SunburstRow> = [{ id: model.rootId, parentId: null, value: 0 }]
 
   for (const arc of model.arcs) {

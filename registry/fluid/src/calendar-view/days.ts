@@ -1,4 +1,4 @@
-// Fluid Functionalism 200b4534, MIT, copyright 2026 Micka Touillaud.
+/* @license Fluid Functionalism 200b4534, MIT, copyright 2026 Micka Touillaud. */
 import type { Attribute } from 'foldkit/html'
 import { cn } from '../lib/utils.js'
 import { typeClass } from '../lib/type-scale.js'
@@ -8,6 +8,256 @@ import { Action, restoreDate } from '../calendar-state.js'
 import type { Projection } from '../calendar-state.js'
 import { calendarBandSlice } from '../calendar-presentation.js'
 import type { CalendarChild, CalendarMessage, ViewContext } from './contracts.js'
+
+const dayColor: (day: Day, selected: boolean, preview: boolean, unavailable: boolean) => string =
+  function dayColor(day: Day, selected: boolean, preview: boolean, unavailable: boolean) {
+    if (selected) {
+      return 'bg-foreground text-background'
+    }
+
+    if (preview) {
+      return 'cursor-pointer text-background'
+    }
+
+    if (unavailable) {
+      return cn(
+        'cursor-default text-muted-foreground opacity-50',
+        day.flags.booked === true && 'line-through',
+      )
+    }
+
+    return day.flags.outside === true
+      ? 'cursor-pointer text-muted-foreground opacity-60'
+      : 'cursor-pointer text-foreground'
+  }
+
+const dayTransition: (ctx: ViewContext, day: Day) => string = function dayTransition(
+  ctx: ViewContext,
+  day: Day,
+) {
+  if (ctx.picking) {
+    return 'transition-[color] duration-80'
+  }
+
+  return ctx.visual.committedEnd === day.ordinal
+    ? 'transition-none'
+    : 'transition-[color,background-color,font-variation-settings] duration-80'
+}
+
+const dayEvents: (ctx: ViewContext, day: Day) => Array<Attribute<CalendarMessage>> =
+  function dayEvents(ctx: ViewContext, day: Day) {
+    const { h } = ctx
+
+    return [
+      h.OnClick(
+        ctx.request(
+          Action.cases.Picked.make({
+            date: day.date,
+            displayMonth: day.displayMonth,
+            modifiers: day.flags,
+          }),
+        ),
+      ),
+      h.OnMouseEnter(
+        ctx.request(Action.cases.MouseEntered.make({ date: day.date, modifiers: day.flags })),
+      ),
+      h.OnMouseLeave(
+        ctx.request(Action.cases.MouseLeft.make({ date: day.date, modifiers: day.flags })),
+      ),
+      h.OnFocus(
+        ctx.request(
+          Action.cases.Focused.make({
+            date: day.date,
+            displayMonth: day.displayMonth,
+            modifiers: day.flags,
+          }),
+        ),
+      ),
+      h.OnBlur(ctx.request(Action.cases.Blurred.make({ date: day.date, modifiers: day.flags }))),
+      h.OnKeyDown((key, modifiers) =>
+        ctx.request(
+          Action.cases.KeyDown.make({
+            date: day.date,
+            modifiers: day.flags,
+            key,
+            shift: modifiers.shiftKey,
+          }),
+        ),
+      ),
+    ]
+  }
+
+const dayStatusAttributes: (
+  ctx: ViewContext,
+  day: Day,
+  appearance: DayAppearance,
+) => Array<Attribute<CalendarMessage>> = function dayStatusAttributes(
+  ctx: ViewContext,
+  day: Day,
+  appearance: DayAppearance,
+) {
+  const { h } = ctx
+  const { unavailable, selected, middle, preview, hasDetail, detailId } = appearance
+
+  return [
+    ...(unavailable ? [h.DataAttribute('calendar-inert', '')] : []),
+    ...(selected ? [h.DataAttribute('selected', 'true')] : []),
+    ...(middle ? [h.DataAttribute('range-middle', 'true')] : []),
+    ...(day.flags.booked === true ? [h.DataAttribute('booked', 'true')] : []),
+    ...(unavailable ? [h.DataAttribute('unavailable', 'true')] : []),
+    ...(preview ? [h.DataAttribute('preview-end', 'true')] : []),
+    ...(hasDetail ? [h.AriaDescribedBy(detailId)] : []),
+  ]
+}
+
+const dayInteractionAttributes: (
+  ctx: ViewContext,
+  day: Day,
+  present: boolean,
+  unavailable: boolean,
+) => Array<Attribute<CalendarMessage>> = function dayInteractionAttributes(
+  ctx: ViewContext,
+  day: Day,
+  present: boolean,
+  unavailable: boolean,
+) {
+  const { h, visual, projection } = ctx
+
+  return [
+    h.DataAttribute('calendar-button', ''),
+    ...(present && day.flags.outside !== true && visual.active === day.ordinal
+      ? [h.DataAttribute('fluid-hover-active', '')]
+      : []),
+    h.Type('button'),
+    h.Disabled(unavailable && day.flags.focused !== true),
+    ...(unavailable && day.flags.focused === true ? [h.AriaDisabled(true)] : []),
+    h.Tabindex(present && day.tabStop ? 0 : -1),
+    h.AriaLabel(day.label),
+    h.DataAttribute('calendar-ordinal', String(day.ordinal)),
+    h.DataAttribute('calendar-display-month', String(day.displayMonth)),
+    ...(day.flags.outside !== true && present
+      ? [
+          h.DataAttribute(
+            'calendar-index',
+            String(day.ordinal - (projection.months[0]?.weeks[0]?.days[0]?.ordinal ?? 0)),
+          ),
+        ]
+      : []),
+  ]
+}
+
+const dayButtonAttributes: (
+  ctx: ViewContext,
+  day: Day,
+  present: boolean,
+  appearance: DayAppearance,
+) => Array<Attribute<CalendarMessage>> = function dayButtonAttributes(
+  ctx: ViewContext,
+  day: Day,
+  present: boolean,
+  appearance: DayAppearance,
+) {
+  const { h, inputs } = ctx
+  const { selected, preview, unavailable, hasDetail } = appearance
+
+  return [
+    h.Class(
+      cn(
+        'relative z-[2] flex items-center justify-center p-0 outline-none select-none tabular-nums',
+        hasDetail && 'flex-col gap-2',
+        dayTransition(ctx, day),
+        inputs.fill ? 'aspect-square h-full max-w-full' : 'size-[var(--cell-size)]',
+        inputs.pill ? 'rounded-full' : inputs.shape.bg,
+        typeClass('body', inputs.compact ? 'compact' : 'default'),
+        dayColor(day, selected, preview, unavailable),
+      ),
+    ),
+    ...dayInteractionAttributes(ctx, day, present, unavailable),
+    ...dayStatusAttributes(ctx, day, appearance),
+    h.Style({
+      fontVariationSettings: day.flags.today === true ? fontWeights.semibold : fontWeights.normal,
+    }),
+    ...(present ? dayEvents(ctx, day) : []),
+  ]
+}
+
+const dayCellAttributes: (ctx: ViewContext, day: Day) => Array<Attribute<CalendarMessage>> =
+  function dayCellAttributes(ctx: ViewContext, day: Day) {
+    const { h, inputs } = ctx
+
+    return [
+      h.Role('gridcell'),
+      h.DataAttribute('calendar-date', String(day.date)),
+      h.DataAttribute('calendar-outside', String(day.flags.outside === true)),
+      ...(day.flags.outside === true ? [h.DataAttribute('outside', 'true')] : []),
+      h.DataAttribute('day', day.isoDate),
+      ...(day.flags.selected === true ? [h.AriaSelected(true)] : []),
+      ...(day.flags.today === true ? [h.DataAttribute('today', 'true')] : []),
+      ...(day.flags.hidden === true ? [h.DataAttribute('hidden', 'true')] : []),
+      h.Class(
+        cn(
+          'relative flex items-center justify-center p-0',
+          inputs.fill
+            ? 'aspect-square max-h-[var(--cell-size)] min-w-0 flex-1'
+            : 'size-[var(--cell-size)]',
+        ),
+      ),
+    ]
+  }
+
+const dayButtonContent: (
+  ctx: ViewContext,
+  day: Day,
+  detail: CalendarChild,
+  appearance: DayAppearance,
+) => ReadonlyArray<CalendarChild> = function dayButtonContent(
+  ctx: ViewContext,
+  day: Day,
+  detail: CalendarChild,
+  appearance: DayAppearance,
+) {
+  const { h, inputs } = ctx
+  const { hasDetail, detailId, selected, preview, unavailable } = appearance
+
+  return [
+    h.span([h.Class('[text-box:trim-both_cap_alphabetic]')], [day.text]),
+    ...(hasDetail
+      ? [
+          h.span(
+            [
+              h.Class(
+                cn(
+                  'whitespace-nowrap [text-box:trim-both_cap_alphabetic]',
+                  typeClass('caption', inputs.compact ? 'compact' : 'default'),
+                  selected || preview
+                    ? '[&_*]:!text-current'
+                    : !unavailable && 'text-muted-foreground',
+                ),
+              ),
+              h.Id(detailId),
+              h.DataAttribute('slot', 'calendar-day-detail'),
+              h.Style({ fontVariationSettings: fontWeights.normal }),
+            ],
+            [detail],
+          ),
+        ]
+      : []),
+    ...(day.flags.today === true && !hasDetail
+      ? [
+          h.span(
+            [
+              h.AriaHidden(true),
+              h.DataAttribute('slot', 'calendar-today-dot'),
+              h.Class(
+                'absolute bottom-[14%] left-1/2 size-1 -translate-x-1/2 rounded-full bg-current',
+              ),
+            ],
+            [],
+          ),
+        ]
+      : []),
+  ]
+}
 
 const bandStyle = (slice: NonNullable<ReturnType<typeof calendarBandSlice>>) => ({
   left: String(slice.left),
@@ -21,79 +271,6 @@ const bandStyle = (slice: NonNullable<ReturnType<typeof calendarBandSlice>>) => 
 type Day = Projection['months'][number]['weeks'][number]['days'][number]
 
 type Month = Projection['months'][number]
-
-function dayColor(day: Day, selected: boolean, preview: boolean, unavailable: boolean): string {
-  if (selected) {
-    return 'bg-foreground text-background'
-  }
-
-  if (preview) {
-    return 'cursor-pointer text-background'
-  }
-
-  if (unavailable) {
-    return cn(
-      'cursor-default text-muted-foreground opacity-50',
-      day.flags.booked === true && 'line-through',
-    )
-  }
-
-  return day.flags.outside === true
-    ? 'cursor-pointer text-muted-foreground opacity-60'
-    : 'cursor-pointer text-foreground'
-}
-
-function dayTransition(ctx: ViewContext, day: Day): string {
-  if (ctx.picking) {
-    return 'transition-[color] duration-80'
-  }
-
-  return ctx.visual.committedEnd === day.ordinal
-    ? 'transition-none'
-    : 'transition-[color,background-color,font-variation-settings] duration-80'
-}
-
-function dayEvents(ctx: ViewContext, day: Day): Array<Attribute<CalendarMessage>> {
-  const { h } = ctx
-
-  return [
-    h.OnClick(
-      ctx.request(
-        Action.cases.Picked.make({
-          date: day.date,
-          displayMonth: day.displayMonth,
-          modifiers: day.flags,
-        }),
-      ),
-    ),
-    h.OnMouseEnter(
-      ctx.request(Action.cases.MouseEntered.make({ date: day.date, modifiers: day.flags })),
-    ),
-    h.OnMouseLeave(
-      ctx.request(Action.cases.MouseLeft.make({ date: day.date, modifiers: day.flags })),
-    ),
-    h.OnFocus(
-      ctx.request(
-        Action.cases.Focused.make({
-          date: day.date,
-          displayMonth: day.displayMonth,
-          modifiers: day.flags,
-        }),
-      ),
-    ),
-    h.OnBlur(ctx.request(Action.cases.Blurred.make({ date: day.date, modifiers: day.flags }))),
-    h.OnKeyDown((key, modifiers) =>
-      ctx.request(
-        Action.cases.KeyDown.make({
-          date: day.date,
-          modifiers: day.flags,
-          key,
-          shift: modifiers.shiftKey,
-        }),
-      ),
-    ),
-  ]
-}
 
 function renderGhost(
   ctx: ViewContext,
@@ -152,158 +329,6 @@ interface DayAppearance {
   readonly unavailable: boolean
   readonly hasDetail: boolean
   readonly detailId: string
-}
-
-function dayStatusAttributes(
-  ctx: ViewContext,
-  day: Day,
-  appearance: DayAppearance,
-): Array<Attribute<CalendarMessage>> {
-  const { h } = ctx
-  const { unavailable, selected, middle, preview, hasDetail, detailId } = appearance
-
-  return [
-    ...(unavailable ? [h.DataAttribute('calendar-inert', '')] : []),
-    ...(selected ? [h.DataAttribute('selected', 'true')] : []),
-    ...(middle ? [h.DataAttribute('range-middle', 'true')] : []),
-    ...(day.flags.booked === true ? [h.DataAttribute('booked', 'true')] : []),
-    ...(unavailable ? [h.DataAttribute('unavailable', 'true')] : []),
-    ...(preview ? [h.DataAttribute('preview-end', 'true')] : []),
-    ...(hasDetail ? [h.AriaDescribedBy(detailId)] : []),
-  ]
-}
-
-function dayInteractionAttributes(
-  ctx: ViewContext,
-  day: Day,
-  present: boolean,
-  unavailable: boolean,
-): Array<Attribute<CalendarMessage>> {
-  const { h, visual, projection } = ctx
-
-  return [
-    h.DataAttribute('calendar-button', ''),
-    ...(present && day.flags.outside !== true && visual.active === day.ordinal
-      ? [h.DataAttribute('fluid-hover-active', '')]
-      : []),
-    h.Type('button'),
-    h.Disabled(unavailable && day.flags.focused !== true),
-    ...(unavailable && day.flags.focused === true ? [h.AriaDisabled(true)] : []),
-    h.Tabindex(present && day.tabStop ? 0 : -1),
-    h.AriaLabel(day.label),
-    h.DataAttribute('calendar-ordinal', String(day.ordinal)),
-    h.DataAttribute('calendar-display-month', String(day.displayMonth)),
-    ...(day.flags.outside !== true && present
-      ? [
-          h.DataAttribute(
-            'calendar-index',
-            String(day.ordinal - (projection.months[0]?.weeks[0]?.days[0]?.ordinal ?? 0)),
-          ),
-        ]
-      : []),
-  ]
-}
-
-function dayButtonAttributes(
-  ctx: ViewContext,
-  day: Day,
-  present: boolean,
-  appearance: DayAppearance,
-): Array<Attribute<CalendarMessage>> {
-  const { h, inputs } = ctx
-  const { selected, preview, unavailable, hasDetail } = appearance
-
-  return [
-    h.Class(
-      cn(
-        'relative z-[2] flex items-center justify-center p-0 outline-none select-none tabular-nums',
-        hasDetail && 'flex-col gap-2',
-        dayTransition(ctx, day),
-        inputs.fill ? 'aspect-square h-full max-w-full' : 'size-[var(--cell-size)]',
-        inputs.pill ? 'rounded-full' : inputs.shape.bg,
-        typeClass('body', inputs.compact ? 'compact' : 'default'),
-        dayColor(day, selected, preview, unavailable),
-      ),
-    ),
-    ...dayInteractionAttributes(ctx, day, present, unavailable),
-    ...dayStatusAttributes(ctx, day, appearance),
-    h.Style({
-      fontVariationSettings: day.flags.today === true ? fontWeights.semibold : fontWeights.normal,
-    }),
-    ...(present ? dayEvents(ctx, day) : []),
-  ]
-}
-
-function dayCellAttributes(ctx: ViewContext, day: Day): Array<Attribute<CalendarMessage>> {
-  const { h, inputs } = ctx
-
-  return [
-    h.Role('gridcell'),
-    h.DataAttribute('calendar-date', String(day.date)),
-    h.DataAttribute('calendar-outside', String(day.flags.outside === true)),
-    ...(day.flags.outside === true ? [h.DataAttribute('outside', 'true')] : []),
-    h.DataAttribute('day', day.isoDate),
-    ...(day.flags.selected === true ? [h.AriaSelected(true)] : []),
-    ...(day.flags.today === true ? [h.DataAttribute('today', 'true')] : []),
-    ...(day.flags.hidden === true ? [h.DataAttribute('hidden', 'true')] : []),
-    h.Class(
-      cn(
-        'relative flex items-center justify-center p-0',
-        inputs.fill
-          ? 'aspect-square max-h-[var(--cell-size)] min-w-0 flex-1'
-          : 'size-[var(--cell-size)]',
-      ),
-    ),
-  ]
-}
-
-function dayButtonContent(
-  ctx: ViewContext,
-  day: Day,
-  detail: CalendarChild,
-  appearance: DayAppearance,
-): ReadonlyArray<CalendarChild> {
-  const { h, inputs } = ctx
-  const { hasDetail, detailId, selected, preview, unavailable } = appearance
-
-  return [
-    h.span([h.Class('[text-box:trim-both_cap_alphabetic]')], [day.text]),
-    ...(hasDetail
-      ? [
-          h.span(
-            [
-              h.Class(
-                cn(
-                  'whitespace-nowrap [text-box:trim-both_cap_alphabetic]',
-                  typeClass('caption', inputs.compact ? 'compact' : 'default'),
-                  selected || preview
-                    ? '[&_*]:!text-current'
-                    : !unavailable && 'text-muted-foreground',
-                ),
-              ),
-              h.Id(detailId),
-              h.DataAttribute('slot', 'calendar-day-detail'),
-              h.Style({ fontVariationSettings: fontWeights.normal }),
-            ],
-            [detail],
-          ),
-        ]
-      : []),
-    ...(day.flags.today === true && !hasDetail
-      ? [
-          h.span(
-            [
-              h.AriaHidden(true),
-              h.DataAttribute('slot', 'calendar-today-dot'),
-              h.Class(
-                'absolute bottom-[14%] left-1/2 size-1 -translate-x-1/2 rounded-full bg-current',
-              ),
-            ],
-            [],
-          ),
-        ]
-      : []),
-  ]
 }
 
 export function renderDay(ctx: ViewContext, month: Month, day: Day, present: boolean) {

@@ -1,5 +1,3 @@
-// Radar pointer focus: polar polygons are not painted focus targets, so the pointer resolves to the
-// topmost series polygon containing it (bklit's hover region). A native ChartFocusStrategy, no DOM access.
 import type { ChartFocusStrategy, ChartPoint } from '@tanstack/charts'
 import type { RadarRow } from './rows'
 
@@ -11,12 +9,8 @@ const EPS = 1e-6
 
 const LABEL_REACH = 22
 
-// bklit hit-tests the scaled (1.05x) hovered group, so the hovered series keeps focus out to its scaled outline. motion scales the
-// group about the centre of its fill-box (`transform-box: fill-box; transform-origin: 50% 50%`), i.e. its vertex bounding box.
 const HOVER_SCALE = 1.05
 
-// bklit hovers the series group: fill + stroke (2, hovered 3) + dots (r 4, hovered 6, plus their 2px stroke), so a pointer on a
-// vertex dot or an edge stroke outside the fill still hovers the series.
 const STROKE_REST = 2
 
 const STROKE_HOT = 3
@@ -32,7 +26,12 @@ interface RadarHitShape {
   readonly showStroke: boolean
 }
 
-const distanceToSegment = (a: Vertex, b: Vertex, x: number, y: number): number => {
+const distanceToSegment: (a: Vertex, b: Vertex, x: number, y: number) => number = (
+  a: Vertex,
+  b: Vertex,
+  x: number,
+  y: number,
+) => {
   const dx = b[0] - a[0]
   const dy = b[1] - a[1]
   const length = dx * dx + dy * dy
@@ -43,11 +42,15 @@ const distanceToSegment = (a: Vertex, b: Vertex, x: number, y: number): number =
   return Math.hypot(x - (a[0] + t * dx), y - (a[1] + t * dy))
 }
 
-const onSegment = (a: Vertex, b: Vertex, p: Vertex): boolean =>
+const onSegment: (a: Vertex, b: Vertex, p: Vertex) => boolean = (a: Vertex, b: Vertex, p: Vertex) =>
   Math.abs((p[0] - a[0]) * (b[1] - a[1]) - (p[1] - a[1]) * (b[0] - a[0])) <= EPS &&
   (p[0] - a[0]) * (p[0] - b[0]) + (p[1] - a[1]) * (p[1] - b[1]) <= EPS
 
-const inside = (polygon: ReadonlyArray<Vertex>, x: number, y: number): boolean => {
+const inside: (polygon: ReadonlyArray<Vertex>, x: number, y: number) => boolean = (
+  polygon: ReadonlyArray<Vertex>,
+  x: number,
+  y: number,
+) => {
   let hit = false
   let prev = polygon.at(-1)
 
@@ -73,14 +76,19 @@ const inside = (polygon: ReadonlyArray<Vertex>, x: number, y: number): boolean =
 
 export type { RadarHitShape }
 
-export const createRadarFocus = (
+export const createRadarFocus: (
   metricKeys: ReadonlyArray<string>,
   shapes: ReadonlyMap<number, RadarHitShape>,
-): ChartFocusStrategy<RadarRow, string | number, number> => {
+) => ChartFocusStrategy<RadarRow, string | number, number> = (
+  metricKeys: ReadonlyArray<string>,
+  shapes: ReadonlyMap<number, RadarHitShape>,
+) => {
   const order = new Map(metricKeys.map((key, index) => [key, index]))
   const cache = new WeakMap<ReadonlyArray<RadarPoint>, Map<number, Array<Vertex>>>()
 
-  const polygonsOf = (points: ReadonlyArray<RadarPoint>): Map<number, Array<Vertex>> => {
+  const polygonsOf: (points: ReadonlyArray<RadarPoint>) => Map<number, Array<Vertex>> = (
+    points: ReadonlyArray<RadarPoint>,
+  ) => {
     const hit = cache.get(points)
 
     if (hit) {
@@ -117,7 +125,9 @@ export const createRadarFocus = (
 
   let current: number | null = null
 
-  const scaled = (polygon: ReadonlyArray<Vertex>): Array<Vertex> => {
+  const scaled: (polygon: ReadonlyArray<Vertex>) => Array<Vertex> = (
+    polygon: ReadonlyArray<Vertex>,
+  ) => {
     const xs = polygon.map((v) => v[0])
     const ys = polygon.map((v) => v[1])
     const cx = (Math.min(...xs) + Math.max(...xs)) / 2
@@ -126,7 +136,12 @@ export const createRadarFocus = (
     return polygon.map(([vx, vy]) => [cx + (vx - cx) * HOVER_SCALE, cy + (vy - cy) * HOVER_SCALE])
   }
 
-  const hits = (series: number, polygon: ReadonlyArray<Vertex>, x: number, y: number): boolean => {
+  const hits: (series: number, polygon: ReadonlyArray<Vertex>, x: number, y: number) => boolean = (
+    series: number,
+    polygon: ReadonlyArray<Vertex>,
+    x: number,
+    y: number,
+  ) => {
     const hot = series === current
     const shape = shapes.get(series)
     const region = hot ? scaled(polygon) : polygon
@@ -159,13 +174,14 @@ export const createRadarFocus = (
     return false
   }
 
-  const ofSeries = (points: ReadonlyArray<RadarPoint>, series: number): Array<RadarPoint> =>
-    points.filter((p) => p.datum.series === series)
+  const ofSeries: (points: ReadonlyArray<RadarPoint>, series: number) => Array<RadarPoint> = (
+    points: ReadonlyArray<RadarPoint>,
+    series: number,
+  ) => points.filter((p) => p.datum.series === series)
 
   return {
     group: (points, { point }) => ofSeries(points, point.datum.series),
-    // Hover and focus are per series (the whole polygon), so keyboard steps one stop per series, not per vertex: a per-vertex stop
-    // would re-focus the same series and show no change. Each series' first vertex is its stop.
+
     navigation: (points) => {
       const first = new Map<number, RadarPoint>()
 
@@ -197,7 +213,7 @@ export const createRadarFocus = (
       }
 
       current = null
-      // Interactive axis labels: the pointer within reach of a label resolves to that label.
+
       let best: RadarPoint | undefined = undefined
       let bestDistance = LABEL_REACH
 

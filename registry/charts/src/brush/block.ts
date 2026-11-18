@@ -239,7 +239,6 @@ export function defineChartBrushBlock<
           const measuredViewport = viewport === undefined ? model.viewport : Option.some(viewport)
           const yTweens = yDomainsTween(current, target)
 
-          // Drawing may repeat after input rebinding; only changed measurements own a new model.
           if (
             model.updateStep !== 'snap' &&
             sameDomains(model.domains, current) &&
@@ -296,7 +295,7 @@ export function defineChartBrushBlock<
             replaceInteraction(model, configureInteraction(model, owner.plot)),
             {
               owner: () => owner,
-              // The conditional Source strip remounts; only its local control resets.
+
               control: () =>
                 keyChanged || stripEntered ? initialControl(owner.seed) : model.control,
               brushSelection: () =>

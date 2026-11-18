@@ -3,8 +3,6 @@ import { Effect, Queue, Schema, Stream } from 'effect'
 import { TimeFieldAction } from './date-picker-time-state.js'
 import { TimeFieldBlock, Message } from './date-picker-time-definition.js'
 
-// The public ScrollArea viewport slot accepts only resolved ChildAttributes.
-// Own the list resource here, following its exact DOM identity across the portal.
 const acquireList = (element: Element) => {
   const document = element.ownerDocument
   const window = document.defaultView

@@ -1,8 +1,11 @@
 import type { SceneLabel, SceneStyle } from '@tanstack/charts'
 import { setOrRemove, STYLE_PROPERTIES } from './private/svg-layer'
 
-// Presentation attributes, not inline style: the hover CSS (push.ts) must be able to override a scene's opacity.
-const applyStyle = (element: SVGElement, style: SceneStyle | undefined, scale: number): void => {
+const applyStyle: (element: SVGElement, style: SceneStyle | undefined, scale: number) => void = (
+  element: SVGElement,
+  style: SceneStyle | undefined,
+  scale: number,
+) => {
   for (const [key, property] of STYLE_PROPERTIES) {
     const value = style?.[key]
 
@@ -14,7 +17,11 @@ const applyStyle = (element: SVGElement, style: SceneStyle | undefined, scale: n
   }
 }
 
-const paintLabel = (element: SVGElement, node: SceneLabel, scale: number): void => {
+const paintLabel: (element: SVGElement, node: SceneLabel, scale: number) => void = (
+  element: SVGElement,
+  node: SceneLabel,
+  scale: number,
+) => {
   setOrRemove(element, 'class', node.className)
   setOrRemove(element, 'x', node.x)
   setOrRemove(element, 'y', node.y)

@@ -1,7 +1,7 @@
 import { KeyCap } from './key-cap.js'
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
 import { fontWeights } from './lib/font-weight.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { DocumentTooltipOccurrenceViewInputs } from './tooltip-native-public.js'
 import { Array, Function, Match } from 'effect'
 
@@ -34,78 +34,17 @@ import type {
 } from './input-message/composition.js'
 import type { MessageFile, QueuedMessage } from './input-message-domain.js'
 
-export interface InputMessageSlotContext {
-  readonly context: PresentationContext
-  readonly files: ReadonlyArray<MessageFile>
-  /** Native event attribute: opens the picker in the original user-activation stack. */
-  readonly filePickerAttributes: (acceptOverride?: string) => ReadonlyArray<ChildAttribute>
-}
-
-export interface InputMessageViewInputs extends Presentation {
-  readonly placeholder?: string
-  readonly sendLabel?: string
-  readonly className?: string
-  readonly style?: Readonly<Record<string, string>>
-  readonly textareaStyle?: Readonly<Record<string, string>>
-  readonly textareaClassName?: string
-  readonly textareaLabel?: string
-  readonly textareaDescribedBy?: string
-  readonly textareaAttributes?: ReadonlyArray<ChildAttribute>
-  readonly attributes?: ReadonlyArray<ChildAttribute>
-  readonly leftSlot?: (context: InputMessageSlotContext) => ReadonlyArray<Html>
-  readonly rightSlot?: (context: InputMessageSlotContext) => ReadonlyArray<Html>
-  readonly animate: (node: Html, options: MotionOptions) => Html
-  readonly getReorder: () => ReorderScope
-  readonly tooltip: (
-    context: { readonly trigger: DocumentTooltipOccurrenceViewInputs['trigger'] },
-    options: {
-      readonly key: string
-      readonly shapeClass: string
-      readonly content: string
-      readonly side: 'top'
-    },
-  ) => Html
-}
-
-export interface InputMessagePaintInputs extends InputMessageViewInputs {
-  /** Bound native region views, constructed only by the feature's composition. */
-  readonly filesRegion: (
-    files: ReadonlyArray<MessageFile>,
-    size: number,
-    height: number | null,
-  ) => Html
-  readonly queueRegion: (
-    items: ReadonlyArray<QueuedMessage>,
-    height: number | null,
-    isTouch: boolean,
-    reduceMotion: boolean,
-  ) => Html
-  readonly suggestionsRegion: (
-    items: ReadonlyArray<string>,
-    open: boolean,
-    active: number | null,
-    listId: string,
-    height: number | null,
-  ) => Html
-}
-
-export interface InputMessagePaintEvents<M> {
-  readonly buttonComplete: Extract<Attribute<M>, { readonly _tag: 'OnCustomEvent' }>
-  readonly observe: ReadonlyArray<ChildAttribute<InputMessageMountRequirements>>
-  readonly input: Extract<Attribute<M>, { readonly _tag: 'OnInput' }>
-  readonly blur: Extract<Attribute<M>, { readonly _tag: 'OnBlur' }>
-  readonly enter: Extract<Attribute<M>, { readonly _tag: 'OnMouseEnter' }>
-  readonly leave: Extract<Attribute<M>, { readonly _tag: 'OnMouseLeave' }>
-  readonly submit: Extract<Attribute<M>, { readonly _tag: 'OnClick' }>
-  readonly stop: Extract<Attribute<M>, { readonly _tag: 'OnClick' }>
-}
-
-export function inputMessagePaint(
+export const inputMessagePaint: (
   state: InputMessageModel & { readonly activeSuggestion: number | null },
   inputs: InputMessagePaintInputs,
   h: InputMessageViewBuilder,
   events: InputMessagePaintEvents<InputMessageMessage>,
-): Html {
+) => Html = function inputMessagePaint(
+  state: InputMessageModel & { readonly activeSuggestion: number | null },
+  inputs: InputMessagePaintInputs,
+  h: InputMessageViewBuilder,
+  events: InputMessagePaintEvents<InputMessageMessage>,
+) {
   const model = inputMessageValues(state)
 
   for (const item of inputs.textareaAttributes ?? []) {
@@ -308,7 +247,7 @@ export function inputMessagePaint(
             ),
             {
               initial: Match.value(model).pipe(
-                Match.when({ buttonSwaps: 0 }, (): false => false),
+                Match.when({ buttonSwaps: 0 }, Function.constant<false>(false)),
                 Match.when({ reduceMotion: true }, () => ({ opacity: 0 })),
                 Match.orElse(() => ({ opacity: 0, scale: 0.6 })),
               ),
@@ -409,4 +348,70 @@ export function inputMessagePaint(
     model.maxRows,
     model.editRevision,
   )
+}
+
+export interface InputMessageSlotContext {
+  readonly context: PresentationContext
+  readonly files: ReadonlyArray<MessageFile>
+  /** Native event attribute: opens the picker in the original user-activation stack. */
+  readonly filePickerAttributes: (acceptOverride?: string) => ReadonlyArray<ChildAttribute>
+}
+
+export interface InputMessageViewInputs extends Presentation {
+  readonly placeholder?: string
+  readonly sendLabel?: string
+  readonly className?: string
+  readonly style?: Readonly<Record<string, string>>
+  readonly textareaStyle?: Readonly<Record<string, string>>
+  readonly textareaClassName?: string
+  readonly textareaLabel?: string
+  readonly textareaDescribedBy?: string
+  readonly textareaAttributes?: ReadonlyArray<ChildAttribute>
+  readonly attributes?: ReadonlyArray<ChildAttribute>
+  readonly leftSlot?: (context: InputMessageSlotContext) => ReadonlyArray<Html>
+  readonly rightSlot?: (context: InputMessageSlotContext) => ReadonlyArray<Html>
+  readonly animate: (node: Html, options: MotionOptions) => Html
+  readonly getReorder: () => ReorderScope
+  readonly tooltip: (
+    context: { readonly trigger: DocumentTooltipOccurrenceViewInputs['trigger'] },
+    options: {
+      readonly key: string
+      readonly shapeClass: string
+      readonly content: string
+      readonly side: 'top'
+    },
+  ) => Html
+}
+
+export interface InputMessagePaintInputs extends InputMessageViewInputs {
+  /** Bound native region views, constructed only by the feature's composition. */
+  readonly filesRegion: (
+    files: ReadonlyArray<MessageFile>,
+    size: number,
+    height: number | null,
+  ) => Html
+  readonly queueRegion: (
+    items: ReadonlyArray<QueuedMessage>,
+    height: number | null,
+    isTouch: boolean,
+    reduceMotion: boolean,
+  ) => Html
+  readonly suggestionsRegion: (
+    items: ReadonlyArray<string>,
+    open: boolean,
+    active: number | null,
+    listId: string,
+    height: number | null,
+  ) => Html
+}
+
+export interface InputMessagePaintEvents<M> {
+  readonly buttonComplete: Extract<Attribute<M>, { readonly _tag: 'OnCustomEvent' }>
+  readonly observe: ReadonlyArray<ChildAttribute<InputMessageMountRequirements>>
+  readonly input: Extract<Attribute<M>, { readonly _tag: 'OnInput' }>
+  readonly blur: Extract<Attribute<M>, { readonly _tag: 'OnBlur' }>
+  readonly enter: Extract<Attribute<M>, { readonly _tag: 'OnMouseEnter' }>
+  readonly leave: Extract<Attribute<M>, { readonly _tag: 'OnMouseLeave' }>
+  readonly submit: Extract<Attribute<M>, { readonly _tag: 'OnClick' }>
+  readonly stop: Extract<Attribute<M>, { readonly _tag: 'OnClick' }>
 }

@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Option } from 'effect'
 import { childAttributes } from 'foldkit/html'
 import type * as Mount from 'foldkit/mount'
@@ -164,7 +164,7 @@ export const dialogView = <const Key extends symbol>(
           ? defaultPanel()
           : inputs.panelRender(panelAttributes, children)
 
-      const makePanelMotion = (): MotionOptions =>
+      const makePanelMotion: () => MotionOptions = () =>
         inputs.panelMotion?.(open) ?? {
           initial: {
             opacity: 0,

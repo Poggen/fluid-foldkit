@@ -1,5 +1,5 @@
 import { Match } from 'effect'
-// Fluid Functionalism 200b4534, MIT, copyright 2026 Micka Touillaud.
+/* @license Fluid Functionalism 200b4534, MIT, copyright 2026 Micka Touillaud. */
 import type { Attribute, HtmlBuilder } from 'foldkit/html'
 import type { Message } from '../calendar-definition.js'
 import { Action, Selection } from '../calendar-state.js'
@@ -192,7 +192,6 @@ function renderMonth(ctx: ViewContext, month: Projection['months'][number], inde
           ...(calendar.selection.mode === 'range' ? [h.AriaMultiSelectable(true)] : []),
         ],
         children: [
-          // The native Weekdays slot is invoked, and its frozen Fluid default is null.
           ...(projection.hideWeekdays
             ? []
             : [
@@ -376,9 +375,9 @@ export function renderCalendar(
         : [
             h.Dir(
               Match.value(projection.dir).pipe(
-                Match.when('rtl', (): 'Rtl' => 'Rtl'),
-                Match.when('auto', (): 'Auto' => 'Auto'),
-                Match.orElse((): 'Ltr' => 'Ltr'),
+                Match.when('rtl', () => 'Rtl' satisfies 'Rtl'),
+                Match.when('auto', () => 'Auto' satisfies 'Auto'),
+                Match.orElse(() => 'Ltr' satisfies 'Ltr'),
               ),
             ),
           ]),

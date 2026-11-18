@@ -1,17 +1,21 @@
 import type { SelectionBackgroundsViewInputs } from './selection-backgrounds.js'
 import type { SelectionShape } from './selection-state.js'
 import { mergeSpring, cornerDelay } from './lib/selection-geometry.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { Html } from 'foldkit/html'
 import type { TargetMotionOptions as MotionOptions } from './motion-target.js'
 import type { HoverHighlightViewInputs } from './hover-highlight.js'
 import { spring } from './lib/springs.js'
 
-export function dropdownHighlightMotion(
+export const dropdownHighlightMotion: (
   animate: (node: Html, options: MotionOptions) => Html,
   kind: 'hover' | 'selected' | 'focus',
   from: Parameters<HoverHighlightViewInputs['animate']>[2] | null,
-): HoverHighlightViewInputs['animate'] {
+) => HoverHighlightViewInputs['animate'] = function dropdownHighlightMotion(
+  animate: (node: Html, options: MotionOptions) => Html,
+  kind: 'hover' | 'selected' | 'focus',
+  from: Parameters<HoverHighlightViewInputs['animate']>[2] | null,
+) {
   return (node, present, rect, reduceMotion) =>
     animate(node, {
       initial:
@@ -55,11 +59,10 @@ const corners = (radii: SelectionShape['radii']) => ({
   borderBottomLeftRadius: radii[3],
 })
 
-export const dropdownSelectionMotion =
-  (
-    animate: (node: Html, options: MotionOptions) => Html,
-  ): SelectionBackgroundsViewInputs['animate'] =>
-  (node, shape, present) => {
+export const dropdownSelectionMotion: (
+  animate: (node: Html, options: MotionOptions) => Html,
+) => SelectionBackgroundsViewInputs['animate'] =
+  (animate: (node: Html, options: MotionOptions) => Html) => (node, shape, present) => {
     const corner = shape.delayCorners
       ? { ...mergeSpring, delay: shape.cornerDelay ?? cornerDelay }
       : mergeSpring

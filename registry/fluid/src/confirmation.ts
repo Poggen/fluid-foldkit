@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism confirmation. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism confirmation. MIT, copyright 2026 Micka Touillaud. */
 import { Effect, Layer, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import type { Html } from 'foldkit/html'

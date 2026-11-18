@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
 import type { Html } from 'foldkit/html'
 import { Button } from './button.js'
 import {
@@ -15,7 +15,9 @@ type Chip = Exclude<DataTableFilterValue, string>
 const segment =
   'relative z-[1] inline-flex h-full min-w-0 items-center gap-1 px-1 outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)] transition-[background-color] duration-80 aria-expanded:bg-active'
 
-export function emptyColumnFilter(column: DataTableColumn): Chip {
+export const emptyColumnFilter: (column: DataTableColumn) => Chip = function emptyColumnFilter(
+  column: DataTableColumn,
+) {
   const type = typeof column.filter === 'string' ? column.filter : column.editor?.type
   switch (type) {
     case 'number':
@@ -55,11 +57,15 @@ const filterPicker = (model: DataTableModel, h: DataTableViewBuilder) => {
   )
 }
 
-export function DataTableFilters(
+export const DataTableFilters: (
   model: DataTableModel,
   h: DataTableViewBuilder,
   inputs: DataTableViewInputs,
-): Html {
+) => Html = function DataTableFilters(
+  model: DataTableModel,
+  h: DataTableViewBuilder,
+  inputs: DataTableViewInputs,
+) {
   if (model.filters.length === 0) return filterPicker(model, h)
   return Button(
     {
@@ -95,12 +101,17 @@ function operator<T extends string>(
   )
 }
 
-function chipFields(
+const chipFields: (
   model: DataTableModel,
   h: DataTableViewBuilder,
   column: DataTableColumn,
   value: Chip,
-): Html[] {
+) => Html[] = function chipFields(
+  model: DataTableModel,
+  h: DataTableViewBuilder,
+  column: DataTableColumn,
+  value: Chip,
+) {
   const label = column.header
   const change = (next: Chip) => Message.FilterChanged({ id: column.id, value: next })
   const field = (name: string, type: string, text: string, accept: (input: string) => Chip) =>
@@ -223,11 +234,15 @@ function chipFields(
   }
 }
 
-export function DataTableFilterChips(
+export const DataTableFilterChips: (
   model: DataTableModel,
   h: DataTableViewBuilder,
   inputs: DataTableViewInputs,
-): Html {
+) => Html = function DataTableFilterChips(
+  model: DataTableModel,
+  h: DataTableViewBuilder,
+  inputs: DataTableViewInputs,
+) {
   const { shape, size } = resolvePresentation(inputs)
   if (model.filtersHidden || !model.filters.length) return h.empty
   return h.div(

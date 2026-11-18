@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom -- actual ColorPicker and canonical document Tooltip resources
 import { it } from '@effect/vitest'
 import { Effect, Layer, Option, Schedule, Schema } from 'effect'
@@ -75,20 +76,21 @@ const Consumer = Block.make('ColorTooltipConsumer', {
 const PickerRequests = Consumer.makeRequiredFieldBinding(ColorPickerBlock, {
   field: 'picker',
   init: {
-    contextToArgs: (): [ColorPickerConfig] => [
-      {
-        id: 'named-color',
-        channelTooltipProvider: 'ancestor',
-        defaultFormat: 'rgb',
-        value: '#808080',
-        swatches: [
-          { color: '#ff0000', label: 'Scarlet' },
-          { color: '#0000ff', label: 'Ocean' },
-          '#00ff00',
-          { color: '#ffffff', label: '' },
-        ],
-      },
-    ],
+    contextToArgs: () =>
+      [
+        {
+          id: 'named-color',
+          channelTooltipProvider: 'ancestor',
+          defaultFormat: 'rgb',
+          value: '#808080',
+          swatches: [
+            { color: '#ff0000', label: 'Scarlet' },
+            { color: '#0000ff', label: 'Ocean' },
+            '#00ff00',
+            { color: '#ffffff', label: '' },
+          ],
+        },
+      ] satisfies [ColorPickerConfig],
   },
 })
 const Picker = PickerRequests.withOutMessagePolicy({

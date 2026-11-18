@@ -6,8 +6,6 @@ import { cubicBezier } from '../kit/motion/easing'
 import type { EnterTransition } from '../kit/motion/phase'
 import { resumeEnter, type EnterPlan } from '../kit/motion/resume-enter'
 
-/* Heatmap entrance choreography as native per-datum `motion` timing (a `delay` + tween per cell); the renderer owns the clock, so this is pure arithmetic. */
-
 type HeatmapRevealMode = 'enter' | 'fromLoading' | null
 
 /** Enter transition. `duration` is in seconds (bklit/motion convention); `ease` is a cubic-bezier tuple. */
@@ -15,7 +13,6 @@ type HeatmapEnterTransition = EnterTransition
 
 const HEATMAP_DEFAULT_ENTER_DURATION_MS = 1600
 
-// Ported bklit reveal easing: cubic-bezier(0.85, 0, 0.916, 0.282).
 const HEATMAP_DEFAULT_ENTER_EASE = [0.85, 0, 0.916, 0.282] satisfies readonly [
   number,
   number,
@@ -41,22 +38,19 @@ const HEATMAP_ENTER_STAGGER_SPREAD = 0.6
 
 const HEATMAP_HOVER_TRANSITION_MS = 220
 
-// bklit re-runs every cell's enter `animate` at the trailing ParentSize render (debounce 300 ms, heatmap-chart.tsx:685): the tween restarts from its current value, measured ~340 ms after the cells mount.
 const HEATMAP_RESTART_MS = 340
 
-// The reveal timer (heatmap-chart.tsx:607) cuts the enter at `animationDuration` into the ready tween (heatmap-cells.tsx:41-44,149).
 const SETTLED_OPACITY = 0.999
 
 const HEATMAP_READY_EASE = cubicBezier(0.4, 0, 0.2, 1)
 
-// Lehmer / Park-Miller PRNG (modulus 2^31-1, multiplier 7^5).
 const PARK_MILLER_MODULUS = 2_147_483_647
 
 const PARK_MILLER_MODULUS_MINUS_ONE = 2_147_483_646
 
 const PARK_MILLER_MULTIPLIER = 16_807
 
-const seededRandom = (seed: number): (() => number) => {
+const seededRandom: (seed: number) => () => number = (seed: number) => {
   let state = seed % PARK_MILLER_MODULUS
 
   if (state <= 0) {
@@ -82,7 +76,7 @@ const HEATMAP_MAX_ENTER_FADE_SEC = 0.45
 
 const HEATMAP_FADE_DURATION_FRACTION = 0.3
 
-const heatmapCellSeed = (column: number, row: number): number =>
+const heatmapCellSeed: (column: number, row: number) => number = (column: number, row: number) =>
   column * HEATMAP_SEED_COLUMN_FACTOR + row * HEATMAP_SEED_ROW_FACTOR
 
 interface ComputeHeatmapEnterFadeDelayParams {
@@ -94,9 +88,9 @@ interface ComputeHeatmapEnterFadeDelayParams {
   readonly fadeDurationSec: number
 }
 
-const computeHeatmapEnterFadeDelayMs = (
+const computeHeatmapEnterFadeDelayMs: (
   params: Readonly<ComputeHeatmapEnterFadeDelayParams>,
-): number => {
+) => number = (params: Readonly<ComputeHeatmapEnterFadeDelayParams>) => {
   const seed =
     heatmapCellSeed(params.column, params.row) + params.revealEpoch * HEATMAP_REVEAL_EPOCH_SALT
 
@@ -112,10 +106,13 @@ const computeHeatmapEnterFadeDelayMs = (
   return random() * spreadMs
 }
 
-const resolveHeatmapEnterFadeDurationSec = (
+const resolveHeatmapEnterFadeDurationSec: (
   enterTransition: Readonly<HeatmapEnterTransition> | undefined,
   animationDurationMs: number,
-): number => {
+) => number = (
+  enterTransition: Readonly<HeatmapEnterTransition> | undefined,
+  animationDurationMs: number,
+) => {
   if (enterTransition?.duration !== undefined) {
     return enterTransition.duration
   }
@@ -146,13 +143,17 @@ interface HeatmapEnterClock {
   readonly now: () => number
 }
 
-/** One cell's whole opacity curve (0 -> 1 over `cutMs + readyMs`): the enter tween, its restart at `HEATMAP_RESTART_MS`, then the cut into the ready tween. */
-const cellEnterCurve = (
+const cellEnterCurve: (
   enter: (t: number) => number,
   delayMs: number,
   durationMs: number,
   cutMs: number,
-): ((t: number) => number) => {
+) => (t: number) => number = (
+  enter: (t: number) => number,
+  delayMs: number,
+  durationMs: number,
+  cutMs: number,
+) => {
   const total = cutMs + HEATMAP_HOVER_TRANSITION_MS
   const restarts = HEATMAP_RESTART_MS < cutMs
   const atRestart = enter(Math.max(0, HEATMAP_RESTART_MS - delayMs) / durationMs)
@@ -162,7 +163,7 @@ const cellEnterCurve = (
       (1 - atRestart) * enter(Math.max(0, cutMs - HEATMAP_RESTART_MS - delayMs) / durationMs)
     : enter(Math.max(0, cutMs - delayMs) / durationMs)
 
-  const at = (t: number): number => {
+  const at: (t: number) => number = (t: number) => {
     const ms = t * total
 
     if (ms >= cutMs) {
@@ -182,7 +183,6 @@ const cellEnterCurve = (
     )
   }
 
-  // The renderer writes opacity to 3 decimals: a last frame at 0.999 would hand the cells a 0.999 -> 1 CSS opacity transition (hover rule) after the tween.
   return (t) => {
     const v = at(t)
 
@@ -190,12 +190,15 @@ const cellEnterCurve = (
   }
 }
 
-/* Per-datum enter timing for cells. Exit fades over the conceal window so a loading skeleton dissolves instead of popping; resize/update stay instant. */
-const createHeatmapCellMotion = <Datum extends { readonly column: number; readonly row: number }>(
+const createHeatmapCellMotion: <Datum extends { readonly column: number; readonly row: number }>(
   params: Readonly<HeatmapCellMotionParams>,
-): ChartMotionDefinition<Datum> | false => {
+) => ChartMotionDefinition<Datum> | false = <
+  Datum extends { readonly column: number; readonly row: number },
+>(
+  params: Readonly<HeatmapCellMotionParams>,
+) => {
   if (!params.animate || params.animationDuration <= 0) {
-    return false
+    return false satisfies ChartMotionDefinition<Datum> | false
   }
 
   const fadeDurationSec = resolveHeatmapEnterFadeDurationSec(
@@ -206,10 +209,10 @@ const createHeatmapCellMotion = <Datum extends { readonly column: number; readon
   const durationMs = fadeDurationSec * MS_PER_SECOND
   const ease = params.enterTransition?.ease
   const easing = cubicBezier(...(isBezierTuple(ease) ? ease : HEATMAP_DEFAULT_ENTER_EASE))
-  // A render forced mid-reveal (web-font swap) is an update, which resumes the schedule of the first enter call instead of snapping.
+
   const { clock } = params
 
-  const delayOf = (datum: Datum): number =>
+  const delayOf: (datum: Datum) => number = (datum: Datum) =>
     computeHeatmapEnterFadeDelayMs({
       animationDurationMs: params.animationDuration,
       column: datum.column,
@@ -221,34 +224,38 @@ const createHeatmapCellMotion = <Datum extends { readonly column: number; readon
 
   const cutMs = Math.max(params.animationDuration, durationMs)
 
-  const planOf = (datum: Datum): EnterPlan => ({
+  const planOf: (datum: Datum) => EnterPlan = (datum: Datum) => ({
     delay: 0,
     duration: cutMs + HEATMAP_HOVER_TRANSITION_MS,
     easing: cellEnterCurve(easing, delayOf(datum), durationMs, cutMs),
   })
 
-  return (context): false | ChartMotionTiming<Datum> | undefined => {
+  return ((context) => {
     if (context.phase === 'exit') {
       return {
         transition: { duration: HEATMAP_LOADING_CONCEAL_MS, easing: 'ease-in-out', type: 'tween' },
-      }
+      } satisfies false | ChartMotionTiming<Datum> | undefined
     }
 
     const { datum } = context
 
     if (context.phase === 'update') {
-      return datum === undefined ? false : resumeEnter(planOf(datum), clock.at, clock.now())
+      return (
+        datum === undefined ? false : resumeEnter(planOf(datum), clock.at, clock.now())
+      ) satisfies false | ChartMotionTiming<Datum> | undefined
     }
 
     if (datum === undefined) {
-      return undefined
+      return undefined satisfies false | ChartMotionTiming<Datum> | undefined
     }
 
-    // The cells join one commit after the svg (UPSTREAM-GAPS #12); the clock starts where bklit's does so the late join does not shift the tween (heatmap-chart.tsx:566-585).
     clock.at ??= clock.origin() ?? clock.now()
 
-    return resumeEnter(planOf(datum), clock.at, clock.now())
-  }
+    return resumeEnter(planOf(datum), clock.at, clock.now()) satisfies
+      | false
+      | ChartMotionTiming<Datum>
+      | undefined
+  }) satisfies ChartMotionDefinition<Datum> | false
 }
 
 export {

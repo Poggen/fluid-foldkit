@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Context, Effect, Layer, Queue, Schema, Stream } from 'effect'
 import { defineMessageUnion } from 'foldkit/message'
 
@@ -68,8 +68,6 @@ export function observeQueuedStack(element: Element, states: Stream.Stream<'Live
                       ? event.target.closest('button[data-queued-stack-action]')
                       : null
 
-                  // Tooltip owns the button's mount. Stop at this stack's existing boundary
-                  // after same-element listeners, before starting a row drag or bubbling out.
                   if (root && action?.closest('[data-queued-stack]') === root) {
                     event.stopPropagation()
 

@@ -3,6 +3,42 @@ import { ringGeometry } from './geometry'
 import type { RingChartProps, RingData } from './options'
 import type { PieHoverValue } from '../pie/context'
 
+export const ringContext: (
+  props: RingChartProps,
+  size: number,
+  hover: PieHoverValue,
+  containerRef?: RingStableValue['containerRef'],
+) => RingContextValue = function ringContext(
+  props: RingChartProps,
+  size: number,
+  hover: PieHoverValue,
+  containerRef: RingStableValue['containerRef'] = { current: null },
+) {
+  const g = ringGeometry(props, size)
+
+  return {
+    data: props.data,
+    size,
+    center: size / 2,
+    strokeWidth: g.strokeWidth,
+    ringGap: g.ringGap,
+    baseInnerRadius: g.baseInnerRadius,
+    animationKey: 0,
+    isLoaded: true,
+    containerRef,
+    ...(props.enterTransition === undefined ? {} : { enterTransition: props.enterTransition }),
+    enterStaggerScale: props.enterStaggerScale ?? 1,
+    totalValue: g.totalValue,
+    getColor: g.color,
+    getRingRadii: g.getRingRadii,
+    startAngle: g.startAngle,
+    endAngle: g.endAngle,
+    geometryScrubbing: props.geometryScrubbing ?? false,
+    scrubRingLayers: null,
+    ...hover,
+  }
+}
+
 export interface RingStableValue {
   readonly data: ReadonlyArray<RingData>
   readonly size: number
@@ -33,49 +69,24 @@ export interface RingStableValue {
 
 export interface RingContextValue extends RingStableValue, PieHoverValue {}
 
-export function ringContext(
-  props: RingChartProps,
-  size: number,
-  hover: PieHoverValue,
-  containerRef: RingStableValue['containerRef'] = { current: null },
-): RingContextValue {
-  const g = ringGeometry(props, size)
+export const useRingStable: (context: RingContextValue) => RingStableValue = (
+  context: RingContextValue,
+) => context
 
-  return {
-    data: props.data,
-    size,
-    center: size / 2,
-    strokeWidth: g.strokeWidth,
-    ringGap: g.ringGap,
-    baseInnerRadius: g.baseInnerRadius,
-    animationKey: 0,
-    isLoaded: true,
-    containerRef,
-    ...(props.enterTransition === undefined ? {} : { enterTransition: props.enterTransition }),
-    enterStaggerScale: props.enterStaggerScale ?? 1,
-    totalValue: g.totalValue,
-    getColor: g.color,
-    getRingRadii: g.getRingRadii,
-    startAngle: g.startAngle,
-    endAngle: g.endAngle,
-    geometryScrubbing: props.geometryScrubbing ?? false,
-    scrubRingLayers: null,
-    ...hover,
-  }
-}
-
-export const useRingStable = (context: RingContextValue): RingStableValue => context
-
-export const useRingHover = (context: RingContextValue): PieHoverValue => ({
+export const useRingHover: (context: RingContextValue) => PieHoverValue = (
+  context: RingContextValue,
+) => ({
   hoveredIndex: context.hoveredIndex,
   setHoveredIndex: context.setHoveredIndex,
 })
 
 export const useRingHoverCoordinator = useRingHover
 
-export const useRing = (context: RingContextValue): RingContextValue => context
+export const useRing: (context: RingContextValue) => RingContextValue = (
+  context: RingContextValue,
+) => context
 
-export const RingProvider = (
+export const RingProvider: (
   value: RingContextValue,
   render: (context: RingContextValue) => Html,
-): Html => render(value)
+) => Html = (value: RingContextValue, render: (context: RingContextValue) => Html) => render(value)

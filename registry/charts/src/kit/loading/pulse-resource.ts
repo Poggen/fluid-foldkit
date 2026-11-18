@@ -4,6 +4,47 @@ import { createPulseClipMotion } from './pulse-clip-motion'
 import { PULSE_CONFIGURATION, PulseTransportCodec } from './pulse-model'
 import type { PulseTransport } from './pulse-model'
 
+export const observePulse: <Message>(
+  element: Element,
+  states: Stream.Stream<ViewState>,
+  observed: (generation: number) => Message,
+  mounted: Message,
+) => Stream.Stream<Message> = function observePulse<Message>(
+  element: Element,
+  states: Stream.Stream<ViewState>,
+  observed: (generation: number) => Message,
+  mounted: Message,
+) {
+  return Stream.callback<Message>((queue) =>
+    Effect.gen(function* pulseAcquisition() {
+      const resource = yield* Effect.acquireRelease(
+        Effect.sync(() =>
+          makePulseResource(
+            element,
+            (generation) => {
+              Queue.offerUnsafe(queue, observed(generation))
+            },
+            (cause) => {
+              Queue.failCauseUnsafe(queue, cause)
+            },
+          ),
+        ),
+        (owned) =>
+          Effect.sync(() => {
+            owned.release()
+          }),
+      )
+
+      yield* Stream.runForEach(states, (state) =>
+        Effect.sync(() => {
+          resource.state(state)
+          Queue.offerUnsafe(queue, mounted)
+        }),
+      )
+    }),
+  ) satisfies Stream.Stream<Message>
+}
+
 function makePulseResource(
   element: Element,
   completed: (generation: number) => void,
@@ -95,40 +136,4 @@ function makePulseResource(
       motion.destroy()
     },
   }
-}
-
-export function observePulse<Message>(
-  element: Element,
-  states: Stream.Stream<ViewState>,
-  observed: (generation: number) => Message,
-  mounted: Message,
-): Stream.Stream<Message> {
-  return Stream.callback<Message>((queue) =>
-    Effect.gen(function* pulseAcquisition() {
-      const resource = yield* Effect.acquireRelease(
-        Effect.sync(() =>
-          makePulseResource(
-            element,
-            (generation) => {
-              Queue.offerUnsafe(queue, observed(generation))
-            },
-            (cause) => {
-              Queue.failCauseUnsafe(queue, cause)
-            },
-          ),
-        ),
-        (owned) =>
-          Effect.sync(() => {
-            owned.release()
-          }),
-      )
-
-      yield* Stream.runForEach(states, (state) =>
-        Effect.sync(() => {
-          resource.state(state)
-          Queue.offerUnsafe(queue, mounted)
-        }),
-      )
-    }),
-  )
 }

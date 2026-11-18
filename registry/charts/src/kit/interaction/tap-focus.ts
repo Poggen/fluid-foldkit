@@ -1,25 +1,33 @@
 import type { ChartValue, ChartInteractionController } from '@tanstack/charts'
 
-export function mountTapFocus<Mark, X extends ChartValue = number, Y extends ChartValue = number>(
+export const mountTapFocus: <Mark, X extends ChartValue = number, Y extends ChartValue = number>(
+  el: HTMLElement,
+  getInteraction: () => ChartInteractionController<Mark, X, Y> | undefined,
+  mode?: 'tap' | 'press',
+) => () => void = function mountTapFocus<
+  Mark,
+  X extends ChartValue = number,
+  Y extends ChartValue = number,
+>(
   el: HTMLElement,
   getInteraction: () => ChartInteractionController<Mark, X, Y> | undefined,
   mode: 'tap' | 'press' = 'tap',
-): () => void {
+) {
   const TAP_SLOP_PX = 10
   const down = new Map<number, { x: number; y: number }>()
   let tapOk = false
 
-  const inside = (event: Event): boolean =>
+  const inside: (event: Event) => boolean = (event: Event) =>
     event.target instanceof Node && el.contains(event.target)
 
-  const focusAt = (x: number, y: number): void => {
+  const focusAt: (x: number, y: number) => void = (x: number, y: number) => {
     const interaction = getInteraction()
     interaction?.setControlledFocus(interaction.resolvePointer(x, y), { source: 'pointer' })
   }
 
-  const clear = (): void => getInteraction()?.setControlledFocus(null, { source: 'pointer' })
+  const clear: () => void = () => getInteraction()?.setControlledFocus(null, { source: 'pointer' })
 
-  const onDown = (event: PointerEvent): void => {
+  const onDown: (event: PointerEvent) => void = (event: PointerEvent) => {
     if (event.pointerType !== 'touch') {
       return
     }
@@ -39,7 +47,7 @@ export function mountTapFocus<Mark, X extends ChartValue = number, Y extends Cha
     }
   }
 
-  const onMove = (event: PointerEvent): void => {
+  const onMove: (event: PointerEvent) => void = (event: PointerEvent) => {
     if (event.pointerType !== 'touch') {
       return
     }
@@ -59,7 +67,7 @@ export function mountTapFocus<Mark, X extends ChartValue = number, Y extends Cha
     }
   }
 
-  const onUp = (event: PointerEvent): void => {
+  const onUp: (event: PointerEvent) => void = (event: PointerEvent) => {
     if (event.pointerType !== 'touch' || !down.has(event.pointerId)) {
       return
     }
@@ -85,7 +93,7 @@ export function mountTapFocus<Mark, X extends ChartValue = number, Y extends Cha
     }
   }
 
-  const onCancel = (event: PointerEvent): void => {
+  const onCancel: (event: PointerEvent) => void = (event: PointerEvent) => {
     if (event.pointerType === 'touch' && down.delete(event.pointerId)) {
       tapOk = false
 
@@ -95,13 +103,13 @@ export function mountTapFocus<Mark, X extends ChartValue = number, Y extends Cha
     }
   }
 
-  const swallowClick = (event: MouseEvent): void => {
+  const swallowClick: (event: MouseEvent) => void = (event: MouseEvent) => {
     if (mode === 'tap' && event instanceof PointerEvent && event.pointerType === 'touch') {
       event.stopPropagation()
     }
   }
 
-  const mouseDown = (event: MouseEvent): void => {
+  const mouseDown: (event: MouseEvent) => void = (event: MouseEvent) => {
     event.preventDefault()
   }
 
@@ -112,12 +120,12 @@ export function mountTapFocus<Mark, X extends ChartValue = number, Y extends Cha
   el.addEventListener('click', swallowClick, true)
   el.addEventListener('mousedown', mouseDown, true)
 
-  return (): void => {
+  return (() => {
     window.removeEventListener('pointerdown', onDown, true)
     window.removeEventListener('pointermove', onMove, true)
     window.removeEventListener('pointerup', onUp, true)
     window.removeEventListener('pointercancel', onCancel, true)
     el.removeEventListener('click', swallowClick, true)
     el.removeEventListener('mousedown', mouseDown, true)
-  }
+  }) satisfies () => void
 }

@@ -1,10 +1,11 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { accordionValues, accordionItems } from './accordion-state.js'
 import type { AccordionConfig, AccordionState } from './accordion-state.js'
 
-export const initializeAccordion = (
-  config: AccordionConfig,
-): { readonly childInitContext: AccordionConfig; readonly model: AccordionState } => {
+export const initializeAccordion: (config: AccordionConfig) => {
+  readonly childInitContext: AccordionConfig
+  readonly model: AccordionState
+} = (config: AccordionConfig) => {
   const values = accordionValues(config.value ?? config.defaultValue)
 
   return {

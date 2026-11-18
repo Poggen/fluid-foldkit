@@ -1,4 +1,4 @@
-// Lucide 0.564.0, ISC. See registry/fluid/NOTICE
+/* @license Lucide 0.564.0, ISC. See registry/fluid/NOTICE */
 import type { HtmlBuilder } from 'foldkit/html'
 export const shuffleIcon = <M>(h: HtmlBuilder<M>) =>
   h.svg(

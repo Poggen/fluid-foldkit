@@ -13,7 +13,6 @@ export interface NotchEnter {
   readonly easing: string
 }
 
-// bklit springs a notch's scale and opacity 0 -> 1 (motion's granular rest thresholds for a unit span).
 const SETTLE_STEP_MS = 8
 
 const NOTCH_SAMPLES = 36
@@ -24,7 +23,6 @@ const DEFAULT_TWEEN_S = 0.3
 
 const SECONDS_TO_MS = 1000
 
-// motion's default tween ease (easeOut) and its named eases.
 const EASE_OUT = 'cubic-bezier(0,0,0.58,1)'
 
 const EASES: ReadonlyMap<unknown, string> = new Map<unknown, string>([
@@ -37,10 +35,13 @@ const EASES: ReadonlyMap<unknown, string> = new Map<unknown, string>([
   ['linear', 'linear'],
 ])
 
-// motion ends a spring at its settle time rounded up to 50 ms (motion-dom calc-duration.mjs:10-14, JSAnimation.mjs:213-217).
 const MOTION_DURATION_STEP_MS = 50
 
-const springEnter = (stiffness: number, damping: number, mass: number): NotchEnter => {
+const springEnter: (stiffness: number, damping: number, mass: number) => NotchEnter = (
+  stiffness: number,
+  damping: number,
+  mass: number,
+) => {
   const spring = { damping, mass, stiffness }
 
   const settle = settleMs(
@@ -68,7 +69,9 @@ const DEFAULT_NOTCH_ENTER: NotchEnter = springEnter(
   GAUGE_NOTCH_ENTER_SPRING.mass,
 )
 
-export const toNotchEnter = (t?: GaugeEnterTransition): NotchEnter => {
+export const toNotchEnter: (t?: GaugeEnterTransition) => NotchEnter = (
+  t?: GaugeEnterTransition,
+) => {
   if (!t) {
     return DEFAULT_NOTCH_ENTER
   }

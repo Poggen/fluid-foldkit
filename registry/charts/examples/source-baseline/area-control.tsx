@@ -81,7 +81,7 @@ const chartStyles = {
 async function release() {
   dispose?.()
   dispose = undefined
-  // Foldkit disposal interrupts the runtime and restores its original empty container.
+
   for (let frame = 0; frame < 120; frame += 1) {
     if (mount.isConnected && mount.childNodes.length === 0) {
       status.textContent = 'Released: host empty'

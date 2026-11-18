@@ -6,8 +6,36 @@ import { renderToString } from 'foldkit/experimental/server'
 import { tablerIcons } from '../src/icons-tabler.js'
 import { phosphorIcons } from '../src/icons-phosphor.js'
 import { hugeiconsIcons } from '../src/icons-hugeicons.js'
+
+// oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
 // @effect-diagnostics-next-line nodeBuiltinImport:off -- This SSR test reads independent icon fixtures from disk as its rendering oracle.
 import { readFileSync } from 'node:fs'
+const parseSvg: (markup: string) => Node = function parseSvg(markup: string) {
+  const stack: Array<Node> = []
+  let root: Node | undefined
+  for (const match of markup.matchAll(/<(\/?)([\w-]+)([^>]*)>/g)) {
+    if (match[1] === '/') {
+      stack.pop()
+      continue
+    }
+    const tag = match[2]
+    if (tag === undefined) throw new Error('Missing SVG tag')
+    const attributes = Object.fromEntries(
+      [...String(match[3]).matchAll(/([\w:-]+)="([^"]*)"/g)].map((entry) => [
+        String(entry[1]),
+        String(entry[2]),
+      ]),
+    )
+    const node: Node = { tag, attributes, children: [] }
+    const parent = stack.at(-1)
+    if (parent) parent.children.push(node)
+    else root = node
+    stack.push(node)
+  }
+  if (root === undefined) throw new Error('Missing SVG')
+  return root
+}
+
 const Cases = Schema.Array(
   Schema.Struct({
     role: Schema.String,
@@ -64,31 +92,6 @@ interface Node {
   tag: string
   attributes: Record<string, string>
   children: Array<Node>
-}
-function parseSvg(markup: string): Node {
-  const stack: Array<Node> = []
-  let root: Node | undefined
-  for (const match of markup.matchAll(/<(\/?)([\w-]+)([^>]*)>/g)) {
-    if (match[1] === '/') {
-      stack.pop()
-      continue
-    }
-    const tag = match[2]
-    if (tag === undefined) throw new Error('Missing SVG tag')
-    const attributes = Object.fromEntries(
-      [...String(match[3]).matchAll(/([\w:-]+)="([^"]*)"/g)].map((entry) => [
-        String(entry[1]),
-        String(entry[2]),
-      ]),
-    )
-    const node: Node = { tag, attributes, children: [] }
-    const parent = stack.at(-1)
-    if (parent) parent.children.push(node)
-    else root = node
-    stack.push(node)
-  }
-  if (root === undefined) throw new Error('Missing SVG')
-  return root
 }
 test.effect(
   'all three native families preserve 63 latest roles, defaults, custom props and exact SVG trees',

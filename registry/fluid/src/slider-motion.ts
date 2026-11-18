@@ -109,6 +109,41 @@ export function createSliderMotionScope(id: string) {
     if (current) current.synchronize(state)
     else nodes.set(node.elm, mount(node.elm, state))
   }
+  const node: (this: void, vnode: Html, state: SliderModel) => Html = (
+    vnode: Html,
+    state: SliderModel,
+  ) => {
+    if (!active) throw new Error(`Slider motion ${id} requires its owning Layer`)
+
+    if (vnode === null) return null satisfies Html
+    const previous = vnode.data?.hook
+
+    return {
+      ...vnode,
+      data: {
+        ...vnode.data,
+        hook: {
+          ...previous,
+          insert(node) {
+            previous?.insert?.(node)
+            sync(node, state)
+          },
+          postpatch(oldNode, node) {
+            previous?.postpatch?.(oldNode, node)
+            sync(node, state)
+          },
+          destroy(node) {
+            if (node.elm instanceof HTMLElement) {
+              nodes.get(node.elm)?.dispose()
+              nodes.delete(node.elm)
+            }
+
+            previous?.destroy?.(node)
+          },
+        },
+      },
+    } satisfies Html
+  }
 
   return {
     layer: Layer.effectDiscard(
@@ -125,37 +160,6 @@ export function createSliderMotionScope(id: string) {
           }),
       ),
     ),
-    node(this: void, vnode: Html, state: SliderModel): Html {
-      if (!active) throw new Error(`Slider motion ${id} requires its owning Layer`)
-
-      if (vnode === null) return null
-      const previous = vnode.data?.hook
-
-      return {
-        ...vnode,
-        data: {
-          ...vnode.data,
-          hook: {
-            ...previous,
-            insert(node) {
-              previous?.insert?.(node)
-              sync(node, state)
-            },
-            postpatch(oldNode, node) {
-              previous?.postpatch?.(oldNode, node)
-              sync(node, state)
-            },
-            destroy(node) {
-              if (node.elm instanceof HTMLElement) {
-                nodes.get(node.elm)?.dispose()
-                nodes.delete(node.elm)
-              }
-
-              previous?.destroy?.(node)
-            },
-          },
-        },
-      }
-    },
+    node,
   }
 }

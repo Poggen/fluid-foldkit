@@ -29,7 +29,7 @@ export const moduleReferences = (file: string, text: string) => {
   const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true)
   const add = (node: ts.StringLiteralLike) =>
     references.push({ value: node.text, start: node.getStart(source) + 1, end: node.end - 1 })
-  const visit = (node: ts.Node): void => {
+  const visit: (node: ts.Node) => void = (node: ts.Node) => {
     if (
       (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) &&
       node.moduleSpecifier &&

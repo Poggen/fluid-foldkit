@@ -7,12 +7,15 @@ import {
 } from './configuration'
 import type { Control } from './control-definition'
 
-export const controlsFor = (page: ComponentPage): ReadonlyArray<Control> =>
+export const controlsFor: (page: ComponentPage) => ReadonlyArray<Control> = (
+  page: ComponentPage,
+) =>
   page.family === 'charts'
     ? chartControls(page)
     : controlsForConfiguration(configurationForPage(page))
-export const initialConfiguration = (page: ComponentPage): PlaygroundConfiguration =>
-  configurationForPage(page, page.family === 'charts' ? initialProps(page) : {})
+export const initialConfiguration: (page: ComponentPage) => PlaygroundConfiguration = (
+  page: ComponentPage,
+) => configurationForPage(page, page.family === 'charts' ? initialProps(page) : {})
 export const controlValue = (
   configuration: PlaygroundConfiguration,
   property: string,

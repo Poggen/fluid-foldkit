@@ -1,5 +1,5 @@
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import type { Html } from 'foldkit/html'
 import type {
   DataTableModel,
@@ -9,11 +9,15 @@ import type {
 import { dataTableColumns } from './data-table-state.js'
 import { TableCell, TableRow } from './table-parts.js'
 
-export function renderDataTableLoading(
+export const renderDataTableLoading: (
   model: DataTableModel,
   inputs: DataTableViewInputs,
   h: DataTableViewBuilder,
-): ReadonlyArray<Html> {
+) => ReadonlyArray<Html> = function renderDataTableLoading(
+  model: DataTableModel,
+  inputs: DataTableViewInputs,
+  h: DataTableViewBuilder,
+) {
   const columns = dataTableColumns(model)
   return Array.from({ length: model.pageSize }, (_, index) =>
     TableRow(

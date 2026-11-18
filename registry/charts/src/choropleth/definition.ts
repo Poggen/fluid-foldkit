@@ -1,4 +1,4 @@
-// Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT.
+/* @license Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT. */
 import { defineChart } from '@tanstack/charts/scene'
 import { geoShape } from '@tanstack/charts/geo'
 import type { ChartBounds, DomChartDefinition } from '@tanstack/charts'
@@ -55,9 +55,9 @@ interface DefinitionInput {
 }
 
 /** The chart definition: features geoShape, optional graticule layer, and the built-in tooltip (the hovered-feature highlight is an owned svg, highlight.ts). */
-export const createDefinition = (
+export const createDefinition: (
   input: DefinitionInput,
-): DomChartDefinition<ChoroplethFeature, number, number> => {
+) => DomChartDefinition<ChoroplethFeature, number, number> = (input: DefinitionInput) => {
   const {
     data,
     margin,
@@ -74,8 +74,9 @@ export const createDefinition = (
 
   const projectionOptions: ProjectionOptions = { center, k: 1, scale, translate, tx: 0, ty: 0 }
 
-  const projection = (context: { chart: ChartBounds }): GeoProjection => {
-    // The same chart area and options keep the projection and its per-feature geometry.
+  const projection: (context: { chart: ChartBounds }) => GeoProjection = (context: {
+    chart: ChartBounds
+  }) => {
     const { x, y, width, height } = context.chart
     const key = [x, y, width, height, center.join(), scale, translate?.join()].join('|')
 
@@ -86,7 +87,7 @@ export const createDefinition = (
     holder.projection = makeProjection(context.chart, projectionOptions)
     holder.projectionKey = key
     holder.chart = context.chart
-    // Hit-test geometry is built with the projection (load), not on the first hover moves.
+
     geometry.warm(data.features)
 
     return holder.projection
@@ -95,12 +96,11 @@ export const createDefinition = (
   const stroke = featureConfig?.stroke ?? 'var(--bkm-background)'
 
   const features = geoShape(data.features, {
-    // Documented geo `className` hook (reference/marks/geo.md): the CSS selects the group by class.
     className: 'bkm-choro-features',
     fill: (feature, context) => resolveFill(feature, context.index, featureConfig, patternPrefix),
     id: FEATURES_ID,
     key: featureKey,
-    // Source changes projected path props directly; only the feature-layer opacity enters.
+
     motion: false,
     projection,
     stroke,
@@ -130,7 +130,7 @@ export const createDefinition = (
     marks: [features, ...graticule],
     maxFocusDistance: 0,
     scales: { x: null, y: null },
-    // `portal`: the native placement without the per-paint size read (gap #21, kit/tooltip/sized-tooltip-placement.ts).
+
     tooltip: tooltipConfig
       ? {
           anchor: tooltipAnchor(holder, geometry),

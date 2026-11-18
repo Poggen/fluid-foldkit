@@ -5,30 +5,13 @@ import { renderPatternPreset } from '../kit/pattern/presets'
 import { patternResourceView, scopedPatternId } from '../kit/pattern/resources'
 import type { ChartBrushSelectionOverlayProps, ChartBrushTrackOverlayProps } from './options'
 
-export interface OverlayContext {
-  readonly mounted: boolean
-  readonly margin: Margin
-}
-
-const overlayClasses = 'absolute inset-0 z-[1] pointer-events-none'
-
-export function overlayBounds(
-  props: Pick<ChartBrushTrackOverlayProps, 'innerWidth' | 'selectionX0' | 'selectionX1'>,
-) {
-  const x0 = Math.max(0, Math.min(props.selectionX0, props.selectionX1, props.innerWidth))
-
-  const x1 = Math.max(
-    x0,
-    Math.min(Math.max(props.selectionX0, props.selectionX1), props.innerWidth),
-  )
-
-  return { x0, x1, rightWidth: Math.max(0, props.innerWidth - x1) }
-}
-
-export function ChartBrushTrackOverlay(
+export const ChartBrushTrackOverlay: (
   props: Readonly<ChartBrushTrackOverlayProps>,
   context: OverlayContext,
-): Html {
+) => Html = function ChartBrushTrackOverlay(
+  props: Readonly<ChartBrushTrackOverlayProps>,
+  context: OverlayContext,
+) {
   if (!context.mounted) {
     return h.empty
   }
@@ -78,11 +61,15 @@ export function ChartBrushTrackOverlay(
   )
 }
 
-export function ChartBrushSelectionOverlay(
+export const ChartBrushSelectionOverlay: (
   id: string,
   props: Readonly<ChartBrushSelectionOverlayProps>,
   context: OverlayContext,
-): Html {
+) => Html = function ChartBrushSelectionOverlay(
+  id: string,
+  props: Readonly<ChartBrushSelectionOverlayProps>,
+  context: OverlayContext,
+) {
   const { pattern } = props
 
   if (!context.mounted || pattern === undefined || pattern.preset === 'none') {
@@ -118,10 +105,13 @@ export function ChartBrushSelectionOverlay(
 }
 
 /** Visible pills stay above the blur; the brush's full-height SVG handles own hit testing. */
-export function ChartBrushHandleOverlay(
+export const ChartBrushHandleOverlay: (
   props: Readonly<Omit<ChartBrushSelectionOverlayProps, 'pattern'>>,
   context: OverlayContext,
-): Html {
+) => Html = function ChartBrushHandleOverlay(
+  props: Readonly<Omit<ChartBrushSelectionOverlayProps, 'pattern'>>,
+  context: OverlayContext,
+) {
   if (!context.mounted) {
     return h.empty
   }
@@ -144,4 +134,24 @@ export function ChartBrushHandleOverlay(
       ]),
     ),
   )
+}
+
+export interface OverlayContext {
+  readonly mounted: boolean
+  readonly margin: Margin
+}
+
+const overlayClasses = 'absolute inset-0 z-[1] pointer-events-none'
+
+export function overlayBounds(
+  props: Pick<ChartBrushTrackOverlayProps, 'innerWidth' | 'selectionX0' | 'selectionX1'>,
+) {
+  const x0 = Math.max(0, Math.min(props.selectionX0, props.selectionX1, props.innerWidth))
+
+  const x1 = Math.max(
+    x0,
+    Math.min(Math.max(props.selectionX0, props.selectionX1), props.innerWidth),
+  )
+
+  return { x0, x1, rightWidth: Math.max(0, props.innerWidth - x1) }
 }

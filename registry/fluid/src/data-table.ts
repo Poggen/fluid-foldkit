@@ -1,5 +1,5 @@
 import { FocusSearch } from './data-table-search-focus.js'
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
 import { Effect, Layer, Option } from 'effect'
 import { Update } from 'foldkit'
 import { DataTableBlock, Message } from './data-table-definition.js'

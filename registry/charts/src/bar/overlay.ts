@@ -7,6 +7,79 @@ import type { ChartTooltipProps } from '../cartesian/tooltip-options'
 import { barEndValues, barOverlayDots, memoBand } from './overlay-geometry'
 import { pillLayout } from '../cartesian/date-pill'
 
+export const barOverlay: <Row>(
+  props: BarChartProps<Row>,
+  datums: ReadonlyArray<BarDatum<Row>>,
+  categories: ReadonlyArray<string>,
+  series: ReadonlyArray<BarSeries>,
+  domain: readonly [number, number],
+  tip: ChartTooltipProps<Row>,
+) => HoverOverlayModel<Row> = function barOverlay<Row>(
+  props: BarChartProps<Row>,
+  datums: ReadonlyArray<BarDatum<Row>>,
+  categories: ReadonlyArray<string>,
+  series: ReadonlyArray<BarSeries>,
+  domain: readonly [number, number],
+  tip: ChartTooltipProps<Row>,
+) {
+  const springConfig = tip.springConfig ?? useChartConfig(props.environment).tooltipSpring
+
+  const crosshair =
+    tip.showCrosshair === false
+      ? null
+      : {
+          color: 'var(--chart-crosshair)',
+          dash: undefined,
+          width: 1,
+          fadeEdges: tip.indicatorFadeEdges ?? 'both',
+          fadeLength: tip.indicatorFadeLength ?? 10,
+        }
+
+  if (props.orientation === 'horizontal') {
+    const ends = barEndValues(datums, props.stacked === true)
+
+    return {
+      springConfig,
+      crosshair,
+      dots: [],
+      indexOf: (index) => index,
+      pill: null,
+      xOf: (index, plot) =>
+        (((ends.get(categories[index] ?? '') ?? Number.NaN) - domain[0]) /
+          (domain[1] - domain[0] || 1)) *
+        plot.innerWidth,
+    } satisfies HoverOverlayModel<Row>
+  }
+
+  const squares = new Map(
+    series.flatMap((item) =>
+      item.squares === undefined
+        ? []
+        : [
+            [
+              item.key,
+              {
+                gap: item.squares.squareGap ?? 3,
+                fit: item.squares.squareFit ?? false,
+                groupGap: item.squares.groupGap ?? 4,
+              },
+            ] satisfies [string, { gap: number; fit: boolean; groupGap: number }],
+          ],
+    ),
+  )
+
+  const bandFor = memoBand(categories, props.barGap ?? 0.2, props.barWidth)
+
+  return {
+    springConfig,
+    crosshair,
+    dots: verticalDots({ props, datums, categories, series, tip, squares }),
+    indexOf: (index) => index,
+    pill: { labels: categories, layout: pillLayout(categories, () => null) },
+    xOf: (index, plot) => bandFor(plot.innerWidth).centre(categories[index] ?? ''),
+  } satisfies HoverOverlayModel<Row>
+}
+
 function verticalDots<Row>(input: {
   readonly props: BarChartProps<Row>
   readonly datums: ReadonlyArray<BarDatum<Row>>
@@ -57,70 +130,4 @@ function verticalDots<Row>(input: {
   }
 
   return barOverlayDots(options)
-}
-
-export function barOverlay<Row>(
-  props: BarChartProps<Row>,
-  datums: ReadonlyArray<BarDatum<Row>>,
-  categories: ReadonlyArray<string>,
-  series: ReadonlyArray<BarSeries>,
-  domain: readonly [number, number],
-  tip: ChartTooltipProps<Row>,
-): HoverOverlayModel<Row> {
-  const springConfig = tip.springConfig ?? useChartConfig(props.environment).tooltipSpring
-
-  const crosshair =
-    tip.showCrosshair === false
-      ? null
-      : {
-          color: 'var(--chart-crosshair)',
-          dash: undefined,
-          width: 1,
-          fadeEdges: tip.indicatorFadeEdges ?? 'both',
-          fadeLength: tip.indicatorFadeLength ?? 10,
-        }
-
-  if (props.orientation === 'horizontal') {
-    const ends = barEndValues(datums, props.stacked === true)
-
-    return {
-      springConfig,
-      crosshair,
-      dots: [],
-      indexOf: (index) => index,
-      pill: null,
-      xOf: (index, plot) =>
-        (((ends.get(categories[index] ?? '') ?? Number.NaN) - domain[0]) /
-          (domain[1] - domain[0] || 1)) *
-        plot.innerWidth,
-    }
-  }
-
-  const squares = new Map(
-    series.flatMap((item) =>
-      item.squares === undefined
-        ? []
-        : [
-            [
-              item.key,
-              {
-                gap: item.squares.squareGap ?? 3,
-                fit: item.squares.squareFit ?? false,
-                groupGap: item.squares.groupGap ?? 4,
-              },
-            ] satisfies [string, { gap: number; fit: boolean; groupGap: number }],
-          ],
-    ),
-  )
-
-  const bandFor = memoBand(categories, props.barGap ?? 0.2, props.barWidth)
-
-  return {
-    springConfig,
-    crosshair,
-    dots: verticalDots({ props, datums, categories, series, tip, squares }),
-    indexOf: (index) => index,
-    pill: { labels: categories, layout: pillLayout(categories, () => null) },
-    xOf: (index, plot) => bandFor(plot.innerWidth).centre(categories[index] ?? ''),
-  }
 }

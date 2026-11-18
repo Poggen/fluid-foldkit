@@ -1,141 +1,10 @@
 import type { ChartGradient, ChartLinearGradient, ChartRadialGradient } from '@tanstack/charts'
 import { isNumber, leadingFloat } from './guards'
 
-export interface GradientChildStop {
-  readonly offset?: string | number
-  readonly stopColor?: string
-  readonly stopOpacity?: number
-}
-
-export type GradientCarrierRole =
-  | 'linearGradient'
-  | 'radialGradient'
-  | `gradientPreset:${PresetName}`
-  | 'customGradient'
-
-export interface GradientLayer {
-  readonly kind: 'gradient'
-  /** Omitted only for manually authored native resources, grouped as customGradient. */
-  readonly carrierRole?: GradientCarrierRole
-  readonly props: ChartGradient
-}
-
-type Length = string | number
-
-/** A color stop of a gradient. */
-export interface GradientStop {
-  /** Position along the gradient from 0 to 1. */
-  readonly offset: number
-  /** Color at that position. */
-  readonly color: string
-}
-
-interface GradientOwnProps {
-  /** Id of the gradient, referenced as `url(#id)`. */
-  readonly id: string
-  /**
-   * Color at the start of the gradient.
-   * @default "currentColor"
-   */
-  readonly from?: string
-  /**
-   * Color at the end of the gradient.
-   * @default "currentColor"
-   */
-  readonly to?: string
-  /**
-   * Position of the start color, as a fraction (`0.2`) or a percentage (`"20%"`).
-   * @default 0
-   */
-  readonly fromOffset?: Length
-  /**
-   * Position of the end color, as a fraction or a percentage.
-   * @default 1
-   */
-  readonly toOffset?: Length
-  /**
-   * Opacity of the start color from 0 to 1.
-   * @default 1
-   */
-  readonly fromOpacity?: Length
-  /**
-   * Opacity of the end color from 0 to 1.
-   * @default 1
-   */
-  readonly toOpacity?: Length
-  /** Rotates the gradient direction by this many degrees. */
-  readonly rotate?: number | string
-  /** An SVG transform string. Only `rotate(angle)` is applied, and it takes precedence over `rotate`. */
-  readonly transform?: string
-  /** `<stop>` elements. When present they replace `from` and `to`. */
-  readonly children?: ReadonlyArray<GradientChildStop>
-  /** Native replacement for accepted-but-ignored inherited SVG attributes. */
-  readonly svgAttributes?: Readonly<Record<string, string | number | boolean>>
-}
-
-interface LinearGradientOwnProps extends GradientOwnProps {
-  /**
-   * Start x of the gradient vector, as a fraction or a percentage.
-   * @default 0
-   */
-  readonly x1?: Length
-  /**
-   * Start y of the gradient vector.
-   * @default 0
-   */
-  readonly y1?: Length
-  /**
-   * End x of the gradient vector.
-   * @default 1
-   */
-  readonly x2?: Length
-  /**
-   * End y of the gradient vector.
-   * @default 0
-   */
-  readonly y2?: Length
-  /**
-   * Run the gradient from top to bottom. Ignored when any of `x1`, `y1`, `x2`, `y2` is set to a non-zero value.
-   * @default true
-   */
-  readonly vertical?: boolean
-}
-
-/**
- * Props of `LinearGradient`: the gradient options below plus any SVG `linearGradient` attribute. Attributes without a chart equivalent are accepted and ignored.
- */
-// bklit's visx gradients pass every other SVG attribute through; the carriers accept them and ignore what has no native equivalent.
-export type LinearGradientProps = LinearGradientOwnProps
-
-interface RadialGradientOwnProps extends GradientOwnProps {
-  /**
-   * Center x of the outer circle, as a fraction or a percentage.
-   * @default 0.5
-   */
-  readonly cx?: Length
-  /**
-   * Center y of the outer circle.
-   * @default 0.5
-   */
-  readonly cy?: Length
-  /**
-   * Radius of the outer circle.
-   * @default 0.5
-   */
-  readonly r?: Length
-  /** Focal point x. The focal point is the center when omitted. */
-  readonly fx?: Length
-  /** Focal point y. The focal point is the center when omitted. */
-  readonly fy?: Length
-}
-
-/**
- * Props of `RadialGradient`: the gradient options below plus any SVG `radialGradient` attribute. Attributes without a chart equivalent are accepted and ignored.
- */
-export type RadialGradientProps = RadialGradientOwnProps
-
-/** "50%" -> 0.5, "0.25" -> 0.25, 1 -> 1. Undefined/NaN -> fallback. */
-function unit(value: Length | undefined, fallback: number): number {
+const unit: (value: Length | undefined, fallback: number) => number = function unit(
+  value: Length | undefined,
+  fallback: number,
+) {
   if (value === undefined) {
     return fallback
   }
@@ -154,16 +23,13 @@ function unit(value: Length | undefined, fallback: number): number {
   return trimmed.endsWith('%') ? parsed / 100 : parsed
 }
 
-interface AuthoredStop {
-  offset: number
-  color: string
-  opacity?: number
-}
-
-function stopsOf(
+const stopsOf: (
   props: GradientOwnProps,
   defaults?: readonly [string, string],
-): ChartGradient['stops'] {
+) => ChartGradient['stops'] = function stopsOf(
+  props: GradientOwnProps,
+  defaults?: readonly [string, string],
+) {
   const authored: Array<AuthoredStop> = []
 
   for (const child of props.children ?? []) {
@@ -198,8 +64,9 @@ function stopsOf(
   ]
 }
 
-/** visx: `transform` overrides `rotate`; only `rotate(a)` maps onto the native gradient vector. */
-function rotationOf(props: GradientOwnProps): number {
+const rotationOf: (props: GradientOwnProps) => number = function rotationOf(
+  props: GradientOwnProps,
+) {
   const raw =
     props.transform === undefined
       ? props.rotate
@@ -208,16 +75,20 @@ function rotationOf(props: GradientOwnProps): number {
   return raw === undefined ? 0 : Number(raw)
 }
 
-function rotateAboutOrigin(x: number, y: number, degrees: number): [number, number] {
-  const a = (degrees * Math.PI) / 180
+const rotateAboutOrigin: (x: number, y: number, degrees: number) => [number, number] =
+  function rotateAboutOrigin(x: number, y: number, degrees: number) {
+    const a = (degrees * Math.PI) / 180
 
-  return [x * Math.cos(a) - y * Math.sin(a), x * Math.sin(a) + y * Math.cos(a)]
-}
+    return [x * Math.cos(a) - y * Math.sin(a), x * Math.sin(a) + y * Math.cos(a)]
+  }
 
-function linear(
+const linear: (
   props: LinearGradientProps,
   defaults?: readonly [string, string],
-): ChartLinearGradient {
+) => ChartLinearGradient = function linear(
+  props: LinearGradientProps,
+  defaults?: readonly [string, string],
+) {
   const explicit = [props.x1, props.y1, props.x2, props.y2].some(
     (v) => v !== undefined && v !== 0 && v !== '0',
   )
@@ -237,7 +108,9 @@ function linear(
   return { id: props.id, type: 'linear', x1, y1, x2, y2, stops: stopsOf(props, defaults) }
 }
 
-function radial(props: RadialGradientProps): ChartRadialGradient {
+const radial: (props: RadialGradientProps) => ChartRadialGradient = function radial(
+  props: RadialGradientProps,
+) {
   const gradient: ChartRadialGradient = {
     id: props.id,
     type: 'radial',
@@ -258,10 +131,147 @@ function radial(props: RadialGradientProps): ChartRadialGradient {
   return gradient
 }
 
+/** Source ChildTable order: first carrier role, then declarations within that role. */
+export const userGradients: (children: ReadonlyArray<GradientLayer>) => Array<ChartGradient> =
+  function userGradients(children: ReadonlyArray<GradientLayer>) {
+    const roles = new Map<GradientCarrierRole, Array<ChartGradient>>()
+
+    for (const child of children) {
+      const role = child.carrierRole ?? 'customGradient'
+      const existing = roles.get(role)
+
+      if (existing === undefined) {
+        roles.set(role, [child.props])
+      } else {
+        existing.push(child.props)
+      }
+    }
+
+    return [...roles.values()].flat()
+  }
+
+export interface GradientChildStop {
+  readonly offset?: string | number
+  readonly stopColor?: string
+  readonly stopOpacity?: number
+}
+
+export type GradientCarrierRole =
+  | 'linearGradient'
+  | 'radialGradient'
+  | `gradientPreset:${PresetName}`
+  | 'customGradient'
+
+export interface GradientLayer {
+  readonly kind: 'gradient'
+  /** Omitted only for manually authored native resources, grouped as customGradient. */
+  readonly carrierRole?: GradientCarrierRole
+  readonly props: ChartGradient
+}
+
+type Length = string | number
+
+/** A color stop of a gradient. */
+export interface GradientStop {
+  /** Position along the gradient from 0 to 1. */
+  readonly offset: number
+  /** Color at that position. */
+  readonly color: string
+}
+
+interface GradientOwnProps {
+  readonly id: string
+
+  readonly from?: string
+
+  readonly to?: string
+
+  readonly fromOffset?: Length
+
+  readonly toOffset?: Length
+
+  readonly fromOpacity?: Length
+
+  readonly toOpacity?: Length
+
+  readonly rotate?: number | string
+
+  readonly transform?: string
+
+  readonly children?: ReadonlyArray<GradientChildStop>
+
+  readonly svgAttributes?: Readonly<Record<string, string | number | boolean>>
+}
+
+interface LinearGradientOwnProps extends GradientOwnProps {
+  /**
+   * Start x of the gradient vector, as a fraction or a percentage.
+   * @default 0
+   */
+  readonly x1?: Length
+  /**
+   * Start y of the gradient vector.
+   * @default 0
+   */
+  readonly y1?: Length
+  /**
+   * End x of the gradient vector.
+   * @default 1
+   */
+  readonly x2?: Length
+  /**
+   * End y of the gradient vector.
+   * @default 0
+   */
+  readonly y2?: Length
+  /**
+   * Run the gradient from top to bottom. Ignored when any of `x1`, `y1`, `x2`, `y2` is set to a non-zero value.
+   * @default true
+   */
+  readonly vertical?: boolean
+}
+
+export type LinearGradientProps = LinearGradientOwnProps
+
+interface RadialGradientOwnProps extends GradientOwnProps {
+  /**
+   * Center x of the outer circle, as a fraction or a percentage.
+   * @default 0.5
+   */
+  readonly cx?: Length
+  /**
+   * Center y of the outer circle.
+   * @default 0.5
+   */
+  readonly cy?: Length
+  /**
+   * Radius of the outer circle.
+   * @default 0.5
+   */
+  readonly r?: Length
+  /** Focal point x. The focal point is the center when omitted. */
+  readonly fx?: Length
+  /** Focal point y. The focal point is the center when omitted. */
+  readonly fy?: Length
+}
+
+/**
+ * Props of `RadialGradient`: the gradient options below plus any SVG `radialGradient` attribute. Attributes without a chart equivalent are accepted and ignored.
+ */
+export type RadialGradientProps = RadialGradientOwnProps
+
+interface AuthoredStop {
+  offset: number
+  color: string
+  opacity?: number
+}
+
 /**
  * Declares a linear gradient that chart elements reference as `fill="url(#id)"`. Place it as a child of the chart. It renders nothing itself.
  */
-export const LinearGradient = (props: LinearGradientProps): GradientLayer => ({
+export const LinearGradient: (props: LinearGradientProps) => GradientLayer = (
+  props: LinearGradientProps,
+) => ({
   kind: 'gradient',
   carrierRole: 'linearGradient',
   props: linear(props),
@@ -270,13 +280,14 @@ export const LinearGradient = (props: LinearGradientProps): GradientLayer => ({
 /**
  * Declares a radial gradient that chart elements reference as `fill="url(#id)"`. Place it as a child of the chart. It renders nothing itself.
  */
-export const RadialGradient = (props: RadialGradientProps): GradientLayer => ({
+export const RadialGradient: (props: RadialGradientProps) => GradientLayer = (
+  props: RadialGradientProps,
+) => ({
   kind: 'gradient',
   carrierRole: 'radialGradient',
   props: radial(props),
 })
 
-/** Fixed two-stop linear presets, colors copied from @visx/gradient. */
 const PRESETS: Record<
   | 'GradientDarkgreenGreen'
   | 'GradientLightgreenGreen'
@@ -302,14 +313,12 @@ const PRESETS: Record<
 
 type PresetName = keyof typeof PRESETS
 
-// The visx preset components accept every LinearGradient prop; from/to are optional.
-const preset =
-  (name: PresetName) =>
-  (props: LinearGradientProps): GradientLayer => ({
+const preset = (name: PresetName) => (props: LinearGradientProps) =>
+  ({
     kind: 'gradient',
     carrierRole: `gradientPreset:${name}`,
     props: linear(props, PRESETS[name]),
-  })
+  }) satisfies GradientLayer
 
 /**
  * Two-stop linear gradient preset from dark blue (#184E86) to green (#57CA85). Reference it as `fill="url(#your-id)"`. Accepts the `LinearGradient` props, and `from` / `to` override the preset colors.
@@ -373,21 +382,3 @@ export const GradientSteelPurple =
 export const GradientTealBlue =
   // @__PURE__
   preset('GradientTealBlue')
-
-/** Source ChildTable order: first carrier role, then declarations within that role. */
-export function userGradients(children: ReadonlyArray<GradientLayer>): Array<ChartGradient> {
-  const roles = new Map<GradientCarrierRole, Array<ChartGradient>>()
-
-  for (const child of children) {
-    const role = child.carrierRole ?? 'customGradient'
-    const existing = roles.get(role)
-
-    if (existing === undefined) {
-      roles.set(role, [child.props])
-    } else {
-      existing.push(child.props)
-    }
-  }
-
-  return [...roles.values()].flat()
-}

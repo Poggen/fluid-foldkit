@@ -14,7 +14,7 @@ import {
   ColorPickerPopoverBlock,
   layer as ColorPickerPopoverLayer,
 } from '@foldkit-visuals/fluid/color-picker-popover'
-// Derived from Fluid Functionalism cc276ca0 ColorPicker docs. MIT.
+/* @license Derived from Fluid Functionalism cc276ca0 ColorPicker docs. MIT. */
 import { Layer, Option, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { initAndInsert } from 'foldkit/binding'

@@ -1,5 +1,3 @@
-// Layer compositor for a mark-level `renderer`: stacks the host renderer's layers and the mark layers in scene order (UPSTREAM-GAPS #51: only the Canvas module exports one).
-// Covers what ring and sunburst use: no custom focus-guide renderers.
 import type {
   ChartLayerRenderer,
   ChartValue,
@@ -36,19 +34,29 @@ interface Layer<Datum = RingArcRow, X extends ChartValue = number, Y extends Cha
   nodes: Array<SceneNode>
 }
 
-const escapeAttribute = (value: string): string =>
+const escapeAttribute: (value: string) => string = (value: string) =>
   value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
 
-/** Scene nodes grouped into consecutive runs by renderer; a group holding custom-rendered children is split, each run keeping the group wrapper. */
-const splitLayers = <Datum, X extends ChartValue, Y extends ChartValue>(
+const splitLayers: <Datum, X extends ChartValue, Y extends ChartValue>(
   nodes: ReadonlyArray<SceneNode>,
   defaultRenderer: Renderer<Datum, X, Y>,
   customRenderer: ChartLayerRenderer<Datum, X, Y>,
-): { layers: Array<Layer<Datum, X, Y>>; custom: boolean } => {
+) => { layers: Array<Layer<Datum, X, Y>>; custom: boolean } = <
+  Datum,
+  X extends ChartValue,
+  Y extends ChartValue,
+>(
+  nodes: ReadonlyArray<SceneNode>,
+  defaultRenderer: Renderer<Datum, X, Y>,
+  customRenderer: ChartLayerRenderer<Datum, X, Y>,
+) => {
   const layers: Array<Layer<Datum, X, Y>> = []
   let custom = false
 
-  const append = (renderer: Renderer<Datum, X, Y>, next: Array<SceneNode>): void => {
+  const append: (renderer: Renderer<Datum, X, Y>, next: Array<SceneNode>) => void = (
+    renderer: Renderer<Datum, X, Y>,
+    next: Array<SceneNode>,
+  ) => {
     const previous = layers.at(-1)
 
     if (previous?.renderer === renderer) {
@@ -81,15 +89,22 @@ const splitLayers = <Datum, X extends ChartValue, Y extends ChartValue>(
     }
   }
 
-  return { custom, layers }
+  return { custom, layers } satisfies { layers: Array<Layer<Datum, X, Y>>; custom: boolean }
 }
 
-/** The host layer first and last, so the host's focus guides and hit surface sit on top of the custom layers. */
-const renderLayers = <Datum, X extends ChartValue, Y extends ChartValue>(
+const renderLayers: <Datum, X extends ChartValue, Y extends ChartValue>(
   scene: Scene<Datum, X, Y>,
   defaultRenderer: Renderer<Datum, X, Y>,
   customRenderer: ChartLayerRenderer<Datum, X, Y>,
-): Array<Layer<Datum, X, Y> & { guides?: Scene<Datum, X, Y>['focusGuides'] }> => {
+) => Array<Layer<Datum, X, Y> & { guides?: Scene<Datum, X, Y>['focusGuides'] }> = <
+  Datum,
+  X extends ChartValue,
+  Y extends ChartValue,
+>(
+  scene: Scene<Datum, X, Y>,
+  defaultRenderer: Renderer<Datum, X, Y>,
+  customRenderer: ChartLayerRenderer<Datum, X, Y>,
+) => {
   const layers: Array<Layer<Datum, X, Y> & { guides?: Scene<Datum, X, Y>['focusGuides'] }> =
     splitLayers(scene.nodes, defaultRenderer, customRenderer).layers
 
@@ -107,14 +122,18 @@ const renderLayers = <Datum, X extends ChartValue, Y extends ChartValue>(
     top.guides = scene.focusGuides
   }
 
-  return layers
+  return layers satisfies Array<Layer<Datum, X, Y> & { guides?: Scene<Datum, X, Y>['focusGuides'] }>
 }
 
-const layerScene = <Datum, X extends ChartValue, Y extends ChartValue>(
+const layerScene: <Datum, X extends ChartValue, Y extends ChartValue>(
   scene: Scene<Datum, X, Y>,
   layer: Layer<Datum, X, Y> & { guides?: Scene<Datum, X, Y>['focusGuides'] },
   index: number,
-): Scene<Datum, X, Y> => {
+) => Scene<Datum, X, Y> = <Datum, X extends ChartValue, Y extends ChartValue>(
+  scene: Scene<Datum, X, Y>,
+  layer: Layer<Datum, X, Y> & { guides?: Scene<Datum, X, Y>['focusGuides'] },
+  index: number,
+) => {
   const { focusGuides: _guides, ...base } = scene
 
   return {
@@ -122,14 +141,18 @@ const layerScene = <Datum, X extends ChartValue, Y extends ChartValue>(
     ...(layer.guides === undefined ? {} : { focusGuides: layer.guides }),
     nodes: layer.nodes,
     theme: index === 0 ? scene.theme : { ...scene.theme, background: 'transparent' },
-  }
+  } satisfies Scene<Datum, X, Y>
 }
 
-const layerOptions = (
+const layerOptions: (
   options: ChartSurfaceRenderOptions,
   index: number,
   animate: boolean,
-): ChartSurfaceRenderOptions => {
+) => ChartSurfaceRenderOptions = (
+  options: ChartSurfaceRenderOptions,
+  index: number,
+  animate: boolean,
+) => {
   const { animation, className: _className, ...base } = options
 
   return {
@@ -144,20 +167,27 @@ const LAYER_CLASSES = 'ts-chart-layer absolute inset-0 w-full h-full pointer-eve
 
 const ROOT_CLASSES = 'ts-chart ts-chart-layers block relative w-full h-full overflow-visible'
 
-export const composeLayers = <
+export const composeLayers: <
   Datum = RingArcRow,
   X extends ChartValue = number,
   Y extends ChartValue = number,
 >(
   defaultRenderer: Renderer<Datum, X, Y>,
   customRenderer: ChartLayerRenderer<Datum, X, Y>,
-): Renderer<Datum, X, Y> => {
+) => Renderer<Datum, X, Y> = <
+  Datum = RingArcRow,
+  X extends ChartValue = number,
+  Y extends ChartValue = number,
+>(
+  defaultRenderer: Renderer<Datum, X, Y>,
+  customRenderer: ChartLayerRenderer<Datum, X, Y>,
+) => {
   const renderer: Renderer<Datum, X, Y> = {
     ...(defaultRenderer.capabilities === undefined
       ? {}
       : { capabilities: defaultRenderer.capabilities }),
     id: `layers:${defaultRenderer.id}`,
-    mount: (container, requestRender): Surface<Datum, X, Y> => {
+    mount: (container, requestRender) => {
       const root =
         container.querySelector<HTMLElement>(':scope > .ts-chart-layers') ??
         container.ownerDocument.createElement('div')
@@ -176,10 +206,13 @@ export const composeLayers = <
       let current: Scene<Datum, X, Y> | undefined
       let destroyed = false
 
-      const defaultSurface = (): Surface<Datum, X, Y> | undefined =>
+      const defaultSurface: () => Surface<Datum, X, Y> | undefined = () =>
         mounted.findLast((layer) => layer.renderer === defaultRenderer)?.surface
 
-      const mountAll = (layers: Array<Layer<Datum, X, Y>>, adopt: boolean): void => {
+      const mountAll: (layers: Array<Layer<Datum, X, Y>>, adopt: boolean) => void = (
+        layers: Array<Layer<Datum, X, Y>>,
+        adopt: boolean,
+      ) => {
         const existing = [...root.querySelectorAll<HTMLElement>(':scope > .ts-chart-layer')]
         const canAdopt = adopt && existing.length === layers.length
 
@@ -213,7 +246,7 @@ export const composeLayers = <
                 y: ((clientY - bounds.top) / bounds.height) * scene.height,
               }
         },
-        destroy: (): void => {
+        destroy: () => {
           if (destroyed) {
             return
           }
@@ -251,7 +284,7 @@ export const composeLayers = <
 
           return presented ? { ...current, nodes } : undefined
         },
-        render: (scene, options): void => {
+        render: (scene, options) => {
           if (destroyed) {
             return
           }
@@ -309,16 +342,16 @@ export const composeLayers = <
         subscribePresentationPoints: (listener) => {
           listeners.add(listener)
 
-          return (): void => {
+          return () => {
             listeners.delete(listener)
           }
         },
         supportsStateFocus: true,
       }
 
-      return surface
+      return surface satisfies Surface<Datum, X, Y>
     },
-    prerender: (scene, options: RenderChartOptions): string => {
+    prerender: (scene, options: RenderChartOptions) => {
       const className = options.className ? `${ROOT_CLASSES} ${options.className}` : ROOT_CLASSES
 
       const description = options.ariaDescription
@@ -337,9 +370,9 @@ export const composeLayers = <
         return `<div class="${LAYER_CLASSES}" data-ts-chart-layer="${index}" aria-hidden="true">${inner}</div>`
       })
 
-      return `<div class="${escapeAttribute(className)}" role="img" aria-roledescription="chart" aria-label="${escapeAttribute(options.ariaLabel)}"${description} tabindex="${options.tabIndex ?? 0}" data-ts-chart-width="${Math.round(scene.width)}" data-ts-chart-height="${Math.round(scene.height)}">${layers.join('')}</div>`
+      return `<div class="${escapeAttribute(className)}" role="img" aria-roledescription="chart" aria-label="${escapeAttribute(options.ariaLabel)}"${description} tabindex="${options.tabIndex ?? 0}" data-ts-chart-width="${Math.round(scene.width)}" data-ts-chart-height="${Math.round(scene.height)}">${layers.join('')}</div>` satisfies string
     },
   }
 
-  return renderer
+  return renderer satisfies Renderer<Datum, X, Y>
 }

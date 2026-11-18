@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { modifyFields } from 'foldkit/struct'
 import { Checkbox } from '@foldkit/ui'
 import { Data, Effect, Function, Option, Predicate, Queue, Schema, Stream } from 'effect'
@@ -21,10 +21,15 @@ const Mark = Schema.Union([
   Schema.TaggedStruct('Exiting', { glyph: Glyph, generation: Schema.Natural }),
 ])
 type Mark = typeof Mark.Type
-const glyphFor = (checked: boolean, indeterminate: boolean): Glyph | undefined =>
-  indeterminate ? 'dash' : checked ? 'check' : undefined
+const glyphFor: (checked: boolean, indeterminate: boolean) => Glyph | undefined = (
+  checked: boolean,
+  indeterminate: boolean,
+) => (indeterminate ? 'dash' : checked ? 'check' : undefined)
 
-const configureMark = (mark: Mark, glyph: Glyph | undefined): Mark => {
+const configureMark: (mark: Mark, glyph: Glyph | undefined) => Mark = (
+  mark: Mark,
+  glyph: Glyph | undefined,
+) => {
   if (glyph !== undefined) {
     return mark._tag === 'Present' && mark.glyph === glyph
       ? mark

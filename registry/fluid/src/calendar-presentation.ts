@@ -1,4 +1,4 @@
-// Fluid calendar 200b4534, MIT. Pure geometry; the Calendar Block owns its lifetime.
+/* @license Fluid calendar 200b4534, MIT. Pure geometry; the Calendar Block owns its lifetime. */
 import { localDate } from './calendar-domain/date-boundary.js'
 import type { TargetMotionOptions } from './motion-target.js'
 import { spring } from './lib/springs.js'
@@ -7,9 +7,51 @@ import type { Matcher } from './calendar-domain/matcher-types.js'
 import { dayNumber } from './calendar-domain/rules.js'
 import { restoreDate, Selection } from './calendar-state.js'
 
-function addDays(date: Date, days: number): Date {
+const addDays: (date: Date, days: number) => Date = function addDays(date: Date, days: number) {
   return localDate(date.getFullYear(), date.getMonth(), date.getDate() + days)
 }
+
+export const calendarSlide: (options: {
+  readonly direction: number
+  readonly stride: number | null
+  readonly stacked: boolean
+  readonly single: boolean
+  readonly reduceMotion: boolean
+  readonly present: boolean
+}) => TargetMotionOptions = function calendarSlide(options: {
+  readonly direction: number
+  readonly stride: number | null
+  readonly stacked: boolean
+  readonly single: boolean
+  readonly reduceMotion: boolean
+  readonly present: boolean
+}) {
+  const offset = options.reduceMotion ? 0 : 10
+  const carousel = options.stride !== null && offset > 0
+
+  const strideScale = options.single ? 3 : 1
+  const strideDistance = options.stride === null ? offset : options.stride / strideScale
+  const distance = carousel ? strideDistance : offset
+
+  const solid = carousel && !options.single
+  const at = (value: number) => (options.stacked ? { y: value } : { x: value })
+
+  return {
+    initial: { opacity: solid ? 1 : 0, ...at(options.direction * distance) },
+    animate: { opacity: 1, x: 0, y: 0, transition: spring.moderate },
+    exit: {
+      opacity: solid ? 1 : 0,
+      ...at(-options.direction * distance),
+      transition: carousel ? spring.moderate : spring.moderate.exit,
+    },
+    present: options.present,
+  }
+}
+
+export const calendarFits: (width: number, cellSize: number, showWeekNumber: boolean) => boolean =
+  function calendarFits(width: number, cellSize: number, showWeekNumber: boolean) {
+    return width >= (7 + (showWeekNumber ? 0.75 : 0)) * cellSize * 2 + 24 + 16
+  }
 
 export interface Band {
   readonly from: number
@@ -26,8 +68,7 @@ function previewBand(
 ) {
   let band: Band | null = null
   let previewEnd: number | null = null
-  // Fluid preview deliberately uses local addDays/default matcher arithmetic,
-  // independent of the injected DayPicker dateLib used for actual selection.
+
   const preview = firstDay && activeIndex !== null ? addDays(firstDay, activeIndex) : undefined
 
   if (from) {
@@ -123,38 +164,4 @@ export function calendarBandSlice(input: {
     borderTopRightRadius: corner(right, atRight(n - 7)),
     borderBottomRightRadius: corner(right, atRight(n + 7)),
   }
-}
-
-export function calendarSlide(options: {
-  readonly direction: number
-  readonly stride: number | null
-  readonly stacked: boolean
-  readonly single: boolean
-  readonly reduceMotion: boolean
-  readonly present: boolean
-}): TargetMotionOptions {
-  const offset = options.reduceMotion ? 0 : 10
-  const carousel = options.stride !== null && offset > 0
-
-  const strideScale = options.single ? 3 : 1
-  const strideDistance = options.stride === null ? offset : options.stride / strideScale
-  const distance = carousel ? strideDistance : offset
-
-  const solid = carousel && !options.single
-  const at = (value: number) => (options.stacked ? { y: value } : { x: value })
-
-  return {
-    initial: { opacity: solid ? 1 : 0, ...at(options.direction * distance) },
-    animate: { opacity: 1, x: 0, y: 0, transition: spring.moderate },
-    exit: {
-      opacity: solid ? 1 : 0,
-      ...at(-options.direction * distance),
-      transition: carousel ? spring.moderate : spring.moderate.exit,
-    },
-    present: options.present,
-  }
-}
-
-export function calendarFits(width: number, cellSize: number, showWeekNumber: boolean): boolean {
-  return width >= (7 + (showWeekNumber ? 0.75 : 0)) * cellSize * 2 + 24 + 16
 }

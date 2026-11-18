@@ -3,26 +3,30 @@ import type { DataTableModel, DataTableRow, DataTableView } from './data-table-d
 import { Message, OutMessage } from './data-table-definition.js'
 import { dataTableRows, dataTableFilteredRows, reconcileDataTable } from './data-table-state.js'
 
-function applySavedView(model: DataTableModel, view: DataTableView): DataTableModel {
-  const { search, sorting, filters, hiddenColumns, columnOrder } = view
-  return reconcileDataTable({
-    ...model,
-    search,
-    sorting,
-    filters,
-    hiddenColumns,
-    columnOrder,
-    activeViewId: Option.some(view.id),
-    pageIndex: 0,
-  })
-}
+const applySavedView: (model: DataTableModel, view: DataTableView) => DataTableModel =
+  function applySavedView(model: DataTableModel, view: DataTableView) {
+    const { search, sorting, filters, hiddenColumns, columnOrder } = view
+    return reconcileDataTable({
+      ...model,
+      search,
+      sorting,
+      filters,
+      hiddenColumns,
+      columnOrder,
+      activeViewId: Option.some(view.id),
+      pageIndex: 0,
+    })
+  }
 
 const snapshot = (model: DataTableModel) => ({
   rows: model.rows,
   selectedIds: model.selectedIds,
   focusedCell: model.focusedCell,
 })
-const changedRows = (model: DataTableModel, rows: ReadonlyArray<DataTableRow>): DataTableModel =>
+const changedRows: (model: DataTableModel, rows: ReadonlyArray<DataTableRow>) => DataTableModel = (
+  model: DataTableModel,
+  rows: ReadonlyArray<DataTableRow>,
+) =>
   reconcileDataTable({
     ...model,
     rows,
@@ -516,13 +520,14 @@ function dataTableMoveRows(
   }
 }
 
-function descendants(model: DataTableModel, roots: ReadonlyArray<string>): ReadonlyArray<string> {
-  const ids = new Set(roots)
-  let count = -1
-  while (count !== ids.size) {
-    count = ids.size
-    for (const row of model.rows)
-      if (row.parentId !== undefined && ids.has(row.parentId)) ids.add(row.id)
+const descendants: (model: DataTableModel, roots: ReadonlyArray<string>) => ReadonlyArray<string> =
+  function descendants(model: DataTableModel, roots: ReadonlyArray<string>) {
+    const ids = new Set(roots)
+    let count = -1
+    while (count !== ids.size) {
+      count = ids.size
+      for (const row of model.rows)
+        if (row.parentId !== undefined && ids.has(row.parentId)) ids.add(row.id)
+    }
+    return model.rows.filter((row) => ids.has(row.id)).map((row) => row.id)
   }
-  return model.rows.filter((row) => ids.has(row.id)).map((row) => row.id)
-}

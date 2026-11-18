@@ -51,7 +51,7 @@ export function createCarouselProgress() {
     }
   }
 
-  const resource = (snapshot: CarouselPaint): MotionResource => {
+  const resource: (snapshot: CarouselPaint) => MotionResource = (snapshot: CarouselPaint) => {
     let record = records.get(snapshot.id)
     if (record === undefined) {
       record = { latest: snapshot, key: {}, keySnapshot: snapshot, bindings: new Set() }

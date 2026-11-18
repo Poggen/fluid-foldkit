@@ -1,9 +1,13 @@
 /** The shared measuring canvas context with `font` set, or null where there is no document (SSR). */
-export const fontContext = (
+export const fontContext: (
   fontSize: number,
   fontWeight: number,
   fontFamily: string,
-): CanvasRenderingContext2D | null => {
+) => CanvasRenderingContext2D | null = (
+  fontSize: number,
+  fontWeight: number,
+  fontFamily: string,
+) => {
   const canvasContext =
     typeof document === 'undefined' ? null : document.createElement('canvas').getContext('2d')
 
@@ -15,12 +19,18 @@ export const fontContext = (
 }
 
 /** Canvas text width; without a canvas, `length * fontSize * fallbackRatio`. */
-export const textWidth = (
+export const textWidth: (
   value: string,
   fontSize: number,
   fontWeight: number,
   fontFamily: string,
   fallbackRatio: number,
-): number =>
+) => number = (
+  value: string,
+  fontSize: number,
+  fontWeight: number,
+  fontFamily: string,
+  fallbackRatio: number,
+) =>
   fontContext(fontSize, fontWeight, fontFamily)?.measureText(value).width ??
   value.length * fontSize * fallbackRatio

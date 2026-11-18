@@ -12,6 +12,87 @@ import {
   type DatePickerInitialControls,
   type DatePickerState,
 } from './date-picker-state.js'
+
+export const pickerCalendarPresentation: (
+  state: DatePickerState,
+  presentation: DatePickerPresentation,
+) => CalendarPresentation = function pickerCalendarPresentation(
+  state: DatePickerState,
+  presentation: DatePickerPresentation,
+) {
+  const numberOfMonths = presentation.numberOfMonths ?? (state.mode === 'range' ? 2 : 1)
+
+  return {
+    ...(presentation.hoverMode === undefined ? {} : { hoverMode: presentation.hoverMode }),
+    numberOfMonths,
+    showWeekNumber: presentation.showWeekNumber,
+    orientation:
+      numberOfMonths === 1
+        ? 'auto'
+        : presentation.orientation === 'auto'
+          ? state.layout
+          : presentation.orientation,
+  }
+}
+
+export const calendarControl: (
+  state: DatePickerState,
+  presentation: DatePickerPresentation,
+) => typeof SelectionControl.Type = function calendarControl(
+  state: DatePickerState,
+  presentation: DatePickerPresentation,
+) {
+  return {
+    mode: state.mode,
+    controlled: true,
+    selected: state.draft ?? state.value,
+    required: state.mode === 'single' || presentation.required,
+    min: presentation.min,
+    max: presentation.max,
+  }
+}
+
+export const pickerOpening: (
+  state: DatePickerState,
+  presentation: DatePickerPresentation,
+  now: number,
+  viewportWidth: number | null,
+) => DatePickerOpening = function pickerOpening(
+  state: DatePickerState,
+  presentation: DatePickerPresentation,
+  now: number,
+  viewportWidth: number | null,
+) {
+  return {
+    now,
+    viewportWidth,
+    orientation: presentation.orientation,
+    numberOfMonths: presentation.numberOfMonths ?? (state.mode === 'range' ? 2 : 1),
+    cellSize: presentation.cellSize ?? (presentation.compact ? 32 : 36),
+    showWeekNumber: presentation.showWeekNumber,
+    presetsCount: state.mode === 'range' ? presentation.presets.length : 0,
+  }
+}
+
+export const pickerHasClear: (
+  state: DatePickerState,
+  presentation: DatePickerPresentation,
+) => boolean = function pickerHasClear(
+  state: DatePickerState,
+  presentation: DatePickerPresentation,
+) {
+  const hasDate =
+    state.mode === 'single'
+      ? state.value._tag === 'Single'
+      : state.value._tag === 'Range' && state.value.from !== null
+
+  return (
+    presentation.variant === 'outline' &&
+    presentation.clearable &&
+    (hasDate || (state.hasTime && !!state.time) || (state.hasTimeRange && state.timeRange !== null))
+  )
+}
+
 export { timeFieldConfig } from './date-picker-time-config.js'
 import type { DatePickerOpening } from './date-picker-transition.js'
 
@@ -48,58 +129,6 @@ export interface DatePickerPreparedConfig {
   readonly now: number
 }
 
-export function pickerCalendarPresentation(
-  state: DatePickerState,
-  presentation: DatePickerPresentation,
-): CalendarPresentation {
-  const numberOfMonths = presentation.numberOfMonths ?? (state.mode === 'range' ? 2 : 1)
-
-  return {
-    ...(presentation.hoverMode === undefined ? {} : { hoverMode: presentation.hoverMode }),
-    numberOfMonths,
-    showWeekNumber: presentation.showWeekNumber,
-    orientation:
-      numberOfMonths === 1
-        ? 'auto'
-        : presentation.orientation === 'auto'
-          ? state.layout
-          : presentation.orientation,
-  }
-}
-
-export function calendarControl(
-  state: DatePickerState,
-  presentation: DatePickerPresentation,
-): typeof SelectionControl.Type {
-  return {
-    mode: state.mode,
-    controlled: true,
-    selected: state.draft ?? state.value,
-    required: state.mode === 'single' || presentation.required,
-    min: presentation.min,
-    max: presentation.max,
-  }
-}
-
-export function pickerOpening(
-  state: DatePickerState,
-  presentation: DatePickerPresentation,
-  now: number,
-  viewportWidth: number | null,
-): DatePickerOpening {
-  return {
-    now,
-    viewportWidth,
-    orientation: presentation.orientation,
-    numberOfMonths: presentation.numberOfMonths ?? (state.mode === 'range' ? 2 : 1),
-    cellSize: presentation.cellSize ?? (presentation.compact ? 32 : 36),
-    showWeekNumber: presentation.showWeekNumber,
-    presetsCount: state.mode === 'range' ? presentation.presets.length : 0,
-  }
-}
-
-// Calendar's rules provider is supplied by the application Layer. Preparation
-// resolves clock-dependent initial content before SSR/first view.
 export const prepareDatePicker = Effect.fn('FluidDatePicker.prepare')(function* (
   controls: DatePickerInitialControls,
   presentation: DatePickerPresentation,
@@ -121,8 +150,7 @@ export const prepareDatePicker = Effect.fn('FluidDatePicker.prepare')(function* 
     id: `${controls.id}-calendar`,
     mode: initial.mode,
     controlled: true,
-    // Calendar's explicit controlled flag owns empty selection; omission still
-    // decodes to selectionValue(undefined), without releasing that control.
+
     ...(selected === undefined ? {} : { selected }),
     required: initial.mode === 'single' || presentation.required,
     min: presentation.min,
@@ -137,19 +165,3 @@ export const prepareDatePicker = Effect.fn('FluidDatePicker.prepare')(function* 
 
   return { initial, calendar, presentation, now } satisfies DatePickerPreparedConfig
 })
-
-export function pickerHasClear(
-  state: DatePickerState,
-  presentation: DatePickerPresentation,
-): boolean {
-  const hasDate =
-    state.mode === 'single'
-      ? state.value._tag === 'Single'
-      : state.value._tag === 'Range' && state.value.from !== null
-
-  return (
-    presentation.variant === 'outline' &&
-    presentation.clearable &&
-    (hasDate || (state.hasTime && !!state.time) || (state.hasTimeRange && state.timeRange !== null))
-  )
-}

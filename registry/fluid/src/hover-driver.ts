@@ -1,5 +1,5 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import { resolveActivator } from './lib/hover-geometry.js'
 import { HoverObservation } from './hover-observation.js'
 
@@ -14,31 +14,16 @@ import {
 } from './hover-attributes.js'
 import { collectHoverItems, measureHoverLayout } from './hover-layout.js'
 
-const MEASURE_EVENT = 'fluid-hover-measure'
-
-export interface HoverDriver {
-  readonly isCurrent: () => boolean
-  readonly activate: (index: number) => void
-  readonly remeasure: () => void
-  readonly measureItems: () => void
-  readonly setPointerHandlers: (enabled: boolean) => void
-  readonly dispose: () => void
-}
-
-/** The native animation callback boundary: measure changing layout in this frame. */
-export const measureHoverItems = (element: HTMLElement): void => {
-  element.dispatchEvent(new Event(MEASURE_EVENT))
-}
-
-const isDisabled = (element: HTMLElement) =>
-  element.hasAttribute(HOVER_DISABLED_ATTR) || element.closest(`[${HOVER_HIDDEN_ATTR}]`) !== null
-
 /** Only browser resources, DOM measurements and coalescing live outside the Block. */
-export function mountHover(
+export const mountHover: (
   container: HTMLElement,
   emit: (observation: typeof HoverObservation.Type) => void,
   scopeKey: (element: Element) => string,
-): HoverDriver {
+) => HoverDriver = function mountHover(
+  container: HTMLElement,
+  emit: (observation: typeof HoverObservation.Type) => void,
+  scopeKey: (element: Element) => string,
+) {
   const window = container.ownerDocument.defaultView
 
   if (window === null) {
@@ -169,7 +154,6 @@ export function mountHover(
     attributeFilter: [HOVER_ITEM_ATTR, HOVER_HIDDEN_ATTR, HOVER_DISABLED_ATTR, HOVER_SCOPE_ATTR],
   })
 
-  // Admission happens when the event arrives; a later override must not discard its queued move.
   const mouseMove = (event: MouseEvent) => {
     if (container.getAttribute(HOVER_MOUSE_ADMISSION_ATTRS.move) === 'false') return
 
@@ -272,7 +256,6 @@ export function mountHover(
 
     pointerHandlers = enabled
 
-    // Source consumers can omit handlers without cancelling an already queued move.
     if (enabled) {
       container.addEventListener('mousemove', mouseMove)
       container.addEventListener('mouseenter', mouseEnter)
@@ -333,3 +316,22 @@ export function mountHover(
     },
   }
 }
+
+const MEASURE_EVENT = 'fluid-hover-measure'
+
+export interface HoverDriver {
+  readonly isCurrent: () => boolean
+  readonly activate: (index: number) => void
+  readonly remeasure: () => void
+  readonly measureItems: () => void
+  readonly setPointerHandlers: (enabled: boolean) => void
+  readonly dispose: () => void
+}
+
+/** The native animation callback boundary: measure changing layout in this frame. */
+export const measureHoverItems: (element: HTMLElement) => void = (element: HTMLElement) => {
+  element.dispatchEvent(new Event(MEASURE_EVENT))
+}
+
+const isDisabled = (element: HTMLElement) =>
+  element.hasAttribute(HOVER_DISABLED_ATTR) || element.closest(`[${HOVER_HIDDEN_ATTR}]`) !== null

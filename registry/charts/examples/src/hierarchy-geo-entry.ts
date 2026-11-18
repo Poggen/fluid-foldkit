@@ -1,5 +1,5 @@
 import { Program, Runtime } from 'foldkit'
-import { HierarchyGeoFixtureBlock, hierarchyGeoLayer } from './hierarchy-geo-fixture'
+import { HierarchyGeoFixtureBlock, hierarchyGeoLayer } from './hierarchy-geo.fixture'
 import '@foldkit-visuals/charts/styles.css'
 import './style.css'
 

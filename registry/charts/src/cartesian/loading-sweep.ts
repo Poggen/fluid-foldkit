@@ -7,20 +7,23 @@ import type { ResolvedSeries } from './series'
 
 const NS = 'http://www.w3.org/2000/svg'
 
-const node = <Tag extends keyof SVGElementTagNameMap>(
+const node: <Tag extends keyof SVGElementTagNameMap>(
+  tag: Tag,
+  attributes?: Readonly<Record<string, string | number>>,
+) => SVGElementTagNameMap[Tag] = <Tag extends keyof SVGElementTagNameMap>(
   tag: Tag,
   attributes: Readonly<Record<string, string | number>> = {},
-): SVGElementTagNameMap[Tag] => {
+) => {
   const element = document.createElementNS(NS, tag)
 
   for (const [name, value] of Object.entries(attributes)) {
     element.setAttribute(name, String(value))
   }
 
-  return element
+  return element satisfies SVGElementTagNameMap[Tag]
 }
 
-const hashFract = (value: number): number => {
+const hashFract: (value: number) => number = (value: number) => {
   const x = Math.sin(value) * 43_758.5453
 
   return x - Math.floor(x)

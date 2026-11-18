@@ -3,7 +3,7 @@ import type { ProjectionAutoMethod, ProjectionPathDensity } from './projection-u
 import type { ProjectionPoint } from '../cartesian/overlay-options'
 
 /** DateTime owns valid instants; the public Source API also returns invalid Date sentinels. */
-export function projectionDate(time: number): Date {
+export const projectionDate: (time: number) => Date = function projectionDate(time: number) {
   return Option.match(DateTime.make(time), {
     onSome: DateTime.toDateUtc,
     onNone: () => {
@@ -21,11 +21,11 @@ interface HistoryPoint {
   readonly value: number
 }
 
-// Offset of the second-to-last history point (the "previous" point of the last segment).
 const PENULTIMATE_OFFSET = -2
 
-// OLS slope as in bklit projection-utils.ts:114 (no @tanstack/charts/regression, ~4 KB min).
-const linearRegressionSlope = (points: ReadonlyArray<HistoryPoint>): number => {
+const linearRegressionSlope: (points: ReadonlyArray<HistoryPoint>) => number = (
+  points: ReadonlyArray<HistoryPoint>,
+) => {
   const n = points.length
 
   if (n < 2) {
@@ -53,7 +53,9 @@ const linearRegressionSlope = (points: ReadonlyArray<HistoryPoint>): number => {
   return variance === 0 ? 0 : cov / variance
 }
 
-const slopeFromLastSegment = (historyPoints: ReadonlyArray<HistoryPoint>): number => {
+const slopeFromLastSegment: (historyPoints: ReadonlyArray<HistoryPoint>) => number = (
+  historyPoints: ReadonlyArray<HistoryPoint>,
+) => {
   if (historyPoints.length < 2) {
     return 0
   }
@@ -70,10 +72,10 @@ const slopeFromLastSegment = (historyPoints: ReadonlyArray<HistoryPoint>): numbe
   return deltaMs === 0 ? 0 : (last.value - prev.value) / deltaMs
 }
 
-const resolveAutoSlope = (
+const resolveAutoSlope: (
   autoMethod: ProjectionAutoMethod,
   historyPoints: ReadonlyArray<HistoryPoint>,
-): number => {
+) => number = (autoMethod: ProjectionAutoMethod, historyPoints: ReadonlyArray<HistoryPoint>) => {
   if (autoMethod === 'lastSegment' && historyPoints.length >= 2) {
     return slopeFromLastSegment(historyPoints)
   }
@@ -89,9 +91,9 @@ interface SteppedProjectionOptions {
   readonly intervalMs: number
 }
 
-const buildEndpointProjectionValues = (
+const buildEndpointProjectionValues: (
   options: Readonly<SteppedProjectionOptions>,
-): Array<ProjectionPoint> => {
+) => Array<ProjectionPoint> = (options: Readonly<SteppedProjectionOptions>) => {
   const { anchorTime, anchorValue, slope, horizonPoints, intervalMs } = options
   const endTime = anchorTime + intervalMs * horizonPoints
   const endValue = anchorValue + slope * intervalMs * horizonPoints
@@ -102,9 +104,9 @@ const buildEndpointProjectionValues = (
   ]
 }
 
-const buildSteppedProjectionValues = (
+const buildSteppedProjectionValues: (
   options: Readonly<SteppedProjectionOptions>,
-): Array<ProjectionPoint> => {
+) => Array<ProjectionPoint> = (options: Readonly<SteppedProjectionOptions>) => {
   const { anchorTime, anchorValue, slope, horizonPoints, intervalMs } = options
   const result: Array<ProjectionPoint> = [{ date: projectionDate(anchorTime), value: anchorValue }]
 
@@ -128,9 +130,9 @@ interface BuildAutoFutureValuesOptions {
   readonly pathDensity?: ProjectionPathDensity
 }
 
-const buildAutoFutureValues = (
+const buildAutoFutureValues: (
   options: Readonly<BuildAutoFutureValuesOptions>,
-): Array<ProjectionPoint> => {
+) => Array<ProjectionPoint> = (options: Readonly<BuildAutoFutureValuesOptions>) => {
   const {
     anchorTime,
     anchorValue,

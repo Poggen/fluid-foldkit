@@ -1,6 +1,6 @@
 import { Option } from 'effect'
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import type { ChildAttribute, Html } from 'foldkit/html'
 import { childAttributes } from 'foldkit/html'
 import { HeaderMenu, Message } from './data-table-definition.js'
@@ -14,14 +14,21 @@ import { DropdownItem } from './dropdown-item.js'
 import type { MotionScope } from './motion.js'
 import { emptyColumnFilter } from './data-table-filters-view.js'
 
-export function DataTableHeaderMenu(
+export const DataTableHeaderMenu: (
   model: DataTableModel,
   column: DataTableColumn,
   inputs: DataTableViewInputs,
   h: DataTableViewBuilder,
   motion: MotionScope,
   trigger: (attributes: ReadonlyArray<ChildAttribute>) => Html,
-): Html {
+) => Html = function DataTableHeaderMenu(
+  model: DataTableModel,
+  column: DataTableColumn,
+  inputs: DataTableViewInputs,
+  h: DataTableViewBuilder,
+  motion: MotionScope,
+  trigger: (attributes: ReadonlyArray<ChildAttribute>) => Html,
+) {
   if (!Option.contains(model.headerColumnId, column.id)) return trigger([])
   const move = (direction: number) => {
     const ids = [...model.columnOrder]

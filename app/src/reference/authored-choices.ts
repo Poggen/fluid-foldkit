@@ -5,7 +5,7 @@ import {
   previewCodeTabId,
   previewCodeTabsViewInputs,
 } from '../../../components/docs/preview-code-tabs'
-// Derived from Fluid Functionalism cc276ca0 Select and Combobox docs. MIT.
+/* @license Derived from Fluid Functionalism cc276ca0 Select and Combobox docs. MIT. */
 import { Effect, Layer, Schema } from 'effect'
 import { createKeyedLazy } from 'foldkit/html'
 import { Block, Update } from 'foldkit'

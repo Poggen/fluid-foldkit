@@ -53,17 +53,25 @@ export type SunburstCarrier =
   | { readonly role: 'center'; readonly props: SunburstCenterProps }
   | { readonly role: 'labels'; readonly props: SunburstLabelsProps }
 
-export const SunburstSegment = (props: SunburstSegmentProps): SunburstCarrier => ({
+export const SunburstSegment: (props: SunburstSegmentProps) => SunburstCarrier = (
+  props: SunburstSegmentProps,
+) => ({
   role: 'segment',
   props,
 })
 
-export const SunburstCenter = (props: SunburstCenterProps = {}): SunburstCarrier => ({
-  role: 'center',
-  props,
-})
+export const SunburstCenter: (props?: SunburstCenterProps) => SunburstCarrier = (
+  props: SunburstCenterProps = {},
+) =>
+  ({
+    role: 'center',
+    props,
+  }) satisfies SunburstCarrier
 
-export const SunburstLabels = (props: SunburstLabelsProps = {}): SunburstCarrier => ({
-  role: 'labels',
-  props,
-})
+export const SunburstLabels: (props?: SunburstLabelsProps) => SunburstCarrier = (
+  props: SunburstLabelsProps = {},
+) =>
+  ({
+    role: 'labels',
+    props,
+  }) satisfies SunburstCarrier

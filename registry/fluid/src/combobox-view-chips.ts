@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { Block } from 'foldkit'
 import type { Model, Composition } from './combobox-definition.js'
 import { Message } from './combobox-definition.js'

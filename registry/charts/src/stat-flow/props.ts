@@ -54,5 +54,5 @@ export type ChartStatFlowProps = Schema.Schema.Type<typeof ChartStatFlowProps>
 
 export const statFlowCodec = Schema.fromJsonString(ChartStatFlowProps)
 
-export const formatStatValue = (props: ChartStatFlowProps): string =>
+export const formatStatValue: (props: ChartStatFlowProps) => string = (props: ChartStatFlowProps) =>
   `${props.prefix ?? ''}${new Intl.NumberFormat(undefined, props.formatOptions ?? defaultChartStatFlowFormat).format(props.value)}${props.suffix ?? ''}`

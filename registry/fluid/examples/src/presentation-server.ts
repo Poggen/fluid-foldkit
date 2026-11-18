@@ -2,7 +2,7 @@ import { Effect } from 'effect'
 import { injectIntoTemplate, renderToString } from 'foldkit/experimental/server'
 import { FluidPresentationExampleBlock, FluidPresentationExampleLayer } from './presentation-app.js'
 
-export const renderPresentation = (template: string): string => {
+export const renderPresentation: (template: string) => string = (template: string) => {
   const rendered = Effect.runSync(
     renderToString(
       { block: FluidPresentationExampleBlock, layer: FluidPresentationExampleLayer },

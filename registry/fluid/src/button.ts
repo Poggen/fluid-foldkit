@@ -10,31 +10,107 @@ import { cn } from './lib/utils.js'
 import { resolvePresentation } from './presentation.js'
 import type { Icon, Presentation } from './presentation.js'
 
-type ButtonAttribute<Message, Requirements> = Parameters<
-  HtmlBuilder<Message, Requirements>['button']
->[0][number]
-
-export interface ButtonProps<Message, Requirements = never> extends Presentation {
-  readonly children: ReadonlyArray<Html | string>
-  readonly variant?: 'primary' | 'secondary' | 'tertiary' | 'ghost' | 'destructive'
-  readonly buttonSize?: ButtonSize
-  readonly loading?: boolean
-  readonly active?: boolean
-  readonly disabled?: boolean
-  readonly leadingIcon?: Icon
-  readonly trailingIcon?: Icon
-  readonly className?: string
-  readonly attributes?: ReadonlyArray<ButtonAttribute<Message, Requirements>>
-  readonly render?: (
-    attributes: ReadonlyArray<ButtonAttribute<Message, Requirements>>,
-    children: ReadonlyArray<Html | string>,
-  ) => Html
+const popupHeld: <Message, Requirements>(
+  attributes: ReadonlyArray<ButtonAttribute<Message, Requirements>>,
+) => boolean = function popupHeld<Message, Requirements>(
+  attributes: ReadonlyArray<ButtonAttribute<Message, Requirements>>,
+) {
+  let expanded = false
+  let popup = false
+  for (const input of attributes) {
+    const attribute = '_tag' in input ? input : input.attribute
+    if (!('value' in attribute)) continue
+    if (
+      attribute._tag === 'AriaExpanded' ||
+      (attribute._tag === 'Attribute' && 'key' in attribute && attribute.key === 'aria-expanded')
+    ) {
+      expanded = attribute.value === true || attribute.value === 'true'
+    }
+    if (
+      attribute._tag === 'AriaHasPopup' ||
+      (attribute._tag === 'Attribute' && 'key' in attribute && attribute.key === 'aria-haspopup')
+    ) {
+      popup = Boolean(attribute.value) && attribute.value !== 'dialog'
+    }
+  }
+  return (expanded && popup) satisfies boolean
 }
 
-function canonicalSize(
+export const Button: <Message, Requirements = never>(
+  props: ButtonProps<Message, Requirements>,
+  h: HtmlBuilder<Message, NoInfer<Requirements>>,
+) => Html = function Button<Message, Requirements = never>(
+  props: ButtonProps<Message, Requirements>,
+  h: HtmlBuilder<Message, NoInfer<Requirements>>,
+) {
+  const presentation = resolvePresentation(props)
+  const size = canonicalSize(props.buttonSize, presentation.size.variant)
+  const iconOnly = size === 'icon' || size === 'icon-compact' || size === 'icon-toolbar'
+  const compact =
+    size === 'compact' || size === 'toolbar' || size === 'icon-compact' || size === 'icon-toolbar'
+  const iconSize = compact ? 14 : 16
+  const variant = props.variant ?? 'primary'
+  const leading = props.leadingIcon
+  const trailing = props.trailingIcon
+  const loading = props.loading === true
+
+  const content = buttonContent(props, iconOnly, iconSize, h)
+
+  const children = [
+    h.span([
+      h.AriaHidden(true),
+      h.Class(
+        cn(
+          'absolute inset-px rounded-[inherit] transition-[box-shadow,background-color] [transition-duration:180ms,80ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1),ease] group-active:[transition-duration:80ms,80ms]',
+          backgroundVariant(
+            variant,
+            props.active === true || popupHeld(props.attributes ?? []),
+            loading,
+          ),
+        ),
+      ),
+    ]),
+    h.span([h.Class('relative inline-flex items-center justify-center gap-[inherit]')], content),
+  ]
+
+  const attributes = [
+    h.Class(
+      cn(
+        buttonVariants({
+          variant,
+          size,
+          iconLeft: !iconOnly && Boolean(leading),
+          iconRight: !iconOnly && Boolean(trailing),
+        }),
+        presentation.shape.button,
+        props.className,
+      ),
+    ),
+    ...(props.render === undefined
+      ? [
+          h.Type('button'),
+          h.Tabindex(0),
+          ...(props.disabled === true || loading ? [h.DataAttribute('disabled', '')] : []),
+        ]
+      : []),
+    ...(loading && props.render === undefined ? [h.AriaBusy(true)] : []),
+    ...(props.attributes ?? []),
+  ]
+
+  return (
+    props.render
+      ? props.render(attributes, children)
+      : h.button([...attributes, h.Disabled(props.disabled === true || loading)], children)
+  ) satisfies Html
+}
+
+const canonicalSize: (
   size: ButtonSize | undefined,
   fallback: 'default' | 'compact',
-): ButtonSizeCanonical {
+) => ButtonSizeCanonical = function canonicalSize(
+  size: ButtonSize | undefined,
+  fallback: 'default' | 'compact',
+) {
   switch (size) {
     case 'sm': {
       return 'compact'
@@ -70,6 +146,47 @@ function canonicalSize(
       return fallback
     }
   }
+}
+
+const backgroundVariant: (
+  variant: NonNullable<ButtonProps<never>['variant']>,
+  active: boolean,
+  loading: boolean,
+) => string = function backgroundVariant(
+  variant: NonNullable<ButtonProps<never>['variant']>,
+  active: boolean,
+  loading: boolean,
+) {
+  if (active) {
+    return activeBgVariants[variant]
+  }
+
+  if (loading) {
+    return loadingBgVariants[variant]
+  }
+
+  return bgVariants[variant]
+}
+
+type ButtonAttribute<Message, Requirements> = Parameters<
+  HtmlBuilder<Message, Requirements>['button']
+>[0][number]
+
+export interface ButtonProps<Message, Requirements = never> extends Presentation {
+  readonly children: ReadonlyArray<Html | string>
+  readonly variant?: 'primary' | 'secondary' | 'tertiary' | 'ghost' | 'destructive'
+  readonly buttonSize?: ButtonSize
+  readonly loading?: boolean
+  readonly active?: boolean
+  readonly disabled?: boolean
+  readonly leadingIcon?: Icon
+  readonly trailingIcon?: Icon
+  readonly className?: string
+  readonly attributes?: ReadonlyArray<ButtonAttribute<Message, Requirements>>
+  readonly render?: (
+    attributes: ReadonlyArray<ButtonAttribute<Message, Requirements>>,
+    children: ReadonlyArray<Html | string>,
+  ) => Html
 }
 
 function buttonContent<Message, Requirements>(
@@ -170,109 +287,6 @@ function buttonContent<Message, Requirements>(
         )
       : null,
   ]
-}
-
-function backgroundVariant(
-  variant: NonNullable<ButtonProps<never>['variant']>,
-  active: boolean,
-  loading: boolean,
-): string {
-  if (active) {
-    return activeBgVariants[variant]
-  }
-
-  if (loading) {
-    return loadingBgVariants[variant]
-  }
-
-  return bgVariants[variant]
-}
-
-function popupHeld<Message, Requirements>(
-  attributes: ReadonlyArray<ButtonAttribute<Message, Requirements>>,
-): boolean {
-  let expanded = false
-  let popup = false
-  for (const input of attributes) {
-    const attribute = '_tag' in input ? input : input.attribute
-    if (!('value' in attribute)) continue
-    if (
-      attribute._tag === 'AriaExpanded' ||
-      (attribute._tag === 'Attribute' && 'key' in attribute && attribute.key === 'aria-expanded')
-    ) {
-      expanded = attribute.value === true || attribute.value === 'true'
-    }
-    if (
-      attribute._tag === 'AriaHasPopup' ||
-      (attribute._tag === 'Attribute' && 'key' in attribute && attribute.key === 'aria-haspopup')
-    ) {
-      popup = Boolean(attribute.value) && attribute.value !== 'dialog'
-    }
-  }
-  return expanded && popup
-}
-
-export function Button<Message, Requirements = never>(
-  props: ButtonProps<Message, Requirements>,
-  h: HtmlBuilder<Message, NoInfer<Requirements>>,
-): Html {
-  const presentation = resolvePresentation(props)
-  const size = canonicalSize(props.buttonSize, presentation.size.variant)
-  const iconOnly = size === 'icon' || size === 'icon-compact' || size === 'icon-toolbar'
-  const compact =
-    size === 'compact' || size === 'toolbar' || size === 'icon-compact' || size === 'icon-toolbar'
-  const iconSize = compact ? 14 : 16
-  const variant = props.variant ?? 'primary'
-  const leading = props.leadingIcon
-  const trailing = props.trailingIcon
-  const loading = props.loading === true
-
-  const content = buttonContent(props, iconOnly, iconSize, h)
-
-  const children = [
-    h.span([
-      h.AriaHidden(true),
-      h.Class(
-        cn(
-          'absolute inset-px rounded-[inherit] transition-[box-shadow,background-color] [transition-duration:180ms,80ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1),ease] group-active:[transition-duration:80ms,80ms]',
-          backgroundVariant(
-            variant,
-            props.active === true || popupHeld(props.attributes ?? []),
-            loading,
-          ),
-        ),
-      ),
-    ]),
-    h.span([h.Class('relative inline-flex items-center justify-center gap-[inherit]')], content),
-  ]
-
-  const attributes = [
-    h.Class(
-      cn(
-        buttonVariants({
-          variant,
-          size,
-          iconLeft: !iconOnly && Boolean(leading),
-          iconRight: !iconOnly && Boolean(trailing),
-        }),
-        presentation.shape.button,
-        props.className,
-      ),
-    ),
-    ...(props.render === undefined
-      ? [
-          h.Type('button'),
-          h.Tabindex(0),
-          ...(props.disabled === true || loading ? [h.DataAttribute('disabled', '')] : []),
-        ]
-      : []),
-    ...(loading && props.render === undefined ? [h.AriaBusy(true)] : []),
-    ...(props.attributes ?? []),
-  ]
-
-  return props.render
-    ? props.render(attributes, children)
-    : h.button([...attributes, h.Disabled(props.disabled === true || loading)], children)
 }
 
 export { buttonVariants } from './lib/button-variants.js'

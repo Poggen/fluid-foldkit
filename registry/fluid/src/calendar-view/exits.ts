@@ -10,8 +10,6 @@ export function observeCalendarExits(
   const timers = new Map<'Ghost' | 'CommittedEnd', { generation: number; timer: number }>()
   let disposed = false
 
-  // Source owns one effect per decoration. Replacing a range must not
-  // restart the earlier committed-end cleanup, even while both remain visible.
   const schedule = (
     kind: 'Ghost' | 'CommittedEnd',
     active: boolean,
@@ -64,8 +62,6 @@ export function observeCalendarExits(
     )
   }
 
-  // Presence owns retirement. The Motion adapter dispatches only after the
-  // current exit and its descendants settle; elapsed time cannot prove that.
   const exited = (event: Event) => {
     const { target } = event
 
@@ -93,8 +89,6 @@ export function observeCalendarExits(
         (peer) => peer.dataset.calendarOverlay === overlayKey,
       )
 
-      // Hover fill and ring share one retained slot, but have separate Motion
-      // owners. Neither may remove the other while its exit is still running.
       if (
         peers.every(
           (peer) =>
@@ -121,8 +115,6 @@ export function observeCalendarExits(
       (peer) => peer.dataset.calendarPanel === key,
     )
 
-    // The key includes the immutable month occurrence generation. A late
-    // completion cannot retire a reopened month with a newer key.
     if (
       peers.every((peer) => peer.dataset.calendarPresent === 'false' && completed.get(peer) === key)
     ) {

@@ -5,15 +5,16 @@ import type { PatternResource, PatternShape } from './types'
 import type { ChartStyle } from '../../cartesian/content-types'
 import { chartStyleProperties } from '../../cartesian/style'
 
-export const scopedPatternId = (prefix: string, id: string): string =>
-  id.startsWith(`${prefix}-`) ? id : `${prefix}-${id}`
-
 /** Gradient resources stay engine-owned; only the explicit pattern ids use this sibling defs host. */
-export function scopePatternPaint(
+export const scopePatternPaint: (
   paint: string,
   prefix: string,
   resources: ReadonlyArray<PatternResource>,
-): string {
+) => string = function scopePatternPaint(
+  paint: string,
+  prefix: string,
+  resources: ReadonlyArray<PatternResource>,
+) {
   const ids = new Set(resources.map((resource) => resource.id))
 
   return paint.replaceAll(/url\(#(?<id>[^)]+)\)/gu, (match: string, id: string) =>
@@ -21,7 +22,7 @@ export function scopePatternPaint(
   )
 }
 
-function shapeView(shape: PatternShape): Html {
+const shapeView: (shape: PatternShape) => Html = function shapeView(shape: PatternShape) {
   const { key } = shape
 
   if (shape.kind === 'rect') {
@@ -68,9 +69,11 @@ function shapeView(shape: PatternShape): Html {
   }
 }
 
-export function patternResourceEntries(
+export const patternResourceEntries: (
   resources: ReadonlyArray<PatternResource>,
-): ReadonlyArray<readonly [string, PatternResource]> {
+) => ReadonlyArray<readonly [string, PatternResource]> = function patternResourceEntries(
+  resources: ReadonlyArray<PatternResource>,
+) {
   const occurrences = new Map<string, number>()
 
   return resources.map((resource) => {
@@ -82,12 +85,17 @@ export function patternResourceEntries(
 }
 
 /** The existing Foldkit renderer owns patching/removal, including SSR; no parallel DOM renderer or Layer is introduced. */
-export function patternResourceView(
+export const patternResourceView: (
+  prefix: string,
+  resources: ReadonlyArray<PatternResource>,
+  definitions?: ReadonlyArray<Html>,
+  paintStyle?: ChartStyle,
+) => Html = function patternResourceView(
   prefix: string,
   resources: ReadonlyArray<PatternResource>,
   definitions: ReadonlyArray<Html> = [],
   paintStyle: ChartStyle = {},
-): Html {
+) {
   if (resources.length === 0 && definitions.length === 0) {
     return h.empty
   }
@@ -138,3 +146,8 @@ export function patternResourceView(
     ],
   )
 }
+
+export const scopedPatternId: (prefix: string, id: string) => string = (
+  prefix: string,
+  id: string,
+) => (id.startsWith(`${prefix}-`) ? id : `${prefix}-${id}`)

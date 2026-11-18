@@ -8,9 +8,32 @@ import type { HeatmapInputs } from './block'
 import type { HeatmapChartProps } from './options'
 import type { HeatmapColumn } from './columns'
 
-const generateHeatmapSkeletonFromTarget = (
+export const HeatmapChartLoading: (props: HeatmapChartLoadingProps) => HeatmapChartProps =
+  function HeatmapChartLoading(props: HeatmapChartLoadingProps) {
+    const loading: HeatmapChartProps = {
+      data: generateHeatmapSkeletonFromTarget([...props.data]),
+      gap: props.gap ?? 2,
+      className: props.className ?? '',
+      status: 'loading',
+      loadingLabel: props.label ?? 'Loading',
+      children: [
+        HeatmapCells({ cornerRadius: props.cornerRadius ?? 2, interactive: false }),
+        HeatmapXAxis(),
+        HeatmapYAxis(),
+      ],
+    }
+
+    const withDomain: HeatmapChartProps =
+      props.xDomain === undefined
+        ? loading
+        : { ...loading, xDomain: [props.xDomain[0], props.xDomain[1]] }
+
+    return props.margin === undefined ? withDomain : { ...withDomain, margin: props.margin }
+  }
+
+const generateHeatmapSkeletonFromTarget: (
   data: ReadonlyArray<HeatmapColumn>,
-): Array<HeatmapColumn> =>
+) => Array<HeatmapColumn> = (data: ReadonlyArray<HeatmapColumn>) =>
   data.map((column) => ({
     bin: column.bin,
     bins: column.bins.map((bin) => ({ ...bin, count: 0 })),
@@ -18,15 +41,11 @@ const generateHeatmapSkeletonFromTarget = (
 
 export function HeatmapChart({ name }: { readonly name: string }) {
   const recipe = defineHeatmapRecipe(name)
-
-  return {
-    ...recipe,
-    context: heatmapContext,
-    configuration: () => ({ controlled: false, index: Option.none<number>() }),
-    inputs: (
-      id: string,
-      props: HeatmapChartProps,
-    ): HeatmapInputs<HeatmapChartProps['data'][number]> => ({
+  const inputs: (
+    id: string,
+    props: HeatmapChartProps,
+  ) => HeatmapInputs<HeatmapChartProps['data'][number]> = (id: string, props: HeatmapChartProps) =>
+    ({
       layout: 'contents',
       mount: (
         element,
@@ -83,7 +102,13 @@ export function HeatmapChart({ name }: { readonly name: string }) {
           ),
         ])
       },
-    }),
+    }) satisfies HeatmapInputs<HeatmapChartProps['data'][number]>
+
+  return {
+    ...recipe,
+    context: heatmapContext,
+    configuration: () => ({ controlled: false, index: Option.none<number>() }),
+    inputs,
   }
 }
 
@@ -95,26 +120,4 @@ export interface HeatmapChartLoadingProps {
   readonly cornerRadius?: number
   readonly label?: string
   readonly className?: string
-}
-
-export function HeatmapChartLoading(props: HeatmapChartLoadingProps): HeatmapChartProps {
-  const loading: HeatmapChartProps = {
-    data: generateHeatmapSkeletonFromTarget([...props.data]),
-    gap: props.gap ?? 2,
-    className: props.className ?? '',
-    status: 'loading',
-    loadingLabel: props.label ?? 'Loading',
-    children: [
-      HeatmapCells({ cornerRadius: props.cornerRadius ?? 2, interactive: false }),
-      HeatmapXAxis(),
-      HeatmapYAxis(),
-    ],
-  }
-
-  const withDomain: HeatmapChartProps =
-    props.xDomain === undefined
-      ? loading
-      : { ...loading, xDomain: [props.xDomain[0], props.xDomain[1]] }
-
-  return props.margin === undefined ? withDomain : { ...withDomain, margin: props.margin }
 }

@@ -5,7 +5,7 @@ import {
 } from './dialog-sidebar-navigation-data.js'
 import type { TooltipDom } from './tooltip-native-public.js'
 import { HoverMode } from './hover.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { DialogResources } from './dialog-resources.js'
 import type { DropdownResources } from './dropdown-resources.js'
 import { DialogLayer as OwningDialogLayer, DialogBlock } from './dialog.js'
@@ -119,16 +119,17 @@ const DialogBinding = SettingsDialogBlock.makeRequiredFieldBinding(Dialog, {
 const Sidebar = SettingsDialogBlock.makeRequiredFieldBinding(SidebarChild, {
   field: 'sidebar',
   init: {
-    contextToArgs: (config: SettingsDialogConfig): [SidebarConfig] => [
-      {
-        id: `${config.id}-sidebar`,
-        collapsible: 'none',
-        persist: false,
-        shortcut: null,
-        width: '13rem',
-        rail: false,
-      },
-    ],
+    contextToArgs: (config: SettingsDialogConfig) =>
+      [
+        {
+          id: `${config.id}-sidebar`,
+          collapsible: 'none',
+          persist: false,
+          shortcut: null,
+          width: '13rem',
+          rail: false,
+        },
+      ] satisfies [SidebarConfig],
   },
 }).withOutMessagePolicy({
   fold: SettingsDialogBlock.makeOutMessageFold(SidebarChild, {
@@ -189,7 +190,7 @@ const sectionSteps = (section: SettingsSection, reset: boolean) =>
     SettingsDialogBlock.makeFieldsStep(() => ({ section: () => section })),
     NavRaw.requestConfigure({ items, activeSlug: section }),
     SelectRaw.requestConfigure({ items: choices, value: section }),
-    // Source SectionPanel unmounts when its section changes: controls restart at their defaults.
+
     ...(reset ? [PanelBinding.requestReset({ section })] : []),
   ])
 

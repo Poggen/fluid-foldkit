@@ -1,6 +1,6 @@
 import { mountHeatmapLoadingFixture } from './chart-visual-contracts-heatmap-fixture'
 import { DateTime } from 'effect'
-import { mountNativeTooltipFixture } from '../../registry/charts/test/chart-visual-contracts-native-tooltip-fixture'
+import { mountNativeTooltipFixture } from '../../registry/charts/test/chart-visual-contracts-native-tooltip.fixture'
 import { constUndefined } from 'effect/Function'
 import { FunnelChart, RadarChart, RadarArea, RadarLabels } from '@foldkit-visuals/charts'
 import { HeatmapChart, HeatmapCells, HeatmapTooltip } from '@foldkit-visuals/charts/heatmap'

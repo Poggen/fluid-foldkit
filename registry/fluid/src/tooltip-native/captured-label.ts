@@ -1,32 +1,15 @@
 import { cn } from '../lib/utils.js'
 
-const SVG = 'http://www.w3.org/2000/svg'
-const XLINK = 'http://www.w3.org/1999/xlink'
-const renderingLinks = new Set([
-  'use',
-  'image',
-  'feImage',
-  'textPath',
-  'linearGradient',
-  'radialGradient',
-  'pattern',
-  'filter',
-])
-
-export function updatePreviousLabelPresentation(previous: HTMLElement, destination: HTMLElement) {
-  const className = cn(
-    destination.className,
-    'pointer-events-none absolute left-1/2 top-1/2 w-max -translate-x-1/2 -translate-y-1/2',
-  )
-  if (previous.className !== className) previous.className = className
-}
-
 /** Keep SVG paint definitions private to this one inert capture, including after source removal. */
-export function capturePreviousLabel(
+export const capturePreviousLabel: (
   source: HTMLElement,
   destination: HTMLElement,
   prefix: string,
-): HTMLElement {
+) => HTMLElement = function capturePreviousLabel(
+  source: HTMLElement,
+  destination: HTMLElement,
+  prefix: string,
+) {
   const clone = destination.cloneNode(false)
   if (!(clone instanceof HTMLElement)) throw new Error('Tooltip label capture requires HTML')
   clone.append(...Array.from(source.childNodes, (node) => node.cloneNode(true)))
@@ -92,4 +75,25 @@ export function capturePreviousLabel(
   updatePreviousLabelPresentation(clone, destination)
   clone.style.opacity = '1'
   return clone
+}
+
+const SVG = 'http://www.w3.org/2000/svg'
+const XLINK = 'http://www.w3.org/1999/xlink'
+const renderingLinks = new Set([
+  'use',
+  'image',
+  'feImage',
+  'textPath',
+  'linearGradient',
+  'radialGradient',
+  'pattern',
+  'filter',
+])
+
+export function updatePreviousLabelPresentation(previous: HTMLElement, destination: HTMLElement) {
+  const className = cn(
+    destination.className,
+    'pointer-events-none absolute left-1/2 top-1/2 w-max -translate-x-1/2 -translate-y-1/2',
+  )
+  if (previous.className !== className) previous.className = className
 }

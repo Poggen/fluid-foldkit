@@ -49,6 +49,11 @@ const themeStyles = () =>
     (style) => style.textContent === themeTransitionStyles + suppressTransitionStyles,
   )
 
+const nextFrame = Effect.callback<void>((resume) => {
+  const frame = window.requestAnimationFrame(() => resume(Effect.void))
+  return Effect.sync(() => window.cancelAnimationFrame(frame))
+})
+
 it.live(
   'installs and flushes the source root class before the installed runtime patches shape',
   () =>
@@ -58,16 +63,9 @@ it.live(
       container.id = 'transition-runtime-order'
       host.append(container)
       document.body.append(host)
-      const flushed: Array<{ guard: boolean; radius: string | undefined }> = []
-      const flush = vi
-        .spyOn(document.documentElement, 'offsetHeight', 'get')
-        .mockImplementation(() => {
-          flushed.push({
-            guard: document.documentElement.classList.contains('transitioning'),
-            radius: host.querySelector<HTMLElement>('button')?.dataset.radius,
-          })
-          return 0
-        })
+      const flush = vi.spyOn(document.documentElement, 'offsetHeight', 'get')
+      const guard = vi.spyOn(document.documentElement.classList, 'toggle')
+      const patch = vi.spyOn(Element.prototype, 'setAttribute')
       const runtime = Runtime.embed(
         Program.make({ block: TransitionFixture, layer: fixtureLayer, container }).provide(
           Layer.succeed(SiteEnvironment, {
@@ -85,9 +83,25 @@ it.live(
         )
         const button = host.querySelector('button')
         if (button === null) throw new Error('Missing transition fixture button')
+        expect(button.dataset.radius).toBe('8')
+        flush.mockClear()
+        guard.mockClear()
+        patch.mockClear()
         button.click()
         yield* Effect.promise(() => vi.waitFor(() => expect(button.dataset.radius).toBe('9')))
-        expect(flushed).toContainEqual({ guard: true, radius: '8' })
+        const guardAt = guard.mock.calls.findIndex(
+          ([name, active]) => name === 'transitioning' && active === true,
+        )
+        const patchAt = patch.mock.calls.findIndex(
+          ([name, value]) => name === 'data-radius' && value === '9',
+        )
+        const guardOrder = guard.mock.invocationCallOrder[guardAt]
+        const flushOrder = flush.mock.invocationCallOrder[0]
+        const patchOrder = patch.mock.invocationCallOrder[patchAt]
+        if (guardOrder === undefined || flushOrder === undefined || patchOrder === undefined)
+          throw new Error('Missing native guard, layout flush, or shape patch observation')
+        expect(guardOrder).toBeLessThan(flushOrder)
+        expect(flushOrder).toBeLessThan(patchOrder)
         expect(document.documentElement.classList.contains('transitioning')).toBe(true)
         yield* Effect.promise(() =>
           vi.waitFor(() =>
@@ -96,6 +110,8 @@ it.live(
         )
       } finally {
         yield* Effect.promise(runtime.dispose)
+        patch.mockRestore()
+        guard.mockRestore()
         flush.mockRestore()
         host.remove()
       }
@@ -164,7 +180,7 @@ it.live(
       const second = yield* Effect.forkChild(effects.transitionTheme)
       try {
         yield* Effect.sleep('30 millis')
-        expect(themeStyles()).toHaveLength(2)
+        expect(themeStyles()).toHaveLength(1)
         yield* Fiber.interrupt(first)
         expect(themeStyles()).toHaveLength(1)
         completion.reject(new Error('Skipped transition'))
@@ -181,10 +197,6 @@ it.live(
 
 it.live('fallback flushes and retains suppression for two frames after the pending commit', () =>
   Effect.gen(function* () {
-    const callbacks: FrameRequestCallback[] = []
-    const frame = vi
-      .spyOn(window, 'requestAnimationFrame')
-      .mockImplementation((callback) => callbacks.push(callback))
     const descriptor = Object.getOwnPropertyDescriptor(document, 'activeViewTransition')
     Object.defineProperty(document, 'activeViewTransition', {
       configurable: true,
@@ -192,27 +204,18 @@ it.live('fallback flushes and retains suppression for two frames after the pendi
     })
     const effects = presentationEffects(document, window)
     const theme = yield* Effect.forkChild(effects.transitionTheme)
-    const advance = () =>
-      Effect.gen(function* () {
-        yield* Effect.yieldNow
-        const callback = callbacks.shift()
-        if (!callback) throw new Error('Missing animation frame')
-        callback(0)
-        yield* Effect.sleep('1 millis')
-      })
     try {
       yield* Effect.yieldNow
       expect(themeStyles()).toHaveLength(1)
-      yield* advance()
+      yield* nextFrame
       expect(themeStyles()).toHaveLength(1)
-      yield* advance()
+      yield* nextFrame
       expect(themeStyles()).toHaveLength(1)
-      yield* advance()
+      yield* nextFrame
       yield* Fiber.join(theme)
       expect(themeStyles()).toHaveLength(0)
     } finally {
       yield* Fiber.interrupt(theme)
-      frame.mockRestore()
       if (descriptor) Object.defineProperty(document, 'activeViewTransition', descriptor)
       else Reflect.deleteProperty(document, 'activeViewTransition')
     }

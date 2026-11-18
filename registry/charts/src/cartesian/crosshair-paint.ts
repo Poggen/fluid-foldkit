@@ -1,50 +1,49 @@
 import type { CrosshairPaintOptions } from './hover-overlay-model'
 
-const SVG_NS = 'http://www.w3.org/2000/svg'
+const fadeStops: (rule: CrosshairPaintOptions) => ReadonlyArray<readonly [number, number]> =
+  function fadeStops(rule: CrosshairPaintOptions) {
+    const fade = Math.min(40, Math.max(2, rule.fadeLength ?? 10))
 
-interface CrosshairPaint {
-  readonly mark: SVGElement
-  readonly paint: (color: string) => void
-}
+    const stops: Readonly<
+      Record<
+        NonNullable<CrosshairPaintOptions['fadeEdges']>,
+        ReadonlyArray<readonly [number, number]>
+      >
+    > = {
+      none: [],
+      top: [
+        [0, 0],
+        [fade, 1],
+        [100, 1],
+      ],
+      bottom: [
+        [0, 1],
+        [100 - fade, 1],
+        [100, 0],
+      ],
+      both: [
+        [0, 0],
+        [fade, 1],
+        [50, 1],
+        [100 - fade, 1],
+        [100, 0],
+      ],
+    }
 
-function fadeStops(rule: CrosshairPaintOptions): ReadonlyArray<readonly [number, number]> {
-  const fade = Math.min(40, Math.max(2, rule.fadeLength ?? 10))
-
-  const stops: Readonly<
-    Record<
-      NonNullable<CrosshairPaintOptions['fadeEdges']>,
-      ReadonlyArray<readonly [number, number]>
-    >
-  > = {
-    none: [],
-    top: [
-      [0, 0],
-      [fade, 1],
-      [100, 1],
-    ],
-    bottom: [
-      [0, 1],
-      [100 - fade, 1],
-      [100, 0],
-    ],
-    both: [
-      [0, 0],
-      [fade, 1],
-      [50, 1],
-      [100 - fade, 1],
-      [100, 0],
-    ],
+    return stops[rule.fadeEdges ?? 'both']
   }
 
-  return stops[rule.fadeEdges ?? 'both']
-}
-
-export function createCrosshairPaint(options: {
+export const createCrosshairPaint: (options: {
   readonly svg: SVGSVGElement
   readonly rule: CrosshairPaintOptions
   readonly height: number
   readonly gradientId: string
-}): CrosshairPaint {
+}) => CrosshairPaint = function createCrosshairPaint(options: {
+  readonly svg: SVGSVGElement
+  readonly rule: CrosshairPaintOptions
+  readonly height: number
+  readonly gradientId: string
+}) {
   const { svg, rule, height, gradientId } = options
   const owner = svg.ownerDocument
 
@@ -117,4 +116,11 @@ export function createCrosshairPaint(options: {
       }
     },
   }
+}
+
+const SVG_NS = 'http://www.w3.org/2000/svg'
+
+interface CrosshairPaint {
+  readonly mark: SVGElement
+  readonly paint: (color: string) => void
 }

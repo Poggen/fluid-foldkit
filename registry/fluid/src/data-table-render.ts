@@ -4,8 +4,8 @@ import type { MotionScope } from './motion.js'
 import { spring } from './lib/springs.js'
 import { dataTablePinStyle, dataTablePinLayers } from './data-table-cell-pin.js'
 import type { DataTableViewBuilder } from './data-table-definition.js'
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import type { Html } from 'foldkit/html'
 import { Message } from './data-table-definition.js'
 import type { DataTableModel, DataTableViewInputs } from './data-table-definition.js'
@@ -16,13 +16,19 @@ import { dataTableRows, dataTableColumns } from './data-table-state.js'
 import { resolvePresentation } from './presentation.js'
 
 import { checkbox, renderDataTableHead } from './data-table-render-head.js'
-export function renderDataTable(
+export const renderDataTable: (
   model: DataTableModel,
   inputs: DataTableViewInputs,
   h: DataTableViewBuilder,
   context: TableContext,
   motion: MotionScope,
-): ReadonlyArray<Html> {
+) => ReadonlyArray<Html> = function renderDataTable(
+  model: DataTableModel,
+  inputs: DataTableViewInputs,
+  h: DataTableViewBuilder,
+  context: TableContext,
+  motion: MotionScope,
+) {
   const focusedCell = Option.getOrNull(model.focusedCell)
   const rows = inputs.empty === true ? [] : dataTableRows(model)
   const columns = dataTableColumns(model)

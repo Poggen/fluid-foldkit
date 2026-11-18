@@ -1,56 +1,117 @@
 name: Native registries
 on:
   pull_request:
+  merge_group:
   push:
+    branches: [main]
   workflow_dispatch:
-    inputs:
-      scope:
-        description: Verification scope
-        type: choice
-        default: full
-        options:
-          - full
-          - browser-contracts
 permissions:
   contents: read
+concurrency:
+  group: native-registries-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
-  check:
-    name: ${{ github.event_name == 'workflow_dispatch' && inputs.scope == 'browser-contracts' && 'browser-contracts' || 'check' }}
+  verify:
+    name: ${{ matrix.task }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - task: types
+            command: bun run typecheck && bun run typecheck:tools
+          - task: lint
+            command: bun run format:check && bun run lint
+          - task: policy
+            command: bun run reference:setup && bun run guardrails && bun run test:admission
+          - task: fluid
+            command: bun run --cwd registry/fluid test
+          - task: charts
+            command: bun run --cwd registry/charts test
+          - task: application
+            command: bun run --cwd app test && cd registry/charts/examples && bunx --no-install vitest run
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: ./.github/actions/setup
+      - run: ${{ matrix.command }}
+        env:
+          VITEST_MAX_WORKERS: 3
+  build:
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: 24.19.0
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
-        with:
-          bun-version: 1.4.2
-      - run: bun install --frozen-lockfile
-      - run: bun run reference:setup
-      - run: bunx --no-install agent-browser install --with-deps
-      - run: bunx --no-install playwright install --with-deps chromium
-        working-directory: app
-      - run: bun run check
-        if: github.event_name != 'workflow_dispatch' || inputs.scope != 'browser-contracts'
-      - run: |
-          bun run build
-          bun run --cwd app test:e2e test/tailwind-fluid-contracts.e2e.ts test/tooltip-contracts.e2e.ts
-        if: github.event_name == 'workflow_dispatch' && inputs.scope == 'browser-contracts'
-      - run: bun run test:consumer
-        if: github.event_name != 'workflow_dispatch' || inputs.scope != 'browser-contracts'
+      - uses: ./.github/actions/setup
+      - id: plan
+        run: bun scripts/ci/browser-shards.ts 16
+      - run: bun run build
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: registries-and-native-showcase
           path: |
             public
             app/dist
+          if-no-files-found: error
+  browser:
+    name: Chromium ${{ matrix.shard }}
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.build.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: ./.github/actions/setup
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: registries-and-native-showcase
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('bun.lock') }}
+      - run: bunx --no-install playwright install --only-shell chromium
+        working-directory: app
+      - name: Run assigned Chromium cases
+        env:
+          TEST_LIST: ${{ matrix.list }}
+          TEST_COUNT: ${{ matrix.count }}
+        run: |
+          printf '%s\n' "$TEST_LIST" > "$RUNNER_TEMP/tests.txt"
+          bun run test:showcase --workers=2 --test-list "$RUNNER_TEMP/tests.txt"
+          jq -e --argjson n "$TEST_COUNT" '.stats | .expected == $n and .skipped == 0 and .unexpected == 0 and .flaky == 0' .verification/showcase-tests.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: chromium-${{ matrix.shard }}
+          include-hidden-files: true
+          path: |
+            .verification/showcase-results
+            .verification/showcase-tests.json
+  consumer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: ./.github/actions/setup
+      - name: Test the installed registry with runner Chrome
+        run: |
+          export AGENT_BROWSER_EXECUTABLE_PATH="$(command -v google-chrome)"
+          "$AGENT_BROWSER_EXECUTABLE_PATH" --version
+          bun run test:consumer
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: consumer-verification
           include-hidden-files: true
           path: |
-            .verification/showcase-results
-            .verification/showcase-tests.json
             .verification/consumer.json
             .verification/consumer.png
+  check:
+    if: always()
+    needs: [verify, build, browser, consumer]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every gate
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: jq -e 'all(.[]; . == "success")' <<< "$RESULTS"

@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
 import type { DataTableRow } from '../../src/data-table.js'
 import { componentRows } from './data-table-example-components.js'
 

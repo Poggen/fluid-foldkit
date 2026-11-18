@@ -1,11 +1,15 @@
 import { DateTime } from 'effect'
 
 /** Preserve the instant while returning the caller-owned Date shape used by chart accessors. */
-export const copyCalendarDate = (date: Readonly<Date>): Date =>
+export const copyCalendarDate: (date: Readonly<Date>) => Date = (date: Readonly<Date>) =>
   DateTime.toDateUtc(DateTime.makeUnsafe(date))
 
 /** Source constructors use local calendar fields, including JavaScript's 0..99 year convention. */
-export const localCalendarDate = (year: number, zeroBasedMonth: number, day: number): Date =>
+export const localCalendarDate: (year: number, zeroBasedMonth: number, day: number) => Date = (
+  year: number,
+  zeroBasedMonth: number,
+  day: number,
+) =>
   DateTime.toDateUtc(
     DateTime.makeZonedUnsafe(
       {

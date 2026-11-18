@@ -25,7 +25,9 @@ export interface ComboboxConfig {
   readonly rootId?: string
   readonly parentId?: string
 }
-export const comboboxValues = (value: ComboboxConfig['value']): ReadonlyArray<string> => {
+export const comboboxValues: (value: ComboboxConfig['value']) => ReadonlyArray<string> = (
+  value: ComboboxConfig['value'],
+) => {
   if (!Predicate.isString(value)) {
     return value ?? []
   }
@@ -196,9 +198,14 @@ const RawPopup = Definition.makeRequiredFieldBinding(ComboboxPopupBlock, {
     },
   },
 })
-export const restQuery = (model: Model, values = model.values): string =>
-  model.multiple ? '' : (model.items.find((item) => item.value === values[0])?.label ?? '')
-export const comboboxFilterQuery = (model: Model): string =>
+export const restQuery: (model: Model, values?: readonly string[]) => string = (
+  model: Model,
+  values = model.values,
+) =>
+  (model.multiple
+    ? ''
+    : (model.items.find((item) => item.value === values[0])?.label ?? '')) satisfies string
+export const comboboxFilterQuery: (model: Model) => string = (model: Model) =>
   !model.multiple && model.query === restQuery(model) ? '' : model.query
 export const closeCombobox = (closingQuery?: string) =>
   Update.combineSteps([

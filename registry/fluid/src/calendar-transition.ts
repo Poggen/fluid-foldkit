@@ -14,17 +14,15 @@ import type { FocusDirection, FocusUnit } from './calendar-domain/navigation.js'
 import { selectRange } from './calendar-domain/selection.js'
 import type { CalendarRules } from './calendar-domain/rules.js'
 
-interface CalendarTransition {
-  readonly state: CalendarState
-  readonly events: Array<Event>
-  readonly focus: number | null
-}
-
-function keyMovement(
+const keyMovement: (
   key: string,
   shift: boolean,
   rtl: boolean,
-): readonly [FocusUnit, FocusDirection] | undefined {
+) => readonly [FocusUnit, FocusDirection] | undefined = function keyMovement(
+  key: string,
+  shift: boolean,
+  rtl: boolean,
+) {
   switch (key) {
     case 'ArrowLeft': {
       return [shift ? 'month' : 'day', rtl ? 'after' : 'before']
@@ -56,7 +54,9 @@ function keyMovement(
   }
 }
 
-function pickingRange(state: CalendarState): boolean {
+const pickingRange: (state: CalendarState) => boolean = function pickingRange(
+  state: CalendarState,
+) {
   return (
     state.selection.mode === 'range' &&
     Selection.isAnyOf(['Range'])(state.selection.selected) &&
@@ -65,11 +65,15 @@ function pickingRange(state: CalendarState): boolean {
   )
 }
 
-export function transitionCalendar(
+export const transitionCalendar: (
   input: CalendarState,
   action: Action,
   rules: CalendarRules,
-): CalendarTransition {
+) => CalendarTransition = function transitionCalendar(
+  input: CalendarState,
+  action: Action,
+  rules: CalendarRules,
+) {
   let state = input
 
   const events: Array<Event> = []
@@ -389,4 +393,10 @@ export function transitionCalendar(
   })
 
   return { state, events, focus }
+}
+
+interface CalendarTransition {
+  readonly state: CalendarState
+  readonly events: Array<Event>
+  readonly focus: number | null
 }

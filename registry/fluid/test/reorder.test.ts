@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom -- the checked Program owns physical DOM resources
 import { it } from '@effect/vitest'
 import { Effect, Schedule, Schema } from 'effect'

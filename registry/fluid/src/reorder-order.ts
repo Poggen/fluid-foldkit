@@ -1,19 +1,19 @@
-// Derived from Motion 14.1.0 Reorder Group/check-reorder. MIT, copyright Framer B.V.
-export type ReorderAxis = 'x' | 'y'
-export interface ReorderBox {
-  readonly x: { readonly min: number; readonly max: number }
-  readonly y: { readonly min: number; readonly max: number }
-}
-
 /** Preserve unmeasured slots exactly as Reorder.Group does. */
-export function reorderedIds(
+export const reorderedIds: (
   ids: ReadonlyArray<string>,
   layouts: ReadonlyMap<string, ReorderBox>,
   id: string,
   offset: number,
   velocity: number,
   axis: ReorderAxis,
-): ReadonlyArray<string> {
+) => ReadonlyArray<string> = function reorderedIds(
+  ids: ReadonlyArray<string>,
+  layouts: ReadonlyMap<string, ReorderBox>,
+  id: string,
+  offset: number,
+  velocity: number,
+  axis: ReorderAxis,
+) {
   if (!velocity) return ids
   const measured = ids.filter((value) => layouts.has(value))
   const index = measured.indexOf(id)
@@ -33,4 +33,11 @@ export function reorderedIds(
   next[sourceIndex] = neighbor
   next[targetIndex] = id
   return next
+}
+
+/* @license Derived from Motion 14.1.0 Reorder Group/check-reorder. MIT, copyright Framer B.V. */
+export type ReorderAxis = 'x' | 'y'
+export interface ReorderBox {
+  readonly x: { readonly min: number; readonly max: number }
+  readonly y: { readonly min: number; readonly max: number }
 }

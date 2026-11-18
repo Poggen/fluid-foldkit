@@ -6,8 +6,8 @@ import { Editors } from './data-table-definition.js'
 import { hoverHighlightAnimation } from './hover-highlight.js'
 import type { MotionScope } from './motion.js'
 import type { DataTableViewBuilder } from './data-table-definition.js'
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import type { Html } from 'foldkit/html'
 import type {
   DataTableColumn,
@@ -22,14 +22,21 @@ import { badgeColors } from './badge.js'
 const isBadgeColor = (value: string | undefined): value is BadgeColor =>
   value !== undefined && Object.hasOwn(badgeColors, value)
 
-export function DataTableCellContent(
+export const DataTableCellContent: (
   model: DataTableModel,
   row: DataTableRow,
   column: DataTableColumn,
   inputs: DataTableViewInputs,
   h: DataTableViewBuilder,
   motion: MotionScope,
-): Html {
+) => Html = function DataTableCellContent(
+  model: DataTableModel,
+  row: DataTableRow,
+  column: DataTableColumn,
+  inputs: DataTableViewInputs,
+  h: DataTableViewBuilder,
+  motion: MotionScope,
+) {
   const editingState = Option.getOrNull(model.editing)
   const editor = column.editor
   const editing =

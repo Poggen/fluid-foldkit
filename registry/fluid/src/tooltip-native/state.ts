@@ -21,15 +21,15 @@ export const Model = Schema.Struct({
   sequence: Schema.Natural,
 })
 export type Model = typeof Model.Type
-// Transitions plan only document-owned state; child state is initialized and updated by Bindings.
+
 export type PresentationModel = Pick<Model, 'groups' | 'generation' | 'sequence'> & {
   readonly rows: { readonly [key: string]: Omit<Row, 'interaction'> }
 }
-export const settlePresentation = (
+export const settlePresentation: (
   before: Presentation,
   next: Presentation,
   generation: number,
-): Presentation => {
+) => Presentation = (before: Presentation, next: Presentation, generation: number) => {
   const wasOpen = effectiveOpen(before)
   const open = effectiveOpen(next)
   return wasOpen === open
@@ -100,7 +100,6 @@ export function transition(
       changes.push({ key, open: effectiveOpen(presentation) })
   } else if (effectiveOpen(requested.presentation)) changes.push({ key, open: true })
 
-  // Base grouping observes effective visibility. Forced-closed admissions do not warm it.
   for (let index = 0; index < changes.length; index += 1) {
     const change = changes[index]
     if (change === undefined) continue

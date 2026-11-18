@@ -10,7 +10,15 @@ const BAND_STOPS = Array.from({ length: 17 }, (_, index) => {
 })
 
 /** Physical iteration is an observation. Only the owning Block may decide whether to advance its seed. */
-export function sweepMask<Message, Mounts>(
+export const sweepMask: <Message, Mounts>(
+  h: HtmlBuilder<Message, Mounts>,
+  chartId: string,
+  width: number,
+  height: number,
+  durationSeconds: number,
+  onSweepObserved: Message,
+  backgroundOpacity?: number,
+) => ReadonlyArray<Html> = function sweepMask<Message, Mounts>(
   h: HtmlBuilder<Message, Mounts>,
   chartId: string,
   width: number,
@@ -18,7 +26,7 @@ export function sweepMask<Message, Mounts>(
   durationSeconds: number,
   onSweepObserved: Message,
   backgroundOpacity = 0,
-): ReadonlyArray<Html> {
+) {
   return [
     h.linearGradient(
       [

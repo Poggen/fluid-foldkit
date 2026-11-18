@@ -8,23 +8,81 @@ import { toDate as toDateValue } from './series'
 import { seriesValueOf } from './domains'
 import { pillLayout } from './date-pill'
 
-export function measuredOverlayPill<Row>(
+export const timeSeriesHoverModel: <Row extends Readonly<Record<string, unknown>>>(
+  next: CartesianSnapshot<Row>,
+  props: TimeSeriesProps<Row>,
+  tooltip: ChartTooltipProps<Row> | undefined,
+  textWidth: (text: string) => number | null,
+  sourceMotion?: boolean,
+) => HoverOverlayModel<Row> | null = function <Row extends Readonly<Record<string, unknown>>>(
+  next: CartesianSnapshot<Row>,
+  props: TimeSeriesProps<Row>,
+  tooltip: ChartTooltipProps<Row> | undefined,
+  textWidth: (text: string) => number | null,
+  sourceMotion = false,
+) {
+  const interactive = next.series.filter((series) => series.kind !== 'pattern')
+
+  const dots = [
+    ...seriesMarkerDots(next),
+    ...(tooltip === undefined || tooltip.showDots === false
+      ? []
+      : [...tooltipDots(next, tooltip), ...(next.extraDots ?? [])]),
+  ]
+
+  const dates = next.rows.map((row) =>
+    new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(
+      (props.x ?? ((item: Row) => toDateValue(item[props.xDataKey ?? 'date'])))(row),
+    ),
+  )
+
+  const hasMarks = interactive.length > 0 || (next.extraDots?.length ?? 0) > 0
+
+  if (tooltip === undefined && dots.length === 0) {
+    return null satisfies HoverOverlayModel<Row> | null
+  }
+
+  return {
+    sourceMotion,
+    springConfig: tooltip?.springConfig ?? useChartConfig(props.environment).tooltipSpring,
+    crosshair: crosshairModel(tooltip, hasMarks),
+    dots,
+    pill:
+      hasMarks && tooltip !== undefined && tooltip.showDatePill !== false
+        ? { labels: dates, layout: pillLayout(dates, textWidth) }
+        : null,
+    indexOf: (time) =>
+      next.rows.findIndex(
+        (row) =>
+          (props.x ?? ((item: Row) => toDateValue(item[props.xDataKey ?? 'date'])))(
+            row,
+          ).getTime() === time,
+      ),
+  } satisfies HoverOverlayModel<Row> | null
+}
+
+export const measuredOverlayPill: <Row>(
   overlay: HoverOverlayModel<Row> | null,
   textWidth: (text: string) => number | null,
-): HoverOverlayModel<Row> | null {
+) => HoverOverlayModel<Row> | null = function measuredOverlayPill<Row>(
+  overlay: HoverOverlayModel<Row> | null,
+  textWidth: (text: string) => number | null,
+) {
   if (overlay === null || overlay.pill === null || overlay.pill === undefined) {
-    return overlay
+    return overlay satisfies HoverOverlayModel<Row> | null
   }
 
   return {
     ...overlay,
     pill: { ...overlay.pill, layout: pillLayout(overlay.pill.labels, textWidth) },
-  }
+  } satisfies HoverOverlayModel<Row> | null
 }
 
-function seriesMarkerDots<Row extends Readonly<Record<string, unknown>>>(
+const seriesMarkerDots: <Row extends Readonly<Record<string, unknown>>>(
   next: CartesianSnapshot<Row>,
-): Array<OverlayDot<Row>> {
+) => Array<OverlayDot<Row>> = function seriesMarkerDots<
+  Row extends Readonly<Record<string, unknown>>,
+>(next: CartesianSnapshot<Row>) {
   const interactive = next.series.filter((series) => series.kind !== 'pattern')
   const dots: Array<OverlayDot<Row>> = []
 
@@ -68,36 +126,16 @@ function seriesMarkerDots<Row extends Readonly<Record<string, unknown>>>(
     }
   }
 
-  return dots
+  return dots satisfies Array<OverlayDot<Row>>
 }
 
-function tooltipDotShape(
-  tooltip:
-    | Pick<
-        ChartTooltipProps,
-        'dotSize' | 'dotScale' | 'dotVariant' | 'dotRadiusFraction' | 'dotStrokeWidth'
-      >
-    | undefined,
-  color: string,
-): OverlayShape {
-  const r = (tooltip?.dotSize ?? 5) * (tooltip?.dotScale ?? 1)
-
-  return tooltip?.dotVariant === 'ring'
-    ? {
-        r,
-        corner: r * 2 * Math.max(0, Math.min(0.5, tooltip.dotRadiusFraction ?? 0.25)),
-        fill: 'transparent',
-        stroke: color,
-        // TooltipDot's default parameter is 2, despite its public comment saying 1.5.
-        strokeWidth: tooltip.dotStrokeWidth ?? 2,
-      }
-    : { r, fill: color, stroke: 'var(--chart-background)', strokeWidth: 2 }
-}
-
-function tooltipDots<Row extends Readonly<Record<string, unknown>>>(
+const tooltipDots: <Row extends Readonly<Record<string, unknown>>>(
   next: CartesianSnapshot<Row>,
   tooltip: ChartTooltipProps<Row> | undefined,
-): Array<OverlayDot<Row>> {
+) => Array<OverlayDot<Row>> = function tooltipDots<Row extends Readonly<Record<string, unknown>>>(
+  next: CartesianSnapshot<Row>,
+  tooltip: ChartTooltipProps<Row> | undefined,
+) {
   const interactive = next.series.filter((series) => series.kind !== 'pattern')
   const dots: Array<OverlayDot<Row>> = []
 
@@ -140,16 +178,48 @@ function tooltipDots<Row extends Readonly<Record<string, unknown>>>(
     }
   }
 
-  return dots
+  return dots satisfies Array<OverlayDot<Row>>
 }
 
-function indicatorWidth(width: ChartTooltipProps['indicatorWidth']): number {
-  if (Predicate.isNumber(width)) {
-    return width
+const tooltipDotShape: (
+  tooltip:
+    | Pick<
+        ChartTooltipProps,
+        'dotSize' | 'dotScale' | 'dotVariant' | 'dotRadiusFraction' | 'dotStrokeWidth'
+      >
+    | undefined,
+  color: string,
+) => OverlayShape = function tooltipDotShape(
+  tooltip:
+    | Pick<
+        ChartTooltipProps,
+        'dotSize' | 'dotScale' | 'dotVariant' | 'dotRadiusFraction' | 'dotStrokeWidth'
+      >
+    | undefined,
+  color: string,
+) {
+  const r = (tooltip?.dotSize ?? 5) * (tooltip?.dotScale ?? 1)
+
+  return tooltip?.dotVariant === 'ring'
+    ? {
+        r,
+        corner: r * 2 * Math.max(0, Math.min(0.5, tooltip.dotRadiusFraction ?? 0.25)),
+        fill: 'transparent',
+        stroke: color,
+
+        strokeWidth: tooltip.dotStrokeWidth ?? 2,
+      }
+    : { r, fill: color, stroke: 'var(--chart-background)', strokeWidth: 2 }
+}
+
+const indicatorWidth: (width: ChartTooltipProps['indicatorWidth']) => number =
+  function indicatorWidth(width: ChartTooltipProps['indicatorWidth']) {
+    if (Predicate.isNumber(width)) {
+      return width
+    }
+
+    return { thin: 2, medium: 4, thick: 8, line: 1 }[width ?? 'line']
   }
-
-  return { thin: 2, medium: 4, thick: 8, line: 1 }[width ?? 'line']
-}
 
 function crosshairModel<Row>(tooltip: ChartTooltipProps<Row> | undefined, hasMarks: boolean) {
   if (tooltip === undefined || !hasMarks || tooltip.showCrosshair === false) {
@@ -162,52 +232,5 @@ function crosshairModel<Row>(tooltip: ChartTooltipProps<Row> | undefined, hasMar
     dash: tooltip.indicatorDasharray,
     fadeEdges: tooltip.indicatorFadeEdges ?? 'both',
     fadeLength: tooltip.indicatorFadeLength ?? 10,
-  }
-}
-
-export function timeSeriesHoverModel<Row extends Readonly<Record<string, unknown>>>(
-  next: CartesianSnapshot<Row>,
-  props: TimeSeriesProps<Row>,
-  tooltip: ChartTooltipProps<Row> | undefined,
-  textWidth: (text: string) => number | null,
-  sourceMotion = false,
-): HoverOverlayModel<Row> | null {
-  const interactive = next.series.filter((series) => series.kind !== 'pattern')
-
-  const dots = [
-    ...seriesMarkerDots(next),
-    ...(tooltip === undefined || tooltip.showDots === false
-      ? []
-      : [...tooltipDots(next, tooltip), ...(next.extraDots ?? [])]),
-  ]
-
-  const dates = next.rows.map((row) =>
-    new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(
-      (props.x ?? ((item: Row) => toDateValue(item[props.xDataKey ?? 'date'])))(row),
-    ),
-  )
-
-  const hasMarks = interactive.length > 0 || (next.extraDots?.length ?? 0) > 0
-
-  if (tooltip === undefined && dots.length === 0) {
-    return null
-  }
-
-  return {
-    sourceMotion,
-    springConfig: tooltip?.springConfig ?? useChartConfig(props.environment).tooltipSpring,
-    crosshair: crosshairModel(tooltip, hasMarks),
-    dots,
-    pill:
-      hasMarks && tooltip !== undefined && tooltip.showDatePill !== false
-        ? { labels: dates, layout: pillLayout(dates, textWidth) }
-        : null,
-    indexOf: (time) =>
-      next.rows.findIndex(
-        (row) =>
-          (props.x ?? ((item: Row) => toDateValue(item[props.xDataKey ?? 'date'])))(
-            row,
-          ).getTime() === time,
-      ),
   }
 }

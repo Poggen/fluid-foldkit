@@ -47,7 +47,7 @@ export const buildReferences = () => {
       )
         return []
       const type = checker.getDeclaredTypeOfSymbol(symbol)
-      const structured = (value: ts.Type): boolean =>
+      const structured: (value: ts.Type) => boolean = (value: ts.Type) =>
         value.isUnion()
           ? value.types.some(structured)
           : (value.flags & (ts.TypeFlags.Object | ts.TypeFlags.Intersection)) !== 0

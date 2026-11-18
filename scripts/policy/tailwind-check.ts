@@ -18,12 +18,15 @@ const maintained = [
 ]
 const excluded = [
   'tests/parity/accordion/source-style.css',
-  // Frozen React fixtures import this shared file; maintained entries must not.
+  /* @license Frozen React fixtures import this shared file; maintained entries must not. */
   'registry/charts/examples/family-consumer.css',
   'registry/charts/examples/source-baseline/',
   'registry/fluid/examples/color-scroll-private/source/',
 ]
-const files = (root: string, directory: string): readonly string[] =>
+const files: (root: string, directory: string) => readonly string[] = (
+  root: string,
+  directory: string,
+) =>
   readdirSync(path.join(root, directory), { withFileTypes: true }).flatMap((entry) => {
     const file = `${directory}/${entry.name}`
     if (
@@ -38,7 +41,10 @@ const files = (root: string, directory: string): readonly string[] =>
         : []
   })
 
-const importSpecifiers = (file: string, text: string): readonly string[] => {
+const importSpecifiers: (file: string, text: string) => readonly string[] = (
+  file: string,
+  text: string,
+) => {
   if (!file.endsWith('.css'))
     return moduleReferences('source.tsx', text).map((reference) => reference.value)
   const values: string[] = []

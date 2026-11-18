@@ -1,5 +1,51 @@
 import type { RenderChartOptions, SceneGroup, SceneNode } from '@tanstack/charts'
 
+const staticAttributes: (element: SVGElement, target: Element, preserveMotion: boolean) => void =
+  function staticAttributes(element: SVGElement, target: Element, preserveMotion: boolean) {
+    for (const name of STATIC_ATTRIBUTES) {
+      if (preserveMotion && (name === 'opacity' || name === 'filter' || name === 'style')) {
+        continue
+      }
+
+      set(element, name, target.getAttribute(name) ?? undefined)
+    }
+  }
+
+const groupClip: (
+  element: SVGElement,
+  clips: SVGDefsElement,
+  clip: SceneGroup['clip'],
+  path: ReadonlyArray<string>,
+  prefix: string,
+) => void = function groupClip(
+  element: SVGElement,
+  clips: SVGDefsElement,
+  clip: SceneGroup['clip'],
+  path: ReadonlyArray<string>,
+  prefix: string,
+) {
+  if (clip === undefined) {
+    element.removeAttribute('clip-path')
+
+    return
+  }
+
+  const document = element.ownerDocument
+  const id = `bkm-scatter-clip-${opaqueId(JSON.stringify([prefix, path]))}`
+  const definition = document.createElementNS(SVG_NS, 'clipPath')
+  const rectangle = document.createElementNS(SVG_NS, 'rect')
+  definition.setAttribute('id', id)
+  definition.setAttribute('clipPathUnits', 'userSpaceOnUse')
+
+  for (const name of ['x', 'y', 'width', 'height'] as const) {
+    rectangle.setAttribute(name, String(clip[name]))
+  }
+
+  definition.append(rectangle)
+  clips.append(definition)
+  element.setAttribute('clip-path', `url(#${id})`)
+}
+
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
 const STATIC_ATTRIBUTES = [
@@ -24,54 +70,19 @@ interface PaintNode {
   readonly children: Map<string, PaintNode>
 }
 
-const opaqueId = (value: string): string =>
+const opaqueId: (value: string) => string = (value: string) =>
   Array.from(value, (unit) => unit.codePointAt(0)?.toString(16)).join('-')
 
-const set = (element: Element, name: string, value: string | undefined): void => {
+const set: (element: Element, name: string, value: string | undefined) => void = (
+  element: Element,
+  name: string,
+  value: string | undefined,
+) => {
   if (value === undefined) {
     element.removeAttribute(name)
   } else {
     element.setAttribute(name, value)
   }
-}
-
-function staticAttributes(element: SVGElement, target: Element, preserveMotion: boolean): void {
-  for (const name of STATIC_ATTRIBUTES) {
-    if (preserveMotion && (name === 'opacity' || name === 'filter' || name === 'style')) {
-      continue
-    }
-
-    set(element, name, target.getAttribute(name) ?? undefined)
-  }
-}
-
-function groupClip(
-  element: SVGElement,
-  clips: SVGDefsElement,
-  clip: SceneGroup['clip'],
-  path: ReadonlyArray<string>,
-  prefix: string,
-): void {
-  if (clip === undefined) {
-    element.removeAttribute('clip-path')
-
-    return
-  }
-
-  const document = element.ownerDocument
-  const id = `bkm-scatter-clip-${opaqueId(JSON.stringify([prefix, path]))}`
-  const definition = document.createElementNS(SVG_NS, 'clipPath')
-  const rectangle = document.createElementNS(SVG_NS, 'rect')
-  definition.setAttribute('id', id)
-  definition.setAttribute('clipPathUnits', 'userSpaceOnUse')
-
-  for (const name of ['x', 'y', 'width', 'height'] as const) {
-    rectangle.setAttribute(name, String(clip[name]))
-  }
-
-  definition.append(rectangle)
-  clips.append(definition)
-  element.setAttribute('clip-path', `url(#${id})`)
 }
 
 /** Only the surface's own parent-local opaque Scene keys identify retained nodes. */
@@ -83,7 +94,7 @@ export function scatterLayerPainter(svg: SVGSVGElement) {
     throw new Error('A mounted Scatter surface requires its browser document')
   }
 
-  const adopt = (parent: SVGElement): Map<string, PaintNode> => {
+  const adopt: (parent: SVGElement) => Map<string, PaintNode> = (parent: SVGElement) => {
     const entries = new Map<string, PaintNode>()
 
     for (const element of parent.children) {
@@ -131,14 +142,21 @@ export function scatterLayerPainter(svg: SVGSVGElement) {
 
   const entries = adopt(root)
 
-  const update = (
+  const update: (
     nodes: ReadonlyArray<SceneNode>,
     parent: SVGElement,
     previous: Map<string, PaintNode>,
     serialized: Element,
     path: ReadonlyArray<string>,
     prefix: string,
-  ): void => {
+  ) => void = (
+    nodes: ReadonlyArray<SceneNode>,
+    parent: SVGElement,
+    previous: Map<string, PaintNode>,
+    serialized: Element,
+    path: ReadonlyArray<string>,
+    prefix: string,
+  ) => {
     const active = new Set<string>()
     const serializedChildren = new Map(
       [...serialized.children].flatMap((element) => {

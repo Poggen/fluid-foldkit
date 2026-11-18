@@ -1,21 +1,20 @@
-// Derived from Lucide 0.564.0. ISC; Feather-derived portions MIT.
-// See NOTICE
+/* @license Derived from Lucide 0.564.0. ISC; Feather-derived portions MIT. */
+/* @license See NOTICE */
 import type { Html, HtmlBuilder } from 'foldkit/html'
 import type { IconOptions } from './presentation.js'
 
-const mergeClasses = (...classes: ReadonlyArray<string>) =>
-  classes
-    .filter((name, index, names) => name.trim() !== '' && names.indexOf(name) === index)
-    .join(' ')
-    .trim()
-
 /** Exact SVG defaults from the frozen Lucide source, with native Foldkit nodes. */
-export function renderLucideIcon<Message>(
+export const renderLucideIcon: <Message>(
   glyph: string,
   options: IconOptions,
   h: HtmlBuilder<Message>,
   children: ReadonlyArray<Html>,
-): Html {
+) => Html = function renderLucideIcon<Message>(
+  glyph: string,
+  options: IconOptions,
+  h: HtmlBuilder<Message>,
+  children: ReadonlyArray<Html>,
+) {
   return h.svg(
     [
       h.Xmlns('http://www.w3.org/2000/svg'),
@@ -37,5 +36,11 @@ export function renderLucideIcon<Message>(
       h.AriaHidden(true),
     ],
     children,
-  )
+  ) satisfies Html
 }
+
+const mergeClasses = (...classes: ReadonlyArray<string>) =>
+  classes
+    .filter((name, index, names) => name.trim() !== '' && names.indexOf(name) === index)
+    .join(' ')
+    .trim()

@@ -1,5 +1,5 @@
 import { fontWeights } from './lib/font-weight.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Layer } from 'effect'
 import { Block } from 'foldkit'
 import { DropdownMenuBlock, menuLayer } from './dropdown.js'
@@ -11,31 +11,19 @@ import { resolvePresentation } from './presentation.js'
 import type { Presentation } from './presentation.js'
 import { cn } from './lib/utils.js'
 
-const recipe = sidebarIdentityRecipe('workspace')
-
-export const SidebarWorkspaceHeaderKey = Symbol('SidebarWorkspaceHeader')
-
-export const SidebarWorkspaceHeaderBlock = Block.make(recipe.namespace, {
-  key: SidebarWorkspaceHeaderKey,
-  ...recipe.contract,
-})
-
-export const SidebarWorkspaceHeaderLayer = SidebarWorkspaceHeaderBlock.makeLayer(
-  recipe.plans(SidebarWorkspaceHeaderBlock, DropdownMenuBlock),
-).pipe(Layer.provide(Layer.mergeAll(menuLayer, hoverLayer, highlightLayer)))
-
-export type {
-  SidebarIdentityConfig as SidebarWorkspaceHeaderConfig,
-  SidebarIdentityViewInputs as SidebarWorkspaceHeaderViewInputs,
-} from './sidebar-identity.js'
-
-export function WorkspaceTile<Message>(
+export const WorkspaceTile: <Message>(
   props: Presentation & {
     readonly children: ReadonlyArray<Html | string>
     readonly className?: string
   },
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function WorkspaceTile<Message>(
+  props: Presentation & {
+    readonly children: ReadonlyArray<Html | string>
+    readonly className?: string
+  },
+  h: HtmlBuilder<Message>,
+) {
   const { shape } = resolvePresentation(props)
 
   return h.span(
@@ -54,8 +42,26 @@ export function WorkspaceTile<Message>(
       h.Style({ fontVariationSettings: fontWeights.semibold }),
     ],
     props.children,
-  )
+  ) satisfies Html
 }
+
+const recipe = sidebarIdentityRecipe('workspace')
+
+export const SidebarWorkspaceHeaderKey = Symbol('SidebarWorkspaceHeader')
+
+export const SidebarWorkspaceHeaderBlock = Block.make(recipe.namespace, {
+  key: SidebarWorkspaceHeaderKey,
+  ...recipe.contract,
+})
+
+export const SidebarWorkspaceHeaderLayer = SidebarWorkspaceHeaderBlock.makeLayer(
+  recipe.plans(SidebarWorkspaceHeaderBlock, DropdownMenuBlock),
+).pipe(Layer.provide(Layer.mergeAll(menuLayer, hoverLayer, highlightLayer)))
+
+export type {
+  SidebarIdentityConfig as SidebarWorkspaceHeaderConfig,
+  SidebarIdentityViewInputs as SidebarWorkspaceHeaderViewInputs,
+} from './sidebar-identity.js'
 
 export const hoverModeOf = (model: typeof SidebarWorkspaceHeaderBlock.Model.Type) =>
   model.hover.mode

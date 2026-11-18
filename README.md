@@ -5,6 +5,8 @@ Native [Foldkit](https://github.com/foldkit/foldkit) ports of
 and [Bklit / TanStack Charts](https://github.com/toomingos/bklit-tanstack-charts-migration).
 The showcase is the documentation, with live examples, source, API references,
 and composition guides. Components use Blocks, Bindings, and Effect Layers.
+[Runtime and source contracts](ARCHITECTURE.md) describe the lifetime, motion,
+identity, and provenance constraints.
 Composition and showcase refinements draw on [Tim Hanlon’s Foldkit port](https://github.com/timhanlon/fluid-functionalism-foldkit).
 
 [Live showcase and installation guide](https://fluid-foldkit.vercel.app).
@@ -72,8 +74,16 @@ bun run test:consumer
 REGISTRY_CONSUMER_ORIGIN=https://fluid-foldkit.vercel.app bun run test:consumer
 ```
 
+Oxlint includes the complete Landmines recommended preset alongside the Foldkit
+and repository rules. Native browser keepers cover real layout and browser APIs;
+unit tests retain narrowly documented finite host controls for race and failure paths.
+
 `check` runs architecture guards, Effect diagnostics, tsrs typechecks, lint,
-unit tests, builds, and production browser tests. Linux CI installs Playwright
+generated consumer admission, unit tests, builds, and production browser tests.
+Pull requests, merge groups and pushes to main run the complete GitHub Actions gate. Release tags reuse the commit's verification. Playwright discovers the current suite on every run. CI balances it across 16 Chromium shards using measured Linux durations and verifies each shard’s executed count against its assignment. Every shard tests the same production build. Each shard uploads its report and failure traces. The `check` job requires every lane to pass.
+
+`bun run test:admission` checks copied Sidebar state retention and all generated
+CommandMenu layouts with tsrs and the real Foldkit runtime before unit tests. Linux CI installs Playwright
 Chromium from `app/` and runs with `CI=1`.
 
 The showcase carries one [temporary Foldkit runtime patch](patches/foldkit@0.170.0-canary.54f8bcd443b4.patch).

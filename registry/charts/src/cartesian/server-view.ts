@@ -9,59 +9,15 @@ import type { Html, HtmlBuilder } from 'foldkit/html'
 import type { ChartStyle } from './content-types'
 import { chartStyleProperties } from './style'
 
-const stableId = (value: string): string => Hash.string(value).toString(36)
-
-const scopedPaint = (paint: string, uid: string, gradients: ReadonlySet<string>): string => {
-  const match = /^url\(#(?<id>[^)]+)\)$/u.exec(paint)
-  const id = match?.groups?.id
-
-  return id !== undefined && gradients.has(id) ? `url(#${scopedGradientId(uid, id)})` : paint
-}
-
-const number = (value: number): string => String(Math.round(value * 100) / 100)
-
-function sceneNodeAttributes<Message, Requirements>(
-  h: HtmlBuilder<Message, Requirements>,
-  node: SceneNode,
-  uid: string,
-  gradients: ReadonlySet<string>,
-) {
-  const { style } = node
-
-  return [
-    h.DataAttribute('ts-key', node.key),
-    ...(node.className === undefined ? [] : [h.Class(node.className)]),
-    ...(node.ariaHidden === true ? [h.AriaHidden(true)] : []),
-    ...(
-      [
-        ['fill', style?.fill],
-        ['fill-opacity', style?.fillOpacity],
-        ['stroke', style?.stroke],
-        ['stroke-opacity', style?.strokeOpacity],
-        ['stroke-width', style?.strokeWidth],
-        ['opacity', style?.opacity],
-        ['stroke-linecap', style?.lineCap],
-        ['stroke-linejoin', style?.lineJoin],
-        ['stroke-dasharray', style?.strokeDasharray],
-      ] satisfies ReadonlyArray<readonly [string, string | number | undefined]>
-    ).flatMap(([name, value]) =>
-      value === undefined
-        ? []
-        : [
-            h.Attribute(
-              name,
-              Predicate.isNumber(value) ? number(value) : scopedPaint(value, uid, gradients),
-            ),
-          ],
-    ),
-  ]
-}
-
-function sceneLabelView<Message, Requirements>(
+const sceneLabelView: <Message, Requirements>(
   h: HtmlBuilder<Message, Requirements>,
   node: Extract<SceneNode, { kind: 'label' }>,
   attributes: ReturnType<typeof sceneNodeAttributes<Message, Requirements>>,
-): Html {
+) => Html = function sceneLabelView<Message, Requirements>(
+  h: HtmlBuilder<Message, Requirements>,
+  node: Extract<SceneNode, { kind: 'label' }>,
+  attributes: ReturnType<typeof sceneNodeAttributes<Message, Requirements>>,
+) {
   return h.text(
     [
       ...attributes,
@@ -79,15 +35,20 @@ function sceneLabelView<Message, Requirements>(
         : [h.Transform(`rotate(${number(node.rotate)} ${number(node.x)} ${number(node.y)})`)]),
     ],
     [node.text],
-  )
+  ) satisfies Html
 }
 
-function sceneNodeView<Message, Requirements>(
+const sceneNodeView: <Message, Requirements>(
   h: HtmlBuilder<Message, Requirements>,
   node: SceneNode,
   uid: string,
   gradients: ReadonlySet<string>,
-): Html {
+) => Html = function <Message, Requirements>(
+  h: HtmlBuilder<Message, Requirements>,
+  node: SceneNode,
+  uid: string,
+  gradients: ReadonlySet<string>,
+) {
   const attributes = sceneNodeAttributes(h, node, uid, gradients)
 
   switch (node.kind) {
@@ -130,7 +91,7 @@ function sceneNodeView<Message, Requirements>(
               ]),
           ...node.children.map((child) => sceneNodeView(h, child, uid, gradients)),
         ],
-      )
+      ) satisfies Html
     }
 
     case 'area':
@@ -152,7 +113,7 @@ function sceneNodeView<Message, Requirements>(
         h.D(polygonPath ?? node.path ?? points(node.points, node.kind === 'area')),
         h.VectorEffect('non-scaling-stroke'),
         ...(polygonPath === undefined ? [] : [h.FillRule('evenodd')]),
-      ])
+      ]) satisfies Html
     }
 
     case 'rect': {
@@ -163,7 +124,7 @@ function sceneNodeView<Message, Requirements>(
         h.Width(number(node.width)),
         h.Height(number(node.height)),
         ...(node.radius === undefined ? [] : [h.Rx(number(node.radius))]),
-      ])
+      ]) satisfies Html
     }
 
     case 'rule': {
@@ -173,7 +134,7 @@ function sceneNodeView<Message, Requirements>(
         h.Y1(number(node.y1)),
         h.X2(number(node.x2)),
         h.Y2(number(node.y2)),
-      ])
+      ]) satisfies Html
     }
 
     case 'dot': {
@@ -182,20 +143,29 @@ function sceneNodeView<Message, Requirements>(
         h.Cx(number(node.x)),
         h.Cy(number(node.y)),
         h.R(number(node.radius)),
-      ])
+      ]) satisfies Html
     }
 
     case 'label': {
-      return sceneLabelView(h, node, attributes)
+      return sceneLabelView(h, node, attributes) satisfies Html
     }
 
     default: {
-      return absurd(node)
+      return absurd(node) satisfies Html
     }
   }
 }
 
-export function cartesianServerView<Row, XValue extends ChartValue, YValue extends ChartValue>(
+export const cartesianServerView: <Row, XValue extends ChartValue, YValue extends ChartValue>(
+  definition: DomChartDefinition<Row, XValue, YValue>,
+  width: number,
+  height: number,
+  uid: string,
+  ariaLabel: string,
+  overlay?: () => Html,
+  paintStyle?: ChartStyle,
+  renderer?: ChartRenderer<Row, XValue, YValue>,
+) => Html = function cartesianServerView<Row, XValue extends ChartValue, YValue extends ChartValue>(
   definition: DomChartDefinition<Row, XValue, YValue>,
   width: number,
   height: number,
@@ -204,7 +174,7 @@ export function cartesianServerView<Row, XValue extends ChartValue, YValue exten
   overlay: () => Html = () => inertHtml.empty,
   paintStyle: ChartStyle = {},
   renderer?: ChartRenderer<Row, XValue, YValue>,
-): Html {
+) {
   const h = inertHtml
   const runtime = createChartRuntime<Row, XValue, YValue>()
   const scene = runtime.render(definition, { width, height })
@@ -263,5 +233,57 @@ export function cartesianServerView<Row, XValue extends ChartValue, YValue exten
       ),
       overlay(),
     ],
-  )
+  ) satisfies Html
+}
+
+const stableId: (value: string) => string = (value: string) => Hash.string(value).toString(36)
+
+const scopedPaint: (paint: string, uid: string, gradients: ReadonlySet<string>) => string = (
+  paint: string,
+  uid: string,
+  gradients: ReadonlySet<string>,
+) => {
+  const match = /^url\(#(?<id>[^)]+)\)$/u.exec(paint)
+  const id = match?.groups?.id
+
+  return id !== undefined && gradients.has(id) ? `url(#${scopedGradientId(uid, id)})` : paint
+}
+
+const number: (value: number) => string = (value: number) => String(Math.round(value * 100) / 100)
+
+function sceneNodeAttributes<Message, Requirements>(
+  h: HtmlBuilder<Message, Requirements>,
+  node: SceneNode,
+  uid: string,
+  gradients: ReadonlySet<string>,
+) {
+  const { style } = node
+
+  return [
+    h.DataAttribute('ts-key', node.key),
+    ...(node.className === undefined ? [] : [h.Class(node.className)]),
+    ...(node.ariaHidden === true ? [h.AriaHidden(true)] : []),
+    ...(
+      [
+        ['fill', style?.fill],
+        ['fill-opacity', style?.fillOpacity],
+        ['stroke', style?.stroke],
+        ['stroke-opacity', style?.strokeOpacity],
+        ['stroke-width', style?.strokeWidth],
+        ['opacity', style?.opacity],
+        ['stroke-linecap', style?.lineCap],
+        ['stroke-linejoin', style?.lineJoin],
+        ['stroke-dasharray', style?.strokeDasharray],
+      ] satisfies ReadonlyArray<readonly [string, string | number | undefined]>
+    ).flatMap(([name, value]) =>
+      value === undefined
+        ? []
+        : [
+            h.Attribute(
+              name,
+              Predicate.isNumber(value) ? number(value) : scopedPaint(value, uid, gradients),
+            ),
+          ],
+    ),
+  ]
 }

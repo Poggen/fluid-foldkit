@@ -1,10 +1,103 @@
-// The live chart's per-tick frame: the types the roll is described with, and the pure helpers that read it (the y domain on
-// screen under a roll, bklit's y label step).
 import { scaleLinear } from '@tanstack/charts/scales/linear'
 import type { LiveRow } from './definition'
 import type { Momentum } from './momentum'
 import { pickNiceInterval } from './live-yaxis'
 import { introEasing } from './head-ease'
+
+/** d3 `nice()` (default 10 ticks), as bklit's yScale applies to the eased domain. */
+export const niceDomain: (domain: readonly [number, number]) => [number, number] =
+  function niceDomain(domain: readonly [number, number]) {
+    const [lo, hi] = scaleLinear().domain(domain).nice().domain()
+
+    return [lo, hi]
+  }
+
+/** How far the roll has eased at frame time `time`: 1 with no roll, 0 before its start is stamped. */
+export const rollEase: (r: RollClock | null, time: number) => number = function rollEase(
+  r: RollClock | null,
+  time: number,
+) {
+  if (!r) {
+    return 1
+  }
+
+  const progress = r.at === null ? 0 : Math.min(1, Math.max(0, (time - r.at) / r.dur))
+
+  return r.ease.kind === 'linear' ? progress : introEasing(r.ease.lerp, r.ease.durationMs)(progress)
+}
+
+/** The roll's y transform at frame time `time`: from its start (`s`,`t`) to identity on its own easing, from the stamped start. */
+export const rollYAt: (r: RollClock | null, time: number) => RollY = function rollYAt(
+  r: RollClock | null,
+  time: number,
+) {
+  if (!r) {
+    return { s: 1, t: 0 }
+  }
+
+  const e = rollEase(r, time)
+
+  return { s: 1 + (r.s - 1) * (1 - e), t: r.t * (1 - e) }
+}
+
+export const shownDomain: (
+  y: readonly [number, number],
+  roll: RollY,
+  top: number,
+  height: number,
+) => [number, number] = function shownDomain(
+  y: readonly [number, number],
+  roll: RollY,
+  top: number,
+  height: number,
+) {
+  const s = roll.s > 0 ? roll.s : 1
+
+  const at: (screen: number) => number = (screen: number) =>
+    y[1] - (((screen - roll.t) / s - top) * (y[1] - y[0])) / (height || 1)
+
+  return [at(top + height), at(top)]
+}
+
+/** Steps bklit's raw y domain one rAF tick (nextAnimFrame, live-line-chart.tsx:105-127, :383-431), from 0..100 (:349-355):
+ * an edge moving outward jumps to its target, one moving inward closes `lerp` of the gap. */
+export const stepRaw: (
+  p: StepPick,
+  target: readonly [number, number],
+  lerp: number,
+) => [number, number] = function stepRaw(
+  p: StepPick,
+  target: readonly [number, number],
+  lerp: number,
+) {
+  const raw = p.raw ?? [0, 100]
+  raw[0] = target[0] < raw[0] ? target[0] : target[0] + (raw[0] - target[0]) * (1 - lerp)
+  raw[1] = target[1] > raw[1] ? target[1] : target[1] + (raw[1] - target[1]) * (1 - lerp)
+  p.raw = raw
+
+  return raw
+}
+
+export const pickStep: (
+  p: StepPick,
+  domain: readonly [number, number],
+  height: number,
+  minGap: number,
+) => number = function pickStep(
+  p: StepPick,
+  domain: readonly [number, number],
+  height: number,
+  minGap: number,
+) {
+  const [lo, hi] = niceDomain(domain)
+
+  if (hi - lo !== p.range) {
+    p.range = hi - lo
+    p.interval = pickNiceInterval(p.range, height, minGap, p.interval)
+  }
+
+  return p.interval
+}
 
 /** A streamed sample: bklit's LiveLinePoint, with the optional extra field the chart's dataKey reads. */
 export type LiveSample = {
@@ -93,13 +186,6 @@ export interface FrameState {
   tipAt: number | null
 }
 
-/** d3 `nice()` (default 10 ticks), as bklit's yScale applies to the eased domain. */
-export function niceDomain(domain: readonly [number, number]): [number, number] {
-  const [lo, hi] = scaleLinear().domain(domain).nice().domain()
-
-  return [lo, hi]
-}
-
 /** bklit's y label step: its axis re-picks the interval, with hysteresis, whenever the committed frame's nice y range changes (live-y-axis.tsx:117-132), and its loop commits every
  * LIVE_FRAME_COMMIT_MS (COMMIT_MS; live-line-chart.tsx:275-284, 400-425) from a raw domain lerped once per rAF frame from 0..100 (stepRaw), so the latched step depends on which frames a commit lands on.
  * The loop starts on the seed frame, as bklit's first tick steps and picks on mount. */
@@ -115,71 +201,4 @@ export interface StepPick {
 export interface RollY {
   readonly s: number
   readonly t: number
-}
-
-/** How far the roll has eased at frame time `time`: 1 with no roll, 0 before its start is stamped. */
-export function rollEase(r: RollClock | null, time: number): number {
-  if (!r) {
-    return 1
-  }
-
-  const progress = r.at === null ? 0 : Math.min(1, Math.max(0, (time - r.at) / r.dur))
-
-  return r.ease.kind === 'linear' ? progress : introEasing(r.ease.lerp, r.ease.durationMs)(progress)
-}
-
-/** The roll's y transform at frame time `time`: from its start (`s`,`t`) to identity on its own easing, from the stamped start. */
-export function rollYAt(r: RollClock | null, time: number): RollY {
-  if (!r) {
-    return { s: 1, t: 0 }
-  }
-
-  const e = rollEase(r, time)
-
-  return { s: 1 + (r.s - 1) * (1 - e), t: r.t * (1 - e) }
-}
-
-export function shownDomain(
-  y: readonly [number, number],
-  roll: RollY,
-  top: number,
-  height: number,
-): [number, number] {
-  const s = roll.s > 0 ? roll.s : 1
-
-  const at = (screen: number): number =>
-    y[1] - (((screen - roll.t) / s - top) * (y[1] - y[0])) / (height || 1)
-
-  return [at(top + height), at(top)]
-}
-
-/** Steps bklit's raw y domain one rAF tick (nextAnimFrame, live-line-chart.tsx:105-127, :383-431), from 0..100 (:349-355):
- * an edge moving outward jumps to its target, one moving inward closes `lerp` of the gap. */
-export function stepRaw(
-  p: StepPick,
-  target: readonly [number, number],
-  lerp: number,
-): [number, number] {
-  const raw = p.raw ?? [0, 100]
-  raw[0] = target[0] < raw[0] ? target[0] : target[0] + (raw[0] - target[0]) * (1 - lerp)
-  raw[1] = target[1] > raw[1] ? target[1] : target[1] + (raw[1] - target[1]) * (1 - lerp)
-  p.raw = raw
-
-  return raw
-}
-
-export function pickStep(
-  p: StepPick,
-  domain: readonly [number, number],
-  height: number,
-  minGap: number,
-): number {
-  const [lo, hi] = niceDomain(domain)
-
-  if (hi - lo !== p.range) {
-    p.range = hi - lo
-    p.interval = pickNiceInterval(p.range, height, minGap, p.interval)
-  }
-
-  return p.interval
 }

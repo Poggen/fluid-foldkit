@@ -26,7 +26,7 @@ export type SidebarCalloutEvents = Pick<
   'DismissedSidebarCallout' | 'UpdatedSidebarAction' | 'HoveredSidebarCallouts'
 >
 
-export const renderSidebarCallouts = (
+export const renderSidebarCallouts: (
   events: SidebarCalloutEvents,
   calloutGroup: ConfiguredSidebarModel['sidebarCallouts'],
   presences: ConfiguredSidebarModel['sidebarCalloutPresence'],
@@ -36,7 +36,17 @@ export const renderSidebarCallouts = (
   configuration: Configuration,
   context: PresentationContext,
   h: ConfiguredSidebarViewBuilder,
-): ReadonlyArray<Html> => {
+) => ReadonlyArray<Html> = (
+  events: SidebarCalloutEvents,
+  calloutGroup: ConfiguredSidebarModel['sidebarCallouts'],
+  presences: ConfiguredSidebarModel['sidebarCalloutPresence'],
+  dismissed: ReadonlyArray<string>,
+  hovered: boolean,
+  measuredHeight: number,
+  configuration: Configuration,
+  context: PresentationContext,
+  h: ConfiguredSidebarViewBuilder,
+) => {
   if (configuration.footerCallout === 'none') return []
   const shown = (configuration.footerCalloutStacked ? callouts : callouts.slice(0, 1)).filter(
     (card) => presences.find((item) => item.id === card.id)?.model.phase !== 'Closed',

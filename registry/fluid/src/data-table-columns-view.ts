@@ -1,7 +1,7 @@
 import { DataTableWrapText } from './data-table-wrap-view.js'
 import { DropdownLabel, DropdownSeparator } from './dropdown-parts.js'
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import { childAttributes } from 'foldkit/html'
 import type { Html } from 'foldkit/html'
 import { ViewMenu, Message } from './data-table-definition.js'
@@ -15,12 +15,17 @@ import { Button } from './button.js'
 import { resolvePresentation } from './presentation.js'
 import type { MotionScope } from './motion.js'
 
-export function DataTableColumnsMenu(
+export const DataTableColumnsMenu: (
   model: DataTableModel,
   inputs: DataTableViewInputs,
   h: DataTableViewBuilder,
   motion: MotionScope,
-): Html {
+) => Html = function DataTableColumnsMenu(
+  model: DataTableModel,
+  inputs: DataTableViewInputs,
+  h: DataTableViewBuilder,
+  motion: MotionScope,
+) {
   const { icons, size } = resolvePresentation(inputs)
   const ids = [
     ...model.pinnedColumns.left,

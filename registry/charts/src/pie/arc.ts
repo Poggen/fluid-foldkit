@@ -1,5 +1,3 @@
-// Static painted-geometry arc generator for radialArc({ generator }): native `states` style paint only (gap #31: the charts use none), so bklit's translate pop-out
-// (pie-chart.tsx) and `grow` effect (kit/polar/polar-dim.ts: a scale for a pie, a `d` variant for a donut) are CSS.
 import { arc as d3Arc } from 'd3-shape'
 import type { Arc } from 'd3-shape'
 
@@ -28,7 +26,10 @@ interface PieArcGeneratorOptions {
   readonly cornerRadius: number
 }
 
-const buildBaseArc = (row: PieArcGeneratorOptions, outerRadius: number): Arc<unknown, PieArcRow> =>
+const buildBaseArc: (
+  row: PieArcGeneratorOptions,
+  outerRadius: number,
+) => Arc<unknown, PieArcRow> = (row: PieArcGeneratorOptions, outerRadius: number) =>
   d3Arc<PieArcRow>()
     .startAngle((datum: Readonly<PieArcRow>) => datum.startAngle)
     .endAngle((datum: Readonly<PieArcRow>) => datum.endAngle)
@@ -38,16 +39,19 @@ const buildBaseArc = (row: PieArcGeneratorOptions, outerRadius: number): Arc<unk
     .cornerRadius(row.cornerRadius)
 
 const pieArcGenerator =
-  (options: Readonly<PieArcGeneratorOptions>) =>
-  (layout: Readonly<{ radius: number }>): Arc<unknown, PieArcRow> =>
-    buildBaseArc(options, layout.radius)
+  (options: Readonly<PieArcGeneratorOptions>) => (layout: Readonly<{ radius: number }>) =>
+    buildBaseArc(options, layout.radius) satisfies Arc<unknown, PieArcRow>
 
 /** Slice outline at an explicit outer radius (the grown variant for donuts, built once per slice on the host, not on hover). */
-const pieArcPath = (
+const pieArcPath: (
   options: Readonly<PieArcGeneratorOptions>,
   outerRadius: number,
   row: Readonly<PieArcRow>,
-): string => buildBaseArc(options, outerRadius)(row) ?? ''
+) => string = (
+  options: Readonly<PieArcGeneratorOptions>,
+  outerRadius: number,
+  row: Readonly<PieArcRow>,
+) => buildBaseArc(options, outerRadius)(row) ?? ''
 
 export { pieArcGenerator, pieArcPath }
 

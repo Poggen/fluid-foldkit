@@ -69,11 +69,15 @@ export const swatches = [
   '#000',
 ]
 
-const colorConfig = (
+const colorConfig: (
   id: string,
   defaultFormat: 'hex' | 'rgb' | 'hsl' | 'oklch',
   options: ColorScrollOptions,
-): ColorPickerConfig => {
+) => ColorPickerConfig = (
+  id: string,
+  defaultFormat: 'hex' | 'rgb' | 'hsl' | 'oklch',
+  options: ColorScrollOptions,
+) => {
   const picker: ColorPickerConfig = {
     id,
     hoverMode: options.hoverMode ?? 'fluid',
@@ -95,9 +99,10 @@ const colorConfig = (
 const Hex = ColorScrollExample.makeRequiredFieldBinding(ColorPickerBlock, {
   field: 'hex',
   init: {
-    contextToArgs: (options: ColorScrollOptions): [ColorPickerConfig] => [
-      { ...colorConfig('hex', 'hex', options), channelTooltipProvider: 'ancestor' },
-    ],
+    contextToArgs: (options: ColorScrollOptions) =>
+      [{ ...colorConfig('hex', 'hex', options), channelTooltipProvider: 'ancestor' }] satisfies [
+        ColorPickerConfig,
+      ],
   },
 }).withOutMessagePolicy({
   fold: ColorScrollExample.makeOutMessageFold(ColorPickerBlock, {
@@ -111,9 +116,8 @@ const Hex = ColorScrollExample.makeRequiredFieldBinding(ColorPickerBlock, {
 const Rgb = ColorScrollExample.makeRequiredFieldBinding(ColorPickerBlock, {
   field: 'rgb',
   init: {
-    contextToArgs: (options: ColorScrollOptions): [ColorPickerConfig] => [
-      colorConfig('rgb', 'rgb', options),
-    ],
+    contextToArgs: (options: ColorScrollOptions) =>
+      [colorConfig('rgb', 'rgb', options)] satisfies [ColorPickerConfig],
   },
 }).withOutMessagePolicy({
   fold: ColorScrollExample.makeOutMessageFold(ColorPickerBlock, {
@@ -124,9 +128,8 @@ const Rgb = ColorScrollExample.makeRequiredFieldBinding(ColorPickerBlock, {
 const Hsl = ColorScrollExample.makeRequiredFieldBinding(ColorPickerBlock, {
   field: 'hsl',
   init: {
-    contextToArgs: (options: ColorScrollOptions): [ColorPickerConfig] => [
-      colorConfig('hsl', 'hsl', options),
-    ],
+    contextToArgs: (options: ColorScrollOptions) =>
+      [colorConfig('hsl', 'hsl', options)] satisfies [ColorPickerConfig],
   },
 }).withOutMessagePolicy({
   fold: ColorScrollExample.makeOutMessageFold(ColorPickerBlock, {
@@ -137,9 +140,8 @@ const Hsl = ColorScrollExample.makeRequiredFieldBinding(ColorPickerBlock, {
 const Oklch = ColorScrollExample.makeRequiredFieldBinding(ColorPickerBlock, {
   field: 'oklch',
   init: {
-    contextToArgs: (options: ColorScrollOptions): [ColorPickerConfig] => [
-      colorConfig('oklch', 'oklch', options),
-    ],
+    contextToArgs: (options: ColorScrollOptions) =>
+      [colorConfig('oklch', 'oklch', options)] satisfies [ColorPickerConfig],
   },
 }).withOutMessagePolicy({
   fold: ColorScrollExample.makeOutMessageFold(ColorPickerBlock, {
@@ -150,10 +152,12 @@ const Oklch = ColorScrollExample.makeRequiredFieldBinding(ColorPickerBlock, {
 const Popover = ColorScrollExample.makeRequiredFieldBinding(ColorPickerPopoverBlock, {
   field: 'popover',
   init: {
-    contextToArgs: (options: ColorScrollOptions): [ColorPickerPopoverConfig] => {
+    contextToArgs: (options: ColorScrollOptions) => {
       const picker = colorConfig('popover', 'hex', options)
 
-      return [options.initialOpen ? { ...picker, defaultOpen: true } : picker]
+      return [options.initialOpen ? { ...picker, defaultOpen: true } : picker] satisfies [
+        ColorPickerPopoverConfig,
+      ]
     },
   },
 }).withOutMessagePolicy({

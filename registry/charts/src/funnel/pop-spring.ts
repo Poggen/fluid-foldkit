@@ -1,20 +1,16 @@
 import type { createSpringDriver } from '../pie/private/spring-driver'
 import type { Spring } from '../kit/motion/springs'
 
-// Gap #16 (states carry no transform key, so the pop cannot be a state; posted #194): bklit HRing's velocity-keeping spring (funnel-chart.tsx:171-202)
-// on the shared WAAPI driver (kit/motion/spring-animate.ts); the resting transform stays static CSS (funnel.css), the animation only draws the travel.
-const readHoverIndex = (host: HTMLElement): number | null =>
+const readHoverIndex: (host: HTMLElement) => number | null = (host: HTMLElement) =>
   host.dataset.hover === undefined ? null : Number(host.dataset.hover)
 
-const range = (n: number): Array<number> => Array.from({ length: n }, (_, i) => i)
+const range: (n: number) => Array<number> = (n: number) => Array.from({ length: n }, (_, i) => i)
 
 const DIM_PERCENT = 60
 
-/** bklit's per-stage label overlay: a motion opacity spring (funnel-chart.tsx:1011-1017) on 300/24 both ways. */
 const LABEL_SPRING: Spring = { damping: 24, mass: 1, stiffness: 300 }
 
-/** bklit HRing: stiffness 300 - 60i, damping 24 - 3i (clamped so the outer rings of a deep funnel stay a valid spring). */
-const ringSpring = (layer: number): Spring => ({
+const ringSpring: (layer: number) => Spring = (layer: number) => ({
   damping: Math.max(6, 24 - layer * 3),
   mass: 1,
   stiffness: Math.max(60, 300 - layer * 60),
@@ -35,15 +31,20 @@ interface FunnelPop {
   readonly dispose: () => void
 }
 
-/** The stage's group in the funnel mark (marks.ts), by stage order. */
-const stageGroup = (host: HTMLElement, stage: number): Element | undefined =>
-  host.querySelector('.bkm-stages')?.children[stage]
+const stageGroup: (host: HTMLElement, stage: number) => Element | undefined = (
+  host: HTMLElement,
+  stage: number,
+) => host.querySelector('.bkm-stages')?.children[stage]
 
-const ringsOf = (
+const ringsOf: (
   host: HTMLElement,
   stage: number,
   layers: number,
-): Array<{ readonly el: SVGElement; readonly layer: number }> => {
+) => Array<{ readonly el: SVGElement; readonly layer: number }> = (
+  host: HTMLElement,
+  stage: number,
+  layers: number,
+) => {
   const rings: Array<{ el: SVGElement; layer: number }> = []
   const group = stageGroup(host, stage)
 
@@ -56,31 +57,38 @@ const ringsOf = (
   return rings
 }
 
-const dimOf = (stage: number, hovered: number | null): number =>
-  hovered !== null && hovered !== stage ? 1 : 0
+const dimOf: (stage: number, hovered: number | null) => number = (
+  stage: number,
+  hovered: number | null,
+) => (hovered !== null && hovered !== stage ? 1 : 0)
 
-const createFunnelPop = (
+const createFunnelPop: (
   host: HTMLElement,
   options: Readonly<FunnelPopOptions>,
   driver: ReturnType<typeof createSpringDriver>,
-): FunnelPop => {
-  // Picks up a hover already painted on the host: this pop is rebuilt when `horizontal`/`layers` change, and a fresh `null` would make the
-  // next leave a no-op while the rings still sit at the hot value. The shared driver keeps the live state of the elements across the rebuild.
+) => FunnelPop = (
+  host: HTMLElement,
+  options: Readonly<FunnelPopOptions>,
+  driver: ReturnType<typeof createSpringDriver>,
+) => {
   let current = readHoverIndex(host)
 
-  const targetOf = (stage: number, layer: number, hovered: number | null): number =>
-    stage === hovered ? options.popOf(layer, options.layers) : 0
+  const targetOf: (stage: number, layer: number, hovered: number | null) => number = (
+    stage: number,
+    layer: number,
+    hovered: number | null,
+  ) => (stage === hovered ? options.popOf(layer, options.layers) : 0)
 
-  const scaleOf = (value: number): string =>
+  const scaleOf: (value: number) => string = (value: number) =>
     options.horizontal ? `scale(1,${1 + value})` : `scale(${1 + value},1)`
 
-  const play = (
+  const play: (
     el: SVGElement,
     layer: number,
     rest: number,
     target: number,
     from?: number,
-  ): void => {
+  ) => void = (el: SVGElement, layer: number, rest: number, target: number, from?: number) => {
     const job = {
       affine: true,
       el,
@@ -93,8 +101,11 @@ const createFunnelPop = (
     driver.play(from === undefined ? job : { ...job, from })
   }
 
-  // The label layer fades as one element, like bklit's per-stage overlay (the pill's shadow and text dim with it): `dim` 0 = full, 1 = bklit's 0.4.
-  const playLabels = (stage: number, previous: number | null, next: number | null): void => {
+  const playLabels: (stage: number, previous: number | null, next: number | null) => void = (
+    stage: number,
+    previous: number | null,
+    next: number | null,
+  ) => {
     const el = stageGroup(host, stage)?.querySelector<SVGElement>('.bkm-fl')
 
     if (el) {
@@ -131,7 +142,6 @@ const createFunnelPop = (
 
       current = stage
 
-      // Every stage's label dims or restores when the hover enters or leaves the chart; otherwise only the two stages involved change.
       const labelled =
         previous === null || stage === null
           ? range(host.querySelector('.bkm-stages')?.children.length ?? 0)

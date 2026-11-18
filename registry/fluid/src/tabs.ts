@@ -11,7 +11,7 @@ import {
   SynchronizeSelectedPill,
   AdoptSelectedPillLease,
 } from './tabs-selected-pill-effects.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { tabsDecorations, tabsExitAttribute } from './tabs-decorations.js'
 import { Effect, Layer, Option, Schema, Struct } from 'effect'
 import { Update } from 'foldkit'
@@ -86,14 +86,15 @@ const SynchronizeLabels = TabsBlock.makeFieldsStep((model) => {
 const Hover = TabsBlock.makeRequiredFieldBinding(HoverBlock, {
   field: 'hover',
   init: {
-    contextToArgs: (config: TabsConfig): [HoverConfig] => [
-      {
-        id: config.id,
-        axis: 'x',
-        gapClick: false,
-        ...(config.hoverMode === undefined ? {} : { mode: config.hoverMode }),
-      },
-    ],
+    contextToArgs: (config: TabsConfig) =>
+      [
+        {
+          id: config.id,
+          axis: 'x',
+          gapClick: false,
+          ...(config.hoverMode === undefined ? {} : { mode: config.hoverMode }),
+        },
+      ] satisfies [HoverConfig],
   },
 }).withOutMessagePolicy({
   fold: TabsBlock.makeOutMessageFold(HoverBlock, {

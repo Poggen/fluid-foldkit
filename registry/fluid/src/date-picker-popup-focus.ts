@@ -1,25 +1,28 @@
-// Framework-independent Base UI tabbable traversal, MIT. Frozen provenance is
-// recorded in the packet; this keeps slots, shadow roots, radio groups and
-// closed details behavior without importing its React focus manager.
-type FocusTarget = HTMLElement | SVGElement
+export const popupVisible: (element: Element, ancestor?: boolean) => boolean = function (
+  element: Element,
+  ancestor = false,
+) {
+  const styles = element.ownerDocument.defaultView?.getComputedStyle(element)
 
-const candidateSelector =
-  'a[href],button,input,select,textarea,summary,details,iframe,object,embed,[tabindex],[contenteditable]:not([contenteditable="false"]),audio[controls],video[controls]'
+  if (!styles) return false satisfies boolean
 
-function target(element: Element): element is FocusTarget {
-  const window = element.ownerDocument.defaultView
+  if (ancestor) return (styles.display !== 'none') satisfies boolean
+
+  if (styles.visibility === 'hidden' || styles.visibility === 'collapse')
+    return false satisfies boolean
 
   return (
-    window !== null &&
-    (element instanceof window.HTMLElement || element instanceof window.SVGElement)
-  )
+    typeof element.checkVisibility === 'function'
+      ? element.checkVisibility()
+      : styles.display !== 'none' && styles.display !== 'contents'
+  ) satisfies boolean
 }
 
-function summary(element: Element): Element | undefined {
+const summary: (element: Element) => Element | undefined = function summary(element: Element) {
   return Array.from(element.children).find((child) => child.localName === 'summary')
 }
 
-function parent(element: Element): Element | null {
+const parent: (element: Element) => Element | null = function parent(element: Element) {
   if (element.assignedSlot) return element.assignedSlot
 
   if (element.parentElement) return element.parentElement
@@ -29,53 +32,7 @@ function parent(element: Element): Element | null {
   return window && root instanceof window.ShadowRoot ? root.host : null
 }
 
-function candidate(element: Element): element is FocusTarget {
-  if (!target(element) || !element.matches(candidateSelector)) return false
-
-  if (element.localName === 'summary')
-    return (
-      element.parentElement?.localName === 'details' && summary(element.parentElement) === element
-    )
-
-  if (element.localName === 'details') return summary(element) === undefined
-
-  return element.localName !== 'input' || element.getAttribute('type') !== 'hidden'
-}
-
-export function popupVisible(element: Element, ancestor = false): boolean {
-  const styles = element.ownerDocument.defaultView?.getComputedStyle(element)
-
-  if (!styles) return false
-
-  if (ancestor) return styles.display !== 'none'
-
-  if (styles.visibility === 'hidden' || styles.visibility === 'collapse') return false
-
-  return typeof element.checkVisibility === 'function'
-    ? element.checkVisibility()
-    : styles.display !== 'none' && styles.display !== 'contents'
-}
-
-function focusable(element: Element): element is FocusTarget {
-  if (!candidate(element) || !element.isConnected || element.matches(':disabled')) return false
-
-  for (let current: Element | null = element; current; current = parent(current)) {
-    if (current.hasAttribute('inert') || current.hasAttribute('hidden')) return false
-
-    if (current !== element && current.localName === 'details' && !current.hasAttribute('open')) {
-      const firstSummary = summary(current)
-
-      if (!firstSummary || (firstSummary !== element && !firstSummary.contains(element)))
-        return false
-    }
-
-    if (current.localName !== 'slot' && !popupVisible(current, current !== element)) return false
-  }
-
-  return true
-}
-
-function tabIndex(element: FocusTarget): number {
+const tabIndex: (element: FocusTarget) => number = function tabIndex(element: FocusTarget) {
   const window = element.ownerDocument.defaultView
 
   if (
@@ -88,7 +45,7 @@ function tabIndex(element: FocusTarget): number {
   return element.tabIndex
 }
 
-function radio(element: Element): HTMLInputElement | null {
+const radio: (element: Element) => HTMLInputElement | null = function radio(element: Element) {
   const window = element.ownerDocument.defaultView
 
   return window &&
@@ -99,21 +56,22 @@ function radio(element: Element): HTMLInputElement | null {
     : null
 }
 
-function radioStop(element: Element, candidates: ReadonlyArray<FocusTarget>): boolean {
-  const input = radio(element)
+const radioStop: (element: Element, candidates: ReadonlyArray<FocusTarget>) => boolean =
+  function radioStop(element: Element, candidates: ReadonlyArray<FocusTarget>) {
+    const input = radio(element)
 
-  if (!input) return true
+    if (!input) return true
 
-  const group = candidates.filter((entry) => {
-    const item = radio(entry)
+    const group = candidates.filter((entry) => {
+      const item = radio(entry)
 
-    return item?.name === input.name && item.form === input.form
-  })
+      return item?.name === input.name && item.form === input.form
+    })
 
-  return (group.find((entry) => radio(entry)?.checked) ?? group[0]) === input
-}
+    return (group.find((entry) => radio(entry)?.checked) ?? group[0]) === input
+  }
 
-function children(element: Element): ReadonlyArray<Element> {
+const children: (element: Element) => ReadonlyArray<Element> = function children(element: Element) {
   const window = element.ownerDocument.defaultView
 
   if (window && element instanceof window.HTMLSlotElement) {
@@ -125,22 +83,29 @@ function children(element: Element): ReadonlyArray<Element> {
   return Array.from((element.shadowRoot ?? element).children)
 }
 
-function collect(element: Element, result: Array<FocusTarget>): void {
+const collect: (element: Element, result: Array<FocusTarget>) => void = function collect(
+  element: Element,
+  result: Array<FocusTarget>,
+) {
   for (const child of children(element)) {
     if (candidate(child)) result.push(child)
     collect(child, result)
   }
 }
 
-export function popupTabbable(element: Element): ReadonlyArray<FocusTarget> {
-  const all: Array<FocusTarget> = []
-  collect(element, all)
-  const candidates = all.filter(focusable)
+export const popupTabbable: (element: Element) => ReadonlyArray<FocusTarget> =
+  function popupTabbable(element: Element) {
+    const all: Array<FocusTarget> = []
+    collect(element, all)
+    const candidates = all.filter(focusable)
 
-  return candidates.filter((entry) => tabIndex(entry) >= 0 && radioStop(entry, candidates))
-}
+    return candidates.filter((entry) => tabIndex(entry) >= 0 && radioStop(entry, candidates))
+  }
 
-export function popupContains(ancestor: Node, node: Node | null): boolean {
+export const popupContains: (ancestor: Node, node: Node | null) => boolean = function popupContains(
+  ancestor: Node,
+  node: Node | null,
+) {
   for (let current = node; current;) {
     if (current === ancestor || ancestor.contains(current)) return true
     const root = current.getRootNode()
@@ -151,21 +116,28 @@ export function popupContains(ancestor: Node, node: Node | null): boolean {
   return false
 }
 
-export function popupActiveElement(document: Document): Element | null {
-  let active = document.activeElement
+export const popupActiveElement: (document: Document) => Element | null =
+  function popupActiveElement(document: Document) {
+    let active = document.activeElement
 
-  while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement
+    while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement
 
-  return active
-}
+    return active
+  }
 
-export function installPopupFocusGuards(
+export const installPopupFocusGuards: (
   anchor: HTMLElement,
   element: HTMLElement,
   portal: HTMLElement,
   id: string,
   dismiss: () => void,
-): () => void {
+) => () => void = function installPopupFocusGuards(
+  anchor: HTMLElement,
+  element: HTMLElement,
+  portal: HTMLElement,
+  id: string,
+  dismiss: () => void,
+) {
   const document = element.ownerDocument
 
   const makeGuard = () => {
@@ -300,4 +272,52 @@ export function installPopupFocusGuards(
     outsideBefore.remove()
     outsideAfter.remove()
   }
+}
+
+/* @license Framework-independent Base UI tabbable traversal, MIT. Frozen provenance is */
+
+type FocusTarget = HTMLElement | SVGElement
+
+const candidateSelector =
+  'a[href],button,input,select,textarea,summary,details,iframe,object,embed,[tabindex],[contenteditable]:not([contenteditable="false"]),audio[controls],video[controls]'
+
+function target(element: Element): element is FocusTarget {
+  const window = element.ownerDocument.defaultView
+
+  return (
+    window !== null &&
+    (element instanceof window.HTMLElement || element instanceof window.SVGElement)
+  )
+}
+
+function candidate(element: Element): element is FocusTarget {
+  if (!target(element) || !element.matches(candidateSelector)) return false
+
+  if (element.localName === 'summary')
+    return (
+      element.parentElement?.localName === 'details' && summary(element.parentElement) === element
+    )
+
+  if (element.localName === 'details') return summary(element) === undefined
+
+  return element.localName !== 'input' || element.getAttribute('type') !== 'hidden'
+}
+
+function focusable(element: Element): element is FocusTarget {
+  if (!candidate(element) || !element.isConnected || element.matches(':disabled')) return false
+
+  for (let current: Element | null = element; current; current = parent(current)) {
+    if (current.hasAttribute('inert') || current.hasAttribute('hidden')) return false
+
+    if (current !== element && current.localName === 'details' && !current.hasAttribute('open')) {
+      const firstSummary = summary(current)
+
+      if (!firstSummary || (firstSummary !== element && !firstSummary.contains(element)))
+        return false
+    }
+
+    if (current.localName !== 'slot' && !popupVisible(current, current !== element)) return false
+  }
+
+  return true
 }

@@ -1,6 +1,5 @@
 import { buttonId } from '@foldkit/ui/disclosure'
 
-// Item values are arbitrary strings; ARIA IDREFs must remain single tokens.
 const token = (value: string) =>
   Array.from({ length: value.length }, (_value, index) =>
     value.charCodeAt(index).toString(16),

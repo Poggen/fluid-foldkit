@@ -28,23 +28,30 @@ import { layer as CalloutLayer } from './sidebar-callouts'
 import { AI_NAV, AI_THREADS, WIKI_PRIVATE, WIKI_SHARED, WIKI_RECENT } from './sidebar-data'
 import { sidebarSceneView } from './sidebar-scene-view'
 export { SidebarSceneBlock } from './sidebar-scene-definition'
-const item = (label: string, level = 0, badge: string | null = null): NavItemConfig => ({
-  value: label,
-  label,
-  level,
-  badge,
-  href: label,
-  disabled: false,
-  status: null,
-})
+const item: (label: string, level?: number, badge?: string | null) => NavItemConfig = (
+  label: string,
+  level = 0,
+  badge: string | null = null,
+) =>
+  ({
+    value: label,
+    label,
+    level,
+    badge,
+    href: label,
+    disabled: false,
+    status: null,
+  }) satisfies NavItemConfig
 export const wiki = [
   { label: 'Private', branches: WIKI_PRIVATE },
   { label: 'Shared', branches: WIKI_SHARED },
   { label: 'Recent', branches: WIKI_RECENT },
 ]
-export const navConfigs = (
+export const navConfigs: (
   kind: string,
-): ReadonlyArray<{ readonly key: string; readonly items: ReadonlyArray<NavItemConfig> }> =>
+) => ReadonlyArray<{ readonly key: string; readonly items: ReadonlyArray<NavItemConfig> }> = (
+  kind: string,
+) =>
   kind === 'nesting'
     ? wiki.map((group) => ({
         key: group.label,

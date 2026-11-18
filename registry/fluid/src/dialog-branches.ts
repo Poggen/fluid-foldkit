@@ -23,7 +23,10 @@ export function createDialogBranches(document: Document, topDialog: () => string
   const branches: Array<DialogBranch> = []
   const focused = new WeakMap<DialogBranch, HTMLElement>()
 
-  const belongs = (branch: DialogBranch, id: string): boolean => {
+  const belongs: (branch: DialogBranch, id: string) => boolean = (
+    branch: DialogBranch,
+    id: string,
+  ) => {
     const visited = new Set<string>()
     let current: DialogBranch | undefined = branch
 

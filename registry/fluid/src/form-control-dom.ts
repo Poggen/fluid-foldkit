@@ -1,7 +1,10 @@
 import type { Html, VNode } from 'foldkit/html'
 
 /** Native defaults follow accepted values, while file selection remains browser-owned. */
-export function formControlDefault(vnode: Html, value: string): Html {
+export const formControlDefault: (vnode: Html, value: string) => Html = function formControlDefault(
+  vnode: Html,
+  value: string,
+) {
   if (vnode === null) {
     return null
   }
@@ -38,25 +41,26 @@ export function formControlDefault(vnode: Html, value: string): Html {
   }
 }
 
-export function stepNumberInput(element: HTMLInputElement, direction: number): void {
-  if (element.disabled || element.readOnly) {
-    return
-  }
+export const stepNumberInput: (element: HTMLInputElement, direction: number) => void =
+  function stepNumberInput(element: HTMLInputElement, direction: number) {
+    if (element.disabled || element.readOnly) {
+      return
+    }
 
-  if (element.step === 'any') {
-    const minimum = element.min === '' ? -Infinity : Number(element.min)
-    const maximum = element.max === '' ? Infinity : Number(element.max)
-    element.value = String(
-      Math.min(maximum, Math.max(minimum, (Number(element.value) || 0) + direction)),
-    )
-  } else if (direction > 0) {
-    element.stepUp()
-  } else {
-    element.stepDown()
-  }
+    if (element.step === 'any') {
+      const minimum = element.min === '' ? -Infinity : Number(element.min)
+      const maximum = element.max === '' ? Infinity : Number(element.max)
+      element.value = String(
+        Math.min(maximum, Math.max(minimum, (Number(element.value) || 0) + direction)),
+      )
+    } else if (direction > 0) {
+      element.stepUp()
+    } else {
+      element.stepDown()
+    }
 
-  element.dispatchEvent(new Event('input', { bubbles: true }))
-}
+    element.dispatchEvent(new Event('input', { bubbles: true }))
+  }
 
 export const formControlClasses =
   'w-full min-w-0 border border-border bg-transparent text-foreground outline-none transition-[background-color,border-color] duration-80 placeholder:text-muted-foreground hover:bg-hover aria-invalid:border-destructive/50 focus:border-foreground/40 aria-invalid:focus:border-foreground/40 focus:hover:bg-transparent disabled:opacity-50 disabled:pointer-events-none'

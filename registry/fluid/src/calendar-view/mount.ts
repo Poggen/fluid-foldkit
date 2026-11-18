@@ -8,8 +8,6 @@ import { measureCalendar } from './measure.js'
 import { calendarInteractions } from './interactions.js'
 import { observeCalendarExits } from './exits.js'
 
-// The mount owns only live DOM resources. Selection and range validity remain
-// the Calendar owner's queued public operations and Layer-owned rules.
 export const CalendarVisuals = CalendarBlock.makeMountStream('CalendarVisuals', {
   args: { autoFocus: Schema.Boolean },
   messages: [Message.Mounted, Message.VisualObserved, Message.Requested],

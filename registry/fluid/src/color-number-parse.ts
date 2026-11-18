@@ -1,31 +1,12 @@
-// Transposed from Base UI number-field/utils/parse, MIT, MUI contributors.
-export interface NumberLocale {
-  readonly decimal: string
-  readonly group?: string | undefined
-  readonly currency?: string
-  readonly exponentSeparator?: string
-  readonly units: ReadonlyArray<string>
-}
-
-export interface NumberLocales {
-  readonly default: NumberLocale
-  readonly ar: NumberLocale
-  readonly zh: NumberLocale
-}
-
-export const isNumeral = (value: string) => /[0-9٠-٩۰-۹０-９零〇一二三四五六七八九]/.test(value)
-
-export const minus = /[-−－‒–—﹣]/u
-
-export const plus = /[+＋﹢]/u
-
-const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
-export function parseColorNumber(
+export const parseColorNumber: (
   raw: string,
   locales: NumberLocales,
   percent: boolean,
-): number | null {
+) => number | null = function parseColorNumber(
+  raw: string,
+  locales: NumberLocales,
+  percent: boolean,
+) {
   let input = raw
     .replace(/\p{Cf}/gu, '')
     .trim()
@@ -94,18 +75,40 @@ export function parseColorNumber(
   return Number.isFinite(number) ? number : null
 }
 
-// The picker exposes only fixed fraction precision. Round its decimal coefficient
-// before the wrapper clamps/wraps, matching NumberFormat's default halfExpand.
-export function roundColorNumber(value: number, precision: number): number {
-  if (!Number.isFinite(value)) return value
-  const [coefficient = '0', exponent = '0'] = Math.abs(value).toString().split('e')
-  const [integer = '0', fraction = ''] = coefficient.split('.')
-  const digits = integer + fraction
-  const position = integer.length + Number(exponent) + precision
+export const roundColorNumber: (value: number, precision: number) => number =
+  function roundColorNumber(value: number, precision: number) {
+    if (!Number.isFinite(value)) return value
+    const [coefficient = '0', exponent = '0'] = Math.abs(value).toString().split('e')
+    const [integer = '0', fraction = ''] = coefficient.split('.')
+    const digits = integer + fraction
+    const position = integer.length + Number(exponent) + precision
 
-  if (position < 0) return value < 0 ? -0 : 0
-  const retained = digits.slice(0, position).padEnd(position, '0') || '0'
-  const rounded = BigInt(retained) + ((digits[position] ?? '0') >= '5' ? 1n : 0n)
+    if (position < 0) return value < 0 ? -0 : 0
+    const retained = digits.slice(0, position).padEnd(position, '0') || '0'
+    const rounded = BigInt(retained) + ((digits[position] ?? '0') >= '5' ? 1n : 0n)
 
-  return Number(`${value < 0 ? '-' : ''}${rounded}e-${precision}`)
+    return Number(`${value < 0 ? '-' : ''}${rounded}e-${precision}`)
+  }
+
+/* @license Transposed from Base UI number-field/utils/parse, MIT, MUI contributors. */
+export interface NumberLocale {
+  readonly decimal: string
+  readonly group?: string | undefined
+  readonly currency?: string
+  readonly exponentSeparator?: string
+  readonly units: ReadonlyArray<string>
 }
+
+export interface NumberLocales {
+  readonly default: NumberLocale
+  readonly ar: NumberLocale
+  readonly zh: NumberLocale
+}
+
+export const isNumeral = (value: string) => /[0-9٠-٩۰-۹０-９零〇一二三四五六七八九]/.test(value)
+
+export const minus = /[-−－‒–—﹣]/u
+
+export const plus = /[+＋﹢]/u
+
+const escape = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')

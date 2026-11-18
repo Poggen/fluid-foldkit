@@ -6,21 +6,15 @@ import { Rect } from './hover-observation.js'
 import { askCurrent, askSafeIndex } from './ask-user-questions-state.js'
 import type { AskFlow } from './ask-user-questions-state.js'
 
-export const AskChromeSlot = Schema.Struct({
-  key: Schema.Literals(['focus', 'hint', 'back', 'skip', 'submit']),
-  generation: Schema.Natural,
-  present: Schema.Boolean,
-  rect: Schema.OptionFromNullOr(Rect),
-  label: Schema.String,
-})
-
-export type AskChromeSlot = typeof AskChromeSlot.Type
-
-export function askChrome(
+export const askChrome: (
   flow: AskFlow,
   rectangles: IndexedGeometry | ReadonlyArray<typeof Rect.Type | null>,
   previous: ReadonlyArray<AskChromeSlot>,
-): ReadonlyArray<AskChromeSlot> {
+) => ReadonlyArray<AskChromeSlot> = function askChrome(
+  flow: AskFlow,
+  rectangles: IndexedGeometry | ReadonlyArray<typeof Rect.Type | null>,
+  previous: ReadonlyArray<AskChromeSlot>,
+) {
   const geometry = normalizeGeometry(rectangles)
   const question = askCurrent(flow)
 
@@ -119,3 +113,13 @@ export function askChrome(
     ),
   ]
 }
+
+export const AskChromeSlot = Schema.Struct({
+  key: Schema.Literals(['focus', 'hint', 'back', 'skip', 'submit']),
+  generation: Schema.Natural,
+  present: Schema.Boolean,
+  rect: Schema.OptionFromNullOr(Rect),
+  label: Schema.String,
+})
+
+export type AskChromeSlot = typeof AskChromeSlot.Type

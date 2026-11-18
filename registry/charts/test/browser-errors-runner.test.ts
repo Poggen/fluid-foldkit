@@ -1,9 +1,15 @@
 import { afterEach, expect, test } from 'vitest'
+
+// oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
 // @effect-diagnostics-next-line nodeBuiltinImport:off -- This fixture executes the standalone Node checker and shell runners to verify their real exit status.
 import { spawnSync } from 'node:child_process'
+
+// oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
 // @effect-diagnostics-next-line nodeBuiltinImport:off -- Isolated executable setup and exact receipt checks use native files outside the checker under test.
 import fs from 'node:fs'
 import os from 'node:os'
+
+// oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
 // @effect-diagnostics-next-line nodeBuiltinImport:off -- Executable fixtures require host-native paths and PATH delimiters.
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -106,7 +112,7 @@ for (const name of [
     )
     const result = spawnSync(
       'sh',
-      [path.join(root, `registry/fluid/examples/tests/${name}.sh`), 'http://fixture.invalid'],
+      [path.join(root, `registry/fluid/examples/test/${name}.sh`), 'http://fixture.invalid'],
       {
         env: host.env,
         encoding: 'utf8',

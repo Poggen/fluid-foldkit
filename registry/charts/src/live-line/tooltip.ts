@@ -8,11 +8,15 @@ import type { ChartTooltipOptions, ChartTooltipPosition, ChartValue } from '@tan
 import { orderChartTooltipPoints, resolveChartTooltipAnchor } from '@tanstack/charts/tooltip/model'
 import { familyTooltipPlacement } from './placement'
 
-/** Uses the pinned renderer's motion controller and anchor algorithms with a view-owned body. */
-const nativeTooltipClasses =
-  'absolute z-[1] max-w-none p-0 border-none rounded-none bg-transparent text-inherit shadow-none [font:inherit] pointer-events-none [overflow-wrap:anywhere] select-none data-[sticky=true]:pointer-events-auto data-[sticky=true]:select-text bottom-auto m-0 right-auto w-max left-[var(--bkm-tooltip-left)] top-[var(--bkm-tooltip-top)]'
-
-export function liveTooltip(
+export const liveTooltip: (
+  id: string,
+  lifecycle?: {
+    readonly holdMs?: number
+    readonly notifyBody?: boolean
+    readonly placement?: 'live' | 'heatmap'
+    readonly bottomInset?: number
+  },
+) => ChartTooltipExtension = function liveTooltip(
   id: string,
   lifecycle: {
     readonly holdMs?: number
@@ -20,14 +24,14 @@ export function liveTooltip(
     readonly placement?: 'live' | 'heatmap'
     readonly bottomInset?: number
   } = {},
-): ChartTooltipExtension {
+) {
   return {
     id: 'bklit-native-tooltip',
     __chartExtensionType: 'tooltip',
     __chartTooltipHost: 'dom',
     create<Datum, X extends ChartValue, Y extends ChartValue>(
       context: ChartTooltipExtensionContext<Datum, X, Y>,
-    ): ChartTooltipExtensionInstance<Datum, X, Y> {
+    ) {
       const found = context.container.ownerDocument.getElementById(id)
 
       if (!(found instanceof HTMLElement))
@@ -141,7 +145,10 @@ export function liveTooltip(
           if (frame !== undefined) view?.cancelAnimationFrame(frame)
           context.motion?.destroy(element)
         },
-      }
+      } satisfies ChartTooltipExtensionInstance<Datum, X, Y>
     },
   }
 }
+
+const nativeTooltipClasses =
+  'absolute z-[1] max-w-none p-0 border-none rounded-none bg-transparent text-inherit shadow-none [font:inherit] pointer-events-none [overflow-wrap:anywhere] select-none data-[sticky=true]:pointer-events-auto data-[sticky=true]:select-text bottom-auto m-0 right-auto w-max left-[var(--bkm-tooltip-left)] top-[var(--bkm-tooltip-top)]'

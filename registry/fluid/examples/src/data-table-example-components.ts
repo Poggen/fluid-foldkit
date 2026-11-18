@@ -1,4 +1,4 @@
-// Example rows derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
+/* @license Example rows derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
 import type { DataTableRow } from '../../src/data-table.js'
 
 export const componentRows: ReadonlyArray<DataTableRow> = [

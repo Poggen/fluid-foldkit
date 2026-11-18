@@ -169,7 +169,9 @@ export const controls = [
   { kind: 'toggle', prop: 'loading', label: 'Loading', group: 'State', initial: defaults.loading },
   { kind: 'toggle', prop: 'empty', label: 'Empty', group: 'State', initial: defaults.empty },
 ] satisfies ReadonlyArray<Control<keyof Configuration>>
-export const controlsFor = (configuration: Configuration): ReadonlyArray<Control> =>
+export const controlsFor: (configuration: Configuration) => ReadonlyArray<Control> = (
+  configuration: Configuration,
+) =>
   controls.map((control) => ({
     ...control,
     enabled:

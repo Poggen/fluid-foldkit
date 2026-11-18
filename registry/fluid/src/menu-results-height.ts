@@ -1,9 +1,13 @@
 /** Keep the last visible result area while a filter has no matches. */
-export function observeMenuResultsHeight(
+export const observeMenuResultsHeight: (
+  root: HTMLElement,
+  rowSelector: string,
+  source?: 'list' | 'surface',
+) => () => void = function observeMenuResultsHeight(
   root: HTMLElement,
   rowSelector: string,
   source: 'list' | 'surface' = 'list',
-): () => void {
+) {
   const window = root.ownerDocument.defaultView
   if (!window) return () => {}
   let height = 0

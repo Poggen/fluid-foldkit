@@ -1,5 +1,5 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import { Schema } from 'effect'
 import { MessageFile } from '@foldkit-visuals/fluid/input-message'
 import { RemoteFile } from '@foldkit-visuals/fluid/chat-message'

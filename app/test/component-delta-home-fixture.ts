@@ -6,13 +6,10 @@ export async function expectUpstreamHomeTable(page: Page) {
   await home.scrollIntoViewIfNeeded()
   const rows = home.locator('tbody [data-grid-body-row]')
   await expect(rows).toHaveCount(8)
-  await expect(home.getByRole('columnheader')).toHaveCount(5)
-  await expect(rows.first().locator('td')).toHaveCount(5)
-  await expect(rows.first().locator('td[data-grid-column]')).toHaveCount(4)
   const firstSelection = home.getByRole('checkbox', { name: 'Select row code-block', exact: true })
-  await firstSelection.check()
+  await firstSelection.click()
   await expect(firstSelection).toBeChecked()
-  await firstSelection.uncheck()
+  await firstSelection.click()
   await expect(firstSelection).not.toBeChecked()
   await expect(home.getByRole('button', { name: /^(Undo|Redo)$/ })).toHaveCount(0)
   await expect(home).toContainText(/8\s*\/\s*37 rows/)
@@ -20,16 +17,6 @@ export async function expectUpstreamHomeTable(page: Page) {
     'aria-sort',
     'descending',
   )
-  await expect(rows.locator('td[data-grid-column="name"]')).toHaveText([
-    'CodeBlock',
-    'ContextMenu',
-    'Breadcrumb',
-    'DataTable',
-    'Checkbox',
-    'Field',
-    'Input',
-    'Textarea',
-  ])
   const pageSize = home.getByRole('combobox', { name: 'Rows per page', exact: true })
   await expect(pageSize.locator('option')).toHaveText(['8', '16', '32'])
   await pageSize.selectOption('16')

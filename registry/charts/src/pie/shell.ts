@@ -57,9 +57,11 @@ class ShellHost implements PolarHost<PieData> {
 }
 
 export function PieCenterShell({ name }: { readonly name: string }) {
-  return {
-    ...polarRecipe({ name, Row: PieData }),
-    inputs: (_id: string, props: PieCenterShellProps): PolarInputs<PieData> => ({
+  const inputs: (_id: string, props: PieCenterShellProps) => PolarInputs<PieData> = (
+    _id: string,
+    props: PieCenterShellProps,
+  ) =>
+    ({
       layout: 'contents',
       size: props.contextSize,
       serverContent: (data) =>
@@ -89,6 +91,10 @@ export function PieCenterShell({ name }: { readonly name: string }) {
         host.configure(props)
       },
       customContent: () => h.empty,
-    }),
+    }) satisfies PolarInputs<PieData>
+
+  return {
+    ...polarRecipe({ name, Row: PieData }),
+    inputs,
   }
 }

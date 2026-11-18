@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom -- public Program, split tooltip views and real motion resources
 import { it } from '@effect/vitest'
 import { Effect, Layer, Schedule, Schema } from 'effect'

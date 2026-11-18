@@ -41,7 +41,10 @@ export const DocumentTooltipBlock = Block.make('DocumentTooltip', {
   },
 })
 
-const contextFor = (model: PresentationModel, key: string): InteractionContext => {
+const contextFor: (model: PresentationModel, key: string) => InteractionContext = (
+  model: PresentationModel,
+  key: string,
+) => {
   const row = model.rows[key]
 
   if (row === undefined) throw new Error(`Unknown Tooltip occurrence ${key}`)

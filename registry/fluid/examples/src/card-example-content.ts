@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { Html, HtmlBuilder } from 'foldkit/html'
 import {
   Card,
@@ -76,10 +76,10 @@ export interface CardRows<Message> {
   readonly action: (label: string) => Message
 }
 
-export const cardRows = <Message>(
+export const cardRows: <Message>(
   props: CardRows<Message>,
   h: HtmlBuilder<Message>,
-): ReadonlyArray<Html> =>
+) => ReadonlyArray<Html> = <Message>(props: CardRows<Message>, h: HtmlBuilder<Message>) =>
   features.map((feature, index) => {
     const disabled = props.disabledLast && index === features.length - 1
 
@@ -148,15 +148,21 @@ export const cardRows = <Message>(
           h,
         )
       : Card(card, h)
-  })
+  }) satisfies ReadonlyArray<Html>
 
-export const promoCard = <Message>(
+export const promoCard: <Message>(
   props: Presentation & {
     readonly dismiss: Message
     readonly action: (label: string) => Message
   },
   h: HtmlBuilder<Message>,
-): Html =>
+) => Html = <Message>(
+  props: Presentation & {
+    readonly dismiss: Message
+    readonly action: (label: string) => Message
+  },
+  h: HtmlBuilder<Message>,
+) =>
   Card(
     {
       ...props,
@@ -229,4 +235,4 @@ export const promoCard = <Message>(
       ],
     },
     h,
-  )
+  ) satisfies Html

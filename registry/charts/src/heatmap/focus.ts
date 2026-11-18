@@ -6,9 +6,11 @@ type HeatmapScene = ChartScene<CellDatum, number | string, string>
 
 /** Containment focus that hit-tests the last scene's final cell geometry: the default strategy gets presented points, which omit entering cells until their motion ends (`interactionPoints()`),
  * so `findNearestPoint` without a points argument lets cells hover from their first commit as bklit's do. `navigation` and `group` stay the plain point list / hovered point. */
-const createHeatmapFocus = (
+const createHeatmapFocus: (
   getScene: () => HeatmapScene | null,
-): ChartFocusStrategy<CellDatum, number | string, string> => ({
+) => ChartFocusStrategy<CellDatum, number | string, string> = (
+  getScene: () => HeatmapScene | null,
+) => ({
   group: (_points, context) => [context.point],
   navigation: (points) => points,
   resolve: (_points, { x, y }) => {

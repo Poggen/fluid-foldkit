@@ -11,20 +11,15 @@ import type { Presentation } from './presentation.js'
 import { nearestSliderStep, sliderValues } from './slider-state.js'
 import type { SliderModel } from './slider-state.js'
 
-export interface SliderViewInputs extends Presentation {
-  readonly label?: string
-  readonly formatValue?: (value: number) => string
-  readonly className?: string
-  readonly attributes?: ReadonlyArray<ChildAttribute>
-  readonly animate: (node: Html, options: MotionOptions) => Html
-  readonly motionValues: (node: Html, state: SliderModel) => Html
-}
-
-export function sliderKeyboardView<M, R>(
+export const sliderKeyboardView: <M, R>(
   model: SliderModel,
   inputs: SliderViewInputs,
   h: HtmlBuilder<M, R>,
-): Html {
+) => Html = function sliderKeyboardView<M, R>(
+  model: SliderModel,
+  inputs: SliderViewInputs,
+  h: HtmlBuilder<M, R>,
+) {
   const { settings } = model
   const values = sliderValues(settings.value)
   const list = settings.steps.length > 1
@@ -90,14 +85,18 @@ export function sliderKeyboardView<M, R>(
 
   return h.div(attributes, [
     h.div([h.Class('w-full h-full')], [h.div([h.Class('w-full h-full')], [h.div([])]), ...thumbs]),
-  ])
+  ]) satisfies Html
 }
 
-export function sliderValueDisplay<M, R>(
+export const sliderValueDisplay: <M, R>(
   model: SliderModel,
   inputs: SliderViewInputs,
   h: HtmlBuilder<M, R>,
-): Html {
+) => Html = function sliderValueDisplay<M, R>(
+  model: SliderModel,
+  inputs: SliderViewInputs,
+  h: HtmlBuilder<M, R>,
+) {
   const format = inputs.formatValue ?? String
   const values = sliderValues(model.settings.value)
   const { shape } = resolvePresentation(inputs)
@@ -196,10 +195,10 @@ export function sliderValueDisplay<M, R>(
         ],
       ),
     ],
-  )
+  ) satisfies Html
 }
 
-export function sliderBubble<M, R>(
+export const sliderBubble: <M, R>(
   value: number,
   inputs: SliderViewInputs,
   h: HtmlBuilder<M, R>,
@@ -207,7 +206,15 @@ export function sliderBubble<M, R>(
   top: number,
   present: boolean,
   left?: number,
-): Html {
+) => Html = function sliderBubble<M, R>(
+  value: number,
+  inputs: SliderViewInputs,
+  h: HtmlBuilder<M, R>,
+  attributes: ReadonlyArray<Attribute<M> | ChildAttribute>,
+  top: number,
+  present: boolean,
+  left?: number,
+) {
   const { shape, reducedMotion } = resolvePresentation(inputs)
 
   return inputs.animate(
@@ -240,11 +247,22 @@ export function sliderBubble<M, R>(
       transition: present ? spring.fast : spring.fast.exit,
       reducedMotion,
     },
-  )
+  ) satisfies Html
 }
 
-export function sliderCss(
+export const sliderCss: (
   style: Readonly<Record<string, string | number>> | undefined,
-): Record<string, string> {
+) => Record<string, string> = function sliderCss(
+  style: Readonly<Record<string, string | number>> | undefined,
+) {
   return cssStyle(style)
+}
+
+export interface SliderViewInputs extends Presentation {
+  readonly label?: string
+  readonly formatValue?: (value: number) => string
+  readonly className?: string
+  readonly attributes?: ReadonlyArray<ChildAttribute>
+  readonly animate: (node: Html, options: MotionOptions) => Html
+  readonly motionValues: (node: Html, state: SliderModel) => Html
 }

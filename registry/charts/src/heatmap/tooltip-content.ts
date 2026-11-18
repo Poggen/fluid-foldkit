@@ -43,7 +43,6 @@ export const heatmapTooltipContent = (body: HTMLElement) => {
       (props.formatLabel ?? formatHeatmapContributionLabel)(datum.count, datum.date),
     ]
 
-    // Keep the subtree stable: replacing it forces expensive gallery-wide style invalidation.
     lines.forEach((line, index) => {
       const value = values[index] ?? ''
       if (line.data !== value) line.data = value

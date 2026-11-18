@@ -1,5 +1,5 @@
 import { HoverMode } from './hover-observation.js'
-// Source ColorPicker's format menu, with its own checked popup and decoration graph.
+
 import { rectAt } from './lib/indexed-geometry.js'
 import { Effect, Layer, Schema } from 'effect'
 import type { ColorPickerEnvironment } from './color-picker-environment.js'
@@ -147,7 +147,7 @@ const Hover = ColorFormatMenuBlock.makeRequiredFieldBinding(HoverBlock, {
 const Popup = ColorFormatMenuBlock.makeRequiredFieldBinding(ColorPopupBlock, {
   field: 'popup',
   init: {
-    contextToArgs: (config: ColorFormatMenuConfig): [ColorPopupConfig] => {
+    contextToArgs: (config: ColorFormatMenuConfig) => {
       const popup: ColorPopupConfig = { id: config.id, kind: 'menu' }
       const configured = config.open === undefined ? popup : { ...popup, open: config.open }
 
@@ -155,7 +155,7 @@ const Popup = ColorFormatMenuBlock.makeRequiredFieldBinding(ColorPopupBlock, {
         config.defaultOpen === undefined
           ? configured
           : { ...configured, defaultOpen: config.defaultOpen },
-      ]
+      ] satisfies [ColorPopupConfig]
     },
   },
 }).withOutMessagePolicy({

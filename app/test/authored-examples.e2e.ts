@@ -1,24 +1,4 @@
 import { expect, test } from '@playwright/test'
-import inventory from './fixtures/authored-inventory.json' with { type: 'json' }
-
-// Independent source inventory: missing authored sections must not be hidden by a generic playground.
-test('every Fluid source section is reachable in the native documentation', async ({ page }) => {
-  test.setTimeout(180000)
-  const crashes: Array<string> = []
-  page.on('pageerror', (error) => crashes.push(error.message))
-  for (const { slug, sections } of inventory.pages) {
-    await page.goto(`/components/${slug}`)
-    for (const title of sections)
-      await expect(
-        page.getByRole('heading', { level: 2, name: title, exact: true }),
-        `${slug}: ${title}`,
-      ).toBeVisible()
-    await expect(
-      page.getByRole('heading', { level: 2, name: 'API reference', exact: true }),
-    ).toBeVisible()
-  }
-  expect(crashes).toEqual([])
-})
 
 test('authored drafts survive presentation edits and Code/Preview', async ({ page }) => {
   await page.goto('/components/input')

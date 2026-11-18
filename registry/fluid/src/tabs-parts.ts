@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Option } from 'effect'
 import { childAttributes } from 'foldkit/html'
 import type { Attribute, ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
@@ -10,37 +10,7 @@ import { resolvePresentation } from './presentation.js'
 import type { Icon, Presentation } from './presentation.js'
 import type { TabsLabel } from './tabs-state.js'
 
-export interface TabsLabelView {
-  readonly state: typeof TabsLabel.Type
-  readonly completion: ReadonlyArray<ChildAttribute>
-}
-
-export interface TabsContext extends Presentation {
-  readonly measureLabel: (
-    attributes: ReadonlyArray<ChildAttribute>,
-    children: ReadonlyArray<Html>,
-  ) => Html
-  readonly itemDisabled: (index: number) => boolean
-  readonly itemAttributes: (index: number) => ReadonlyArray<ChildAttribute>
-  readonly id: string
-  readonly idPrefix?: string
-  readonly selectedIndex: number
-  readonly hoveredIndex: number | null
-  readonly focusedIndex: number | null
-  readonly activeLabel: boolean
-  readonly labels: ReadonlyArray<TabsLabelView>
-  readonly animate: (node: Html, options: TargetMotionOptions) => Html
-}
-
-export interface TabsItemProps<Message> {
-  readonly index: number
-  readonly label: string
-  readonly icon?: Icon
-  readonly className?: string
-  readonly attributes?: ReadonlyArray<Attribute<Message> | ChildAttribute>
-}
-
-function renderCollapsedLabel<Message, MountRequirements>(
+const renderCollapsedLabel: <Message, MountRequirements>(
   context: TabsContext,
   index: number,
   label: Html,
@@ -49,7 +19,16 @@ function renderCollapsedLabel<Message, MountRequirements>(
   marginLeft: number,
   reducedMotion: ReturnType<typeof resolvePresentation>['reducedMotion'],
   h: HtmlBuilder<Message, MountRequirements>,
-): Html | null {
+) => Html | null = function renderCollapsedLabel<Message, MountRequirements>(
+  context: TabsContext,
+  index: number,
+  label: Html,
+  slot: TabsLabelView | undefined,
+  selected: boolean,
+  marginLeft: number,
+  reducedMotion: ReturnType<typeof resolvePresentation>['reducedMotion'],
+  h: HtmlBuilder<Message, MountRequirements>,
+) {
   let collapsedLabel: Html | null = null
 
   if (slot === undefined && selected) {
@@ -86,35 +65,42 @@ function renderCollapsedLabel<Message, MountRequirements>(
     )
   }
 
-  return collapsedLabel
+  return collapsedLabel satisfies Html | null
 }
 
-function renderTabsIcon<Message, MountRequirements>(
+const renderTabsIcon: <Message, MountRequirements>(
   icon: Icon | undefined,
   active: boolean,
   size: ReturnType<typeof resolvePresentation>['size']['icon'],
   h: HtmlBuilder<Message, MountRequirements>,
-): Html | null {
-  return (
-    icon?.(
-      {
-        size,
-        strokeWidth: active ? 2 : 1.5,
-        className: cn(
-          'shrink-0 transition-[color,stroke-width] duration-80',
-          active ? 'text-foreground' : 'text-muted-foreground',
-        ),
-      },
-      h,
-    ) ?? null
-  )
+) => Html | null = function renderTabsIcon<Message, MountRequirements>(
+  icon: Icon | undefined,
+  active: boolean,
+  size: ReturnType<typeof resolvePresentation>['size']['icon'],
+  h: HtmlBuilder<Message, MountRequirements>,
+) {
+  return (icon?.(
+    {
+      size,
+      strokeWidth: active ? 2 : 1.5,
+      className: cn(
+        'shrink-0 transition-[color,stroke-width] duration-80',
+        active ? 'text-foreground' : 'text-muted-foreground',
+      ),
+    },
+    h,
+  ) ?? null) satisfies Html | null
 }
 
-export function TabsItem<Message, MountRequirements>(
+export const TabsItem: <Message, MountRequirements>(
   props: TabsItemProps<Message>,
   context: TabsContext,
   h: HtmlBuilder<Message, MountRequirements>,
-): Html {
+) => Html = function TabsItem<Message, MountRequirements>(
+  props: TabsItemProps<Message>,
+  context: TabsContext,
+  h: HtmlBuilder<Message, MountRequirements>,
+) {
   const { size, shape, reducedMotion } = resolvePresentation(context)
   const disabled = context.itemDisabled(props.index)
   const selected = context.selectedIndex === props.index
@@ -193,7 +179,55 @@ export function TabsItem<Message, MountRequirements>(
           )
         : label,
     ],
-  )
+  ) satisfies Html
+}
+
+export const TabsPanel: <Message>(props: TabsPanelProps<Message>, h: HtmlBuilder<Message>) => Html =
+  function TabsPanel<Message>(props: TabsPanelProps<Message>, h: HtmlBuilder<Message>) {
+    const selected = props.index === props.selectedIndex
+
+    return h.div(
+      [
+        h.Id(`${props.idPrefix}-panel-${props.index}`),
+        h.Role('tabpanel'),
+        h.AriaLabelledBy(`${props.idPrefix}-tab-${props.index}`),
+        h.Hidden(!selected),
+        h.Tabindex(-1),
+        h.Class(cn('outline-none', props.className)),
+        ...(props.attributes ?? []),
+      ],
+      selected ? props.children : [],
+    ) satisfies Html
+  }
+
+export interface TabsLabelView {
+  readonly state: typeof TabsLabel.Type
+  readonly completion: ReadonlyArray<ChildAttribute>
+}
+
+export interface TabsContext extends Presentation {
+  readonly measureLabel: (
+    attributes: ReadonlyArray<ChildAttribute>,
+    children: ReadonlyArray<Html>,
+  ) => Html
+  readonly itemDisabled: (index: number) => boolean
+  readonly itemAttributes: (index: number) => ReadonlyArray<ChildAttribute>
+  readonly id: string
+  readonly idPrefix?: string
+  readonly selectedIndex: number
+  readonly hoveredIndex: number | null
+  readonly focusedIndex: number | null
+  readonly activeLabel: boolean
+  readonly labels: ReadonlyArray<TabsLabelView>
+  readonly animate: (node: Html, options: TargetMotionOptions) => Html
+}
+
+export interface TabsItemProps<Message> {
+  readonly index: number
+  readonly label: string
+  readonly icon?: Icon
+  readonly className?: string
+  readonly attributes?: ReadonlyArray<Attribute<Message> | ChildAttribute>
 }
 
 export interface TabsPanelProps<Message> {
@@ -203,21 +237,4 @@ export interface TabsPanelProps<Message> {
   readonly children: ReadonlyArray<Html | string>
   readonly className?: string
   readonly attributes?: ReadonlyArray<Attribute<Message> | ChildAttribute>
-}
-
-export function TabsPanel<Message>(props: TabsPanelProps<Message>, h: HtmlBuilder<Message>): Html {
-  const selected = props.index === props.selectedIndex
-
-  return h.div(
-    [
-      h.Id(`${props.idPrefix}-panel-${props.index}`),
-      h.Role('tabpanel'),
-      h.AriaLabelledBy(`${props.idPrefix}-tab-${props.index}`),
-      h.Hidden(!selected),
-      h.Tabindex(-1),
-      h.Class(cn('outline-none', props.className)),
-      ...(props.attributes ?? []),
-    ],
-    selected ? props.children : [],
-  )
 }

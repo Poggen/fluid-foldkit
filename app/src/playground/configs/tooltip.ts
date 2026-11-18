@@ -93,4 +93,6 @@ export const controls = [
     values: Configuration.fields.followCursor.literals,
   },
 ] satisfies ReadonlyArray<Control<keyof Configuration>>
-export const controlsFor = (_configuration: Configuration): ReadonlyArray<Control> => controls
+export const controlsFor: (_configuration: Configuration) => ReadonlyArray<Control> = (
+  _configuration: Configuration,
+) => controls

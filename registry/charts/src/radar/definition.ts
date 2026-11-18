@@ -23,8 +23,9 @@ import { toChartTransition } from './transition'
 import { toMotionTransition } from '../kit/motion/enter-transition'
 import type { RadarEnterTransition } from './transition'
 
-const joinClasses = (...names: ReadonlyArray<string | boolean | undefined>): string =>
-  names.filter(Boolean).join(' ')
+const joinClasses: (...names: ReadonlyArray<string | boolean | undefined>) => string = (
+  ...names: ReadonlyArray<string | boolean | undefined>
+) => names.filter(Boolean).join(' ')
 
 export const MS_BASE_DURATION = 1100
 
@@ -38,13 +39,11 @@ export const SERIES_BASE_MS = 200
 
 const LEVEL_LABEL_STAGGER_MS = 60
 
-// The native engine springs a unit progress, so bklit's px rest thresholds (0.5 px, 2 px/s on a spoke's x2/y2) are divided by the radius;
-// unscaled they stop the spring at ~85% (~280 ms in instead of ~1.1 s). Rings animate `scale` 0 -> 1 (the native defaults).
 const GRID_SPRING: ChartMotionTransition = { damping: 15, mass: 1, stiffness: 100, type: 'spring' }
 
 const MOTION_REST_PX = { delta: 0.5, speed: 2 }
 
-const spokeSpring = (radius: number): ChartMotionTransition => ({
+const spokeSpring: (radius: number) => ChartMotionTransition = (radius: number) => ({
   damping: 15,
   mass: 1,
   restDelta: MOTION_REST_PX.delta / radius,
@@ -75,29 +74,32 @@ const LEVEL_FONT = 9
 
 type Motion = ChartMotionDefinition<RadarRow>
 
-// Entrance with a fixed delay; every later phase (hover, data change) stays instant like bklit.
-const enterMotion = (
+const enterMotion: (
+  animate: boolean,
+  delayMs: number,
+  transition: ChartMotionTransition,
+  perDatumMs?: number,
+) => Motion = (
   animate: boolean,
   delayMs: number,
   transition: ChartMotionTransition,
   perDatumMs = 0,
-): Motion => {
+) => {
   if (!animate) {
-    return false
+    return false satisfies Motion
   }
 
-  return (ctx: Readonly<ChartMotionContext<RadarRow>>) =>
+  return ((ctx: Readonly<ChartMotionContext<RadarRow>>) =>
     ctx.phase === 'enter'
       ? { delay: delayMs + ctx.datumIndex * perDatumMs, transition }
-      : { transition: INSTANT }
+      : { transition: INSTANT }) satisfies Motion
 }
 
-// The series entrance runs once; every later phase is left to the chart (no motion).
-const seriesEnter = (
+const seriesEnter: (
   animate: boolean,
   delay: number,
   transition: ChartMotionTransition,
-): Motion => {
+) => Motion = (animate: boolean, delay: number, transition: ChartMotionTransition) => {
   if (!animate) {
     return false
   }
@@ -166,13 +168,16 @@ const gridMarks = (
     }
 
     if (o.grid.showLabels ?? true) {
-      const levelRows = Array.from({ length: o.levels }, (_, level): RadarRow => ({
-        // bklit prints the raw quotient (33.333333333333336 for 3 levels), so no rounding here.
-        label: String(((level + 1) * RADAR_VALUE_MAX) / o.levels),
-        metric: keys[0] ?? '',
-        series: -1,
-        value: ((level + 1) * RADAR_VALUE_MAX) / o.levels,
-      }))
+      const levelRows = Array.from(
+        { length: o.levels },
+        (_, level) =>
+          ({
+            label: String(((level + 1) * RADAR_VALUE_MAX) / o.levels),
+            metric: keys[0] ?? '',
+            series: -1,
+            value: ((level + 1) * RADAR_VALUE_MAX) / o.levels,
+          }) satisfies RadarRow,
+      )
 
       marks.push(
         radialText(levelRows, {
@@ -206,7 +211,6 @@ const axisMarks = (o: BuildOptions, keys: ReadonlyArray<string>) => {
   const marks = []
 
   if (o.axis) {
-    // One two-point radial line per spoke so each grows from the centre on its own spring (bklit: x2/y2 from 0, 80/15, i*0.05).
     const spoke = spokeSpring(o.radius)
 
     for (const [i, key] of keys.entries()) {
@@ -303,7 +307,6 @@ export const buildDefinition = (o: BuildOptions) => {
     const delay = seriesBase + area.index * SERIES_STAGGER_MS * o.staggerScale * df
     const seriesMotion = seriesEnter(o.animate, delay, seriesTransition)
 
-    // Hover (1.05 spring scale, fill/stroke/dot emphasis, glow, dim) is static CSS keyed on the host's data-hover (radar/hover-css.ts).
     const areaOptions = {
       angle: 'metric',
       className: joinClasses(
@@ -377,7 +380,7 @@ export const buildDefinition = (o: BuildOptions) => {
         scales: {
           angle: { scale: scalePoint().domain(keys) },
           radius: { scale: scaleLinear().domain([0, RADAR_VALUE_MAX]) },
-          // bklit offsets the grid rings by half a step (and runs them counter-clockwise); a degree scale reproduces it.
+
           ring: { channel: 'angle', scale: scaleLinear().domain([0, 360]) },
         },
       }),
@@ -389,5 +392,6 @@ export const buildDefinition = (o: BuildOptions) => {
   return defineChart(spec, { focus: spec.focus })
 }
 
-export const isAreaPoint = (point: ChartPoint<RadarRow, string | number, number>): boolean =>
-  point.datum.series >= 0 && /^radar:(?:area|glow|dot)-/u.test(point.markId)
+export const isAreaPoint: (point: ChartPoint<RadarRow, string | number, number>) => boolean = (
+  point: ChartPoint<RadarRow, string | number, number>,
+) => point.datum.series >= 0 && /^radar:(?:area|glow|dot)-/u.test(point.markId)

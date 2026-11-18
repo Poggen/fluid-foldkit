@@ -7,7 +7,7 @@ const CONTRIBUTION_LEVEL_3_MAX = 3
 const CONTRIBUTION_LEVEL_4_MAX = 4
 
 /** Discrete 5-level threshold scale (0-4), not a continuous interpolation. */
-export const getHeatmapContributionLevel = (count: number): number => {
+export const getHeatmapContributionLevel: (count: number) => number = (count: number) => {
   if (count <= 0) {
     return 0
   }

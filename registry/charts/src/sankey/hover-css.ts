@@ -1,18 +1,16 @@
-// Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT.
+/* @license Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT. */
 import { keyEnds, keyIs, keyStarts } from '../kit/renderer-dom'
 
-// Sankey hover is static scoped CSS: per-index `--bkm-sk-dim` / `--bkm-sk-hot` rules edited in place through the CSSOM, never chart state or renderer-owned DOM.
-// Transitions carry NOT_MOTION; a phase epsilon keeps CSS from reversing a transition (bklit restarts over the full duration).
 const HOVER_STROKE_BOOST = 1.3
 
 const HOST = '[data-bkm-chart="sankey"]'
 
 /** Per-index rules scoped to one chart (`data-bkm-sk-id` on its host): node rules (index `i`), then flow rules (`counts.nodes + i`), every value at rest; rendered once, the writer edits declarations in place.
  */
-const sankeyIndexCss = (
+const sankeyIndexCss: (
   id: string,
   counts: { readonly nodes: number; readonly links: number },
-): string => {
+) => string = (id: string, counts: { readonly nodes: number; readonly links: number }) => {
   const host = `${HOST}[data-bkm-sk-id="${id}"]`
   let css = ''
 
@@ -28,7 +26,7 @@ const sankeyIndexCss = (
 }
 
 /** Static paint belongs to the chart root utilities. */
-const sankeyHoverCss = (): string => ''
+const sankeyHoverCss: () => string = () => ''
 
 interface SankeyHoverVars {
   readonly '--bkm-sk-lf': number
@@ -38,11 +36,11 @@ interface SankeyHoverVars {
 }
 
 /** Per-host custom properties from the faded / rest opacities (props, not hover state). */
-const sankeyHoverVars = (
+const sankeyHoverVars: (
   fadedNode: number,
   fadedLink: number,
   strokeOpacity: number,
-): SankeyHoverVars => ({
+) => SankeyHoverVars = (fadedNode: number, fadedLink: number, strokeOpacity: number) => ({
   '--bkm-sk-lf': fadedLink,
   '--bkm-sk-lh': Math.min(1, strokeOpacity * HOVER_STROKE_BOOST),
   '--bkm-sk-lo': strokeOpacity,
@@ -62,10 +60,10 @@ interface SankeyHoverSets {
 }
 
 /** The active node / flow indices for a focused node (itself, its flows and their far ends) or a focused flow (it and its two ends). */
-const sankeyHoverSets = (
+const sankeyHoverSets: (
   links: ReadonlyArray<SankeyLinkRef>,
   focus: SankeyHoverFocus,
-): SankeyHoverSets => {
+) => SankeyHoverSets = (links: ReadonlyArray<SankeyLinkRef>, focus: SankeyHoverFocus) => {
   const nodes = new Set<number>()
   const flows: Array<number> = []
 
@@ -100,7 +98,10 @@ const FLOW_FADED = 1
 
 const FLOW_HOT = 2
 
-const flowState = (hovered: boolean, active: boolean): number => {
+const flowState: (hovered: boolean, active: boolean) => number = (
+  hovered: boolean,
+  active: boolean,
+) => {
   if (!hovered) {
     return 0
   }
@@ -109,7 +110,6 @@ const flowState = (hovered: boolean, active: boolean): number => {
 }
 
 interface Slot {
-  /** Node: 1 dimmed. Flow: 0 rest, 1 faded, 2 hot (the value-distinct states). */
   state: number
   phase: number
 }
@@ -123,13 +123,13 @@ interface SankeyHoverWriter {
   ) => void
 }
 
-const slotOf = (list: Array<Slot>, index: number): Slot => (list[index] ??= { phase: 0, state: 0 })
+const slotOf: (list: Array<Slot>, index: number) => Slot = (list: Array<Slot>, index: number) =>
+  (list[index] ??= { phase: 0, state: 0 })
 
-// The fraction of a state with its phase nudge: the state's own end (0 or 1) pulled in by phase * EPSILON.
-const fraction = (on: boolean, phase: number): string =>
+const fraction: (on: boolean, phase: number) => string = (on: boolean, phase: number) =>
   String(on ? 1 - phase * EPSILON : phase * EPSILON)
 
-const advance = (slot: Slot, state: number): boolean => {
+const advance: (slot: Slot, state: number) => boolean = (slot: Slot, state: number) => {
   if (slot.state === state) {
     return false
   }
@@ -140,13 +140,16 @@ const advance = (slot: Slot, state: number): boolean => {
   return true
 }
 
-const ruleAt = (sheet: CSSStyleSheet, index: number): CSSStyleDeclaration | null => {
+const ruleAt: (sheet: CSSStyleSheet, index: number) => CSSStyleDeclaration | null = (
+  sheet: CSSStyleSheet,
+  index: number,
+) => {
   const rule = sheet.cssRules[index]
 
   return rule instanceof CSSStyleRule ? rule.style : null
 }
 
-const createSankeyHoverWriter = (): SankeyHoverWriter => {
+const createSankeyHoverWriter: () => SankeyHoverWriter = () => {
   let nodes: Array<Slot> = []
   let flows: Array<Slot> = []
   let current: CSSStyleSheet | null = null
@@ -159,7 +162,6 @@ const createSankeyHoverWriter = (): SankeyHoverWriter => {
         return
       }
 
-      // A new sheet (remount, text change) starts every rule at rest.
       if (sheet !== current || counts.nodes !== nodeCount || counts.links !== linkCount) {
         nodeCount = counts.nodes
         linkCount = counts.links

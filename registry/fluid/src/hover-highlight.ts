@@ -140,7 +140,7 @@ const init = HoverHighlightComposition.makeInit(
   }),
 )
 
-const exiting = (slot: typeof Slot.Type): typeof Slot.Type =>
+const exiting: (slot: typeof Slot.Type) => typeof Slot.Type = (slot: typeof Slot.Type) =>
   slot.phase === 'Exiting'
     ? slot
     : modifyFields(slot, { phase: () => 'Exiting', generation: Number.increment })
@@ -377,10 +377,10 @@ export const toHighlightTarget = (rect: ItemRect) => ({
   height: rect.height,
 })
 
-export const resolveHighlightTransition = (
+export const resolveHighlightTransition: (
   transition: Transition | false | undefined,
   reduceMotion: boolean,
-): Transition => ({
+) => Transition = (transition: Transition | false | undefined, reduceMotion: boolean) => ({
   ...(transition === false || reduceMotion ? { duration: 0 } : (transition ?? spring.fast)),
   opacity: { duration: 0.08 },
 })
@@ -391,12 +391,14 @@ export interface HoverHighlightAnimationOptions {
   readonly transition?: Transition | false
 }
 
-export const hoverHighlightAnimation =
-  (
-    motion: TargetMotionScope,
-    options: HoverHighlightAnimationOptions = {},
-  ): HoverHighlightViewInputs['animate'] =>
-  (node, present, rect, reduceMotion, transition) =>
+export const hoverHighlightAnimation: (
+  motion: TargetMotionScope,
+  options?: HoverHighlightAnimationOptions,
+) => HoverHighlightViewInputs['animate'] = (
+  motion: TargetMotionScope,
+  options: HoverHighlightAnimationOptions = {},
+) =>
+  ((node, present, rect, reduceMotion, transition) =>
     motion.node(node, {
       ...(rect.fluidPresentation?.snap === undefined
         ? {}
@@ -410,4 +412,4 @@ export const hoverHighlightAnimation =
       exit: { opacity: 0, transition: spring.fast.exit },
       transition: resolveHighlightTransition(transition ?? options.transition, reduceMotion),
       present,
-    })
+    })) satisfies HoverHighlightViewInputs['animate']

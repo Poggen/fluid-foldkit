@@ -1,17 +1,23 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { Html, HtmlBuilder, ChildAttribute } from 'foldkit/html'
 import type { MotionOptions } from './motion.js'
 import { spring } from './lib/springs.js'
 import { cn } from './lib/utils.js'
 import type { AccordionTint } from './accordion-state.js'
 
-export function accordionExpansion<Message, Requirements>(
+export const accordionExpansion: <Message, Requirements>(
   slot: AccordionTint,
   shape: string,
   animate: (node: Html, options: MotionOptions) => Html,
   completion: ReadonlyArray<ChildAttribute>,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function accordionExpansion<Message, Requirements>(
+  slot: AccordionTint,
+  shape: string,
+  animate: (node: Html, options: MotionOptions) => Html,
+  completion: ReadonlyArray<ChildAttribute>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   return animate(
     h.keyed('div')(`expanded-${slot.value}`, [
       h.Class(`absolute ${shape} bg-accent/20 dark:bg-accent/12 pointer-events-none`),
@@ -30,16 +36,22 @@ export function accordionExpansion<Message, Requirements>(
         opacity: { duration: 0.12 },
       },
     },
-  )
+  ) satisfies Html
 }
 
-export function accordionFocusRing<Message, Requirements>(
+export const accordionFocusRing: <Message, Requirements>(
   slot: AccordionTint,
   shape: string,
   animate: (node: Html, options: MotionOptions) => Html,
   completion: ReadonlyArray<ChildAttribute>,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function accordionFocusRing<Message, Requirements>(
+  slot: AccordionTint,
+  shape: string,
+  animate: (node: Html, options: MotionOptions) => Html,
+  completion: ReadonlyArray<ChildAttribute>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   return animate(
     h.keyed('div')('focus', [
       h.Class(
@@ -62,5 +74,5 @@ export function accordionFocusRing<Message, Requirements>(
       transition: { ...spring.fast, opacity: { duration: 0.08 } },
       present: slot.present,
     },
-  )
+  ) satisfies Html
 }

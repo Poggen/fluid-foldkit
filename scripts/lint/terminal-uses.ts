@@ -147,10 +147,10 @@ const terminalClassifiers: readonly TerminalClassifier[] = [
   discardTerminal,
 ]
 
-export const terminalReason = (
+export const terminalReason: (
   current: ESTree.Node,
   parent: ESTree.Node,
-): TerminalReason | null => {
+) => TerminalReason | null = (current: ESTree.Node, parent: ESTree.Node) => {
   for (const classify of terminalClassifiers) {
     const reason = classify(current, parent)
 

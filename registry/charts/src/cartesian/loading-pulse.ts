@@ -69,7 +69,7 @@ export function loadingPulses<Row>(element: HTMLElement, id: string, observe: Na
     })
   }
 
-  const createEntry = (series: ResolvedSeries): Entry => {
+  const createEntry: (series: ResolvedSeries) => Entry = (series: ResolvedSeries) => {
     const paintId = `${id}-pulse-${nextId}`
     nextId += 1
     const clip = document.createElementNS(NS, 'clipPath')

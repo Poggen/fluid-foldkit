@@ -4,17 +4,7 @@ import type { Data } from 'number-flow/lite'
 import type { GaugeProps } from './props'
 import { defaultGaugeStatFormat } from './props'
 
-class NativeNumberFlow extends NumberFlowLite {}
-
-export interface GaugeLabel {
-  readonly node: HTMLDivElement
-  update(props: GaugeProps, arc: boolean): void
-  commit(): void
-  destroy(): void
-}
-
-export function createGaugeLabel(): GaugeLabel {
-  // Same framework-neutral class/data API as upstream's React 19 wrapper.
+export const createGaugeLabel: () => GaugeLabel = function createGaugeLabel() {
   define('fk-bklit-number', NativeNumberFlow)
   const node = document.createElement('div')
   const inner = document.createElement('div')
@@ -36,7 +26,7 @@ export function createGaugeLabel(): GaugeLabel {
   let committed = false
   let currentData: Data | undefined
 
-  const paint = (reading: number): void => {
+  const paint: (reading: number) => void = (reading: number) => {
     const format = latest.formatOptions ?? defaultGaugeStatFormat
     const signature = JSON.stringify([reading, format, latest.prefix, latest.suffix])
 
@@ -58,8 +48,6 @@ export function createGaugeLabel(): GaugeLabel {
       const valueUpdateAfterCommit = committed && introDone && centerChanged
       latest = props
       if (arc && centerChanged) {
-        // Original PieCenterShell restarts its two-frame zero intro on value changes.
-        // Cancel an interrupted intro; unrelated configuration updates keep its identity.
         cancelAnimationFrame(outerFrame)
         cancelAnimationFrame(innerFrame)
         introScheduled = false
@@ -79,13 +67,11 @@ export function createGaugeLabel(): GaugeLabel {
 
         if (!introScheduled) {
           introScheduled = true
-          const finishIntro = (): void => {
+          const finishIntro: () => void = () => {
             introDone = true
             paint(latest.centerValue ?? 0)
           }
-          // Original's value-change effect schedules two frames, but React commits its
-          // zero state after the first. Here zero is already committed: only one remains.
-          // Initial insertion still needs both frames to prime NumberFlow's layout.
+
           outerFrame = requestAnimationFrame(() => {
             if (valueUpdateAfterCommit) finishIntro()
             else innerFrame = requestAnimationFrame(finishIntro)
@@ -96,17 +82,24 @@ export function createGaugeLabel(): GaugeLabel {
     commit() {
       if (committed) return
       committed = true
-      // Upstream React 19 assigns the public data property during creation and again in componentDidMount.
-      // Reapply after insertion so NumberFlow primes its measured state on the same lifecycle boundary.
+
       flow.data = currentData
     },
     destroy() {
       cancelAnimationFrame(outerFrame)
       cancelAnimationFrame(innerFrame)
 
-      // NumberFlow awaits its animations; its public setter finishes them without rejection.
       flow.animated = false
       node.remove()
     },
   }
+}
+
+class NativeNumberFlow extends NumberFlowLite {}
+
+export interface GaugeLabel {
+  readonly node: HTMLDivElement
+  update(props: GaugeProps, arc: boolean): void
+  commit(): void
+  destroy(): void
 }

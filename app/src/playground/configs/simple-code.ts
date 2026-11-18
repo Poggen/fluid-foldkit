@@ -48,7 +48,9 @@ h.block(Tooltips.embedView({ slotId: 'tooltips', model: model.tooltips, viewInpu
 } }))`
 }
 
-export const simpleCode = (c: FluidConfiguration): string | undefined => {
+export const simpleCode: (c: FluidConfiguration) => string | undefined = (
+  c: FluidConfiguration,
+) => {
   const code = Match.value(c).pipe(
     Match.tags({
       input: (c) => {

@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
 import { DateTime, Option } from 'effect'
 import type { DataTableColumn, DataTableValue } from '../../src/data-table.js'
 import type { Scenario } from './data-table-example-data.js'
@@ -17,11 +17,15 @@ const monthDay = new Intl.DateTimeFormat('en-US', {
 })
 const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'UTC' })
 
-export function formatCell(
+export const formatCell: (
   scenario: Scenario,
   column: DataTableColumn,
   value: DataTableValue | undefined,
-): string | undefined {
+) => string | undefined = function formatCell(
+  scenario: Scenario,
+  column: DataTableColumn,
+  value: DataTableValue | undefined,
+) {
   if (column.id === 'fluidHover' && typeof value === 'boolean') return value ? 'Yes' : 'No'
   if (
     (column.editor?.type === 'date' || (scenario === 'showcase' && column.id === 'added')) &&

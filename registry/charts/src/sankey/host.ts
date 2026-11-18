@@ -295,12 +295,10 @@ export class SankeyHost implements Host {
     this.#observe({ _tag: 'ObservedFocus', kind, index, nodeControlled: controlled !== undefined })
   }
   #left = () => {
-    // Source's chart mouseleave requests null even after the node's own mouseleave.
     if (this.#props.hoveredNodeIndex !== undefined)
       this.#observe({ _tag: 'ObservedNodeHoverRequest', index: null })
   }
   #focus() {
-    // Source context setters affect graph emphasis without creating tooltip data.
     this.#style()
   }
   #tooltip() {
@@ -335,7 +333,6 @@ export class SankeyHost implements Host {
     if (previous.tooltipRevision !== state.tooltipRevision) this.#tooltip()
   }
   #redraw() {
-    // Restoring an existing native point during definition replacement is not a Source mouse event.
     this.#settingTooltip = true
     try {
       this.#chart?.update(this.#options())
@@ -382,7 +379,6 @@ export class SankeyHost implements Host {
       })
 
     if (replay) {
-      // Source increments revealEpoch on the existing SVG/context; its tooltip and pointer survive.
       this.#flows.clear()
       this.#nodes.clear()
       this.#reveal = props.revealSignature ?? ''
@@ -413,7 +409,7 @@ export class SankeyHost implements Host {
   }
 }
 
-export const ratio = (value: string): number => {
+export const ratio: (value: string) => number = (value: string) => {
   const [w, h] = value.split('/').map(Number)
 
   return w !== undefined &&

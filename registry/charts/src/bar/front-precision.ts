@@ -4,10 +4,10 @@ export interface BarFrontRect extends SceneRect {
   readonly className: string
 }
 
-const encode = (value: string): string =>
+const encode: (value: string) => string = (value: string) =>
   Array.from(value, (unit) => unit.codePointAt(0)?.toString(16)).join('-')
 
-export const barFrontClass = (id: string, key: string): string =>
+export const barFrontClass: (id: string, key: string) => string = (id: string, key: string) =>
   `bkm-bar-front-${encode(id)}--${encode(key)}`
 
 const axes = ['x', 'y', 'width', 'height'] as const
@@ -17,7 +17,9 @@ type GeometryAxis = (typeof axes)[number]
 const currentProperty = (axis: GeometryAxis) => `--bkm-bar-current-${axis}`
 
 /** Keep exact targets separate from the live values owned by Bar's existing entrance. */
-export const barFrontTargetCss = (rectangles: ReadonlyArray<BarFrontRect>): string =>
+export const barFrontTargetCss: (rectangles: ReadonlyArray<BarFrontRect>) => string = (
+  rectangles: ReadonlyArray<BarFrontRect>,
+) =>
   rectangles
     .map(
       (rect) =>

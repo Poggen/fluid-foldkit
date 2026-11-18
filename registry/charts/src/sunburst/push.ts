@@ -9,7 +9,7 @@ export interface SectorPush {
   readonly maxR: number
 }
 
-const onPath = (arc: ArcDatum, hovered: ArcDatum): boolean =>
+const onPath: (arc: ArcDatum, hovered: ArcDatum) => boolean = (arc: ArcDatum, hovered: ArcDatum) =>
   arc.id === hovered.id || hovered.id.startsWith(`${arc.id}${ID_SEP}`)
 
 export interface PushInput {
@@ -23,19 +23,21 @@ export interface PushInput {
 
 /** bklit's per-arc grow for the hovered path (buildHoverGrowTargets): one segment grow for the visible path length,
  * capped at one expanded first-level ring (maxHoverSegmentThickness). */
-export const growTargets = ({
+export const growTargets: (
+  argument0: Readonly<PushInput & { readonly hovered: ArcDatum }>,
+) => Map<string, number> = ({
   arcs,
   sectors,
   hovered,
   focusDepth,
   maxDepth,
   popOut,
-}: Readonly<PushInput & { readonly hovered: ArcDatum }>): Map<string, number> => {
+}: Readonly<PushInput & { readonly hovered: ArcDatum }>) => {
   const targets = new Map<string, number>()
   const ringWidth = sectors.get(hovered.id)?.thickness ?? 0
 
   if (ringWidth <= 0) {
-    return targets
+    return targets satisfies Map<string, number>
   }
 
   const radius =
@@ -62,19 +64,23 @@ export const growTargets = ({
     }
   }
 
-  return targets
+  return targets satisfies Map<string, number>
 }
 
 export type ArcKind = 'a' | 'p' | 'l'
 
-const classOf = (kind: ArcKind, index: number): string =>
+const classOf: (kind: ArcKind, index: number) => string = (kind: ArcKind, index: number) =>
   kind === 'l' ? `bk-sb-l-${index}` : `bk-sb-${kind}${index}`
 
 export function createPushWriter() {
   const desired = new WeakMap<HTMLElement, Map<string, string>>()
   const KEY_SEP = ' '
 
-  const writeOn = (element: SVGElement, name: string, value: string | undefined): void => {
+  const writeOn: (element: SVGElement, name: string, value: string | undefined) => void = (
+    element: SVGElement,
+    name: string,
+    value: string | undefined,
+  ) => {
     if (value === undefined) {
       element.removeAttribute(name)
     } else {
@@ -82,19 +88,18 @@ export function createPushWriter() {
     }
   }
 
-  const applyOn = (
+  const applyOn: (
     host: HTMLElement,
     cls: string,
     name: string,
     value: string | undefined,
-  ): void => {
+  ) => void = (host: HTMLElement, cls: string, name: string, value: string | undefined) => {
     for (const element of host.querySelectorAll<SVGElement>(`.${cls}`)) {
       writeOn(element, name, value)
     }
   }
 
-  /** Re-applies the wanted vars and flags after the sector layer painted: its elements are created by the scene, not by hover. */
-  const reapplyPush = (host: HTMLElement | null): void => {
+  const reapplyPush: (host: HTMLElement | null) => void = (host: HTMLElement | null) => {
     const wanted = host === null ? undefined : desired.get(host)
 
     if (host !== null && wanted !== undefined) {
@@ -110,13 +115,19 @@ export function createPushWriter() {
     }
   }
 
-  const setOn = (
+  const setOn: (
     host: HTMLElement,
     kind: ArcKind,
     index: number,
     name: string,
     value: string | null,
-  ): void => {
+  ) => void = (
+    host: HTMLElement,
+    kind: ArcKind,
+    index: number,
+    name: string,
+    value: string | null,
+  ) => {
     const wanted = desired.get(host) ?? new Map<string, string>()
     desired.set(host, wanted)
     const key = [kind, index, name].join(KEY_SEP)
@@ -134,13 +145,12 @@ export function createPushWriter() {
     applyOn(host, classOf(kind, index), name, value ?? undefined)
   }
 
-  /** Makes the elements of `indexes` (arc indexes of one kind) the only ones carrying the attribute `name`. */
-  const setFlag = (
+  const setFlag: (
     host: HTMLElement,
     kind: ArcKind,
     name: string,
     indexes: Iterable<number>,
-  ): void => {
+  ) => void = (host: HTMLElement, kind: ArcKind, name: string, indexes: Iterable<number>) => {
     const wanted = new Set(indexes)
 
     for (const key of desired.get(host)?.keys() ?? []) {

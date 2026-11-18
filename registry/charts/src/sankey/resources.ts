@@ -1,13 +1,9 @@
 import { inertHtml as h } from 'foldkit/html'
 import type { Html, TagName } from 'foldkit/html'
 
-export interface SvgResource {
-  readonly tag: Exclude<TagName, 'textarea'>
-  readonly attributes: Readonly<Record<string, string | number>>
-  readonly children?: ReadonlyArray<SvgResource | string>
-}
-
-export function resourceElement(resource: SvgResource): SVGElement {
+export const resourceElement: (resource: SvgResource) => SVGElement = function resourceElement(
+  resource: SvgResource,
+) {
   const element = document.createElementNS('http://www.w3.org/2000/svg', resource.tag)
 
   for (const [name, value] of Object.entries(resource.attributes)) {
@@ -27,7 +23,7 @@ export function resourceElement(resource: SvgResource): SVGElement {
   return element
 }
 
-export function resourceHtml(resource: SvgResource): Html {
+export const resourceHtml: (resource: SvgResource) => Html = function (resource: SvgResource) {
   return h.keyed(resource.tag)(
     String(resource.attributes.id ?? resource.tag),
     Object.entries(resource.attributes).map(([name, value]) => h.Attribute(name, String(value))),
@@ -37,13 +33,10 @@ export function resourceHtml(resource: SvgResource): Html {
   )
 }
 
-const scopedId = (prefix: string, id: string): string =>
-  id.startsWith(prefix) ? id : `${prefix}${id}`
-
-export function scopePatterns(
+export const scopePatterns: (
   resources: ReadonlyArray<SvgResource>,
   prefix: string,
-): ReadonlyArray<SvgResource> {
+) => ReadonlyArray<SvgResource> = function (resources: ReadonlyArray<SvgResource>, prefix: string) {
   return resources.map((resource) => {
     const a = resource.attributes
 
@@ -65,3 +58,12 @@ export function scopePatterns(
     }
   })
 }
+
+export interface SvgResource {
+  readonly tag: Exclude<TagName, 'textarea'>
+  readonly attributes: Readonly<Record<string, string | number>>
+  readonly children?: ReadonlyArray<SvgResource | string>
+}
+
+const scopedId: (prefix: string, id: string) => string = (prefix: string, id: string) =>
+  id.startsWith(prefix) ? id : `${prefix}${id}`

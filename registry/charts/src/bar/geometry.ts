@@ -1,143 +1,62 @@
 import type { BarProps } from './options'
-// Pure geometry shared by the bar-family custom marks (squares, track, depth).
-// Ports of bklit's bar-squares-layout and bar-depth geometry helpers.
 
-/** @internal */
-export interface SquareColumnLayout {
-  /** Number of squares in the column. */
-  count: number
-  /** Top offsets (relative to the column top), bottom square first. */
-  positions: Array<number>
-  /** Quantized column height in pixels. */
-  columnHeight: number
-  squareSize: number
-  /** Effective gap between squares (fit mode redistributes it). */
-  gap: number
-}
-
-export interface SquareColumnInput {
-  /** Raw bar length in pixels (baseline minus value). */
-  barLengthPx: number
-  /** Square width and height, typically the bar width. */
-  squareSize: number
-  /** Gap between stacked squares in pixels. */
-  gap: number
-  /** Redistribute the gap so the column height matches `barLengthPx` exactly. */
-  fit?: boolean
-}
-
-/**
- * Quantize a bar length into a stack of square cells.
- * @internal
- */
-export function computeSquareColumn({
-  barLengthPx,
-  squareSize,
-  gap,
-  fit = false,
-}: SquareColumnInput): SquareColumnLayout {
-  if (barLengthPx <= 0 || squareSize <= 0) {
-    return { count: 0, columnHeight: 0, positions: [], squareSize, gap }
-  }
-
-  const positions: Array<number> = []
-
-  if (fit) {
-    const count = Math.max(1, Math.floor((barLengthPx + gap) / (squareSize + gap)))
-    const effective = count > 1 ? Math.max(0, (barLengthPx - count * squareSize) / (count - 1)) : 0
-    const step = squareSize + effective
-
-    for (let i = 0; i < count; i += 1) {
-      positions.push(barLengthPx - squareSize - i * step)
+export const computeSquareColumn: (argument0: SquareColumnInput) => SquareColumnLayout =
+  function computeSquareColumn({ barLengthPx, squareSize, gap, fit = false }: SquareColumnInput) {
+    if (barLengthPx <= 0 || squareSize <= 0) {
+      return { count: 0, columnHeight: 0, positions: [], squareSize, gap }
     }
 
-    return { count, columnHeight: barLengthPx, positions, squareSize, gap: effective }
+    const positions: Array<number> = []
+
+    if (fit) {
+      const count = Math.max(1, Math.floor((barLengthPx + gap) / (squareSize + gap)))
+      const effective =
+        count > 1 ? Math.max(0, (barLengthPx - count * squareSize) / (count - 1)) : 0
+      const step = squareSize + effective
+
+      for (let i = 0; i < count; i += 1) {
+        positions.push(barLengthPx - squareSize - i * step)
+      }
+
+      return { count, columnHeight: barLengthPx, positions, squareSize, gap: effective }
+    }
+
+    const step = squareSize + gap
+    const count = Math.max(1, Math.round(barLengthPx / step))
+    const columnHeight = count * squareSize + Math.max(0, count - 1) * gap
+
+    for (let i = 0; i < count; i += 1) {
+      positions.push(columnHeight - squareSize - i * step)
+    }
+
+    return { count, columnHeight, positions, squareSize, gap }
   }
 
-  const step = squareSize + gap
-  const count = Math.max(1, Math.round(barLengthPx / step))
-  const columnHeight = count * squareSize + Math.max(0, count - 1) * gap
+export const topSquareCenterY: (argument0: SquareColumnInput & { baselineY: number }) => number =
+  function topSquareCenterY({ baselineY, ...input }: SquareColumnInput & { baselineY: number }) {
+    const { count, squareSize, columnHeight } = computeSquareColumn(input)
 
-  for (let i = 0; i < count; i += 1) {
-    positions.push(columnHeight - squareSize - i * step)
+    return count === 0 ? baselineY : baselineY - columnHeight + squareSize / 2
   }
 
-  return { count, columnHeight, positions, squareSize, gap }
-}
-
-/** One layout feeds the square scene and the column-spanning SVG paint definitions. */
-export function squareColumnFrame(input: {
-  readonly centre: number
-  readonly bandwidth: number
-  readonly baseline: number
-  readonly top: number
-  readonly value: number
-  readonly slot: number
-  readonly slots: number
-  readonly groupGap: number
-  readonly squareGap: number
-  readonly fit: boolean
-}) {
-  if (
-    !input.bandwidth ||
-    !Number.isFinite(input.centre) ||
-    !Number.isFinite(input.top) ||
-    input.value <= 0
-  ) {
-    return null
-  }
-
-  const gap = input.slots > 1 ? input.groupGap : 0
-  const size = Math.max(0, (input.bandwidth - gap * (input.slots - 1)) / input.slots)
-
-  const column = computeSquareColumn({
-    barLengthPx: input.baseline - input.top,
-    squareSize: size,
-    gap: input.squareGap,
-    fit: input.fit,
-  })
-
-  return {
-    x: input.centre - input.bandwidth / 2 + input.slot * (size + gap),
-    size,
-    baseline: input.baseline,
-    columnTop: input.baseline - column.columnHeight,
-    column,
-  }
-}
-
-/**
- * Y centre of the topmost square in a vertical column.
- * @internal
- */
-export function topSquareCenterY({
-  baselineY,
-  ...input
-}: SquareColumnInput & { baselineY: number }): number {
-  const { count, squareSize, columnHeight } = computeSquareColumn(input)
-
-  return count === 0 ? baselineY : baselineY - columnHeight + squareSize / 2
-}
-
-// --- 3D depth ---------------------------------------------------------
-
-export const DEFAULT_GROUND_SHADOW = 0.26
-
-export const GLASS_TIP_OPACITY = 0.2
-
-/** Side-face depth is capped below the gap between neighbouring bars. */
-function barDepthMaxDepth(step: number, bandWidth: number): number {
+const barDepthMaxDepth: (step: number, bandWidth: number) => number = function barDepthMaxDepth(
+  step: number,
+  bandWidth: number,
+) {
   const gap = Math.max(0, step - bandWidth)
 
   return Math.min(bandWidth * 0.22, Math.max(0, gap - 1), 7)
 }
 
-/** Depth grows with distance from the chart centre; the lid rises with it (bklit bar-depth-geometry.ts). */
-function barDepthAndRise(
+const barDepthAndRise: (
   absOffset: number,
   naturalHeight: number,
   maxDepth: number,
-): Pick<DepthEntry, 'depth' | 'perspectiveRise'> {
+) => Pick<DepthEntry, 'depth' | 'perspectiveRise'> = function barDepthAndRise(
+  absOffset: number,
+  naturalHeight: number,
+  maxDepth: number,
+) {
   const offset = Math.min(1, Math.max(0, absOffset))
   const capped = Math.min(maxDepth, Math.max(0, naturalHeight))
   const depth = offset * capped
@@ -145,39 +64,9 @@ function barDepthAndRise(
   return { depth, perspectiveRise: depth * 0.45 }
 }
 
-export interface DepthEntry {
-  readonly index: number
-  readonly label: string
-  readonly bandX: number
-  readonly bandWidth: number
-  readonly baselineY: number
-  readonly topY: number
-  readonly bottomY: number
-  readonly barHeight: number
-  readonly naturalHeight: number
-  readonly topYTrim: number
-  readonly depth: number
-  readonly perspectiveRise: number
-  readonly isNegative: boolean
-  readonly isRightOfCenter: boolean
-}
-
-export interface DepthInput {
-  readonly index: number
-  readonly label: string
-  readonly value: number
-  readonly bandX: number
-  readonly bandWidth: number
-  readonly step: number
-  readonly innerWidth: number
-  readonly plotLeft: number
-  readonly baselineY: number
-  readonly valueY: number
-  readonly minBarHeight: number
-  readonly topSegmentFraction?: number
-}
-
-export function depthEntry(input: DepthInput): DepthEntry | undefined {
+export const depthEntry: (input: DepthInput) => DepthEntry | undefined = function depthEntry(
+  input: DepthInput,
+) {
   const { value, bandX, bandWidth, step, innerWidth, plotLeft, baselineY, valueY, minBarHeight } =
     input
 
@@ -234,10 +123,12 @@ export function depthEntry(input: DepthInput): DepthEntry | undefined {
   }
 }
 
-type Pt = readonly [number, number]
-
 /** Side parallelogram between two y spans (front edge at the bar, back edge shifted by depth / rise). */
-export function sidePoints(e: DepthEntry, y1: number, y2: number): Array<Pt> {
+export const sidePoints: (e: DepthEntry, y1: number, y2: number) => Array<Pt> = function sidePoints(
+  e: DepthEntry,
+  y1: number,
+  y2: number,
+) {
   const { bandX, bandWidth, depth, perspectiveRise: r, isRightOfCenter } = e
 
   if (isRightOfCenter) {
@@ -257,7 +148,7 @@ export function sidePoints(e: DepthEntry, y1: number, y2: number): Array<Pt> {
   ]
 }
 
-export function lidPoints(e: DepthEntry): Array<Pt> {
+export const lidPoints: (e: DepthEntry) => Array<Pt> = function lidPoints(e: DepthEntry) {
   const { bandX, bandWidth, depth, perspectiveRise: r, topY, isRightOfCenter } = e
 
   if (isRightOfCenter) {
@@ -276,6 +167,108 @@ export function lidPoints(e: DepthEntry): Array<Pt> {
     [bandX + depth, topY - r],
   ]
 }
+
+export interface SquareColumnLayout {
+  /** Number of squares in the column. */
+  count: number
+  /** Top offsets (relative to the column top), bottom square first. */
+  positions: Array<number>
+  /** Quantized column height in pixels. */
+  columnHeight: number
+  squareSize: number
+  /** Effective gap between squares (fit mode redistributes it). */
+  gap: number
+}
+
+export interface SquareColumnInput {
+  /** Raw bar length in pixels (baseline minus value). */
+  barLengthPx: number
+  /** Square width and height, typically the bar width. */
+  squareSize: number
+  /** Gap between stacked squares in pixels. */
+  gap: number
+  /** Redistribute the gap so the column height matches `barLengthPx` exactly. */
+  fit?: boolean
+}
+
+/** One layout feeds the square scene and the column-spanning SVG paint definitions. */
+export function squareColumnFrame(input: {
+  readonly centre: number
+  readonly bandwidth: number
+  readonly baseline: number
+  readonly top: number
+  readonly value: number
+  readonly slot: number
+  readonly slots: number
+  readonly groupGap: number
+  readonly squareGap: number
+  readonly fit: boolean
+}) {
+  if (
+    !input.bandwidth ||
+    !Number.isFinite(input.centre) ||
+    !Number.isFinite(input.top) ||
+    input.value <= 0
+  ) {
+    return null
+  }
+
+  const gap = input.slots > 1 ? input.groupGap : 0
+  const size = Math.max(0, (input.bandwidth - gap * (input.slots - 1)) / input.slots)
+
+  const column = computeSquareColumn({
+    barLengthPx: input.baseline - input.top,
+    squareSize: size,
+    gap: input.squareGap,
+    fit: input.fit,
+  })
+
+  return {
+    x: input.centre - input.bandwidth / 2 + input.slot * (size + gap),
+    size,
+    baseline: input.baseline,
+    columnTop: input.baseline - column.columnHeight,
+    column,
+  }
+}
+
+export const DEFAULT_GROUND_SHADOW = 0.26
+
+export const GLASS_TIP_OPACITY = 0.2
+
+export interface DepthEntry {
+  readonly index: number
+  readonly label: string
+  readonly bandX: number
+  readonly bandWidth: number
+  readonly baselineY: number
+  readonly topY: number
+  readonly bottomY: number
+  readonly barHeight: number
+  readonly naturalHeight: number
+  readonly topYTrim: number
+  readonly depth: number
+  readonly perspectiveRise: number
+  readonly isNegative: boolean
+  readonly isRightOfCenter: boolean
+}
+
+export interface DepthInput {
+  readonly index: number
+  readonly label: string
+  readonly value: number
+  readonly bandX: number
+  readonly bandWidth: number
+  readonly step: number
+  readonly innerWidth: number
+  readonly plotLeft: number
+  readonly baselineY: number
+  readonly valueY: number
+  readonly minBarHeight: number
+  readonly topSegmentFraction?: number
+}
+
+type Pt = readonly [number, number]
 
 export interface BarFrameInput {
   readonly value: number

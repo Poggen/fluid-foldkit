@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { DialogResources } from './dialog-resources.js'
 import type { DropdownResources } from './dropdown-resources.js'
 import type { TooltipDom } from './tooltip-native-public.js'
@@ -88,9 +88,10 @@ export const SidebarAppBlock = Block.make('SidebarApp', {
 const Sidebar = SidebarAppBlock.makeRequiredFieldBinding(SidebarBlock, {
   field: 'sidebar',
   init: {
-    contextToArgs: (config: SidebarAppConfig): [SidebarConfig] => [
-      { ...config, variant: config.variant ?? 'inset', peek: config.peek ?? 'hover' },
-    ],
+    contextToArgs: (config: SidebarAppConfig) =>
+      [{ ...config, variant: config.variant ?? 'inset', peek: config.peek ?? 'hover' }] satisfies [
+        SidebarConfig,
+      ],
   },
 }).withOutMessagePolicy({
   fold: SidebarAppBlock.makeOutMessageFold(SidebarBlock, {

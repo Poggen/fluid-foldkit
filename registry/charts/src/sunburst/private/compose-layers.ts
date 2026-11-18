@@ -1,5 +1,3 @@
-// Layer compositor for a mark-level `renderer`: stacks the host renderer's layers and the mark layers in scene order (UPSTREAM-GAPS #51: only the Canvas module exports one).
-// Covers what ring and sunburst use: no custom focus-guide renderers.
 import type {
   ChartLayerRenderer,
   ChartRenderer,
@@ -21,19 +19,25 @@ interface Layer {
   nodes: Array<SceneNode>
 }
 
-const escapeAttribute = (value: string): string =>
+const escapeAttribute: (value: string) => string = (value: string) =>
   value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
 
-/** Scene nodes grouped into consecutive runs by renderer; a group holding custom-rendered children is split, each run keeping the group wrapper. */
-const splitLayers = (
+const splitLayers: (
   nodes: ReadonlyArray<SceneNode>,
   defaultRenderer: Renderer,
   customRenderer: ChartLayerRenderer<unknown, number, number>,
-): { layers: Array<Layer>; custom: boolean } => {
+) => { layers: Array<Layer>; custom: boolean } = (
+  nodes: ReadonlyArray<SceneNode>,
+  defaultRenderer: Renderer,
+  customRenderer: ChartLayerRenderer<unknown, number, number>,
+) => {
   const layers: Array<Layer> = []
   let custom = false
 
-  const append = (renderer: Renderer, next: Array<SceneNode>): void => {
+  const append: (renderer: Renderer, next: Array<SceneNode>) => void = (
+    renderer: Renderer,
+    next: Array<SceneNode>,
+  ) => {
     const previous = layers.at(-1)
 
     if (previous?.renderer === renderer) {
@@ -69,12 +73,15 @@ const splitLayers = (
   return { custom, layers }
 }
 
-/** The host layer first and last, so the host's focus guides and hit surface sit on top of the custom layers. */
-const renderLayers = (
+const renderLayers: (
   scene: Scene,
   defaultRenderer: Renderer,
   customRenderer: ChartLayerRenderer<unknown, number, number>,
-): Array<Layer & { guides?: Scene['focusGuides'] }> => {
+) => Array<Layer & { guides?: Scene['focusGuides'] }> = (
+  scene: Scene,
+  defaultRenderer: Renderer,
+  customRenderer: ChartLayerRenderer<unknown, number, number>,
+) => {
   const layers: Array<Layer & { guides?: Scene['focusGuides'] }> = splitLayers(
     scene.nodes,
     defaultRenderer,
@@ -98,11 +105,11 @@ const renderLayers = (
   return layers
 }
 
-const layerScene = (
+const layerScene: (
   scene: Scene,
   layer: Layer & { guides?: Scene['focusGuides'] },
   index: number,
-): Scene => {
+) => Scene = (scene: Scene, layer: Layer & { guides?: Scene['focusGuides'] }, index: number) => {
   const { focusGuides: _guides, ...base } = scene
 
   return {
@@ -113,11 +120,15 @@ const layerScene = (
   }
 }
 
-const layerOptions = (
+const layerOptions: (
   options: ChartSurfaceRenderOptions,
   index: number,
   animate: boolean,
-): ChartSurfaceRenderOptions => {
+) => ChartSurfaceRenderOptions = (
+  options: ChartSurfaceRenderOptions,
+  index: number,
+  animate: boolean,
+) => {
   const { animation, className: _className, ...base } = options
 
   return {
@@ -132,16 +143,19 @@ const LAYER_CLASSES = 'ts-chart-layer absolute inset-0 w-full h-full pointer-eve
 
 const ROOT_CLASSES = 'ts-chart ts-chart-layers block relative w-full h-full overflow-visible'
 
-export const composeLayers = (
+export const composeLayers: (
   defaultRenderer: Renderer,
   customRenderer: ChartLayerRenderer<unknown, number, number>,
-): Renderer => {
+) => Renderer = (
+  defaultRenderer: Renderer,
+  customRenderer: ChartLayerRenderer<unknown, number, number>,
+) => {
   const renderer: Renderer = {
     ...(defaultRenderer.capabilities === undefined
       ? {}
       : { capabilities: defaultRenderer.capabilities }),
     id: `layers:${defaultRenderer.id}`,
-    mount: (container, requestRender): Surface => {
+    mount: (container, requestRender) => {
       const root =
         container.querySelector<HTMLElement>(':scope > .ts-chart-layers') ??
         container.ownerDocument.createElement('div')
@@ -160,10 +174,13 @@ export const composeLayers = (
       let current: Scene | undefined
       let destroyed = false
 
-      const defaultSurface = (): Surface | undefined =>
+      const defaultSurface: () => Surface | undefined = () =>
         mounted.findLast((layer) => layer.renderer === defaultRenderer)?.surface
 
-      const mountAll = (layers: Array<Layer>, adopt: boolean): void => {
+      const mountAll: (layers: Array<Layer>, adopt: boolean) => void = (
+        layers: Array<Layer>,
+        adopt: boolean,
+      ) => {
         const existing = [...root.querySelectorAll<HTMLElement>(':scope > .ts-chart-layer')]
         const canAdopt = adopt && existing.length === layers.length
 
@@ -197,7 +214,7 @@ export const composeLayers = (
                 y: ((clientY - bounds.top) / bounds.height) * scene.height,
               }
         },
-        destroy: (): void => {
+        destroy: () => {
           if (destroyed) {
             return
           }
@@ -238,7 +255,7 @@ export const composeLayers = (
 
           return presented ? { ...current, nodes } : undefined
         },
-        render: (scene, options): void => {
+        render: (scene, options) => {
           if (destroyed) {
             return
           }
@@ -304,16 +321,16 @@ export const composeLayers = (
         subscribePresentationPoints: (listener) => {
           listeners.add(listener)
 
-          return (): void => {
+          return () => {
             listeners.delete(listener)
           }
         },
         supportsStateFocus: true,
       }
 
-      return surface
+      return surface satisfies Surface
     },
-    prerender: (scene, options: RenderChartOptions): string => {
+    prerender: (scene, options: RenderChartOptions) => {
       const className = options.className ? `${ROOT_CLASSES} ${options.className}` : ROOT_CLASSES
 
       const description = options.ariaDescription
@@ -332,7 +349,7 @@ export const composeLayers = (
         return `<div class="${LAYER_CLASSES}" data-ts-chart-layer="${index}" aria-hidden="true">${inner}</div>`
       })
 
-      return `<div class="${escapeAttribute(className)}" role="img" aria-roledescription="chart" aria-label="${escapeAttribute(options.ariaLabel)}"${description} tabindex="${options.tabIndex ?? 0}" data-ts-chart-width="${Math.round(scene.width)}" data-ts-chart-height="${Math.round(scene.height)}">${layers.join('')}</div>`
+      return `<div class="${escapeAttribute(className)}" role="img" aria-roledescription="chart" aria-label="${escapeAttribute(options.ariaLabel)}"${description} tabindex="${options.tabIndex ?? 0}" data-ts-chart-width="${Math.round(scene.width)}" data-ts-chart-height="${Math.round(scene.height)}">${layers.join('')}</div>` satisfies string
     },
   }
 

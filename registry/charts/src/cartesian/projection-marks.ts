@@ -15,43 +15,20 @@ import type {
   LineSeriesTerminalMarkerProps,
 } from './overlay-options'
 
-const curveProjectionBezier: CurveFactory = (context) => {
-  let first = true
-  let previousX = 0
-  let previousY = 0
-
-  return {
-    areaStart: constVoid,
-    areaEnd: constVoid,
-    lineStart() {
-      first = true
-    },
-    lineEnd: constVoid,
-    point(x: number, y: number) {
-      if (first) {
-        context.moveTo(x, y)
-      } else {
-        const dx = (x - previousX) * 0.45
-
-        context.bezierCurveTo(previousX + dx, previousY, x - dx, y, x, y)
-      }
-
-      first = false
-      previousX = x
-      previousY = y
-    },
+const hidesLegacyEndpoint: (props: { readonly showEndpoints?: boolean }) => boolean =
+  function hidesLegacyEndpoint(props: { readonly showEndpoints?: boolean }) {
+    return props.showEndpoints === false
   }
-}
 
-function hidesLegacyEndpoint(props: { readonly showEndpoints?: boolean }): boolean {
-  return props.showEndpoints === false
-}
-
-function visibleTail(
+const visibleTail: (
   props: ProjectionLineProps,
   xDomain: readonly [Date, Date],
   innerWidth: number,
-): ReadonlyArray<ProjectionPoint> {
+) => ReadonlyArray<ProjectionPoint> = function visibleTail(
+  props: ProjectionLineProps,
+  xDomain: readonly [Date, Date],
+  innerWidth: number,
+) {
   const last = props.data.at(-1)
   const span = xDomain[1].getTime() - xDomain[0].getTime()
 
@@ -80,6 +57,34 @@ function visibleTail(
       date: toDate(xDomain[0].getTime() + (visibleEndX / innerWidth) * span),
     },
   ]
+}
+
+const curveProjectionBezier: CurveFactory = (context) => {
+  let first = true
+  let previousX = 0
+  let previousY = 0
+
+  return {
+    areaStart: constVoid,
+    areaEnd: constVoid,
+    lineStart() {
+      first = true
+    },
+    lineEnd: constVoid,
+    point(x: number, y: number) {
+      if (first) {
+        context.moveTo(x, y)
+      } else {
+        const dx = (x - previousX) * 0.45
+
+        context.bezierCurveTo(previousX + dx, previousY, x - dx, y, x, y)
+      }
+
+      first = false
+      previousX = x
+      previousY = y
+    },
+  }
 }
 
 export function projectionExtents<Row>(children: ReadonlyArray<CartesianLayer<Row>>) {

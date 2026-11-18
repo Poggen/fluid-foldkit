@@ -1,4 +1,5 @@
 // oxlint-disable no-comments/no-comments -- Real renderers and NumberFlow need browser classes at module acquisition.
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 // oxlint-enable no-comments/no-comments -- Resume the source comment policy.
 import { expect, test } from 'vitest'
@@ -22,7 +23,7 @@ import {
   rows,
   size,
   twentyTicks,
-} from './y-axis-source-fixture'
+} from './y-axis-source.fixture'
 
 function mount<Row, Datum, X extends ChartValue, Y extends ChartValue, Snapshot, Options>(
   element: HTMLElement,

@@ -81,7 +81,9 @@ export const urlToSiteRoute = Route.parseUrlWithFallback(
   ),
   SiteRoute.NotFound,
 )
-export const pathFromUrl = (url: Parameters<typeof urlToSiteRoute>[0]): string =>
+export const pathFromUrl: (url: Parameters<typeof urlToSiteRoute>[0]) => string = (
+  url: Parameters<typeof urlToSiteRoute>[0],
+) =>
   SiteRoute.match(urlToSiteRoute(url), {
     Showcase: () => showcaseRouter(),
     Introduction: () => introductionRouter(),

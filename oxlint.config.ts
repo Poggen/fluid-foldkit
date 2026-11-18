@@ -1,4 +1,5 @@
 import { defineConfig } from 'oxlint'
+import landmines from '@interfere/landmines/configs/recommended.json' with { type: 'json' }
 import recommended from '@foldkit/oxlint-plugin/recommended.json' with { type: 'json' }
 import { checkedScopedViewOverrides } from './scripts/policy/scoped-view-policy.ts'
 import { prepareDesignSystemTheme } from './scripts/policy/design-system-theme.ts'
@@ -10,11 +11,11 @@ import {
 
 prepareDesignSystemTheme(import.meta.dirname)
 
-const foldkitRules = (rules: Readonly<Record<string, string | undefined>>) =>
+const recommendedRules = (rules: Readonly<Record<string, string | undefined>>) =>
   Object.fromEntries(
     Object.entries(rules).map(([rule, severity]) => {
       if (severity !== 'error' && severity !== 'off')
-        throw new Error(`Unreviewed Foldkit rule severity: ${rule}`)
+        throw new Error(`Unreviewed recommended rule severity: ${rule}`)
       return [rule, severity] satisfies readonly [string, 'error' | 'off']
     }),
   )
@@ -28,13 +29,13 @@ const scopes = [
   'lib',
 ]
 const foldkitOverrides = scopes.flatMap((scope) => [
-  { files: [`${scope}/**/*.ts`], rules: foldkitRules(recommended.rules) },
+  { files: [`${scope}/**/*.ts`], rules: recommendedRules(recommended.rules) },
   ...recommended.overrides.map(({ files, excludeFiles, rules }) => ({
     files: files.map((file) => `${scope}/${file}`),
     ...(excludeFiles === undefined
       ? {}
       : { excludeFiles: excludeFiles.map((file) => `${scope}/${file}`) }),
-    rules: foldkitRules(rules),
+    rules: recommendedRules(rules),
   })),
 ])
 
@@ -52,6 +53,7 @@ export default defineConfig({
     '**/*.bun-fixture.ts',
   ],
   jsPlugins: [
+    ...landmines.jsPlugins,
     { name: 'shadcn', specifier: '@shadcn/lint' },
     { name: 'foldkit-design', specifier: './scripts/policy/design-system-plugin.ts' },
     { name: 'foldkit', specifier: '@foldkit/oxlint-plugin' },
@@ -61,6 +63,7 @@ export default defineConfig({
     { name: 'anti-slop-effect', specifier: './scripts/lint/anti-slop/effect/index.ts' },
   ],
   rules: {
+    ...recommendedRules(landmines.rules),
     'typescript/no-explicit-any': 'error',
     'typescript/no-non-null-assertion': 'error',
     'typescript/consistent-type-assertions': [
@@ -105,10 +108,6 @@ export default defineConfig({
     {
       files: ['registry/fluid/test/button-mount.test.ts'],
       rules: { 'eslint/require-yield': 'off' },
-    },
-    {
-      files: ['registry/fluid/test/pdf-worker-config.test.ts'],
-      rules: { 'anti-slop/no-module-mocking': 'off' },
     },
     {
       files: ['registry/**/*.ts', 'registry/*/examples/**/*.ts', 'app/**/*.ts'],

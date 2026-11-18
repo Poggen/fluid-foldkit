@@ -1,5 +1,5 @@
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import { Switch } from '@foldkit/ui'
 import type { Html } from 'foldkit/html'
 import { Message } from './data-table-definition.js'
@@ -13,12 +13,17 @@ import { resolvePresentation } from './presentation.js'
 import { switchMetrics } from './switch.js'
 import { spring } from './lib/springs.js'
 
-export function DataTableWrapText(
+export const DataTableWrapText: (
   model: DataTableModel,
   inputs: DataTableViewInputs,
   h: DataTableViewBuilder,
   motion: MotionScope,
-): Html {
+) => Html = function DataTableWrapText(
+  model: DataTableModel,
+  inputs: DataTableViewInputs,
+  h: DataTableViewBuilder,
+  motion: MotionScope,
+) {
   const columns = model.columns.filter((column) => column.lines !== undefined)
   if (columns.length === 0) return null
   const { shape, size, reducedMotion } = resolvePresentation(inputs)

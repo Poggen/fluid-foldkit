@@ -20,7 +20,6 @@ const toLocal = (element: SVGGraphicsElement, x: number, y: number) => {
   const screen = element.ownerSVGElement?.getScreenCTM()
   const local = element.getScreenCTM()
 
-  // A delayed node starts at scaleY(0), which has no invertible local hit area.
   if (screen === null || screen === undefined || local === null || !isInvertible(local)) {
     return null
   }
@@ -75,7 +74,6 @@ export function hitSankeyPresentation(
 
     if (path === null || position === null) return false
 
-    // Source focus covers the full bump curve while its stroke entrance is still drawing.
     const start = path.getPointAtLength(0)
     const end = path.getPointAtLength(path.getTotalLength())
     return hitFlow(
@@ -207,8 +205,6 @@ export function createSankeyRenderer(sync: (root: HTMLElement, scene: Scene) => 
         paintFocus(focus, pointer, cursor, options) {
           const result = surface.paintFocus(focus, pointer, cursor, options)
 
-          // Native focus reconciles destination SVG attributes as well as focus guides.
-          // Reattach the current Motion pose before returning control to interaction.
           if (scene !== undefined) {
             sync(container, scene)
           }

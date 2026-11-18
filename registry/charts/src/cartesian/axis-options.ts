@@ -1,4 +1,3 @@
-// Native typed options transposed from the pinned Bklit public contracts.
 import type { PatternPresetId, PatternPresetOptions } from '../kit/pattern/pattern-preset-helpers'
 
 export interface XAxisConfig {

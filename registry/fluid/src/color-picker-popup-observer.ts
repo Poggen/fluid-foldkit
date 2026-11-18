@@ -112,7 +112,6 @@ export const observeColorPopup = ({
                   }
                 }
 
-                // Committing a color field blurs to body without moving focus to another control.
                 let retainedFocus = false
 
                 const ownsFocus = (target: Element) => {

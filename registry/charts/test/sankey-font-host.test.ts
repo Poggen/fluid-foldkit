@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom -- public Sankey scene and renderer font lifecycle
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { motion } from '@tanstack/charts/motion'
@@ -43,7 +44,6 @@ const clock = () => 0
 const ignoreReverse = () => {}
 
 const setup = (configured: SankeyChartProps = props) => {
-  // This renderer-only fixture supplies the now-default view-owned tooltip host.
   tooltipHost = document.createElement('div')
   tooltipHost.id = 'font-host-tooltip'
   tooltipHost.hidden = true
@@ -130,6 +130,7 @@ test.each([false, true])(
       const before = nodeBox(host.getScene(), value)
       const svg = environment.container.querySelector('svg')
       const count = render.mock.calls.length
+      // oxlint-disable-next-line landmines-testing/no-test-doubles -- Finite per-label glyph bounds exercise retained layout and hit geometry; native Canvas is independently verified.
       environment.measure.mockImplementation((text) => ({
         width: (value ? text.endsWith('sessions') : text === 'Start') ? 50 : 20,
         actualBoundingBoxLeft: 0,
@@ -223,9 +224,7 @@ test('external font capture commits the same resource that began the successful 
       fonts.beginFontMetrics()
       current = second
     },
-    commitFontMetrics: vi.fn(() => {
-      fonts.commitFontMetrics()
-    }),
+    commitFontMetrics: vi.spyOn(fonts, 'commitFontMetrics'),
   }
 
   current = first
@@ -266,6 +265,7 @@ test.each(['horizontal', 'vertical'] satisfies ReadonlyArray<'horizontal' | 'ver
   'custom node value text shares native, SSR and measured hit geometry (%s)',
   (labelOrientation) => {
     const formatted = '12 vehicles with telemetry'
+    // oxlint-disable-next-line landmines-testing/no-test-doubles -- Finite per-label glyph bounds exercise retained layout and hit geometry; native Canvas is independently verified.
     environment.measure.mockImplementation((text) => ({
       width: text === formatted ? 128 : 20,
       actualBoundingBoxLeft: 0,

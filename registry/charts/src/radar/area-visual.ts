@@ -37,7 +37,7 @@ export function createRadarAreaVisual(
   )
   element.append(path)
 
-  const groupProps = (): MotionNodeOptions => ({
+  const groupProps: () => MotionNodeOptions = () => ({
     animate: {
       opacity: hovered !== null && hovered !== area.index ? 0.3 : 1,
       scale: hovered === area.index ? 1.05 : 1,
@@ -53,7 +53,7 @@ export function createRadarAreaVisual(
   const createGroupVisual = () =>
     mountRadarVisual(element, { opacity: props.animate === false ? 1 : 0, scale: 1 }, groupProps())
 
-  const pathProps = (): MotionNodeOptions => ({
+  const pathProps: () => MotionNodeOptions = () => ({
     animate: {
       fillOpacity: hovered === area.index ? 0.35 : 0.15,
       strokeWidth: area.showStroke === false ? 0 : hoverStrokeWidth(hovered === area.index),
@@ -83,7 +83,7 @@ export function createRadarAreaVisual(
     path.style.setProperty('--bkm-radar-area-color', color)
     path.toggleAttribute('data-no-stroke', area.showStroke === false)
     path.toggleAttribute('data-glow', area.showGlow !== false && hovered === area.index)
-    // Motion owns these attributes during entry; CSS takes over only after its visual unmounts.
+
     path.toggleAttribute('data-complete', complete)
     path.toggleAttribute('data-hovered', hovered === area.index)
 
@@ -154,7 +154,7 @@ export function createRadarAreaVisual(
       groupVisual = undefined
       pathVisual?.destroy()
       pathVisual = undefined
-      // Unmount retains the final Motion output; release it before static CSS takes ownership.
+
       element.style.removeProperty('opacity')
       element.style.removeProperty('transform')
     }

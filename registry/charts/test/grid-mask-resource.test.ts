@@ -1,7 +1,8 @@
-import { expect, vi } from 'vitest'
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
+// @vitest-environment happy-dom
+import { expect } from 'vitest'
 import { it as effectIt } from '@effect/vitest'
 import { Effect } from 'effect'
-import { Window } from 'happy-dom'
 import { gridMaskResource, sourceGridMasks } from '../src/cartesian/grid-mask'
 import { scatterPaintResource } from '../src/scatter/paint'
 
@@ -9,9 +10,6 @@ effectIt.effect(
   'updates grid plot masks in the existing SVG owner and retires disabled resources without ID collisions',
   () =>
     Effect.sync(() => {
-      const browser = new Window()
-      vi.stubGlobal('document', browser.document)
-
       try {
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
         document.body.append(svg)
@@ -79,10 +77,9 @@ effectIt.effect(
         expect(svg.querySelector('#scatter-resource')).toBeNull()
         expect(svg.querySelectorAll('mask')).toHaveLength(2)
         svg.remove()
-        expect(browser.document.querySelector('mask')).toBeNull()
+        expect(document.querySelector('mask')).toBeNull()
       } finally {
-        browser.close()
-        vi.unstubAllGlobals()
+        document.body.replaceChildren()
       }
     }),
 )

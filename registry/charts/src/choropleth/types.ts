@@ -206,7 +206,6 @@ interface ChoroplethTooltipData {
   readonly feature: ChoroplethFeature
 }
 
-// Hover mirror lives in an external store (no chart-level React state): only useChoropleth() consumers re-render on focus.
 interface HoverStore {
   hovered: number | null
   tooltip: ChoroplethTooltipData | null

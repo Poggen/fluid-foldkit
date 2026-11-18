@@ -216,10 +216,13 @@ export const lineLoadingSweepConfiguration = (props: LineLoadingSweepProps) =>
     ),
   )
 
-export const lineLoadingSweepInputs = (
+export const lineLoadingSweepInputs: (
   props: Pick<LineLoadingSweepProps, 'curve'>,
   dimensions?: Readonly<{ innerWidth: number; innerHeight: number }>,
-): LineSweepViewInputs => ({
+) => LineSweepViewInputs = (
+  props: Pick<LineLoadingSweepProps, 'curve'>,
+  dimensions?: Readonly<{ innerWidth: number; innerHeight: number }>,
+) => ({
   curve: () => props.curve,
   dimensions: {
     innerWidth: dimensions?.innerWidth ?? 0,

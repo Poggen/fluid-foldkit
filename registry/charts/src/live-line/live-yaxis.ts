@@ -1,15 +1,18 @@
-// bklit's live y axis (repos/bklit-ui/packages/ui/src/charts/live-y-axis.tsx) as pure functions: label step hysteresis, ticks,
-// edge fade and clamp, intro trajectory. The labels are the native y axis' tick labels (definition.ts).
 import { REST_GRANULAR } from '../kit/motion/spring-curve'
 import { LIVE_Y_TICK_SPRING } from '../kit/motion/springs'
 
 /** bklit's pickNiceInterval (live-y-axis.tsx:15-55): a 1/2/2.5-ladder step keeping labels ~minGap px apart, with hysteresis. */
-export function pickNiceInterval(
+export const pickNiceInterval: (
   valRange: number,
   chartHeight: number,
   minGap: number,
   prev: number,
-): number {
+) => number = function pickNiceInterval(
+  valRange: number,
+  chartHeight: number,
+  minGap: number,
+  prev: number,
+) {
   if (valRange <= 0 || chartHeight <= 0) {
     return 1
   }
@@ -49,10 +52,10 @@ export function pickNiceInterval(
   return best === Number.POSITIVE_INFINITY ? valRange / 5 : best
 }
 
-/** Labels within this many px of the plot's top/bottom fade (live-y-axis.tsx:61-72). */
-const EDGE_FADE_PX = 28
-
-export function edgeOpacity(y: number, height: number): number {
+export const edgeOpacity: (y: number, height: number) => number = function edgeOpacity(
+  y: number,
+  height: number,
+) {
   const fromEdge = Math.min(y, height - y)
 
   if (fromEdge >= EDGE_FADE_PX) {
@@ -62,16 +65,18 @@ export function edgeOpacity(y: number, height: number): number {
   return fromEdge <= 0 ? 0 : fromEdge / EDGE_FADE_PX
 }
 
-/** bklit keeps a tick only while its y is within this many px of the plot (live-y-axis.tsx:182); a leaving label stops there. */
-const Y_KEEP_PX = 10
-
 /** bklit's tick values for a domain and step (live-y-axis.tsx:141-157, 182): candidates over the domain padded by half a step, kept while within Y_KEEP_PX of the plot. */
-export function yTickValues(
+export const yTickValues: (
   domain: readonly [number, number],
   interval: number,
   height: number,
   allowDecimals: boolean,
-): Array<number> {
+) => Array<number> = function yTickValues(
+  domain: readonly [number, number],
+  interval: number,
+  height: number,
+  allowDecimals: boolean,
+) {
   const [lo, hi] = domain
   const values: Array<number> = []
 
@@ -103,9 +108,16 @@ export function yTickValues(
 
 /** Where a label may sit, as an offset from its tick (px): bklit drops a tick once its y leaves [-10, h+10] (live-y-axis.tsx:182) and its exit animates opacity only (:205), so a label never travels past there;
  * the native axis places a seed label at its final slot, this pulls it back to that bound. */
-export function clampedOffset(plotY: number, height: number): number {
+export const clampedOffset: (plotY: number, height: number) => number = function clampedOffset(
+  plotY: number,
+  height: number,
+) {
   return Math.min(height + Y_KEEP_PX, Math.max(-Y_KEEP_PX, plotY)) - plotY
 }
+
+const EDGE_FADE_PX = 28
+
+const Y_KEEP_PX = 10
 
 /** bklit's tick spring (live-y-axis.tsx:89): label glide and enter/exit fade, no rest thresholds, so motion picks them per value from the starting delta (motion-dom 12.27.0 spring/index.mjs:83-88, defaults.mjs):
  * under 5 units "granular" (0.01 / 0.005), else 2 / 0.5; opacity is always granular. One transition drives both channels, and px thresholds made a fade stop within 0.5 and snap, so granular ones are used (y rests at 0.005px). */

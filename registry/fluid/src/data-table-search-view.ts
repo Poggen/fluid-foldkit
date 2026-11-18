@@ -1,5 +1,5 @@
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import { Input } from '@foldkit/ui'
 import type { Html } from 'foldkit/html'
 import { Message } from './data-table-definition.js'
@@ -15,12 +15,17 @@ import { resolvePresentation } from './presentation.js'
 import { spring } from './lib/springs.js'
 import { cn } from './lib/utils.js'
 
-export function DataTableSearchField(
+export const DataTableSearchField: (
   model: DataTableModel,
   inputs: DataTableViewInputs,
   h: DataTableViewBuilder,
   motion: MotionScope,
-): Html {
+) => Html = function DataTableSearchField(
+  model: DataTableModel,
+  inputs: DataTableViewInputs,
+  h: DataTableViewBuilder,
+  motion: MotionScope,
+) {
   const { icons, shape, size, reducedMotion } = resolvePresentation(inputs)
   const compact = size.variant === 'compact'
   const value = typeof model.search === 'string' ? model.search : model.search.query

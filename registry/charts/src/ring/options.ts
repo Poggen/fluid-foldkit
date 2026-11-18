@@ -39,9 +39,10 @@ export type RingChild =
   | { readonly kind: 'ring'; readonly props: RingProps }
   | { readonly kind: 'center'; readonly props: RingCenterProps }
 
-export const Ring = (props: RingProps): RingChild => ({ kind: 'ring', props })
+export const Ring: (props: RingProps) => RingChild = (props: RingProps) => ({ kind: 'ring', props })
 
-export const RingCenter = (props: RingCenterProps = {}): RingChild => ({ kind: 'center', props })
+export const RingCenter: (props?: RingCenterProps) => RingChild = (props: RingCenterProps = {}) =>
+  ({ kind: 'center', props }) satisfies RingChild
 
 export interface RingChartProps {
   readonly data: ReadonlyArray<RingData>

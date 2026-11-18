@@ -1,14 +1,21 @@
-// bklit's `createNotchPath` as an areaX `curve`: the polygon notch's four vertices arrive as pixel points (x1 = x2, one row per vertex),
-// and the path is the polygon with each corner cut by a quadratic of radius `cornerRadius` (same clamps as bklit).
 import type { AreaXCurve } from '@tanstack/charts/area-x'
 
-const lerp = (a: number, b: number, t: number): number => a + (b - a) * t
+const lerp: (a: number, b: number, t: number) => number = (a: number, b: number, t: number) =>
+  a + (b - a) * t
 
-const at = (ax: number, ay: number, bx: number, by: number, t: number): string =>
-  `${lerp(ax, bx, t)} ${lerp(ay, by, t)}`
+const at: (ax: number, ay: number, bx: number, by: number, t: number) => string = (
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  t: number,
+) => `${lerp(ax, bx, t)} ${lerp(ay, by, t)}`
 
 /** `sideDepth`: the corner clamp depth is the side length (arc, parallel sides); otherwise the vertical extent (linear, tapered). */
-export const notchPolygonCurve = (cornerRadius: number, sideDepth: boolean): AreaXCurve => ({
+export const notchPolygonCurve: (cornerRadius: number, sideDepth: boolean) => AreaXCurve = (
+  cornerRadius: number,
+  sideDepth: boolean,
+) => ({
   areaX: (right) => {
     if (right.length < 4) {
       return ''

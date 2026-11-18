@@ -1,7 +1,6 @@
 import { defineConfig } from 'vitest/config'
 export default defineConfig({
   test: {
-    // Vitest otherwise replaces this source ?raw module with an empty CSS stub.
     css: { include: [/\/src\/styles\/thinking-indicator\.css(?:\?.*)?$/] },
     maxWorkers: Number(process.env.VITEST_MAX_WORKERS ?? 1),
     include: ['src/**/*.test.ts', 'test/**/*.test.ts'],

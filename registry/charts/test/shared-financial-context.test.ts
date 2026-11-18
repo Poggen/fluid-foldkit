@@ -306,7 +306,9 @@ export const ScatterParentKey = Symbol('SharedScatterContextParent')
   )
 }
 
-const financialFlatten = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<SceneNode> =>
+const financialFlatten: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<SceneNode> = (
+  nodes: ReadonlyArray<SceneNode>,
+) =>
   nodes.flatMap((node) =>
     node.kind === 'group' ? [node, ...financialFlatten(node.children)] : [node],
   )

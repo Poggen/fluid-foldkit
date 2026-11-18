@@ -81,7 +81,7 @@ const Picker = Root.makeOptionalFieldBinding(DatePickerBlock, {
         if (changed?._tag !== 'Picker' || changed.event._tag !== 'ValueChanged')
           return Root.makeNoopStep()
         const selected = changed.event.value
-        // Calendar ordinals retain the chosen civil day across local-midnight offsets.
+
         return setValue(
           selected._tag === 'Single'
             ? DateTime.formatIso(DateTime.makeUnsafe(selected.date.ordinal * 86_400_000)).slice(

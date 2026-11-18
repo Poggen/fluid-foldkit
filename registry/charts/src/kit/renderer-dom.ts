@@ -1,16 +1,13 @@
-/** The only TS module that names renderer-owned DOM: core's fixed `ts-chart__*` classes, the `data-ts-key` encoding and `data-ts-motion-role`
- * (UPSTREAM-GAPS #36, #50). `data-ts-key` itself is documented (reference/rendering-and-export.md); the key format and the classes are not.
- * styles.css repeats these selectors because CSS cannot import them. */
+const attr: (op: string, key: string) => string = (op: string, key: string) =>
+  `[data-ts-key${op}="${key}"]`
 
-const attr = (op: string, key: string): string => `[data-ts-key${op}="${key}"]`
+export const keyIs: (key: string) => string = (key: string) => attr('', key)
 
-export const keyIs = (key: string): string => attr('', key)
+export const keyStarts: (prefix: string) => string = (prefix: string) => attr('^', prefix)
 
-export const keyStarts = (prefix: string): string => attr('^', prefix)
+export const keyEnds: (suffix: string) => string = (suffix: string) => attr('$', suffix)
 
-export const keyEnds = (suffix: string): string => attr('$', suffix)
-
-export const keyHas = (part: string): string => attr('*', part)
+export const keyHas: (part: string) => string = (part: string) => attr('*', part)
 
 export const CLS = {
   marks: '.ts-chart__marks',
@@ -28,7 +25,8 @@ export const CLS = {
 export const NOT_MOTION = ':not([data-ts-motion-role])'
 
 /** True when the renderer is mid-tween on `el` (#50). */
-export const isMotionNode = (el: Element): boolean => el.hasAttribute('data-ts-motion-role')
+export const isMotionNode: (el: Element) => boolean = (el: Element) =>
+  el.hasAttribute('data-ts-motion-role')
 
 /** The renderer-owned layers that the ready and focus gates hide: the focus layer and the focus-guide layer. */
 export const FOCUS_LAYERS = `${CLS.focusLayer},${CLS.guideLayer}`

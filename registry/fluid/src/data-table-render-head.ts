@@ -3,8 +3,8 @@ import { DataTableHeaderMenu } from './data-table-header-menu-view.js'
 import { dataTablePinStyle } from './data-table-cell-pin.js'
 import { Option } from 'effect'
 import type { DataTableViewBuilder } from './data-table-definition.js'
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import type { Html } from 'foldkit/html'
 import { Message } from './data-table-definition.js'
 import type { DataTableModel, DataTableViewInputs } from './data-table-definition.js'
@@ -13,14 +13,21 @@ import { TableHeader, TableHead, TableRow } from './table-parts.js'
 import { dataTableFilteredRows, dataTableColumns } from './data-table-state.js'
 import { resolvePresentation } from './presentation.js'
 
-export function checkbox(
+export const checkbox: (
   checked: boolean | 'mixed',
   label: string,
   action: string,
   rowId: string,
   inputs: DataTableViewInputs,
   h: DataTableViewBuilder,
-): Html {
+) => Html = function checkbox(
+  checked: boolean | 'mixed',
+  label: string,
+  action: string,
+  rowId: string,
+  inputs: DataTableViewInputs,
+  h: DataTableViewBuilder,
+) {
   const { icons, shape } = resolvePresentation(inputs)
   return h.button(
     [
@@ -43,13 +50,19 @@ export function checkbox(
   )
 }
 
-export function renderDataTableHead(
+export const renderDataTableHead: (
   model: DataTableModel,
   inputs: DataTableViewInputs,
   h: DataTableViewBuilder,
   context: TableContext,
   motion: MotionScope,
-): Html {
+) => Html = function renderDataTableHead(
+  model: DataTableModel,
+  inputs: DataTableViewInputs,
+  h: DataTableViewBuilder,
+  context: TableContext,
+  motion: MotionScope,
+) {
   const menu = Option.getOrNull(model.menu)
   const rows = dataTableFilteredRows(model)
   const columns = dataTableColumns(model)

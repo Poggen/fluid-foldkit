@@ -12,7 +12,6 @@ export const LayoutResource = DatePickerBlock.makeMountStream('SegmentsLayout', 
             ? Stream.callback<typeof Message.RowsMeasured.Type>((queue) =>
                 Effect.acquireRelease(
                   Effect.sync(() => {
-                    // The permanent trigger segment owns this mount; Hover owns the group mount.
                     const element = anchor.parentElement
                     const window = anchor.ownerDocument.defaultView
                     const parent = element?.parentElement
@@ -89,7 +88,6 @@ export const PresetFocusResource = DatePickerBlock.makeMountStream('PresetFocus'
             ? Stream.callback<typeof Message.PresetFocused.Type>((queue) =>
                 Effect.acquireRelease(
                   Effect.sync(() => {
-                    // The existing outer wrapper owns this mount; the inner group keeps ObserveHover.
                     const element = anchor.firstElementChild
                     const window = anchor.ownerDocument.defaultView
 

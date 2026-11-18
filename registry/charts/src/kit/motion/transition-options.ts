@@ -21,7 +21,9 @@ type SingleEase =
   | 'backInOut'
   | 'anticipate'
 
-const singleEase = (value: NonNullable<EnterTransition['ease']>): SingleEase => {
+const singleEase: (value: NonNullable<EnterTransition['ease']>) => SingleEase = (
+  value: NonNullable<EnterTransition['ease']>,
+) => {
   if (Predicate.isFunction(value)) {
     return value
   }
@@ -64,10 +66,13 @@ const singleEase = (value: NonNullable<EnterTransition['ease']>): SingleEase => 
 }
 
 /** Motion supplies omitted-field defaults; chart defaults apply only when the whole transition is omitted. */
-export const mountProgressOptions = (
+export const mountProgressOptions: (
+  transition?: EnterTransition,
+  fallback?: EnterTransition,
+) => ValueAnimationTransition<number> = (
   transition?: EnterTransition,
   fallback: EnterTransition = DEFAULT_CHART_ENTER_TRANSITION,
-): ValueAnimationTransition<number> => {
+) => {
   const { type, ease, ...fields } = transition ?? fallback
 
   if (
@@ -104,5 +109,5 @@ export const mountProgressOptions = (
         : singleEase(ease)
   }
 
-  return options
+  return options satisfies ValueAnimationTransition<number>
 }

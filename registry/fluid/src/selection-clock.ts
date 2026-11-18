@@ -1,42 +1,15 @@
 import { Context, Effect, Layer, Schema } from 'effect'
 
-const Deadline = Schema.Struct({ id: Schema.Natural, delay: Schema.Finite })
-
-export const SelectionClockPlan = Schema.Struct({
-  deadlines: Schema.Array(Deadline),
-  nextFrame: Schema.Array(Schema.Natural),
-})
-
-export interface SelectionClockPlan extends Schema.Schema.Type<typeof SelectionClockPlan> {}
-
-export interface SelectionClock {
-  readonly synchronize: (plan: SelectionClockPlan) => void
-  readonly dispose: () => void
-}
-
-export class SelectionClocks extends Context.Service<
-  SelectionClocks,
-  Map<string, SelectionClock>
->()('@foldkit-visuals/fluid/SelectionClocks') {}
-
-export const SelectionClocksLayer = Layer.effect(
-  SelectionClocks,
-  Effect.acquireRelease(
-    Effect.sync(() => new Map<string, SelectionClock>()),
-    (clocks) =>
-      Effect.sync(() => {
-        for (const clock of clocks.values()) clock.dispose()
-        clocks.clear()
-      }),
-  ),
-)
-
 /** Timers advance authored geometry phases; Motion completion alone releases exit slots. */
-export function mountSelectionClock(
+export const mountSelectionClock: (
   element: Element,
   deadline: (id: number) => void,
   advanced: (ids: ReadonlyArray<number>) => void,
-): SelectionClock {
+) => SelectionClock = function mountSelectionClock(
+  element: Element,
+  deadline: (id: number) => void,
+  advanced: (ids: ReadonlyArray<number>) => void,
+) {
   const window = element.ownerDocument.defaultView
 
   if (window === null) throw new Error('Fluid selection requires a live document')
@@ -87,3 +60,34 @@ export function mountSelectionClock(
     },
   }
 }
+
+const Deadline = Schema.Struct({ id: Schema.Natural, delay: Schema.Finite })
+
+export const SelectionClockPlan = Schema.Struct({
+  deadlines: Schema.Array(Deadline),
+  nextFrame: Schema.Array(Schema.Natural),
+})
+
+export interface SelectionClockPlan extends Schema.Schema.Type<typeof SelectionClockPlan> {}
+
+export interface SelectionClock {
+  readonly synchronize: (plan: SelectionClockPlan) => void
+  readonly dispose: () => void
+}
+
+export class SelectionClocks extends Context.Service<
+  SelectionClocks,
+  Map<string, SelectionClock>
+>()('@foldkit-visuals/fluid/SelectionClocks') {}
+
+export const SelectionClocksLayer = Layer.effect(
+  SelectionClocks,
+  Effect.acquireRelease(
+    Effect.sync(() => new Map<string, SelectionClock>()),
+    (clocks) =>
+      Effect.sync(() => {
+        for (const clock of clocks.values()) clock.dispose()
+        clocks.clear()
+      }),
+  ),
+)

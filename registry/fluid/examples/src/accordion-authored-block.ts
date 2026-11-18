@@ -288,7 +288,10 @@ const presentation = createPresentationContext({
 })
 
 const view = AccordionAuthoredComposition.makeView((model, h) => {
-  const inputs = (rows: ReadonlyArray<AccordionRow>, grouped: boolean): AccordionViewInputs => ({
+  const inputs: (rows: ReadonlyArray<AccordionRow>, grouped: boolean) => AccordionViewInputs = (
+    rows: ReadonlyArray<AccordionRow>,
+    grouped: boolean,
+  ) => ({
     context: presentation,
     animate: motion.node,
     animateHighlight,

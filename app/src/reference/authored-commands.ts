@@ -12,7 +12,7 @@ import {
   previewCodeTabId,
   previewCodeTabsViewInputs,
 } from '../../../components/docs/preview-code-tabs'
-// Authored from Fluid Functionalism cc276ca0 CommandMenu docs. MIT.
+/* @license Authored from Fluid Functionalism cc276ca0 CommandMenu docs. MIT. */
 import { Effect, Layer, Option, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { initAndInsert } from 'foldkit/binding'

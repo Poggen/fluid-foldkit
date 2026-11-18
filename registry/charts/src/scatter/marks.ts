@@ -6,33 +6,18 @@ import type { YScaleId, SeriesMark } from '../cartesian/build-state'
 import type { ScatterSeries } from './series'
 import type { ScatterMarkRole } from './paint'
 
-const isFiniteNumber = Schema.is(Schema.Finite)
-
-interface SeriesMarksInput<Row extends Readonly<Record<string, unknown>>> {
-  readonly present: (
-    mark: SeriesMark<Row>,
-    role: ScatterMarkRole,
-    indices: ReadonlyArray<number>,
-  ) => SeriesMark<Row>
-  readonly input: {
-    readonly revealed: boolean
-  }
-  readonly data: ReadonlyArray<Row>
-  readonly xOf: (d: Row) => Date
-  readonly colorDomain: Array<string>
-  readonly colorRange: Array<string>
-}
-
 /** The dot marks of one series (outline ring, disc + ring, or separate ring) with their per-datum entrance. */
-export function seriesMarks<Row extends Readonly<Record<string, unknown>>>(
+export const seriesMarks: <Row extends Readonly<Record<string, unknown>>>(
   s: ScatterSeries,
   deps: SeriesMarksInput<Row>,
-): Array<ChartMark<Row, Date, number, Date, number, 'x', YScaleId>> {
+) => Array<ChartMark<Row, Date, number, Date, number, 'x', YScaleId>> = function seriesMarks<
+  Row extends Readonly<Record<string, unknown>>,
+>(s: ScatterSeries, deps: SeriesMarksInput<Row>) {
   const { input, data, xOf, colorDomain, colorRange } = deps
   const { revealed } = input
   const marks: Array<ChartMark<Row, Date, number, Date, number, 'x', YScaleId>> = []
 
-  const yOf = (d: Row): number => {
+  const yOf: (d: Row) => number = (d: Row) => {
     const value = d[s.dataKey]
 
     return isFiniteNumber(value) ? value : Number.NaN
@@ -44,14 +29,17 @@ export function seriesMarks<Row extends Readonly<Record<string, unknown>>>(
 
   const rows = indices.flatMap((index) => (data[index] === undefined ? [] : [data[index]]))
 
-  const keyOf = (_d: Row, { index }: { index: number }): string => `${s.dataKey}:${indices[index]}`
+  const keyOf: (_d: Row, argument1: { index: number }) => string = (
+    _d: Row,
+    { index }: { index: number },
+  ) => `${s.dataKey}:${indices[index]}` satisfies string
 
   const pre = s.dim ? '' : 'nodim:'
 
   const common = {
     ...yScaleForAxis(s.yAxisId),
     x: xOf,
-    z: (): string => s.dataKey,
+    z: () => s.dataKey satisfies string,
   }
 
   if (s.outlineWidth > 0) {
@@ -76,8 +64,6 @@ export function seriesMarks<Row extends Readonly<Record<string, unknown>>>(
   }
 
   if (s.ringWidth > 0 && s.stroke === s.fill) {
-    // Preserve the shared dim wrapper and point keys while painting Source's
-    // plain filled disc and separate stroked ring.
     const discKey = `${s.dataKey}:disc`
     const ringKey = `${s.dataKey}:ring`
     colorDomain.push(discKey, ringKey)
@@ -142,5 +128,22 @@ export function seriesMarks<Row extends Readonly<Record<string, unknown>>>(
     }
   }
 
-  return marks
+  return marks satisfies Array<ChartMark<Row, Date, number, Date, number, 'x', YScaleId>>
+}
+
+const isFiniteNumber = Schema.is(Schema.Finite)
+
+interface SeriesMarksInput<Row extends Readonly<Record<string, unknown>>> {
+  readonly present: (
+    mark: SeriesMark<Row>,
+    role: ScatterMarkRole,
+    indices: ReadonlyArray<number>,
+  ) => SeriesMark<Row>
+  readonly input: {
+    readonly revealed: boolean
+  }
+  readonly data: ReadonlyArray<Row>
+  readonly xOf: (d: Row) => Date
+  readonly colorDomain: Array<string>
+  readonly colorRange: Array<string>
 }

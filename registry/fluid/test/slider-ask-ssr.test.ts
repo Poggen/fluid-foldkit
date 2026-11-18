@@ -37,7 +37,8 @@ const SliderServerBlock = Block.make('SliderServer', {
 const Radix = SliderServerBlock.makeRequiredFieldBinding(SliderBlock, {
   field: 'radix',
   init: {
-    contextToArgs: (): [SliderConfig] => [{ id: 'server-radix', value: [20, 70], size: 'compact' }],
+    contextToArgs: () =>
+      [{ id: 'server-radix', value: [20, 70], size: 'compact' }] satisfies [SliderConfig],
   },
 }).withOutMessagePolicy({
   fold: SliderServerBlock.makeOutMessageFold(SliderBlock, {
@@ -48,9 +49,8 @@ const Radix = SliderServerBlock.makeRequiredFieldBinding(SliderBlock, {
 const Base = SliderServerBlock.makeRequiredFieldBinding(SliderBlock, {
   field: 'base',
   init: {
-    contextToArgs: (): [SliderConfig] => [
-      { id: 'server-base', value: 0.5, min: 0, max: 1, size: 'compact' },
-    ],
+    contextToArgs: () =>
+      [{ id: 'server-base', value: 0.5, min: 0, max: 1, size: 'compact' }] satisfies [SliderConfig],
   },
 }).withOutMessagePolicy({
   fold: SliderServerBlock.makeOutMessageFold(SliderBlock, {

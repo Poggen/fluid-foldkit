@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism f8014098 InputMessage TranscriptDemo. MIT.
+/* @license Derived from Fluid Functionalism f8014098 InputMessage TranscriptDemo. MIT. */
 import { Effect, Layer, Option, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { initAndInsert } from 'foldkit/binding'

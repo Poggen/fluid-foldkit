@@ -102,7 +102,6 @@ export function acquireDepthMotion(
       const changed = top(next) !== top(target) || size(next) !== size(target)
       target = next
       if (!loaded && nextOptions.loaded) {
-        // Source rekeys clip, lid and glass at the checked loaded cutoff.
         y.jump(top(next))
         height.jump(size(next))
         lift.jump(0)

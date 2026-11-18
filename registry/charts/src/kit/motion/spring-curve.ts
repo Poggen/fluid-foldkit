@@ -1,5 +1,3 @@
-// Spring sampling on TanStack's analytic oscillator (`createChartSpring`, reference/motion.md "Standalone spring"): the rest thresholds a
-// caller needs, the settle search, and a spring sampled as a CSS `linear()` easing.
 import { createChartSpring } from '@tanstack/charts/spring'
 import type { ChartSpring, ChartSpringState } from '@tanstack/charts/spring'
 import type { Spring } from './springs'
@@ -18,13 +16,16 @@ export const REST_PX: SpringRest = { delta: 0.5, speed: 2 }
 export const REST_GRANULAR: SpringRest = { delta: 0.005, speed: 0.01 }
 
 /** motion picks its thresholds per value from the starting travel: under 5 units is granular, otherwise pixel-sized. */
-export const restOf = (travel: number): SpringRest =>
+export const restOf: (travel: number) => SpringRest = (travel: number) =>
   Math.abs(travel) < GRANULAR_TRAVEL ? REST_GRANULAR : REST_PX
 
 const springs = new Map<string, ChartSpring>()
 
 /** The native spring for `spring` with `rest` thresholds (cached: the constants repeat across every hover). */
-export const springOf = (spring: Spring, rest: SpringRest): ChartSpring => {
+export const springOf: (spring: Spring, rest: SpringRest) => ChartSpring = (
+  spring: Spring,
+  rest: SpringRest,
+) => {
   const key = `${spring.stiffness}/${spring.damping}/${spring.mass}/${rest.delta}/${rest.speed}`
   let made = springs.get(key)
 
@@ -43,12 +44,12 @@ export const springOf = (spring: Spring, rest: SpringRest): ChartSpring => {
 }
 
 /** Milliseconds (a multiple of `stepMs`) at which the spring first meets its rest thresholds from `state`; `limitMs` when it never does. */
-export const settleMs = (
+export const settleMs: (
   spring: ChartSpring,
   state: ChartSpringState,
   stepMs: number,
   limitMs: number,
-): number => {
+) => number = (spring: ChartSpring, state: ChartSpringState, stepMs: number, limitMs: number) => {
   for (let ms = stepMs; ms < limitMs; ms += stepMs) {
     if (spring.sample(ms, state).done) {
       return ms
@@ -65,13 +66,7 @@ export type SpringCurveOptions = {
   readonly samples: number
   /** Decimal places of each stop. */
   readonly decimals: number
-} &
-  /** The easing runs over this duration. */
-  (
-    | { readonly durationMs: number }
-    /** The easing runs over the settle time, searched every `stepMs` up to `limitMs`. */
-    | { readonly stepMs: number; readonly limitMs: number }
-  )
+} & ({ readonly durationMs: number } | { readonly stepMs: number; readonly limitMs: number })
 
 export interface SpringCurve {
   readonly durationMs: number
@@ -79,7 +74,10 @@ export interface SpringCurve {
 }
 
 /** A spring (0 -> 1, overshoots) as a CSS `linear()` easing over its settle time. */
-export const springCurve = (spring: Spring, options: SpringCurveOptions): SpringCurve => {
+export const springCurve: (spring: Spring, options: SpringCurveOptions) => SpringCurve = (
+  spring: Spring,
+  options: SpringCurveOptions,
+) => {
   const native = springOf(spring, options.rest)
   const state: ChartSpringState = { from: 0, to: 1, velocity: 0 }
 
@@ -92,7 +90,6 @@ export const springCurve = (spring: Spring, options: SpringCurveOptions): Spring
   const stops: Array<string> = []
 
   for (let step = 0; step <= options.samples; step += 1) {
-    // The last stop is the target: a fixed `durationMs` can end before the spring has settled, and the easing must land on 1.
     const { value } = native.sample((step / options.samples) * durationMs, state)
     stops.push(step === options.samples ? '1' : String(Math.round(value * scale) / scale))
   }

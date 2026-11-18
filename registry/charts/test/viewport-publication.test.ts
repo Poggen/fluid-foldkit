@@ -1,8 +1,9 @@
 import { it } from '@effect/vitest'
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom -- real checked parent and native renderer ResizeObserver deliveries
 import { expect } from 'vitest'
 import { Effect, Option, Schedule } from 'effect'
-import { viewportFixture } from './viewport-runtime-fixture'
+import { viewportFixture } from './viewport-runtime.fixture'
 
 const eventually = (check: () => void) =>
   Effect.try(check).pipe(Effect.retry({ times: 50, schedule: Schedule.spaced('20 millis') }))

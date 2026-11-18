@@ -14,9 +14,9 @@ export const isTagMember = (
   ((!node.computed && node.property.type === 'Identifier' && node.property.name === '_tag') ||
     (node.computed && isStringLiteral(node.property) && node.property.value === '_tag'))
 
-export const tagMemberFromComparison = (
+export const tagMemberFromComparison: (
   node: ESTree.BinaryExpression,
-): ESTree.MemberExpression | undefined => {
+) => ESTree.MemberExpression | undefined = (node: ESTree.BinaryExpression) => {
   if (!equalityOperators.has(node.operator)) return undefined
   if (isTagMember(node.left) && isStringLiteral(node.right)) return node.left
   if (isTagMember(node.right) && isStringLiteral(node.left)) return node.right
@@ -34,7 +34,7 @@ const isBroadEffectCatchCall = (
   node.callee.property.type === 'Identifier' &&
   broadEffectCatchMethods.has(node.callee.property.name)
 
-export const isInsideBroadEffectHandler = (node: ESTree.Node): boolean => {
+export const isInsideBroadEffectHandler: (node: ESTree.Node) => boolean = (node: ESTree.Node) => {
   let current: ESTree.Node | null | undefined = node.parent
   while (current !== null && current !== undefined) {
     if (current.type === 'ArrowFunctionExpression' || current.type === 'FunctionExpression') {
@@ -45,7 +45,9 @@ export const isInsideBroadEffectHandler = (node: ESTree.Node): boolean => {
   return false
 }
 
-export const isReasonTagMember = (node: ESTree.MemberExpression): boolean =>
+export const isReasonTagMember: (node: ESTree.MemberExpression) => boolean = (
+  node: ESTree.MemberExpression,
+) =>
   node.object.type === 'MemberExpression' &&
   ((!node.object.computed &&
     node.object.property.type === 'Identifier' &&

@@ -3,7 +3,7 @@ import { PreviewOptions } from './legacy-options'
 import { decodeConfiguration } from './configuration'
 export { PreviewOptions } from './legacy-options'
 
-export const previewOptionsFromUrl = (url: string): PreviewOptions => {
+export const previewOptionsFromUrl: (url: string) => PreviewOptions = (url: string) => {
   const parsedUrl = new URL(url)
   const raw = parsedUrl.searchParams.get('props')
   if (raw === null) return {}

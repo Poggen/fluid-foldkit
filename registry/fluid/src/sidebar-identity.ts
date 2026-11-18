@@ -1,5 +1,5 @@
 import { fontWeights } from './lib/font-weight.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { modifyFields } from 'foldkit/struct'
 import { HoverMode } from './hover-observation.js'
 import type { DropdownResources } from './dropdown-resources.js'
@@ -101,18 +101,19 @@ export function sidebarIdentityRecipe(kind: 'workspace' | 'user') {
     const Menu = Owner.makeRequiredFieldBinding(Dropdown, {
       field: 'menu',
       init: {
-        contextToArgs: (config: SidebarIdentityConfig): [DropdownConfig] => [
-          config.checkedIndex === undefined
-            ? {
-                id: `${config.id}-menu`,
-                ...(config.hoverMode === undefined ? {} : { hoverMode: config.hoverMode }),
-              }
-            : {
-                id: `${config.id}-menu`,
-                checkedIndex: config.checkedIndex,
-                ...(config.hoverMode === undefined ? {} : { hoverMode: config.hoverMode }),
-              },
-        ],
+        contextToArgs: (config: SidebarIdentityConfig) =>
+          [
+            config.checkedIndex === undefined
+              ? {
+                  id: `${config.id}-menu`,
+                  ...(config.hoverMode === undefined ? {} : { hoverMode: config.hoverMode }),
+                }
+              : {
+                  id: `${config.id}-menu`,
+                  checkedIndex: config.checkedIndex,
+                  ...(config.hoverMode === undefined ? {} : { hoverMode: config.hoverMode }),
+                },
+          ] satisfies [DropdownConfig],
       },
     }).withOutMessagePolicy({
       fold: Owner.makeOutMessageFold(Dropdown, {
@@ -135,14 +136,15 @@ export function sidebarIdentityRecipe(kind: 'workspace' | 'user') {
     const Hover = Owner.makeRequiredFieldBinding(HoverBlock, {
       field: 'hover',
       init: {
-        contextToArgs: (config: SidebarIdentityConfig): [HoverConfig] => [
-          {
-            id: `${config.id}-hover`,
-            axis: 'y',
-            gapClick: false,
-            ...(config.hoverMode === undefined ? {} : { mode: config.hoverMode }),
-          },
-        ],
+        contextToArgs: (config: SidebarIdentityConfig) =>
+          [
+            {
+              id: `${config.id}-hover`,
+              axis: 'y',
+              gapClick: false,
+              ...(config.hoverMode === undefined ? {} : { mode: config.hoverMode }),
+            },
+          ] satisfies [HoverConfig],
       },
     }).withOutMessagePolicy({
       fold: Owner.makeOutMessageFold(HoverBlock, {

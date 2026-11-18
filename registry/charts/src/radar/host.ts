@@ -209,7 +209,7 @@ export class RadarHost implements PolarHost<RadarData> {
     }
 
     this.#surface.hidden = false
-    // Source renders an explicit min(width,height) square at the parent's top-left.
+
     this.#surface.style.setProperty('--bkm-radar-surface-size', `${size}px`)
 
     this.#areas.configure({ ...p, data: this.#data, size })

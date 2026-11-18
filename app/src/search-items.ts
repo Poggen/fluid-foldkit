@@ -1,4 +1,4 @@
-// Site-menu categories derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Site-menu categories derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import type { CommandMenuItem } from '@foldkit-visuals/fluid/command-menu'
 import type { IconName } from '@foldkit-visuals/fluid/icons'
 import { Schema } from 'effect'
@@ -57,12 +57,17 @@ const pageItems: ReadonlyArray<SearchItem> = pages.map((page) => {
     ...(icon === undefined ? {} : { icon }),
   }
 })
-const setting = (
+const setting: (
   value: string,
   label: string,
   selection: SettingSelection,
   keywords: ReadonlyArray<string>,
-): SearchItem => ({
+) => SearchItem = (
+  value: string,
+  label: string,
+  selection: SettingSelection,
+  keywords: ReadonlyArray<string>,
+) => ({
   kind: 'setting',
   value,
   label,
@@ -129,22 +134,32 @@ const settingItems: ReadonlyArray<SearchItem> = [
     ),
   ),
 ]
-const action = (
+const action: (
+  value: string,
+  label: string,
+  intent: SearchIntent,
+  icon: IconName,
+  keywords?: ReadonlyArray<string>,
+) => SearchItem = (
   value: string,
   label: string,
   intent: SearchIntent,
   icon: IconName,
   keywords: ReadonlyArray<string> = [],
-): SearchItem => ({
-  kind: 'action',
-  value: `action:${value}`,
-  label,
-  group: 'Actions',
-  intent,
-  icon,
-  keywords,
-})
-export const searchItems = (path: string, category: SearchCategory): ReadonlyArray<SearchItem> => {
+) =>
+  ({
+    kind: 'action',
+    value: `action:${value}`,
+    label,
+    group: 'Actions',
+    intent,
+    icon,
+    keywords,
+  }) satisfies SearchItem
+export const searchItems: (path: string, category: SearchCategory) => ReadonlyArray<SearchItem> = (
+  path: string,
+  category: SearchCategory,
+) => {
   const index = pages.findIndex((page) => page.href === path)
   const previous = index > 0 ? pages[index - 1] : undefined
   const next = index >= 0 ? pages[index + 1] : undefined

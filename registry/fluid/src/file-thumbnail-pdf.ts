@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Context, Deferred, Effect, FiberSet, Layer } from 'effect'
 import { constant } from 'effect/Function'
 import type * as Pdfjs from 'pdfjs-dist'

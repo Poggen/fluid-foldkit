@@ -322,8 +322,6 @@ test('document views retain the same scoped construction proof', () => {
   ).not.toEqual([])
 })
 
-// These syntax fixtures exercise the policy's admission boundary; SDK types own
-// the init/update contracts. Public constructor identity is still mandatory here.
 const ordinary = source
   .replace(
     "import { Effect } from 'effect'",

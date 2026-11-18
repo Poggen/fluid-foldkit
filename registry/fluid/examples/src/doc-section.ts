@@ -13,7 +13,6 @@ const minHeights: Readonly<Record<number, { readonly preview: string; readonly c
   420: { preview: 'min-h-[420px]', code: '[&_pre]:min-h-[420px]' },
 }
 
-// The body stays mounted while reading code: drafts, focus targets and springs belong to it.
 export const docSection = <M>(
   h: HtmlBuilder<M>,
   options: {

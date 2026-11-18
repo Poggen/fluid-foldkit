@@ -63,7 +63,9 @@ export const SidebarConfigSchema = Schema.Struct({
 
 const sidebarShortcut = (side: SidebarConfig['side']) => (side === 'right' ? ']' : '[')
 
-export const sidebarOptions = (config: SidebarConfig): typeof SidebarOptions.Type => ({
+export const sidebarOptions: (config: SidebarConfig) => typeof SidebarOptions.Type = (
+  config: SidebarConfig,
+) => ({
   id: config.id,
   side: config.side ?? 'left',
   variant: config.variant ?? 'sidebar',

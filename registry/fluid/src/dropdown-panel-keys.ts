@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534 and its pinned Radix/Base primitives. MIT.
+/* @license Derived from Fluid Functionalism 200b4534 and its pinned Radix/Base primitives. MIT. */
 import { Option } from 'effect'
 import { DropdownObservation } from './dropdown-observation.js'
 import type { DropdownPanelObservation } from './dropdown-observation.js'
@@ -68,56 +68,53 @@ const rowKey = (context: PanelKeys, event: KeyboardEvent, field: HTMLInputElemen
     event.preventDefault()
     context.send(DropdownObservation.TypedCharacter({ character: ' ' }))
   } else if ((event.key === 'Enter' || event.key === ' ') && row !== null) {
-    // The activation callback must be able to veto before this adapter cancels the key default.
     context.activate(row, event)
     event.preventDefault()
   } else if (!context.inline && event.key.length === 1) {
     context.send(DropdownObservation.TypedCharacter({ character: event.key }))
   }
 }
-export const dropdownPanelKeys =
-  (context: PanelKeys) =>
-  (event: KeyboardEvent): void => {
-    if (
-      !context.owned(event.target) ||
-      event.defaultPrevented ||
-      event.altKey ||
-      event.ctrlKey ||
-      event.metaKey ||
-      event.isComposing
-    ) {
-      return
-    }
-    if (
-      context.element.dataset.sub === 'true' &&
-      event.key === (context.element.dataset.direction === 'rtl' ? 'ArrowRight' : 'ArrowLeft')
-    ) {
-      event.preventDefault()
-      context.send(
-        DropdownObservation.Dismissed({
-          restore: true,
-          generation: context.generation(),
-          reason: 'left',
-        }),
-      )
-      return
-    }
-    if (event.key === 'Escape') {
-      return
-    }
-    if (event.key === 'Tab') {
-      context.send(
-        DropdownObservation.Dismissed({
-          restore: false,
-          generation: context.generation(),
-          reason: 'tab',
-        }),
-      )
-      return
-    }
-    const field = context.search()
-    if (searchKey(context, event, field)) {
-      return
-    }
-    rowKey(context, event, field)
+export const dropdownPanelKeys = (context: PanelKeys) => (event: KeyboardEvent) => {
+  if (
+    !context.owned(event.target) ||
+    event.defaultPrevented ||
+    event.altKey ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.isComposing
+  ) {
+    return
   }
+  if (
+    context.element.dataset.sub === 'true' &&
+    event.key === (context.element.dataset.direction === 'rtl' ? 'ArrowRight' : 'ArrowLeft')
+  ) {
+    event.preventDefault()
+    context.send(
+      DropdownObservation.Dismissed({
+        restore: true,
+        generation: context.generation(),
+        reason: 'left',
+      }),
+    )
+    return
+  }
+  if (event.key === 'Escape') {
+    return
+  }
+  if (event.key === 'Tab') {
+    context.send(
+      DropdownObservation.Dismissed({
+        restore: false,
+        generation: context.generation(),
+        reason: 'tab',
+      }),
+    )
+    return
+  }
+  const field = context.search()
+  if (searchKey(context, event, field)) {
+    return
+  }
+  rowKey(context, event, field)
+}

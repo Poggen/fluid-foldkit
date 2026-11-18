@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import type { AskUserQuestion } from '@foldkit-visuals/fluid/ask-user-questions'
 export const stackedQuestions: Array<AskUserQuestion> = [
   {

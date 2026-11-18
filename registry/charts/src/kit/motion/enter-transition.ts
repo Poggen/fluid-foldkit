@@ -1,4 +1,3 @@
-// The one bklit enter-transition (motion-library shape, durations in seconds) -> native tween / CSS easing conversion.
 import type { ChartMotionTransition } from '@tanstack/charts'
 import { isFunction, isString } from '../guards'
 import { REVEAL_CSS_EASE, REVEAL_EASING, cubicBezier } from './easing'
@@ -43,7 +42,9 @@ const isBezier = (
 ): ease is readonly [number, number, number, number] => Array.isArray(ease) && ease.length === 4
 
 /** The tween easing function of an enter `ease` (a 4-number bezier or an easing function; anything else is the reveal curve). */
-export const toEaseFn = (ease: EnterTransition['ease']): ((t: number) => number) => {
+export const toEaseFn: (ease: EnterTransition['ease']) => (t: number) => number = (
+  ease: EnterTransition['ease'],
+) => {
   if (isEaseFn(ease)) {
     return ease
   }
@@ -52,15 +53,18 @@ export const toEaseFn = (ease: EnterTransition['ease']): ((t: number) => number)
 }
 
 /** The CSS easing of an enter `ease` (a 4-number bezier; anything else is `fallback`). */
-export const toCssEase = (
+export const toCssEase: (ease: EnterTransition['ease'], fallback?: string) => string = (
   ease: EnterTransition['ease'],
   fallback: string = REVEAL_CSS_EASE,
-): string => (isBezier(ease) ? `cubic-bezier(${ease.join(',')})` : fallback)
+) => (isBezier(ease) ? `cubic-bezier(${ease.join(',')})` : fallback) satisfies string
 
-export const toMotionTransition = (
+export const toMotionTransition: (
+  transition: Readonly<EnterTransition> | undefined,
+  options?: Readonly<MotionTransitionOptions>,
+) => ChartMotionTransition = (
   transition: Readonly<EnterTransition> | undefined,
   options: Readonly<MotionTransitionOptions> = {},
-): ChartMotionTransition => {
+) => {
   const {
     spring = DEFAULT_ENTER_SPRING,
     durationMs = DEFAULT_ENTER_MS,
@@ -73,15 +77,15 @@ export const toMotionTransition = (
       mass: transition.mass ?? spring.mass,
       stiffness: transition.stiffness ?? spring.stiffness,
       type: 'spring',
-    }
+    } satisfies ChartMotionTransition
   }
 
   const duration = transition?.duration === undefined ? durationMs : transition.duration * 1000
   const ease = transition?.ease
 
   if (keywordEases && isKeywordEase(ease)) {
-    return { duration, easing: ease, type: 'tween' }
+    return { duration, easing: ease, type: 'tween' } satisfies ChartMotionTransition
   }
 
-  return { duration, easing: toEaseFn(ease), type: 'tween' }
+  return { duration, easing: toEaseFn(ease), type: 'tween' } satisfies ChartMotionTransition
 }

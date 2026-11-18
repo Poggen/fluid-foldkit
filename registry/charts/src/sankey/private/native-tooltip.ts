@@ -14,46 +14,24 @@ import { orderChartTooltipPoints, resolveChartTooltipAnchor } from '@tanstack/ch
 import { createTooltipBoxResource } from '../../cartesian/tooltip-box-resource'
 import type { TooltipBoxGeometry } from '../../cartesian/tooltip-box-geometry'
 
-export type TooltipBodyPoint = Pick<ChartPoint, 'markId' | 'datum' | 'datumIndex'>
-
-function tooltipGeometry<Datum, X extends ChartValue, Y extends ChartValue>(
-  options: ChartTooltipOptions<Datum, X, Y>,
-  next: ChartTooltipPaintContext<Datum, X, Y>,
-  anchor: ChartTooltipPosition,
-): TooltipBoxGeometry {
-  const { motion } = options
-
-  return {
-    x: anchor.x,
-    y: anchor.y,
-    containerWidth: next.scene.width,
-    containerHeight: next.scene.height,
-    offset: options.offset ?? 16,
-    animate: motion !== false && !(motion?.type === 'tween' && motion.duration === 0),
-    springConfig:
-      motion !== false && motion !== undefined && motion.type === 'spring'
-        ? { stiffness: motion.stiffness ?? 100, damping: motion.damping ?? 20 }
-        : { stiffness: 100, damping: 20 },
-  }
-}
-
-/** Native focus/anchor resolution with the existing Original TooltipBox motion owner. */
-const nativeTooltipClasses =
-  'absolute z-[50] max-w-none p-0 border-none rounded-none bg-transparent text-inherit shadow-none [font:inherit] pointer-events-none [overflow-wrap:anywhere] select-none data-[sticky=true]:pointer-events-auto data-[sticky=true]:select-text'
-
-export function nativeTooltip(
+export const nativeTooltip: (
+  id: string,
+  pointerAnchor?: boolean,
+  bodyKey?: (point: TooltipBodyPoint) => string,
+  requestedAnchor?: () => ChartTooltipPosition | null,
+) => ChartTooltipExtension = function (
   id: string,
   pointerAnchor = true,
   bodyKey?: (point: TooltipBodyPoint) => string,
   requestedAnchor?: () => ChartTooltipPosition | null,
-): ChartTooltipExtension {
+) {
   return {
     id: 'bklit-native-tooltip',
     __chartExtensionType: 'tooltip',
     __chartTooltipHost: 'dom',
     create<Datum, X extends ChartValue, Y extends ChartValue>(
       context: ChartTooltipExtensionContext<Datum, X, Y>,
-    ): ChartTooltipExtensionInstance<Datum, X, Y> {
+    ) {
       const found = context.container.ownerDocument.querySelector(`#${CSS.escape(id)}`)
 
       if (!(found instanceof HTMLElement)) {
@@ -77,7 +55,6 @@ export function nativeTooltip(
         pointer = { x: Math.trunc(event.clientX), y: Math.trunc(event.clientY) }
       }
 
-      // Original localPoint receives integer MouseEvent client coordinates, including on scaled SVGs.
       if (pointerAnchor) {
         document.addEventListener('pointermove', trackPointer, true)
       }
@@ -136,8 +113,6 @@ export function nativeTooltip(
         element.classList.remove('[visibility:hidden]')
       }
 
-      // React commits TooltipBox's children before its first layout measurement. Native focus
-      // arrives before the Foldkit view update, so start that same owner at the body commit.
       const observer = new MutationObserver(paintCommitted)
       observer.observe(body, {
         childList: true,
@@ -165,7 +140,41 @@ export function nativeTooltip(
           document.removeEventListener('pointermove', trackPointer, true)
           resource.destroy()
         },
-      }
+      } satisfies ChartTooltipExtensionInstance<Datum, X, Y>
     },
-  }
+  } satisfies ChartTooltipExtension
 }
+
+const tooltipGeometry: <Datum, X extends ChartValue, Y extends ChartValue>(
+  options: ChartTooltipOptions<Datum, X, Y>,
+  next: ChartTooltipPaintContext<Datum, X, Y>,
+  anchor: ChartTooltipPosition,
+) => TooltipBoxGeometry = function tooltipGeometry<
+  Datum,
+  X extends ChartValue,
+  Y extends ChartValue,
+>(
+  options: ChartTooltipOptions<Datum, X, Y>,
+  next: ChartTooltipPaintContext<Datum, X, Y>,
+  anchor: ChartTooltipPosition,
+) {
+  const { motion } = options
+
+  return {
+    x: anchor.x,
+    y: anchor.y,
+    containerWidth: next.scene.width,
+    containerHeight: next.scene.height,
+    offset: options.offset ?? 16,
+    animate: motion !== false && !(motion?.type === 'tween' && motion.duration === 0),
+    springConfig:
+      motion !== false && motion !== undefined && motion.type === 'spring'
+        ? { stiffness: motion.stiffness ?? 100, damping: motion.damping ?? 20 }
+        : { stiffness: 100, damping: 20 },
+  } satisfies TooltipBoxGeometry
+}
+
+export type TooltipBodyPoint = Pick<ChartPoint, 'markId' | 'datum' | 'datumIndex'>
+
+const nativeTooltipClasses =
+  'absolute z-[50] max-w-none p-0 border-none rounded-none bg-transparent text-inherit shadow-none [font:inherit] pointer-events-none [overflow-wrap:anywhere] select-none data-[sticky=true]:pointer-events-auto data-[sticky=true]:select-text'

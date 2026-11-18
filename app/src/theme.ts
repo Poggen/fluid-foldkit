@@ -1,6 +1,6 @@
 import { resolveTheme, type Settings, type ResolvedTheme } from './settings'
-// Fluid Functionalism cc276ca0, registry/default/lib/theme-context.tsx.
-// MIT, copyright 2026 Micka Touillaud. See registry/fluid/NOTICE
+/* @license Fluid Functionalism cc276ca0, registry/default/lib/theme-context.tsx. */
+/* @license MIT, copyright 2026 Micka Touillaud. See registry/fluid/NOTICE */
 export const themeTransitionStyles =
   '::view-transition-old(root),::view-transition-new(root){animation-duration:180ms;animation-timing-function:ease-in-out}'
 export const suppressTransitionStyles = '*,*::before,*::after{transition:none!important}'
@@ -12,7 +12,10 @@ export const shouldTransitionTheme = (
   known: boolean,
   previousSystem: ResolvedTheme = 'light',
   system: ResolvedTheme = 'light',
-) => previousKnown && known && resolveTheme(before, previousSystem) !== resolveTheme(after, system)
+) =>
+  (before.theme !== 'system' || previousKnown) &&
+  (after.theme !== 'system' || known) &&
+  resolveTheme(before, previousSystem) !== resolveTheme(after, system)
 export const themeClass = (settings: Settings, systemTheme: ResolvedTheme, known: boolean) =>
   settings.theme === 'system' && !known
     ? 'system'

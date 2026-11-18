@@ -78,7 +78,7 @@ export function TooltipContent({ title, rows, children, className }: TooltipCont
   )
 }
 
-const dateValue = (value: Date | string): Date | undefined =>
+const dateValue: (value: Date | string) => Date | undefined = (value: Date | string) =>
   typeof value === 'string' ? undefined : value
 
 export function tooltipView<Row extends Readonly<Record<string, unknown>>>(

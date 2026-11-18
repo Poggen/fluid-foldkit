@@ -1,6 +1,6 @@
 import { Predicate } from 'effect'
 import { hoverItemAttributes } from './hover.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
 import { childAttributes } from 'foldkit/html'
 import { resolvePresentation } from './presentation.js'
@@ -10,67 +10,15 @@ import { popupShape } from './lib/shape.js'
 import { cn } from './lib/utils.js'
 import type { TargetMotionOptions as MotionOptions } from './motion-target.js'
 
-export interface DropdownItemContext extends Presentation {
-  readonly id: string
-  readonly activeIndex: number | null
-  readonly multiple: boolean
-  readonly inMenu: boolean
-  readonly checkedIndex?: number
-  readonly checkedIndices?: ReadonlyArray<number>
-}
-
-export interface DropdownItemProps {
-  readonly id?: string
-  readonly index: number
-  readonly label: string
-  readonly checked?: boolean
-  readonly disabled?: boolean
-  readonly closeOnClick?: boolean
-  readonly icon?: Icon
-  readonly className?: string
-  readonly attributes?: ReadonlyArray<ChildAttribute>
-  readonly children?: ReadonlyArray<Html>
-  readonly render?: (
-    attributes: ReadonlyArray<ChildAttribute>,
-    children: ReadonlyArray<Html>,
-  ) => Html
-  readonly animate: (node: Html, options: MotionOptions) => Html
-}
-
-const dropdownItemSemantics = (props: DropdownItemProps, context: DropdownItemContext) => {
-  const checkbox = context.multiple && Predicate.isBoolean(props.checked)
-
-  const radio = Predicate.isBoolean(props.checked) && !checkbox
-
-  let ariaChecked: boolean | undefined
-
-  if (Predicate.isBoolean(props.checked)) {
-    ariaChecked = !context.inMenu || checkbox ? props.checked : context.checkedIndex === props.index
-  }
-
-  return { checkbox, radio, ariaChecked }
-}
-
-const itemRole = (checkbox: boolean, radio: boolean): string => {
-  if (checkbox) {
-    return 'menuitemcheckbox'
-  }
-
-  return radio ? 'menuitemradio' : 'menuitem'
-}
-
-const inlineTabIndex = (props: DropdownItemProps, context: DropdownItemContext): number =>
-  !context.inMenu &&
-  props.disabled !== true &&
-  props.index === (context.checkedIndex ?? context.checkedIndices?.[0] ?? 0)
-    ? 0
-    : -1
-
-export function DropdownItem<Message>(
+export const DropdownItem: <Message>(
   props: DropdownItemProps,
   context: DropdownItemContext,
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function DropdownItem<Message>(
+  props: DropdownItemProps,
+  context: DropdownItemContext,
+  h: HtmlBuilder<Message>,
+) {
   const { size, shape } = resolvePresentation(context)
 
   const active = context.activeIndex === props.index
@@ -197,5 +145,69 @@ export function DropdownItem<Message>(
     ...(props.children ?? []),
   ]
 
-  return props.render ? props.render(attributes, children) : h.div(attributes, children)
+  return (
+    props.render ? props.render(attributes, children) : h.div(attributes, children)
+  ) satisfies Html
 }
+
+export interface DropdownItemContext extends Presentation {
+  readonly id: string
+  readonly activeIndex: number | null
+  readonly multiple: boolean
+  readonly inMenu: boolean
+  readonly checkedIndex?: number
+  readonly checkedIndices?: ReadonlyArray<number>
+}
+
+export interface DropdownItemProps {
+  readonly id?: string
+  readonly index: number
+  readonly label: string
+  readonly checked?: boolean
+  readonly disabled?: boolean
+  readonly closeOnClick?: boolean
+  readonly icon?: Icon
+  readonly className?: string
+  readonly attributes?: ReadonlyArray<ChildAttribute>
+  readonly children?: ReadonlyArray<Html>
+  readonly render?: (
+    attributes: ReadonlyArray<ChildAttribute>,
+    children: ReadonlyArray<Html>,
+  ) => Html
+  readonly animate: (node: Html, options: MotionOptions) => Html
+}
+
+const dropdownItemSemantics = (props: DropdownItemProps, context: DropdownItemContext) => {
+  const checkbox = context.multiple && Predicate.isBoolean(props.checked)
+
+  const radio = Predicate.isBoolean(props.checked) && !checkbox
+
+  let ariaChecked: boolean | undefined
+
+  if (Predicate.isBoolean(props.checked)) {
+    ariaChecked = !context.inMenu || checkbox ? props.checked : context.checkedIndex === props.index
+  }
+
+  return { checkbox, radio, ariaChecked }
+}
+
+const itemRole: (checkbox: boolean, radio: boolean) => string = (
+  checkbox: boolean,
+  radio: boolean,
+) => {
+  if (checkbox) {
+    return 'menuitemcheckbox'
+  }
+
+  return radio ? 'menuitemradio' : 'menuitem'
+}
+
+const inlineTabIndex: (props: DropdownItemProps, context: DropdownItemContext) => number = (
+  props: DropdownItemProps,
+  context: DropdownItemContext,
+) =>
+  !context.inMenu &&
+  props.disabled !== true &&
+  props.index === (context.checkedIndex ?? context.checkedIndices?.[0] ?? 0)
+    ? 0
+    : -1

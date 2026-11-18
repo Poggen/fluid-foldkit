@@ -1,21 +1,6 @@
 import type { Frame } from './live-frame'
 
-/** The pulse ring's slices of its 1.5 s cycle (see LivePulse). */
-const SLICES = 12
-
-/** bklit's ring: r from dotSize to dotSize * 3.5 and opacity 0.5 -> 0 over 1.5 s, linear, stroke 1.5 (live-line.tsx:250-275). */
-const REACH = 3.5
-
-const STROKE = 1.5
-
-const OPACITY_FROM = 0.5
-
-/** A hard edge between slices, as a share of the cycle. */
-const EDGE = 0.0005
-
-/** The ring's keyframes and slice boxes for a dot size. Slice k covers progress k/SLICES..(k+1)/SLICES of the cycle: a box laid out at the slice's end radius, border STROKE, scaled from the slice's start radius
- * to 1 while its opacity follows the cycle's linear fade, hidden for the rest of the cycle. */
-function pulseCss(dotSize: number): string {
+const pulseCss: (dotSize: number) => string = function pulseCss(dotSize: number) {
   const rules: Array<string> = []
 
   for (let k = 0; k < SLICES; k += 1) {
@@ -25,17 +10,27 @@ function pulseCss(dotSize: number): string {
     const s0 = (1 + (REACH - 1) * p0) / (1 + (REACH - 1) * p1)
     const a0 = OPACITY_FROM * (1 - p0)
     const a1 = OPACITY_FROM * (1 - p1)
-    const pct = (p: number): string => `${Math.round(p * 1e5) / 1e3}%`
+    const pct: (p: number) => string = (p: number) => `${Math.round(p * 1e5) / 1e3}%`
     const hidden = `opacity:0;scale:${s0}`
     rules.push(
       `@keyframes bkm-pr${k}{0%{${hidden}}${k > 0 ? `${pct(p0 - EDGE)}{${hidden}}` : ''}${pct(p0)}{opacity:${a0};scale:${s0}}${pct(p1)}{opacity:${a1};scale:1}${k < SLICES - 1 ? `${pct(p1 + EDGE)}{opacity:0;scale:1}` : ''}100%{opacity:0;scale:1}}`,
-      // The border-box reaches half a stroke past the ring's radius, so the border's centre line sits on it as an svg stroke does.
+
       `.bkm-pr${k}{--bkm-pr-size:${2 * r1 + STROKE}px;--bkm-pr-margin:${-(r1 + STROKE / 2)}px 0 0 ${-(r1 + STROKE / 2)}px;--bkm-pr-animation:bkm-pr${k}}`,
     )
   }
 
   return rules.join('\n')
 }
+
+const SLICES = 12
+
+const REACH = 3.5
+
+const STROKE = 1.5
+
+const OPACITY_FROM = 0.5
+
+const EDGE = 0.0005
 
 export function createLivePulse(parent: HTMLElement) {
   const root = document.createElement('div')

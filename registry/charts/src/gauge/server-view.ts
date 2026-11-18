@@ -18,15 +18,19 @@ import type { GaugeProps } from './props'
 import { defaultGaugeStatFormat } from './props'
 import { numberServerView } from './number-server'
 
-const number = (value: number): string => String(Math.round(value * 100) / 100)
-
-function notchView<Message, Requirements>(
+const notchView: <Message, Requirements>(
+  h: HtmlBuilder<Message, Requirements>,
+  node: SceneNode,
+  enter: NotchEnter | undefined,
+  index?: number,
+  active?: boolean,
+) => Html = function <Message, Requirements>(
   h: HtmlBuilder<Message, Requirements>,
   node: SceneNode,
   enter: NotchEnter | undefined,
   index = 0,
   active = false,
-): Html {
+) {
   const style = node.style
 
   const attributes = [
@@ -78,7 +82,7 @@ function notchView<Message, Requirements>(
         node.children.map((child, childIndex) =>
           notchView(h, child, enter, childIndex, active || node.key === 'gauge:active'),
         ),
-      )
+      ) satisfies Html
     case 'area':
     case 'polyline': {
       const points = (ring: ReadonlyArray<readonly [number, number]>, close: boolean) =>
@@ -98,7 +102,7 @@ function notchView<Message, Requirements>(
         h.D(polygonPath ?? node.path ?? points(node.points, node.kind === 'area')),
         h.VectorEffect('non-scaling-stroke'),
         ...(polygonPath === undefined ? [] : [h.FillRule('evenodd')]),
-      ])
+      ]) satisfies Html
     }
 
     case 'rect':
@@ -109,7 +113,7 @@ function notchView<Message, Requirements>(
         h.Width(number(node.width)),
         h.Height(number(node.height)),
         ...(node.radius === undefined ? [] : [h.Rx(number(node.radius))]),
-      ])
+      ]) satisfies Html
     case 'rule':
       return h.line([
         ...attributes,
@@ -117,25 +121,32 @@ function notchView<Message, Requirements>(
         h.Y1(number(node.y1)),
         h.X2(number(node.x2)),
         h.Y2(number(node.y2)),
-      ])
+      ]) satisfies Html
     case 'dot':
       return h.circle([
         ...attributes,
         h.Cx(number(node.x)),
         h.Cy(number(node.y)),
         h.R(number(node.radius)),
-      ])
+      ]) satisfies Html
     case 'label':
-      return h.text([...attributes, h.X(number(node.x)), h.Y(number(node.y))], [node.text])
+      return h.text(
+        [...attributes, h.X(number(node.x)), h.Y(number(node.y))],
+        [node.text],
+      ) satisfies Html
   }
 }
 
-function labelView<Message, Requirements>(
+const labelView: <Message, Requirements>(
   h: HtmlBuilder<Message, Requirements>,
   props: GaugeProps,
   arc: boolean,
-): Html {
-  if (props.centerValue === undefined) return h.empty
+) => Html = function labelView<Message, Requirements>(
+  h: HtmlBuilder<Message, Requirements>,
+  props: GaugeProps,
+  arc: boolean,
+) {
+  if (props.centerValue === undefined) return h.empty satisfies Html
   const classes = gaugeLabelClasses(props, arc)
 
   const data = formatToData(
@@ -168,15 +179,19 @@ function labelView<Message, Requirements>(
         ],
       ),
     ],
-  )
+  ) satisfies Html
 }
 
 /** Typed server reserve. The live drawing is acquired by the registered Mount, never injected as HTML. */
-export function gaugeServerView<Message, Requirements>(
+export const gaugeServerView: <Message, Requirements>(
   h: HtmlBuilder<Message, Requirements>,
   props: GaugeProps,
   uid: string,
-): Html {
+) => Html = function gaugeServerView<Message, Requirements>(
+  h: HtmlBuilder<Message, Requirements>,
+  props: GaugeProps,
+  uid: string,
+) {
   const options = gaugeOptions(props, uid, true)
   const layout = resolveChartAdapterLayout(options)
   const runtime = createChartRuntime()
@@ -303,5 +318,7 @@ export function gaugeServerView<Message, Requirements>(
           : labelled
         : track,
     ],
-  )
+  ) satisfies Html
 }
+
+const number: (value: number) => string = (value: number) => String(Math.round(value * 100) / 100)

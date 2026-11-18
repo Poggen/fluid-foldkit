@@ -43,7 +43,6 @@ export function mountNotchMotion(
 
   return {
     restore() {
-      // Static Scene reconciliation owns geometry; restore the same live entrance pose afterward.
       visual.render()
     },
     destroy() {

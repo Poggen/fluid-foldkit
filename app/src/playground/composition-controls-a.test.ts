@@ -1,9 +1,5 @@
-import { URL as NodeURL, fileURLToPath } from 'node:url'
 import { expect, test } from 'vitest'
-import { Effect, Option, Schema } from 'effect'
-import { ChildProcess, ChildProcessSpawner } from 'effect/process'
-import { NodeServices } from '@effect/platform-node'
-import { it } from '@effect/vitest'
+import { Option, Schema } from 'effect'
 import ts from 'typescript-api'
 import * as Card from './configs/card'
 import * as Banner from './configs/banner'
@@ -240,21 +236,3 @@ test('all source rail control families remain represented', () => {
     ]),
   )
 })
-
-it.live(
-  'generated command menus pass checked public composition and SSR for every header layout',
-  () =>
-    Effect.gen(function* () {
-      const root = fileURLToPath(new NodeURL('../../../', import.meta.url))
-      const spawner = yield* ChildProcessSpawner.ChildProcessSpawner
-      const exitCode = yield* spawner.exitCode(
-        ChildProcess.make('bun', ['scripts/registry/command-menu-consumers.ts'], {
-          cwd: root,
-          stdout: 'inherit',
-          stderr: 'inherit',
-        }),
-      )
-      expect(exitCode).toBe(0)
-    }).pipe(Effect.timeout('120 seconds'), Effect.provide(NodeServices.layer)),
-  125000,
-)

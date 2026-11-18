@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment node
 import { expect } from 'vitest'
 import { Window, type HTMLElement as HappyHTMLElement } from 'happy-dom'

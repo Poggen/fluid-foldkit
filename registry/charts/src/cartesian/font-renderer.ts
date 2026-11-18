@@ -8,17 +8,19 @@ import type {
 import { mountChartRenderer } from '@tanstack/charts/renderer'
 import { cartesianFontMeasurement } from './font-measurement'
 
-interface FontResource {
-  readonly beginFontMetrics?: () => void
-  readonly commitFontMetrics?: () => void
-  readonly fontMetricsChanged?: (() => boolean) | undefined
-}
-
-export function mountCartesianRenderer<Row, X extends ChartValue, Y extends ChartValue>(
+export const mountCartesianRenderer: <Row, X extends ChartValue, Y extends ChartValue>(
   container: HTMLElement,
   initialOptions: ChartRendererHostOptions<Row, X, Y>,
   resource: () => FontResource | undefined,
-): ChartRendererHost<Row, X, Y> {
+) => ChartRendererHost<Row, X, Y> = function mountCartesianRenderer<
+  Row,
+  X extends ChartValue,
+  Y extends ChartValue,
+>(
+  container: HTMLElement,
+  initialOptions: ChartRendererHostOptions<Row, X, Y>,
+  resource: () => FontResource | undefined,
+) {
   const view = container.ownerDocument.defaultView
 
   const measurement =
@@ -27,7 +29,7 @@ export function mountCartesianRenderer<Row, X extends ChartValue, Y extends Char
       : undefined
 
   if (measurement === undefined || measurement === null || view === null) {
-    return mountChartRenderer(container, initialOptions)
+    return mountChartRenderer(container, initialOptions) satisfies ChartRendererHost<Row, X, Y>
   }
 
   const runtime = createChartRuntime<Row, X, Y>()
@@ -61,7 +63,6 @@ export function mountCartesianRenderer<Row, X extends ChartValue, Y extends Char
     }
   }
 
-  // Core retains hidden tooltip instances after input removal; their callbacks still run.
   const canReuseCapture = (next: ChartRendererHostOptions<Row, X, Y>) =>
     !mayRetainTooltip && next.definition.cursor === undefined
 
@@ -230,5 +231,11 @@ export function mountCartesianRenderer<Row, X extends ChartValue, Y extends Char
       cancelFontWork()
       host.destroy()
     },
-  }
+  } satisfies ChartRendererHost<Row, X, Y>
+}
+
+interface FontResource {
+  readonly beginFontMetrics?: () => void
+  readonly commitFontMetrics?: () => void
+  readonly fontMetricsChanged?: (() => boolean) | undefined
 }

@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { DropdownResources } from './dropdown-resources.js'
 import type { TooltipDom } from './tooltip-native-public.js'
 import { Schema } from 'effect'

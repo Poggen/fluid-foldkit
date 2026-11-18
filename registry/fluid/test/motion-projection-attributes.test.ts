@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { it } from '@effect/vitest'
 import { Effect, Layer, Schema } from 'effect'
@@ -116,7 +117,6 @@ it.live(
           expect(takeChanges()).toHaveLength(0)
         }
 
-        // Compare against current DOM, not only previous options: repair an external mutation.
         element.dataset.layout = 'size'
         element.dataset.layoutId = 'external'
         takeChanges()

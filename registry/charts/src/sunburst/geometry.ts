@@ -1,5 +1,5 @@
-// Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT.
-// Sector geometry the layer tweens, computed from the chart's own layout (never read back from the renderer).
+/* @license Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT. */
+
 import { arc as d3Arc } from 'd3-shape'
 
 /** [startAngle, endAngle, innerRadius, outerRadius] of one sector, angles clockwise from 12 o'clock. */
@@ -13,7 +13,6 @@ const QUARTER_TURN_DEG = 90
 
 const PIN_RATIO = 0.12
 
-// Same thresholds as bklit sunburst-labels.tsx: arc length at centroid and ring thickness, in px.
 const MIN_ARC_LENGTH_PX = 26
 
 const MIN_RING_THICKNESS_PX = 16
@@ -31,12 +30,12 @@ export interface SectorLayout {
 }
 
 /** The native sunburst's partition: the node's share of the root's span, on ring `depth` (1 = first ring below the root). */
-export const sectorArc = (
+export const sectorArc: (
   layout: Readonly<SectorLayout>,
   a0: number,
   a1: number,
   depth: number,
-): ArcValues => {
+) => ArcValues = (layout: Readonly<SectorLayout>, a0: number, a1: number, depth: number) => {
   const span = layout.endAngle - layout.startAngle
   const rootSpan = layout.rootEnd - layout.rootStart
   const ring = (layout.outer - layout.inner) / layout.rings
@@ -50,36 +49,47 @@ export const sectorArc = (
   ]
 }
 
-// bklit's exiting sector collapses to a point (pointGeometry, sunburst.ts:259-264, 284-285).
-export const collapsedArc = ([start, end, inner, outer]: ArcValues): ArcValues => {
+export const collapsedArc: (argument0: ArcValues) => ArcValues = ([
+  start,
+  end,
+  inner,
+  outer,
+]: ArcValues) => {
   const mid = (start + end) / 2
   const pin = Math.max(0, Math.min(((inner + outer) / 2) * PIN_RATIO, inner))
 
-  return [mid, mid, pin, pin]
+  return [mid, mid, pin, pin] satisfies ArcValues
 }
 
-export const lerpArc = (from: ArcValues, to: ArcValues, t: number): ArcValues => [
+export const lerpArc: (from: ArcValues, to: ArcValues, t: number) => ArcValues = (
+  from: ArcValues,
+  to: ArcValues,
+  t: number,
+) => [
   from[0] + (to[0] - from[0]) * t,
   from[1] + (to[1] - from[1]) * t,
   from[2] + (to[2] - from[2]) * t,
   from[3] + (to[3] - from[3]) * t,
 ]
 
-export const sameArc = (a: ArcValues, b: ArcValues): boolean =>
+export const sameArc: (a: ArcValues, b: ArcValues) => boolean = (a: ArcValues, b: ArcValues) =>
   a[0] === b[0] && a[1] === b[1] && a[2] === b[2] && a[3] === b[3]
 
-// bklit lerps a zoomed arc's mid angle the short way round (sunburst.ts:227-258, lerpGeometry/lerpAngle): shift whole turns so the target sits within half a turn of where it tweens from.
-export const unwrapArc = (to: ArcValues, from: ArcValues): ArcValues => {
+export const unwrapArc: (to: ArcValues, from: ArcValues) => ArcValues = (
+  to: ArcValues,
+  from: ArcValues,
+) => {
   const turns = Math.round(((from[0] + from[1]) / 2 - (to[0] + to[1]) / 2) / TURN)
 
   return turns === 0 ? to : [to[0] + turns * TURN, to[1] + turns * TURN, to[2], to[3]]
 }
 
-// bklit sunburst-labels.tsx:80-86: a label shows only while its arc, at the centroid radius, and its ring are wide enough for text.
-// `scale` is the px-per-size-unit ratio: bklit measures both thresholds in its size-unit viewBox.
-export const labelFits = ([start, end, inner, outer]: ArcValues, scale: number): boolean =>
-  ((end - start) * ((inner + outer) / 2)) / scale >= MIN_ARC_LENGTH_PX &&
-  (outer - inner) / scale >= MIN_RING_THICKNESS_PX
+export const labelFits: (argument0: ArcValues, scale: number) => boolean = (
+  [start, end, inner, outer]: ArcValues,
+  scale: number,
+) =>
+  (((end - start) * ((inner + outer) / 2)) / scale >= MIN_ARC_LENGTH_PX &&
+    (outer - inner) / scale >= MIN_RING_THICKNESS_PX) satisfies boolean
 
 export interface LabelPose {
   readonly x: number
@@ -87,8 +97,12 @@ export interface LabelPose {
   readonly rotate: number
 }
 
-// bklit sunburst-labels.tsx:91-100: centred on the arc's centroid, along the radius, flipped so it never reads upside down.
-export const poseOf = ([start, end, inner, outer]: ArcValues): LabelPose => {
+export const poseOf: (argument0: ArcValues) => LabelPose = ([
+  start,
+  end,
+  inner,
+  outer,
+]: ArcValues) => {
   const mid = (start + end) / 2
   const radius = (inner + outer) / 2
   let rotate = (((mid % TURN) + TURN) % TURN) * DEG - QUARTER_TURN_DEG
@@ -101,7 +115,7 @@ export const poseOf = ([start, end, inner, outer]: ArcValues): LabelPose => {
     rotate += 2 * QUARTER_TURN_DEG
   }
 
-  return { rotate, x: Math.sin(mid) * radius, y: -Math.cos(mid) * radius }
+  return { rotate, x: Math.sin(mid) * radius, y: -Math.cos(mid) * radius } satisfies LabelPose
 }
 
 const generator = d3Arc<ArcValues>()
@@ -112,14 +126,15 @@ const generator = d3Arc<ArcValues>()
   .cornerRadius(0)
 
 /** The sector path the native sunburst draws (same d3 arc, no corner radius). */
-export const sectorPath = (values: ArcValues): string => generator(values) ?? ''
+export const sectorPath: (values: ArcValues) => string = (values: ArcValues) =>
+  generator(values) ?? ''
 
 /** Original applyHoverGrow: preserve circular arcs while growing each ancestor ring radially. */
-export const hoverArc = (
+export const hoverArc: (
   arc: ArcValues,
   id: string | undefined,
   growth: ReadonlyMap<string, number>,
-): ArcValues => {
+) => ArcValues = (arc: ArcValues, id: string | undefined, growth: ReadonlyMap<string, number>) => {
   if (id === undefined || growth.size === 0) return arc
   const parts = id.split(' / ')
   let push = 0
@@ -127,7 +142,7 @@ export const hoverArc = (
   return [arc[0], arc[1], arc[2] + push, arc[3] + push + (growth.get(id) ?? 0)]
 }
 
-const middle = (values: ReadonlyArray<number>): number =>
+const middle: (values: ReadonlyArray<number>) => number = (values: ReadonlyArray<number>) =>
   (Math.min(...values) + Math.max(...values)) / 2
 
 interface Point {
@@ -136,7 +151,12 @@ interface Point {
 }
 
 /** Centre of the bounding box of an annular sector (angles clockwise from 12 o'clock), as the SVG fill-box origin sees it. */
-export const sweptArcBox = (lead: number, span: number, inner: number, outer: number): Point => {
+export const sweptArcBox: (lead: number, span: number, inner: number, outer: number) => Point = (
+  lead: number,
+  span: number,
+  inner: number,
+  outer: number,
+) => {
   const angles = [lead, lead + span]
 
   for (let k = Math.ceil(lead / (Math.PI / 2)); k * (Math.PI / 2) <= lead + span; k += 1) {

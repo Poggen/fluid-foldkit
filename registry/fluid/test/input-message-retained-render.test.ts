@@ -42,18 +42,19 @@ const Definition = Block.make('InputRetainedRender', {
 const Input = Definition.makeRequiredFieldBinding(InputMessageBlock, {
   field: 'input',
   init: {
-    contextToArgs: (): [InputMessageConfig] => [
-      {
-        id: 'input',
-        value: '',
-        reduceMotion: false,
-        supportsFiles: true,
-        files,
-        status: 'streaming',
-        supportsQueue: true,
-        queue,
-      },
-    ],
+    contextToArgs: () =>
+      [
+        {
+          id: 'input',
+          value: '',
+          reduceMotion: false,
+          supportsFiles: true,
+          files,
+          status: 'streaming',
+          supportsQueue: true,
+          queue,
+        },
+      ] satisfies [InputMessageConfig],
   },
 }).withOutMessagePolicy({
   fold: Definition.makeOutMessageFold(InputMessageBlock, {

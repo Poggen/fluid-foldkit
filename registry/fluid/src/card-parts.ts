@@ -1,5 +1,5 @@
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Predicate } from 'effect'
 import { inertHtml } from 'foldkit/html'
 import type { Html, HtmlBuilder } from 'foldkit/html'
@@ -9,56 +9,13 @@ import { cn } from './lib/utils.js'
 import { resolvePresentation } from './presentation.js'
 import type { Icon, Presentation } from './presentation.js'
 
-export type CardOrientation = 'card' | 'inline'
-
-export type CardBorder = 'none' | 'outlined'
-
-export type CardLogo = string | readonly [string, string]
-
-export interface CardContext extends Presentation {
-  readonly orientation?: CardOrientation
-  readonly emphasized?: boolean
-  readonly hasImage?: boolean
-}
-
-export interface CardPartProps<Message, Requirements = never> extends CardContext {
-  readonly children?: ReadonlyArray<Html | string>
-  readonly className?: string
-  readonly attributes?: Parameters<HtmlBuilder<Message, Requirements>['div']>[0]
-}
-
-function headerSpacing(
-  orientation: CardOrientation | undefined,
-  hasImage: boolean,
-  compact: boolean,
-) {
-  if (orientation === 'inline') {
-    return hasImage ? 'min-w-0' : cn('min-w-0 flex-1', compact ? 'py-2.5' : 'py-3.5')
-  }
-
-  return compact ? 'px-3 pt-3' : 'px-4 pt-4'
-}
-
-function contentSpacing(compact: boolean) {
-  return compact ? 'px-3 pt-2.5' : 'px-4 pt-3'
-}
-
-function footerSpacing(
-  orientation: CardOrientation | undefined,
-  hasImage: boolean,
-  compact: boolean,
-) {
-  if (orientation === 'inline') {
-    return hasImage ? 'flex-wrap' : cn('shrink-0 ml-auto', compact ? 'pr-3' : 'pr-4')
-  }
-
-  return cn('flex-wrap', contentSpacing(compact))
-}
-
-export function CardHeader<Message, Requirements = never>(
+export const CardHeader: <Message, Requirements = never>(
   props: CardPartProps<Message, Requirements>,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function CardHeader<Message, Requirements = never>(
+  props: CardPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   const compact = resolvePresentation(props).size.variant === 'compact'
 
   return h.div(
@@ -74,13 +31,16 @@ export function CardHeader<Message, Requirements = never>(
       ...(props.attributes ?? []),
     ],
     [...(props.children ?? [])],
-  )
+  ) satisfies Html
 }
 
-export function CardTitle<Message, Requirements = never>(
+export const CardTitle: <Message, Requirements = never>(
   props: CardPartProps<Message, Requirements>,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function CardTitle<Message, Requirements = never>(
+  props: CardPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   const size = resolvePresentation(props).size.variant
   const trim = props.orientation === 'inline' ? '[text-box:trim-both_cap_alphabetic]' : ''
 
@@ -119,13 +79,16 @@ export function CardTitle<Message, Requirements = never>(
         [...(props.children ?? [])],
       ),
     ],
-  )
+  ) satisfies Html
 }
 
-export function CardDescription<Message, Requirements = never>(
+export const CardDescription: <Message, Requirements = never>(
   props: CardPartProps<Message, Requirements>,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function CardDescription<Message, Requirements = never>(
+  props: CardPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   return h.p(
     [
       h.DataAttribute('slot', 'card-description'),
@@ -139,13 +102,16 @@ export function CardDescription<Message, Requirements = never>(
       ...(props.attributes ?? []),
     ],
     [...(props.children ?? [])],
-  )
+  ) satisfies Html
 }
 
-export function CardAction<Message, Requirements = never>(
+export const CardAction: <Message, Requirements = never>(
   props: CardPartProps<Message, Requirements>,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function CardAction<Message, Requirements = never>(
+  props: CardPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   return h.div(
     [
       h.DataAttribute('slot', 'card-action'),
@@ -158,13 +124,16 @@ export function CardAction<Message, Requirements = never>(
       ...(props.attributes ?? []),
     ],
     [...(props.children ?? [])],
-  )
+  ) satisfies Html
 }
 
-export function CardContent<Message, Requirements = never>(
+export const CardContent: <Message, Requirements = never>(
   props: CardPartProps<Message, Requirements>,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function CardContent<Message, Requirements = never>(
+  props: CardPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   const compact = resolvePresentation(props).size.variant === 'compact'
 
   return h.div(
@@ -174,13 +143,16 @@ export function CardContent<Message, Requirements = never>(
       ...(props.attributes ?? []),
     ],
     [...(props.children ?? [])],
-  )
+  ) satisfies Html
 }
 
-export function CardFooter<Message, Requirements = never>(
+export const CardFooter: <Message, Requirements = never>(
   props: CardPartProps<Message, Requirements>,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function CardFooter<Message, Requirements = never>(
+  props: CardPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   const compact = resolvePresentation(props).size.variant === 'compact'
 
   return h.div(
@@ -196,21 +168,16 @@ export function CardFooter<Message, Requirements = never>(
       ...(props.attributes ?? []),
     ],
     [...(props.children ?? [])],
-  )
+  ) satisfies Html
 }
 
-export interface CardMediaProps extends Omit<CardContext, 'size'> {
-  readonly logo?: CardLogo
-  readonly logoAlt?: string
-  readonly icon?: Icon
-  readonly size?: number
-  readonly className?: string
-}
-
-export function CardMedia<Message, Requirements = never>(
+export const CardMedia: <Message, Requirements = never>(
   props: CardMediaProps,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function CardMedia<Message, Requirements = never>(
+  props: CardMediaProps,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   const { shape, size } = resolvePresentation({
     ...props,
     size: props.context?.().size ?? 'default',
@@ -248,42 +215,44 @@ export function CardMedia<Message, Requirements = never>(
           ],
         ),
       ),
-    )
+    ) satisfies Html
   }
 
-  return props.icon === undefined
-    ? null
-    : h.span(
-        [
-          h.DataAttribute('slot', 'card-media'),
-          h.Class(
-            cn('inline-flex items-center justify-center shrink-0 size-8 bg-hover', shape.bg, wrap),
-          ),
-        ],
-        [
-          props.icon(
-            {
-              size: size.variant === 'compact' ? 16 : 18,
-              strokeWidth: 1.5,
-              className: 'text-muted-foreground',
-            },
-            inertHtml,
-          ),
-        ],
-      )
+  return (
+    props.icon === undefined
+      ? null
+      : h.span(
+          [
+            h.DataAttribute('slot', 'card-media'),
+            h.Class(
+              cn(
+                'inline-flex items-center justify-center shrink-0 size-8 bg-hover',
+                shape.bg,
+                wrap,
+              ),
+            ),
+          ],
+          [
+            props.icon(
+              {
+                size: size.variant === 'compact' ? 16 : 18,
+                strokeWidth: 1.5,
+                className: 'text-muted-foreground',
+              },
+              inertHtml,
+            ),
+          ],
+        )
+  ) satisfies Html
 }
 
-export interface CardImageProps {
-  readonly src: string
-  readonly alt?: string
-  readonly className?: string
-  readonly orientation?: CardOrientation
-}
-
-export function CardImage<Message, Requirements = never>(
+export const CardImage: <Message, Requirements = never>(
   props: CardImageProps,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function CardImage<Message, Requirements = never>(
+  props: CardImageProps,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   return h.img([
     h.Src(props.src),
     h.Alt(props.alt ?? ''),
@@ -295,13 +264,16 @@ export function CardImage<Message, Requirements = never>(
         props.className,
       ),
     ),
-  ])
+  ]) satisfies Html
 }
 
-export function renderCardEyebrow<Message, Requirements = never>(
+export const renderCardEyebrow: <Message, Requirements = never>(
   props: CardPartProps<Message, Requirements>,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function renderCardEyebrow<Message, Requirements = never>(
+  props: CardPartProps<Message, Requirements>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   return h.span(
     sourceStyleAttributes({ fontVariationSettings: fontWeights.semibold }, [
       h.Class(
@@ -315,19 +287,16 @@ export function renderCardEyebrow<Message, Requirements = never>(
       ...(props.attributes ?? []),
     ]),
     [...(props.children ?? [])],
-  )
+  ) satisfies Html
 }
 
-export interface CardFeatureProps extends Presentation {
-  readonly icon?: Icon
-  readonly title: string
-  readonly description?: string
-}
-
-export function CardFeature<Message, Requirements = never>(
+export const CardFeature: <Message, Requirements = never>(
   props: CardFeatureProps,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function CardFeature<Message, Requirements = never>(
+  props: CardFeatureProps,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   const { size } = resolvePresentation(props)
 
   return h.div(
@@ -356,33 +325,16 @@ export function CardFeature<Message, Requirements = never>(
         ],
       ),
     ],
-  )
+  ) satisfies Html
 }
 
-export type CardButtonVariant = 'primary' | 'secondary' | 'ghost' | 'link'
-
-const buttonVariants: Readonly<Record<CardButtonVariant, string>> = {
-  primary: 'bg-foreground text-background hover:bg-foreground/90 active:bg-foreground/80',
-  secondary: 'bg-accent text-foreground hover:bg-accent/80 active:bg-accent',
-  ghost: 'text-muted-foreground hover:text-foreground hover:bg-hover active:bg-active',
-  link: 'text-foreground underline-offset-4 hover:underline !px-0 !h-auto',
-}
-
-export interface CardButtonProps<Message> extends Presentation {
-  readonly children: ReadonlyArray<Html | string>
-  readonly onClick?: Message
-  readonly href?: string
-  readonly variant?: CardButtonVariant
-  readonly icon?: Icon
-  readonly iconPosition?: 'start' | 'end'
-  readonly external?: boolean
-  readonly disabled?: boolean
-}
-
-export function CardButton<Message, Requirements = never>(
+export const CardButton: <Message, Requirements = never>(
   props: CardButtonProps<Message>,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function CardButton<Message, Requirements = never>(
+  props: CardButtonProps<Message>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   const { shape, size, icons } = resolvePresentation(props)
 
   const glyph =
@@ -430,16 +382,105 @@ export function CardButton<Message, Requirements = never>(
       : null,
   ]
 
-  return props.href !== undefined && props.href !== ''
-    ? h.a(
-        [
-          ...attributes,
-          h.Href(props.href),
-          ...(props.external === true ? [h.Target('_blank'), h.Rel('noopener noreferrer')] : []),
-        ],
-        content,
-      )
-    : h.button([...attributes, h.Type('button'), h.Disabled(props.disabled ?? false)], content)
+  return (
+    props.href !== undefined && props.href !== ''
+      ? h.a(
+          [
+            ...attributes,
+            h.Href(props.href),
+            ...(props.external === true ? [h.Target('_blank'), h.Rel('noopener noreferrer')] : []),
+          ],
+          content,
+        )
+      : h.button([...attributes, h.Type('button'), h.Disabled(props.disabled ?? false)], content)
+  ) satisfies Html
+}
+
+export type CardOrientation = 'card' | 'inline'
+
+export type CardBorder = 'none' | 'outlined'
+
+export type CardLogo = string | readonly [string, string]
+
+export interface CardContext extends Presentation {
+  readonly orientation?: CardOrientation
+  readonly emphasized?: boolean
+  readonly hasImage?: boolean
+}
+
+export interface CardPartProps<Message, Requirements = never> extends CardContext {
+  readonly children?: ReadonlyArray<Html | string>
+  readonly className?: string
+  readonly attributes?: Parameters<HtmlBuilder<Message, Requirements>['div']>[0]
+}
+
+function headerSpacing(
+  orientation: CardOrientation | undefined,
+  hasImage: boolean,
+  compact: boolean,
+) {
+  if (orientation === 'inline') {
+    return hasImage ? 'min-w-0' : cn('min-w-0 flex-1', compact ? 'py-2.5' : 'py-3.5')
+  }
+
+  return compact ? 'px-3 pt-3' : 'px-4 pt-4'
+}
+
+function contentSpacing(compact: boolean) {
+  return compact ? 'px-3 pt-2.5' : 'px-4 pt-3'
+}
+
+function footerSpacing(
+  orientation: CardOrientation | undefined,
+  hasImage: boolean,
+  compact: boolean,
+) {
+  if (orientation === 'inline') {
+    return hasImage ? 'flex-wrap' : cn('shrink-0 ml-auto', compact ? 'pr-3' : 'pr-4')
+  }
+
+  return cn('flex-wrap', contentSpacing(compact))
+}
+
+export interface CardMediaProps extends Omit<CardContext, 'size'> {
+  readonly logo?: CardLogo
+  readonly logoAlt?: string
+  readonly icon?: Icon
+  readonly size?: number
+  readonly className?: string
+}
+
+export interface CardImageProps {
+  readonly src: string
+  readonly alt?: string
+  readonly className?: string
+  readonly orientation?: CardOrientation
+}
+
+export interface CardFeatureProps extends Presentation {
+  readonly icon?: Icon
+  readonly title: string
+  readonly description?: string
+}
+
+export type CardButtonVariant = 'primary' | 'secondary' | 'ghost' | 'link'
+
+const buttonVariants: Readonly<Record<CardButtonVariant, string>> = {
+  primary: 'bg-foreground text-background hover:bg-foreground/90 active:bg-foreground/80',
+  secondary: 'bg-accent text-foreground hover:bg-accent/80 active:bg-accent',
+  ghost: 'text-muted-foreground hover:text-foreground hover:bg-hover active:bg-active',
+  link: 'text-foreground underline-offset-4 hover:underline !px-0 !h-auto',
+}
+
+export interface CardButtonProps<Message> extends Presentation {
+  readonly children: ReadonlyArray<Html | string>
+  readonly onClick?: Message
+  readonly href?: string
+  readonly variant?: CardButtonVariant
+  readonly icon?: Icon
+  readonly iconPosition?: 'start' | 'end'
+  readonly external?: boolean
+  readonly disabled?: boolean
 }
 
 /** @deprecated A card starts with its title. Retained for source compatibility. */

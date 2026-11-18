@@ -1,5 +1,5 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 
 export type ShapeVariant = 'pill' | 'rounded' | 'sharp'
 
@@ -13,9 +13,7 @@ export interface ShapeClasses {
   container: string
   button: string
   input: string
-  // Numeric counterparts of `bg` / `mergedBg`, in px. Needed where individual
-  // corners are animated (e.g. the selected-background merge/split animation),
-  // which requires per-corner numeric border-radii rather than a class.
+
   bgRadius: number
   /** Numeric counterpart of `container`. Popup shells use a 4px inset, so
    *  containerRadius = bgRadius + 4 keeps their curves concentric. */
@@ -27,7 +25,7 @@ export function nestedRadius(outerRadius: number, inset: number, borderWidth = 0
   return Math.max(0, outerRadius - inset - borderWidth)
 }
 
-export const popupShape = (shape: ShapeVariant): ShapeClasses =>
+export const popupShape: (shape: ShapeVariant) => ShapeClasses = (shape: ShapeVariant) =>
   shape === 'sharp' ? shapeMap.sharp : shapeMap.rounded
 
 export const shapeMap: Record<ShapeVariant, ShapeClasses> = {
@@ -35,9 +33,7 @@ export const shapeMap: Record<ShapeVariant, ShapeClasses> = {
     variant: 'pill',
     item: 'rounded-[20px]',
     bg: 'rounded-[20px]',
-    // +2px over `item` because the focus ring sits 2px outside the element
-    // (top/left -2, width/height +4); this keeps the corners concentric so a
-    // pill element gets a pill ring (matches the rounded-mode 8px→10px bump).
+
     focusRing: 'rounded-[22px]',
     mergedBg: 'rounded-2xl',
     container: 'rounded-3xl',

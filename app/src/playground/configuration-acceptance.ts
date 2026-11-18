@@ -5,10 +5,10 @@ import { colorValueOf } from '@foldkit-visuals/fluid/color-picker'
 import type { PlaygroundConfiguration } from './configuration'
 import type { FluidGalleryModel } from '../gallery/fluid/block'
 
-export const editedConfigurationFields = (
+export const editedConfigurationFields: (
   before: PlaygroundConfiguration,
   after: PlaygroundConfiguration,
-): ReadonlyArray<string> => {
+) => ReadonlyArray<string> = (before: PlaygroundConfiguration, after: PlaygroundConfiguration) => {
   if (before._tag !== after._tag) return ['*']
   const previous = new Map(Object.entries(before))
   return Object.entries(after).flatMap(([key, value]) =>
@@ -16,11 +16,15 @@ export const editedConfigurationFields = (
   )
 }
 
-export const acceptConfiguration = (
+export const acceptConfiguration: (
   configuration: PlaygroundConfiguration,
   before: FluidGalleryModel,
   after: FluidGalleryModel,
-): PlaygroundConfiguration =>
+) => PlaygroundConfiguration = (
+  configuration: PlaygroundConfiguration,
+  before: FluidGalleryModel,
+  after: FluidGalleryModel,
+) =>
   Match.value(configuration).pipe(
     Match.tag('breadcrumb', (c) => {
       if (before.crumbSection === after.crumbSection || after.crumbSection === null) return c
@@ -106,11 +110,15 @@ export const acceptConfiguration = (
     Match.orElse((c) => c),
   )
 
-export const needsChildReconciliation = (
+export const needsChildReconciliation: (
   configuration: PlaygroundConfiguration,
   before: FluidGalleryModel,
   after: FluidGalleryModel,
-): boolean =>
+) => boolean = (
+  configuration: PlaygroundConfiguration,
+  before: FluidGalleryModel,
+  after: FluidGalleryModel,
+) =>
   Match.value(configuration).pipe(
     Match.tag(
       'dropdown',

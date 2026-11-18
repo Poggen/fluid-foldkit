@@ -1,5 +1,5 @@
 import { fontWeights } from './lib/font-weight.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Option } from 'effect'
 import type { Html, HtmlBuilder } from 'foldkit/html'
 import type { AskUserQuestionsViewInputs } from './ask-user-questions-parts.js'
@@ -7,14 +7,21 @@ import type { AskFlow, AskQuestion } from './ask-user-questions-state.js'
 import { resolvePresentation } from './presentation.js'
 import { cn } from './lib/utils.js'
 
-export function askTextarea<M, R>(
+export const askTextarea: <M, R>(
   flow: AskFlow,
   inputs: AskUserQuestionsViewInputs,
   id: string,
   question: typeof AskQuestion.Type,
   free: boolean,
   h: HtmlBuilder<M, R>,
-): Html {
+) => Html = function askTextarea<M, R>(
+  flow: AskFlow,
+  inputs: AskUserQuestionsViewInputs,
+  id: string,
+  question: typeof AskQuestion.Type,
+  free: boolean,
+  h: HtmlBuilder<M, R>,
+) {
   const { size } = resolvePresentation(inputs)
   const error = Option.getOrNull(flow.error)
 
@@ -41,5 +48,5 @@ export function askTextarea<M, R>(
     h.AriaInvalid(error !== null),
     ...(error !== null && error !== '' ? [h.AriaDescribedBy(`${id}-error`)] : []),
     h.Style({ fontVariationSettings: fontWeights.normal }),
-  ])
+  ]) satisfies Html
 }
