@@ -18,7 +18,7 @@ test('site search follows sidebar spacing and supports pointer, keyboard and emp
   if (!searchBox || !firstLinkBox) throw new Error('Expected visible sidebar controls')
   expect(firstLinkBox.y - (searchBox.y + searchBox.height)).toBe(16)
   expect(searchBox.width).toBe(firstLinkBox.width)
-  const caps = trigger.locator('..').locator(':scope > [data-sidebar=menu-badge] > kbd')
+  const caps = trigger.locator('..').locator(':scope > [data-sidebar=menu-badge] kbd')
   await expect(caps).toHaveCount(2)
   for (const cap of await caps.all()) {
     await expect(cap).toHaveCSS('height', '18px')

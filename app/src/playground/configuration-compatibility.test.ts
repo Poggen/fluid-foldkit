@@ -1,3 +1,4 @@
+import * as DataTable from './configs/data-table'
 import { expect, test } from 'vitest'
 import { Effect, Option } from 'effect'
 import { it } from '@effect/vitest'
@@ -49,10 +50,22 @@ const legacyTable = {
   emptyDescription: 'Keep this explanation',
 }
 
+const legacyDataTable = {
+  _tag: 'data-table',
+  appearance: { size: 'compact' },
+  title: 'Saved components',
+  search: false,
+  filters: false,
+  viewOptions: false,
+  pagination: false,
+  selectionBar: false,
+}
+
 for (const [slug, legacy, defaults] of [
   ['thinking-steps', legacyThinking, Thinking.defaults],
   ['chat-message', legacyChat, Chat.defaults],
   ['table', legacyTable, Table.defaults],
+  ['data-table', legacyDataTable, DataTable.defaults],
 ] as const) {
   it.effect(`${slug} preserves saved URL settings when additive fields are absent`, () =>
     Effect.gen(function* () {
@@ -69,6 +82,16 @@ for (const [slug, legacy, defaults] of [
 
 test('additive playground defaults do not accept explicitly invalid values', () => {
   for (const [legacy, fields] of [
+    [
+      legacyDataTable,
+      {
+        pageSize: 0,
+        searchMode: 'unknown',
+        cellAlignment: 'bottom',
+        editable: null,
+        empty: 'true',
+      },
+    ],
     [
       legacyTable,
       {

@@ -6,6 +6,24 @@ import type { Family } from './config.ts'
 
 export const compositionSources = (family: Family, slug: string) => {
   if (!componentPages.some((page) => page.family === family && page.slug === slug)) return []
+  if (family === 'fluid' && ['code-block', 'context-menu', 'data-table'].includes(slug)) {
+    const files = [
+      `registry/fluid/examples/src/${slug}-example-block.ts`,
+      `app/src/playground/configs/${slug}.ts`,
+      'app/src/gallery/fluid/data-components.ts',
+      'app/src/gallery/fluid/data-components-view.ts',
+      'app/src/reference/authored-data-components.ts',
+      ...(slug === 'data-table'
+        ? ['data', 'rows', 'catalogue', 'keyboard', 'format', 'actions'].map(
+            (part) => `registry/fluid/examples/src/data-table-example-${part}.ts`,
+          )
+        : []),
+    ]
+    return files.map((file) => ({
+      path: file,
+      content: readFileSync(path.join(root, file), 'utf8'),
+    }))
+  }
   const chartFamily = [
     'gauge',
     'line',

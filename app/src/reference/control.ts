@@ -55,6 +55,7 @@ export const PropControlBlock = Block.make('PropControl', {
     kind: 'Element',
     Inputs: Block.makeInputContract<{
       readonly settings: Pick<Settings, 'shape' | 'size' | 'hover'>
+      readonly ready?: boolean
     }>(),
   },
 })
@@ -194,21 +195,26 @@ const plans = {
     const context = presentation(inputs.settings)
     const label = model.prop === 'buttonSize' ? 'Size' : model.label
     if (model.kind === 'toggle')
-      return h.block(
-        Toggle.embedView({
-          slotId: 'toggle',
-          model: model.toggle,
-          viewInputs: {
-            context,
-            label,
-            layout: 'settings-row',
-            animate: (node, animation) =>
-              typeof window === 'undefined' ? node : switchMotion.node(node, animation),
-          },
-        }),
-      )
+      return h.div(inputs.ready === false ? [h.Attribute('inert', '')] : [], [
+        h.block(
+          Toggle.embedView({
+            slotId: 'toggle',
+            model: model.toggle,
+            viewInputs: {
+              context,
+              label,
+              layout: 'settings-row',
+              animate: (node, animation) =>
+                typeof window === 'undefined' ? node : switchMotion.node(node, animation),
+            },
+          }),
+        ),
+      ])
     return h.div(
-      [h.Class('flex items-center justify-between pl-2')],
+      [
+        h.Class('flex items-center justify-between pl-2'),
+        ...(model.kind === 'choice' && inputs.ready === false ? [h.Attribute('inert', '')] : []),
+      ],
       [
         h.label(
           [
@@ -246,6 +252,7 @@ const plans = {
                 toView: (attributes) =>
                   h.input([
                     ...attributes.input,
+                    h.DataAttribute('playground-editable', model.prop),
                     h.Class(
                       'h-7 w-[124px] rounded-md bg-transparent px-2 text-right text-site-body text-foreground transition-colors duration-80 hover:bg-hover focus:bg-hover outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)] pointer-coarse:text-[16px]',
                     ),

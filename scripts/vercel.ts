@@ -42,16 +42,21 @@ const manifest = Schema.decodeUnknownSync(Schema.Struct({ serverEntry: Schema.St
 rmSync(output, { recursive: true, force: true })
 mkdirSync(functionDirectory, { recursive: true })
 cpSync(path.join(root, 'app/dist/client'), path.join(output, 'static'), { recursive: true })
-const archive = await fetch(
-  'https://github.com/Poggen/fluid-foldkit/releases/download/registry-0.1.0-preview.0/registry-0.1.0-preview.0.json.gz',
-)
-if (!archive.ok) throw new Error(`Previous registry archive request failed: ${archive.status}`)
-restoreRegistryArchive(
-  path.join(output, 'static'),
-  '0.1.0-preview.0',
-  new Uint8Array(await archive.arrayBuffer()),
-  '673c465c89670a9c89d37b83e238eb5bca547ac0228e3e3f1e9c0eb65c345f35',
-)
+for (const [version, sha256] of Object.entries({
+  '0.1.0-preview.0': '673c465c89670a9c89d37b83e238eb5bca547ac0228e3e3f1e9c0eb65c345f35',
+  '0.1.0-preview.1': '7381c188004608fa8944009879849291d642bb656e3f25da0e8142e1b93f7913',
+})) {
+  const archive = await fetch(
+    `https://github.com/Poggen/fluid-foldkit/releases/download/registry-${version}/registry-${version}.json.gz`,
+  )
+  if (!archive.ok) throw new Error(`Registry ${version} archive request failed: ${archive.status}`)
+  restoreRegistryArchive(
+    path.join(output, 'static'),
+    version,
+    new Uint8Array(await archive.arrayBuffer()),
+    sha256,
+  )
+}
 
 cpSync(path.join(server, manifest.serverEntry), path.join(functionDirectory, manifest.serverEntry))
 if (existsSync(path.join(server, 'assets')))

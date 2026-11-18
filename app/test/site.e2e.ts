@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
+import { chartPages, componentPages, fluidPages } from '../../lib/catalogue'
 
 const live = (page: Page) => expect(page.locator('[data-live-previews="true"]')).toBeVisible()
 
@@ -14,8 +15,8 @@ test.describe('server documents', () => {
     await expect(
       page.getByRole('heading', { name: 'Fluid Functionalism', exact: true }),
     ).toBeVisible()
-    await expect(page.locator('[data-component^="fluid/"]')).toHaveCount(34)
-    await expect(page.locator('[data-component^="charts/"]')).toHaveCount(22)
+    await expect(page.locator('[data-component^="fluid/"]')).toHaveCount(fluidPages.length)
+    await expect(page.locator('[data-component^="charts/"]')).toHaveCount(chartPages.length)
     await expect(
       page.locator('#site-navigation').getByRole('link', { name: 'Card', exact: true }),
     ).toHaveAttribute('href', '/components/card')
@@ -66,7 +67,7 @@ test('runs live previews and navigates through the shared document shell', async
   page.on('pageerror', (error) => errors.push(error.message))
   await page.goto('/')
   await live(page)
-  await expect(page.locator('[data-component]')).toHaveCount(56)
+  await expect(page.locator('[data-component]')).toHaveCount(componentPages.length)
   const composer = page.locator('[data-component="fluid/input-message"]').getByRole('textbox')
   expect((await composer.boundingBox())?.width).toBeGreaterThan(400)
   await expect
@@ -131,7 +132,7 @@ test('customizes the real previews and restores preferences from the URL', async
   await expect(page.locator('.site')).toHaveClass(/light/)
   await expect(page.locator('.site')).toHaveAttribute('data-shape', 'sharp')
   await expect(page.getByRole('combobox', { name: 'Size', exact: true })).toContainText('Default')
-  await expect(page).toHaveURL('http://127.0.0.1:5382/')
+  await expect(page).toHaveURL('/')
 })
 
 test('uses native modal navigation and customization on mobile', async ({ page }) => {

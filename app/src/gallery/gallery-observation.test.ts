@@ -100,3 +100,55 @@ it.effect('resets admission while rejecting queued observations from earlier lif
     )
   }),
 )
+
+it.effect('retains one measured footprint per card and rejects stale lifetime geometry', () =>
+  Effect.gen(function* () {
+    const flags = yield* prepareGalleryFlags
+    const initial = yield* Story.withBlock(subject, (gallery) => gallery.init(flags).model)
+    const href = '/components/input'
+    const measurement = { width: 342, layout: 'default:sans', height: 163 }
+    yield* Story.story(
+      subject,
+      Story.given(initial),
+      Story.message(
+        Message.MeasuredPreviewHeights({ heights: { [href]: measurement }, admissionRevision: 0 }),
+      ),
+      Story.models(
+        Story.steps(
+          Story.message(
+            Message.MeasuredPreviewHeights({
+              heights: { [href]: measurement },
+              admissionRevision: 0,
+            }),
+          ),
+        ),
+        (before, after) => expect(after).toBe(before),
+      ),
+      Story.message(
+        Message.MeasuredPreviewHeights({
+          heights: { [href]: { width: 500, layout: 'compact:sans', height: 155 } },
+          admissionRevision: 0,
+        }),
+      ),
+      Story.model((model) =>
+        expect(model.previewHeights).toEqual({
+          [href]: { width: 500, layout: 'compact:sans', height: 155 },
+        }),
+      ),
+      Story.inMessage(GalleryBlock.InMessage.RequestedAdmissionReset()),
+      Story.models(
+        Story.steps(
+          Story.message(
+            Message.MeasuredPreviewHeights({
+              heights: { [href]: measurement },
+              admissionRevision: 0,
+            }),
+          ),
+        ),
+        (before, after) => expect(after).toBe(before),
+      ),
+      Story.expectNoOutMessage(),
+      Story.Command.expectNone(),
+    )
+  }),
+)

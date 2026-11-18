@@ -1,7 +1,7 @@
 import type { ComponentPage } from '../../lib/catalogue'
 import { currentFontFamily, settingsQuery, type Settings } from './settings'
+import { release } from '../../lib/registry-release'
 
-const release = '0.1.0-preview.1'
 export const buildInstallBrief = (
   origin: string,
   page: ComponentPage | undefined,

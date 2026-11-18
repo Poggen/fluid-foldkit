@@ -1,4 +1,5 @@
 export const authoredFeature = (slug: string) => {
+  if (['code-block', 'context-menu', 'data-table'].includes(slug)) return 'data-components'
   if (['input', 'textarea', 'checkbox', 'field', 'input-group'].includes(slug)) return 'forms'
   if (
     [

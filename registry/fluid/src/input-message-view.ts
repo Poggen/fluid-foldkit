@@ -1,3 +1,4 @@
+import { KeyCap } from './key-cap.js'
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
 import { fontWeights } from './lib/font-weight.js'
 // Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
@@ -262,19 +263,7 @@ export function inputMessagePaint(
                   [h.Class('flex max-w-full items-center gap-1.5')],
                   [
                     h.span([h.Class('min-w-0 truncate')], [model.placeholderSuggestion ?? '']),
-                    h.kbd(
-                      [
-                        h.Class(
-                          cn(
-                            'inline-flex shrink-0 -translate-y-px items-center rounded-[5px] border border-border bg-background px-1 font-sans text-muted-foreground',
-                            compact
-                              ? 'h-4 text-[length:var(--fs-micro-compact,10px)] leading-[var(--lh-micro-compact,12px)]'
-                              : 'h-[18px] text-[length:var(--fs-micro,11px)] leading-[var(--lh-micro,14px)]',
-                          ),
-                        ),
-                      ],
-                      ['Tab'],
-                    ),
+                    KeyCap({ children: 'Tab', className: '-translate-y-px' }, h),
                   ],
                 ),
               ],

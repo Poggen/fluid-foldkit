@@ -1,3 +1,4 @@
+import { ConfirmationBlock, layer as ConfirmationLayer } from '@foldkit-visuals/fluid/confirmation'
 import { hoverModeOf as tabsHoverModeOf } from '../../../components/docs/preview-controls'
 import {
   PreviewControlsBlock,
@@ -54,9 +55,11 @@ export const AuthoredBannerBlock = Block.make('AuthoredBanner', {
     banners: Schema.Record(Schema.String, BannerBlock.Model),
     documentationTabs: Schema.Record(Schema.String, PreviewControlsBlock.Model),
     tooltips: DocumentTooltipBlock.Model,
+    confirmation: ConfirmationBlock.Model,
   }),
   Message: defineMessageUnion({
     Replayed: { key: Schema.String },
+    AskedAgain: {},
   }),
   InMessage: defineInMessageUnion({
     InformedOfPresentation: { presentation: ComponentPresentation },
@@ -85,6 +88,18 @@ const Banners = Root.makeRecordBinding(BannerBlock, { field: 'banners' }).withOu
     Exited: Root.makeNoopStep,
   }),
 })
+const ConfirmationRequests = Root.makeRequiredFieldBinding(ConfirmationBlock, {
+  field: 'confirmation',
+  init: { contextToArgs: () => [{ id: 'docs-banner-confirmation' }] },
+})
+const Confirmation = ConfirmationRequests.withOutMessagePolicy({
+  fold: Root.makeOutMessageFold(ConfirmationBlock, {
+    Approved: () => ConfirmationRequests.requestState({ state: 'approved' }),
+    Denied: () => ConfirmationRequests.requestState({ state: 'denied' }),
+    Dismissed: Root.makeNoopStep,
+    Exited: Root.makeNoopStep,
+  }),
+})
 const DocumentationTabs = Root.makeRecordBinding(PreviewControlsBlock, {
   field: 'documentationTabs',
 })
@@ -100,7 +115,7 @@ const documentationTabsHover = (mode: 'fluid' | 'standard') =>
   )
 const initDocumentationTabs = Root.makeStep(() =>
   Update.combineSteps(
-    ['Statuses', 'Actions', 'Fixed', 'Custom icon'].map((section) =>
+    ['Statuses', 'Actions', 'Fixed', 'Custom icon', 'Confirmation'].map((section) =>
       Root.makeStep((model) =>
         initAndInsert(DocumentationTabs, model, {
           key: section,
@@ -116,7 +131,9 @@ const initDocumentationTabs = Root.makeStep(() =>
     ),
   ),
 )
-const Composition = Root.makeComposition({ bindings: [DocumentationTabs, Banners, Tooltips] })
+const Composition = Root.makeComposition({
+  bindings: [DocumentationTabs, Banners, Tooltips, Confirmation],
+})
 export const layer = Root.makeLayer({
   init: Composition.makeInit(() => ({
     model: { banners: {}, documentationTabs: {} },
@@ -134,6 +151,7 @@ export const layer = Root.makeLayer({
     ],
   })),
   update: Composition.makeUpdate({
+    AskedAgain: ConfirmationRequests.requestState({ state: 'requested' }),
     Replayed: Root.makeStep.fromMessage(({ key }) => Banners.requestReset(key)),
   }),
   inMessageUpdate: Composition.makeInMessageUpdate({
@@ -379,7 +397,38 @@ export const layer = Root.makeLayer({
           'Replace the status icon with any icon from the current set.',
           'w-full max-w-[520px]',
         ),
+        section(
+          'Confirmation',
+          [
+            h.block(
+              Confirmation.embedView({
+                slotId: 'confirmation',
+                model: model.confirmation,
+                viewInputs: {
+                  context,
+                  title: 'Run pnpm build?',
+                  description: 'Builds the app into .next. Takes about a minute.',
+                },
+              }),
+            ),
+            Button(
+              {
+                context,
+                variant: 'ghost',
+                buttonSize: 'compact',
+                children: ['Ask again'],
+                className: model.confirmation.state === 'requested' ? 'invisible' : '',
+                attributes: [h.OnClick(Root.Message.AskedAgain())],
+              },
+              h,
+            ),
+          ],
+          'Ask before a tool call, command, or send. The parent accepts the answer; the confirmation never runs the action itself.',
+          'flex w-full max-w-[480px] flex-col items-start gap-3',
+        ),
       ],
     )
   }),
-}).pipe(Layer.provide(Layer.mergeAll(BannerLayer, PreviewControlsLayer, TooltipLayer)))
+}).pipe(
+  Layer.provide(Layer.mergeAll(BannerLayer, PreviewControlsLayer, TooltipLayer, ConfirmationLayer)),
+)

@@ -1,6 +1,7 @@
 // Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
 import type { Html, HtmlBuilder } from 'foldkit/html'
 import { resolvePresentation, type Presentation } from './presentation.js'
+import { KeyCaps } from './key-cap.js'
 import { formatShortcut } from './command-shortcuts.js'
 import { typeClass } from './lib/type-scale.js'
 import { cn } from './lib/utils.js'
@@ -17,34 +18,16 @@ export function CommandMenuShortcut<Message>(
   },
   h: HtmlBuilder<Message>,
 ): Html {
-  const compact = resolvePresentation(props).size.variant === 'compact'
   const caps = (typeof props.keys === 'string' ? [props.keys] : props.keys).flatMap((key) =>
     formatShortcut(key, props.mac ?? false),
   )
-  return h.kbd(
-    [
-      h.DataAttribute('slot', 'command-menu-shortcut'),
-      h.Class(
-        cn(
-          'ml-auto inline-flex shrink-0 items-center gap-0.5 align-middle font-sans',
-          props.className,
-        ),
-      ),
-    ],
-    caps.map((cap) =>
-      h.span(
-        [
-          h.Class(
-            cn(
-              'flex items-center justify-center rounded-[5px] bg-hover text-muted-foreground',
-              compact ? 'h-4 min-w-4 px-1' : 'h-5 min-w-5 px-1',
-              typeClass('micro', compact ? 'compact' : 'default'),
-            ),
-          ),
-        ],
-        [cap],
-      ),
-    ),
+  return KeyCaps(
+    {
+      keys: caps,
+      className: cn('ml-auto align-middle', props.className),
+      attributes: [h.DataAttribute('slot', 'command-menu-shortcut')],
+    },
+    h,
   )
 }
 export function CommandMenuFooter<Message>(

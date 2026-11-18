@@ -26,6 +26,8 @@ export interface InputCopyTooltip {
 }
 
 export interface InputCopyViewInputs extends Presentation {
+  readonly iconOnly?: boolean
+  readonly accessibleLabel?: string
   readonly label?: string
   readonly className?: string
   readonly attributes?: ReadonlyArray<ChildAttribute>
@@ -159,8 +161,8 @@ export function inputCopyPaint(
     [
       h.Class(
         cn(
-          'shrink-0 px-1.5 transition-colors duration-80',
-          rowPy,
+          'shrink-0 transition-colors duration-80',
+          inputs.iconOnly ? 'p-0' : `px-1.5 ${rowPy}`,
           'text-muted-foreground group-hover:text-foreground',
           buttonVariant && `flex items-center gap-1.5 ${p.size.text}`,
         ),
@@ -211,18 +213,20 @@ export function inputCopyPaint(
             h.Disabled(model.disabled),
             events.down,
             h.AriaLabel(
-              Match.value(model.status).pipe(
-                Match.when('copied', () => 'Copied'),
-                Match.when('error', () => 'Copy failed'),
-                Match.when('idle', () => (hasLabel ? 'Copy' : 'Copy to clipboard')),
-                Match.exhaustive,
-              ),
+              inputs.accessibleLabel ??
+                Match.value(model.status).pipe(
+                  Match.when('copied', () => 'Copied'),
+                  Match.when('error', () => 'Copy failed'),
+                  Match.when('idle', () => (hasLabel ? 'Copy' : 'Copy to clipboard')),
+                  Match.exhaustive,
+                ),
             ),
             ...(hasLabel ? [h.AriaLabelledBy(`${model.id}-button ${model.id}-label`)] : []),
             h.Class(
               cn(
                 'group flex items-center w-full cursor-pointer outline-none transition-[color,background-color,border-radius,box-shadow] duration-80',
                 'focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)]',
+                inputs.iconOnly && 'size-6 justify-center',
                 p.shape.input,
               ),
             ),
@@ -233,7 +237,7 @@ export function inputCopyPaint(
           h.keyed('button')(
             model.variant,
             [...attributes, ...ownButtonAttributes],
-            left ? [action, value] : [value, action],
+            inputs.iconOnly ? [action] : left ? [action, value] : [value, action],
           )
 
         return h.div(
@@ -269,7 +273,7 @@ export function inputCopyPaint(
                     trigger: ({ button: renderButton }) =>
                       renderButton(
                         ownButtonAttributes,
-                        left ? [action, value] : [value, action],
+                        inputs.iconOnly ? [action] : left ? [action, value] : [value, action],
                         model.variant,
                       ),
                   },

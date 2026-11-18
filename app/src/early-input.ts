@@ -1,7 +1,8 @@
-/** Buffer settings/navigation activations; Foldkit remains the sole control-state owner. */
+/** Buffer startup input until Foldkit owns the controls and their state. */
 export const earlyInputHead = `<script>
 (() => {
   let pending;
+  const edits = new Map();
   const pendingClasses = [
     '[&_button:focus]:cursor-progress',
     '[&_button:focus]:[outline:2px_solid_var(--fluid-accent,currentColor)]',
@@ -55,15 +56,33 @@ export const earlyInputHead = `<script>
     root.setAttribute('data-showcase-input-pending', '');
     root.classList.add(...pendingClasses);
   };
+  const captureEdit = (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement) || target.disabled || target.readOnly) return;
+    if (!target.matches('input[data-playground-editable]')) return;
+    const rail = target.closest('[data-playground-controls-path]');
+    const path = rail?.getAttribute('data-playground-controls-path');
+    if (!path || path !== location.pathname || !target.id) return;
+    edits.set(path + ':' + target.id, {
+      path,
+      id: target.id,
+      prop: target.getAttribute('data-playground-editable'),
+      value: target.value,
+      start: target.selectionStart,
+      end: target.selectionEnd,
+    });
+  };
   const dispose = () => {
     delete window.__releaseShowcaseInput;
     delete window.__cancelShowcaseInput;
+    document.removeEventListener('input', captureEdit, true);
     document.removeEventListener('click', capture, true);
     document.removeEventListener('keydown', capture, true);
     document.removeEventListener('pointerdown', abandonOutside, true);
     document.removeEventListener('focusin', abandonOutside, true);
     clearPending();
   };
+  document.addEventListener('input', captureEdit, true);
   document.addEventListener('click', capture, true);
   document.addEventListener('keydown', capture, true);
   document.addEventListener('pointerdown', abandonOutside, true);
@@ -71,7 +90,20 @@ export const earlyInputHead = `<script>
   window.__cancelShowcaseInput = dispose;
   window.__releaseShowcaseInput = () => {
     const input = pending;
+    const drafts = Array.from(edits.values());
     dispose();
+    for (const draft of drafts) {
+      const target = document.getElementById(draft.id);
+      if (
+        draft.path !== location.pathname || !(target instanceof HTMLInputElement) ||
+        target.disabled || target.readOnly || target.getAttribute('data-playground-editable') !== draft.prop ||
+        target.closest('[data-playground-controls-path]')?.getAttribute('data-playground-controls-path') !== draft.path
+      ) continue;
+      target.value = draft.value;
+      if (target === document.activeElement && draft.start !== null && draft.end !== null)
+        target.setSelectionRange(draft.start, draft.end);
+      target.dispatchEvent(new Event('input', { bubbles: true }));
+    }
     if (input !== undefined) {
       const target = document.getElementById(input.id);
       if (

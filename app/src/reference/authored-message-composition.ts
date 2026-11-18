@@ -1,3 +1,4 @@
+import { MessageTranscriptExampleBlock } from './message-transcript-example'
 import { MessageAssetsQuery } from './message-assets-query'
 import { Result } from 'effect'
 import { Number } from 'effect'
@@ -27,6 +28,10 @@ import {
   ObserveTranscript,
 } from './authored-message-definition'
 import { replyFor } from './message-scenes'
+export const Transcript = Root.makeRequiredFieldBinding(MessageTranscriptExampleBlock, {
+  field: 'transcript',
+  init: { contextToArgs: () => [] },
+})
 export const RawComposers = Root.makeRecordBinding(InputMessageBlock, { field: 'composers' })
 export const Chats = Root.makeRecordBinding(ChatMessageBlock, { field: 'chats' })
 export const DocumentationTabs = Root.makeRecordBinding(PreviewControlsBlock, {
@@ -275,6 +280,15 @@ export const AssetsBinding = Root.makeRequiredFieldBinding(MessageAssetsQuery, {
 })
 
 export const Composition = Root.makeComposition({
-  bindings: [Composers, Chats, Stack, Tooltips, Thinking, DocumentationTabs, AssetsBinding],
+  bindings: [
+    Composers,
+    Chats,
+    Stack,
+    Tooltips,
+    Thinking,
+    DocumentationTabs,
+    AssetsBinding,
+    Transcript,
+  ],
   mounts: [ObserveTranscript],
 })

@@ -1,3 +1,6 @@
+import datatableExample from '../../../registry/fluid/examples/src/data-table-example-block.ts?raw'
+import contextmenuExample from '../../../registry/fluid/examples/src/context-menu-example-block.ts?raw'
+import codeblockExample from '../../../registry/fluid/examples/src/code-block-example-block.ts?raw'
 import authoredChoices from './authored-choices.ts?raw'
 import authoredMessages from './authored-messages.ts?raw'
 import authoredDialogs from './authored-dialogs.ts?raw'
@@ -16,6 +19,9 @@ import authoredCommands from './authored-commands.ts?raw'
 import sidebarComparison from './sidebar-comparison.ts?raw'
 
 export const sources = {
+  'data-table-example': datatableExample,
+  'context-menu-example': contextmenuExample,
+  'code-block-example': codeblockExample,
   'authored-choices': authoredChoices,
   'authored-messages': authoredMessages,
   'authored-dialogs': authoredDialogs,

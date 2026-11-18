@@ -1,3 +1,6 @@
+import * as CodeBlock from './configs/code-block'
+import * as ContextMenu from './configs/context-menu'
+import * as DataTable from './configs/data-table'
 import { Match, Option, Schema } from 'effect'
 import type { ComponentPage } from '../../../lib/catalogue'
 import { PreviewOptions } from './legacy-options'
@@ -76,6 +79,9 @@ export const PlaygroundConfiguration = Schema.Union([
   Calendar.Configuration,
   DatePicker.Configuration,
   ColorPicker.Configuration,
+  CodeBlock.Configuration,
+  ContextMenu.Configuration,
+  DataTable.Configuration,
 ])
 export type PlaygroundConfiguration = typeof PlaygroundConfiguration.Type
 const decodeCandidate = (input: unknown) =>
@@ -124,6 +130,9 @@ export const FluidConfiguration = Schema.Union([
   Calendar.Configuration,
   DatePicker.Configuration,
   ColorPicker.Configuration,
+  CodeBlock.Configuration,
+  ContextMenu.Configuration,
+  DataTable.Configuration,
 ])
 export type FluidConfiguration = typeof FluidConfiguration.Type
 
@@ -166,6 +175,9 @@ export const controlsForConfiguration = (
       calendar: (configuration) => Calendar.controlsFor(configuration),
       'date-picker': (configuration) => DatePicker.controlsFor(configuration),
       'color-picker': (configuration) => ColorPicker.controlsFor(configuration),
+      'code-block': CodeBlock.controlsFor,
+      'context-menu': ContextMenu.controlsFor,
+      'data-table': DataTable.controlsFor,
       none: () => [],
       chart: () => [],
     }),
@@ -212,6 +224,11 @@ export const defaultsForPage = (page: ComponentPage): PlaygroundConfiguration =>
       Match.when('calendar', () => Calendar.defaults),
       Match.when('date-picker', () => DatePicker.defaults),
       Match.when('color-picker', () => ColorPicker.defaults),
+    )
+    .pipe(
+      Match.when('code-block', () => CodeBlock.defaults),
+      Match.when('context-menu', () => ContextMenu.defaults),
+      Match.when('data-table', () => DataTable.defaults),
       Match.orElse(() => None.make({ _tag: 'none' })),
     )
 }

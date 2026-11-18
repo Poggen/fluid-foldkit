@@ -250,6 +250,7 @@ const init = ApplicationComposition.makeInit((flags, url) => {
       isEmbed: embed,
       chartStylesActive: false,
       initialGalleryFlags: flags.baseline,
+      landingPreviewHeights: {},
       maybeLandingGallery: Option.none(),
       maybeReference: Option.none(),
       maybeReferenceGallery: Option.none(),

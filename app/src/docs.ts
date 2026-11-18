@@ -1,3 +1,4 @@
+import { release } from '../../lib/registry-release'
 import { codeBlock } from '../../components/docs/code-block'
 import { Button } from '@foldkit-visuals/fluid/button'
 import { Reveal } from '@foldkit-visuals/fluid/reveal'
@@ -69,7 +70,7 @@ const articles: Readonly<
       {
         heading: 'Configure the registries',
         body: 'Add these two namespaces to the registries field of components.json.',
-        code: '"registries": {\n  "@fluid-foldkit": "https://fluid-foldkit.vercel.app/r/fluid/0.1.0-preview.1/{name}.json",\n  "@bklit-foldkit": "https://fluid-foldkit.vercel.app/r/charts/0.1.0-preview.1/{name}.json"\n}',
+        code: `"registries": {\n  "@fluid-foldkit": "https://fluid-foldkit.vercel.app/r/fluid/${release}/{name}.json",\n  "@bklit-foldkit": "https://fluid-foldkit.vercel.app/r/charts/${release}/{name}.json"\n}`,
       },
       {
         heading: 'Install a component',

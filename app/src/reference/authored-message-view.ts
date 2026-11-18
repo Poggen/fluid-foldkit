@@ -18,6 +18,7 @@ import {
   Stack,
   Tooltips,
   Thinking,
+  Transcript,
   DocumentationTabs,
 } from './authored-message-composition'
 import {
@@ -217,70 +218,86 @@ export const authoredMessageView = (Message: typeof Root.Message) =>
                               message: Message.ClickedClear({ section: scene.key }),
                             }
                           : undefined
-                    const content: ReadonlyArray<Html> = floating
-                      ? [
-                          h.div(
-                            [
-                              h.Class('relative w-full self-stretch'),
-                              h.OnMount(ObserveTranscript({ section: scene.key })),
-                            ],
-                            [
+                    const content: ReadonlyArray<Html> =
+                      scene.key === 'transcript'
+                        ? [
+                            h.block(
+                              Transcript.embedView({
+                                slotId: 'docs-message-transcript-example',
+                                model: model.transcript,
+                                viewInputs: {
+                                  context,
+                                  animate: motion.node,
+                                  getReorder: () => reorder,
+                                  tooltip: decorate,
+                                },
+                              }),
+                            ),
+                          ]
+                        : floating
+                          ? [
                               h.div(
                                 [
-                                  h.DataAttribute('demo-transcript', ''),
-                                  h.Class('absolute inset-0 overflow-y-auto scrollbar-hide'),
+                                  h.Class('relative w-full self-stretch'),
+                                  h.OnMount(ObserveTranscript({ section: scene.key })),
                                 ],
                                 [
                                   h.div(
                                     [
-                                      h.Class('flex min-h-full flex-col justify-start gap-2'),
-                                      h.Style({
-                                        paddingBottom:
-                                          scene.key === 'queued'
-                                            ? `calc(var(--composer-height, 100px) + 8px + ${model.stack.queue.length ? collapsedStackHeight(model.stack.queue.length, queueCardHeight({ context })) + 8 : 0}px)`
-                                            : 'calc(var(--composer-height, 100px) + 12px)',
-                                      }),
+                                      h.DataAttribute('demo-transcript', ''),
+                                      h.Class('absolute inset-0 overflow-y-auto scrollbar-hide'),
                                     ],
-                                    transcript(scene.key),
+                                    [
+                                      h.div(
+                                        [
+                                          h.Class('flex min-h-full flex-col justify-start gap-2'),
+                                          h.Style({
+                                            paddingBottom:
+                                              scene.key === 'queued'
+                                                ? `calc(var(--composer-height, 100px) + 8px + ${model.stack.queue.length ? collapsedStackHeight(model.stack.queue.length, queueCardHeight({ context })) + 8 : 0}px)`
+                                                : 'calc(var(--composer-height, 100px) + 12px)',
+                                          }),
+                                        ],
+                                        transcript(scene.key),
+                                      ),
+                                    ],
+                                  ),
+                                  ...(scene.key === 'queued'
+                                    ? [
+                                        h.block(
+                                          Stack.embedView({
+                                            slotId: 'docs-message-stack',
+                                            model: model.stack,
+                                            viewInputs: {
+                                              context,
+                                              animate: motion.node,
+                                              tooltip: decorate,
+                                              morphLayoutId: (item) => `qm-${item.id}`,
+                                              layoutDependency: String(model.revision),
+                                            },
+                                          }),
+                                        ),
+                                      ]
+                                    : []),
+                                  h.div(
+                                    [
+                                      h.DataAttribute('demo-composer', ''),
+                                      h.Class('absolute inset-x-0 bottom-0'),
+                                    ],
+                                    [composer(scene.key)],
                                   ),
                                 ],
                               ),
-                              ...(scene.key === 'queued'
-                                ? [
-                                    h.block(
-                                      Stack.embedView({
-                                        slotId: 'docs-message-stack',
-                                        model: model.stack,
-                                        viewInputs: {
-                                          context,
-                                          animate: motion.node,
-                                          tooltip: decorate,
-                                          morphLayoutId: (item) => `qm-${item.id}`,
-                                          layoutDependency: String(model.revision),
-                                        },
-                                      }),
-                                    ),
-                                  ]
-                                : []),
+                            ]
+                          : [
                               h.div(
+                                [h.Class('w-full max-w-xl flex flex-col gap-3')],
                                 [
-                                  h.DataAttribute('demo-composer', ''),
-                                  h.Class('absolute inset-x-0 bottom-0'),
+                                  ...(scene.key === 'handler' ? transcript('handler') : []),
+                                  composer(scene.key),
                                 ],
-                                [composer(scene.key)],
                               ),
-                            ],
-                          ),
-                        ]
-                      : [
-                          h.div(
-                            [h.Class('w-full max-w-xl flex flex-col gap-3')],
-                            [
-                              ...(scene.key === 'handler' ? transcript('handler') : []),
-                              composer(scene.key),
-                            ],
-                          ),
-                        ]
+                            ]
                     return docSection(h, {
                       title: scene.title,
                       children: content,

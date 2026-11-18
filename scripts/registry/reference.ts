@@ -40,7 +40,7 @@ export const buildReferences = () => {
       )
       if (
         declaration === undefined ||
-        /(?:Prepared|Resource|Context)/u.test(exported.name) ||
+        /(?:Prepared|Resource|Context$)/u.test(exported.name) ||
         !/(?:Props|Inputs|Options|Config|Settings|Variant|Size|Presentation|Context)$/u.test(
           exported.name,
         )

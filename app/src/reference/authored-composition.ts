@@ -1,3 +1,4 @@
+import { AuthoredDataComponentsBlock } from './authored-data-components'
 import { modifyFields } from 'foldkit/struct'
 import { AuthoredSidebarsBlock } from './authored-sidebars'
 import { AuthoredMessagesBlock } from './authored-messages'
@@ -98,6 +99,16 @@ export const Highlight = AuthoredExamplesBlock.makeRequiredFieldBinding(Accordio
     ValueChanged: AuthoredExamplesBlock.makeNoopStep,
   }),
 })
+export const DataComponents = AuthoredExamplesBlock.makeOptionalFieldBinding(
+  AuthoredDataComponentsBlock,
+  {
+    field: 'maybeDataComponents',
+    init: {
+      contextToArgs: (slug: string) =>
+        authoredFeature(slug) === 'data-components' ? Option.some([slug] as const) : Option.none(),
+    },
+  },
+)
 export const PreviewTabs = AuthoredExamplesBlock.makeRecordBinding(PreviewControlsBlock, {
   field: 'previewTabs',
 })
@@ -236,6 +247,7 @@ export const Sidebars = AuthoredExamplesBlock.makeOptionalFieldBinding(AuthoredS
 })
 export const AuthoredExamplesComposition = AuthoredExamplesBlock.makeComposition({
   bindings: [
+    DataComponents,
     Standalone,
     Single,
     Multiple,
@@ -265,6 +277,16 @@ export const AuthoredExamplesComposition = AuthoredExamplesBlock.makeComposition
 export const initFeatureIfMissing = (slug: string) =>
   AuthoredExamplesBlock.makeStep(() =>
     Update.combineSteps([
+      AuthoredExamplesBlock.makeStep((model) =>
+        authoredFeature(slug) === 'data-components' &&
+        (Option.isNone(model.maybeDataComponents) || model.maybeDataComponents.value.slug !== slug)
+          ? DataComponents.init({
+              args: [slug],
+              toParentModel: (child) =>
+                modifyFields(model, { maybeDataComponents: () => Option.some(child) }),
+            })
+          : { model },
+      ),
       AuthoredExamplesBlock.makeStep((model) =>
         authoredFeature(slug) === 'sidebars' && Option.isNone(model.maybeSidebars)
           ? Sidebars.init({

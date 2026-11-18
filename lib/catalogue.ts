@@ -259,6 +259,30 @@ const fluidDefinitions: ReadonlyArray<ComponentPage> = [
     href: '/components/thinking-steps',
   },
   {
+    slug: 'code-block',
+    name: 'CodeBlock',
+    description:
+      'Code and command output with a header, copy feedback, optional line numbers, and a height cap.',
+    family: 'fluid',
+    href: '/components/code-block',
+  },
+  {
+    slug: 'context-menu',
+    name: 'ContextMenu',
+    description:
+      'Open a Dropdown at the pointer or the focused element with a right-click or the keyboard.',
+    family: 'fluid',
+    href: '/components/context-menu',
+  },
+  {
+    slug: 'data-table',
+    name: 'DataTable',
+    description:
+      'Search, sort, filter, select, and edit rows with spreadsheet-style keyboard controls.',
+    family: 'fluid',
+    href: '/components/data-table',
+  },
+  {
     slug: 'tooltip',
     name: 'Tooltip',
     description:
@@ -267,8 +291,15 @@ const fluidDefinitions: ReadonlyArray<ComponentPage> = [
     href: '/components/tooltip',
   },
 ]
-// cc276ca0 lib/changelog/load.ts: pending ahead of the latest pinned release, 2026-10.
-const pendingReleaseSlugs = new Set(['field', 'checkbox', 'input', 'textarea', 'breadcrumb'])
+const pendingReleaseSlugs = new Set([
+  'field',
+  'checkbox',
+  'input',
+  'textarea',
+  'breadcrumb',
+  'data-table',
+  'context-menu',
+])
 
 export const fluidPages: ReadonlyArray<ComponentPage> = [
   'input-message',
@@ -297,6 +328,7 @@ export const fluidPages: ReadonlyArray<ComponentPage> = [
   'carousel-dots',
   'button',
   'breadcrumb',
+  'data-table',
   'table',
   'dialog',
   'calendar',
@@ -305,6 +337,8 @@ export const fluidPages: ReadonlyArray<ComponentPage> = [
   'input',
   'textarea',
   'field',
+  'context-menu',
+  'code-block',
 ]
   .flatMap((slug) => fluidDefinitions.filter((page) => page.slug === slug))
   .map((page) => ({ ...page, isNew: pendingReleaseSlugs.has(page.slug) }))

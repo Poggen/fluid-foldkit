@@ -1,3 +1,4 @@
+import { AuthoredDataComponentsBlock } from './authored-data-components'
 import { ComponentPresentation } from '../settings'
 import { AuthoredSidebarsBlock } from './authored-sidebars'
 import { AuthoredMessagesBlock } from './authored-messages'
@@ -34,6 +35,7 @@ export const AuthoredExamplesBlock = Block.make('AuthoredExamples', {
   ChildInitContext: Schema.String,
   effects: Block.makeEffectsContract<
     never,
+    | Block.FactsOf<typeof AuthoredDataComponentsBlock>['programRequirements']
     | Block.FactsOf<typeof AuthoredFormsBlock>['programRequirements']
     | Block.FactsOf<typeof AuthoredMenusBlock>['programRequirements']
     | Block.FactsOf<typeof AuthoredSurfacesBlock>['programRequirements']
@@ -52,6 +54,7 @@ export const AuthoredExamplesBlock = Block.make('AuthoredExamples', {
   >(),
   Model: Schema.Struct({
     slug: Schema.String,
+    maybeDataComponents: Schema.Option(AuthoredDataComponentsBlock.Model),
     maybeForms: Schema.Option(AuthoredFormsBlock.Model),
     maybeControls: Schema.Option(AuthoredControlsBlock.Model),
     maybeCharts: Schema.Option(AuthoredChartsBlock.Model),

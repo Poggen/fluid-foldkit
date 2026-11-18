@@ -156,3 +156,53 @@ test('the latest first-painted control replaces an earlier intent', async ({ pag
     release()
   }
 })
+
+for (const field of [
+  {
+    slug: 'code-block',
+    prop: 'code',
+    value: 'const beforeBoot = "<draft>"',
+    expected: 'const beforeBoot = "<draft>"',
+  },
+  { slug: 'slider', prop: 'value', value: '75', expected: 75 },
+] as const) {
+  test(`first-painted ${field.slug} property reaches Foldkit after modules resume`, async ({
+    page,
+  }) => {
+    const release = await holdModules(page)
+    try {
+      await page.goto(`/components/${field.slug}`, { waitUntil: 'commit' })
+      const input = page.locator(`#playground-${field.prop}`)
+      await expect(input).toBeVisible()
+      await input.fill(field.value)
+      await expect(input).toHaveValue(field.value)
+      release()
+      await expect
+        .poll(() => {
+          const serialized = new URL(page.url()).searchParams.get('props')
+          if (serialized === null) return undefined
+          const value: unknown = JSON.parse(serialized)
+          return typeof value === 'object' && value !== null && field.prop in value
+            ? Reflect.get(value, field.prop)
+            : undefined
+        })
+        .toBe(field.expected)
+      await expect(input).toHaveValue(field.value)
+      const preview = page
+        .getByRole('region', { name: 'Playground', exact: true })
+        .locator('.reference-preview')
+      if (field.slug === 'code-block')
+        await expect(preview.locator('pre')).toContainText(field.value)
+      else await expect(preview.getByRole('slider')).toHaveAttribute('aria-valuenow', field.value)
+      await input.fill(field.slug === 'code-block' ? 'const afterBoot = true' : '80')
+      await expect
+        .poll(() => {
+          const serialized = new URL(page.url()).searchParams.get('props')
+          return serialized === null ? undefined : JSON.parse(serialized)[field.prop]
+        })
+        .toBe(field.slug === 'code-block' ? 'const afterBoot = true' : 80)
+    } finally {
+      release()
+    }
+  })
+}

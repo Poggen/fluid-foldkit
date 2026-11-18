@@ -1,3 +1,5 @@
+import { dataComponentBindings } from './data-components'
+import { dataComponentDemos } from './data-components-view'
 import { ConfiguredSidebarBinding } from './configured-sidebar-binding'
 import { makeConfiguredView } from './configured-view'
 import { fluidPages } from '../../../../lib/catalogue'
@@ -17,6 +19,7 @@ import { makeInteractiveDemos } from './interactive-ordinary-view'
 export const FluidGalleryComposition = FluidGalleryBlock.makeComposition({
   bindings: [
     ConfiguredSidebarBinding,
+    ...dataComponentBindings,
     ...coreBindings,
     ...detailsBindings,
     ...interactiveBindings,
@@ -99,6 +102,7 @@ export const makeView = () => {
     // Construct ordinary occurrences in the gallery frame before entering tooltip providers.
     const ordinary = buildCards({
       ...coreDemos(model, inputs, h),
+      ...dataComponentDemos(model, inputs.settings, h),
       ...detailsDemos(model, inputs, h),
       ...interactiveDemos(model, inputs, h),
     })

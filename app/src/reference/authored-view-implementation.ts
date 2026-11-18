@@ -1,3 +1,4 @@
+import { DataComponents } from './authored-composition'
 import {
   referenceSection,
   referenceMuted,
@@ -59,6 +60,17 @@ export const renderAuthoredView = (
   ...[model, inputs, h]: Parameters<AuthoredViewRenderer>
 ) => {
   if (!inputs.ready) return h.empty
+  if (
+    authoredFeature(inputs.slug) === 'data-components' &&
+    Option.isSome(model.maybeDataComponents)
+  )
+    return h.block(
+      DataComponents.embedView({
+        slotId: `authored-${inputs.slug}`,
+        model: model.maybeDataComponents.value,
+        viewInputs: inputs,
+      }),
+    )
   if (authoredFeature(inputs.slug) === 'sidebars' && Option.isSome(model.maybeSidebars))
     return h.block(
       Sidebars.embedView({

@@ -1,4 +1,5 @@
 import { expect, test, type Locator } from '@playwright/test'
+import { componentPages } from '../../lib/catalogue'
 
 const firstFive = ['input-message', 'thinking-indicator', 'color-picker', 'switch', 'combobox']
 const emptyStage = async (card: Locator) => {
@@ -9,7 +10,7 @@ const emptyStage = async (card: Locator) => {
   await expect(stage).toHaveText('')
 }
 const noOuterHeight = async (cards: Locator) => {
-  expect(await cards.count()).toBe(56)
+  expect(await cards.count()).toBe(componentPages.length)
   expect(
     await cards.evaluateAll(
       (elements) =>
@@ -45,21 +46,28 @@ for (const viewport of [
       const markedLinks = grid.locator('.preview-footer > a').filter({
         has: page.getByText('New', { exact: true }),
       })
-      await expect(markedLinks).toHaveCount(5)
+      await expect(markedLinks).toHaveCount(7)
       expect(
         await markedLinks.evaluateAll((links) => links.map((link) => link.getAttribute('href'))),
       ).toEqual([
         '/components/breadcrumb',
+        '/components/data-table',
         '/components/checkbox',
         '/components/input',
         '/components/textarea',
         '/components/field',
+        '/components/context-menu',
       ])
       const badge = markedLinks.first().getByText('New', { exact: true }).locator('..')
       await expect(badge).toHaveCSS('height', '20px')
       await expect(badge.locator(':scope > span').first()).toHaveCSS('width', '6px')
       await expect(badge.locator(':scope > span').first()).toHaveCSS('height', '6px')
       if (viewport.width >= 768) {
+        await expect(grid.locator('#fluid-data-table')).toHaveCSS('grid-row', 'span 2 / span 2')
+        await expect(grid.locator('#fluid-data-table .preview-stage')).toHaveCSS(
+          'padding-top',
+          '24px',
+        )
         await expect(grid.locator('#fluid-table')).toHaveCSS('grid-column', 'span 2 / span 2')
         for (const slug of ['input', 'textarea']) {
           await expect(grid.locator(`#fluid-${slug}`)).toHaveCSS('grid-column', 'span 1 / span 1')
@@ -68,7 +76,7 @@ for (const viewport of [
       if (viewport.width < 768) {
         await expect(cards.first().locator('.preview-content')).toHaveCSS('min-height', '200px')
         const reveals = grid.locator('.preview-reveal')
-        await expect(reveals).toHaveCount(56)
+        await expect(reveals).toHaveCount(componentPages.length)
         // Reveal transforms the painted box; offset metrics retain the source grid layout.
         const { gridBounds, frames } = await grid.evaluate((element) => {
           if (!(element instanceof HTMLElement)) throw new Error('Expected an HTML gallery grid')

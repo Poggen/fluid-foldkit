@@ -54,7 +54,11 @@ export const reconcilePageVisit = (
     const system = !isEmbed && systemAt(path) !== undefined
     const embedded = isEmbed && page !== undefined
     const presentation = componentPresentation(model.settings, model.systemTheme)
-    const flags = { ...(initial ?? model.initialGalleryFlags), preview: options }
+    const flags = {
+      ...(initial ?? model.initialGalleryFlags),
+      preview: options,
+      previewHeights: model.landingPreviewHeights,
+    }
     return Update.combineSteps([
       ...ReferenceQuery.pendingArgs(model.referenceQuery)
         .filter((args) => !reference || args.family !== page?.family || args.slug !== page.slug)
@@ -62,7 +66,11 @@ export const reconcilePageVisit = (
       ApplicationBlock.makeFieldsStep((current) => ({
         chartStylesActive: () => current.chartStylesActive || page?.family === 'charts',
         ...((!landing || freshLanding) && Option.isSome(current.maybeLandingGallery)
-          ? { maybeLandingGallery: () => Option.none() }
+          ? {
+              maybeLandingGallery: () => Option.none(),
+              landingPreviewHeights: () =>
+                Option.getOrThrow(current.maybeLandingGallery).previewHeights,
+            }
           : {}),
         ...(!reference && Option.isSome(current.maybeReference)
           ? { maybeReference: () => Option.none() }
@@ -112,7 +120,13 @@ export const reconcilePageVisit = (
             const initialized = Option.getOrThrow(parent.maybeReference)
             return initAndSet(MaybeReferenceGalleryBinding, parent, {
               key: path,
-              args: [{ ...flags, preview: legacyOptions(initialized.model.configuration) }],
+              args: [
+                {
+                  ...flags,
+                  preview: legacyOptions(initialized.model.configuration),
+                  ...(page.family === 'fluid' ? { componentSlug: page.slug } : {}),
+                },
+              ],
             })
           }),
           ApplicationBlock.makeStep((parent) => {

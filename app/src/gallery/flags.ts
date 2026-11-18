@@ -1,3 +1,4 @@
+import { PreviewHeights } from './geometry'
 import { calendarRulesForRevision } from '../playground/configs/calendar'
 import { CalendarBlock, Selection, dateValue } from '@foldkit-visuals/fluid/calendar'
 import {
@@ -48,6 +49,7 @@ export const CalendarSelections = Schema.Struct({
   range: Schema.Union([Selection.cases.Empty, Selection.cases.Range]),
 })
 export const GalleryFlags = Schema.Struct({
+  previewHeights: Schema.optionalKey(PreviewHeights),
   calendar: PreparedCalendar,
   calendarSelections: CalendarSelections,
   picker: PreparedPicker,

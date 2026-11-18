@@ -1,3 +1,4 @@
+import { reconcileDataComponent } from './data-components-update'
 import { reconcileBreadcrumb } from './breadcrumb-update'
 import { resetConfiguration } from './configuration-reset'
 import { admitConfiguredSidebar, ConfiguredSidebarBinding } from './configured-sidebar-binding'
@@ -38,6 +39,7 @@ export const applyConfiguration = FluidGalleryBlock.makeStep(
         ? { ...desired, size: configuration.size }
         : desired
     const operation = Match.value(configuration).pipe(
+      Match.tag('code-block', 'context-menu', 'data-table', reconcileDataComponent),
       Match.tag(
         'input',
         'textarea',

@@ -1,3 +1,4 @@
+import { ContextMenuExample } from './data-components'
 import { hoverModeOf as accordionHover } from '@foldkit-visuals/fluid/accordion'
 import {
   hoverModeOf as askHover,
@@ -80,6 +81,10 @@ export const coreSettings = (presentation: ComponentPresentation) =>
     const volume = { ...model.volume.settings, compact: desired.size === 'compact' }
     const slider = { ...model.slider.settings, compact: desired.size === 'compact' }
     return Update.combineSteps([
+      ...(Option.isSome(model.contextMenuExample) &&
+      model.contextMenuExample.value.menu.menu.hover.mode !== mode
+        ? [ContextMenuExample.requestHoverMode({ mode })]
+        : []),
       ...(selectHover(model.select) === mode ? [] : [Select.requestHoverMode({ mode })]),
       ...(tabsHover(model.tabs) === mode ? [] : [Tabs.requestHoverMode({ mode })]),
       ...(accordionHover(model.accordion) === mode ? [] : [Accordion.requestHoverMode({ mode })]),

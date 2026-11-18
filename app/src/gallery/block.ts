@@ -1,3 +1,4 @@
+import { PreviewHeights, previewLayoutKey } from './geometry'
 import { reconcileEmbeddedLocation } from './embedded-configuration'
 import { acceptConfiguration } from '../playground/configuration-acceptance'
 import { observePreviews } from './preview-observer'
@@ -67,15 +68,17 @@ const Companions = GalleryBlock.makeRequiredFieldBinding(CompanionGalleryBlock, 
   init: { contextToArgs: (flags) => [flags.preview ?? {}] },
 })
 const ObservePreviews = GalleryBlock.makeMountStream('ObservePreviews', {
-  args: { admissionRevision: Schema.Natural },
-  messages: [Message.ObservedPreviews],
+  args: { admissionRevision: Schema.Natural, heights: PreviewHeights, layout: Schema.String },
+  messages: [Message.ObservedPreviews, Message.MeasuredPreviewHeights],
   *handler() {
-    return ({ element, viewStateChanges, admissionRevision }) => {
+    return ({ element, viewStateChanges, admissionRevision, heights, layout }) => {
       const root = element.parentElement
       if (root === null) throw new Error('Preview admission requires a live gallery root')
       return viewStateChanges.pipe(
         Stream.switchMap((state) =>
-          state === 'Paused' ? Stream.never : observePreviews(root, admissionRevision),
+          state === 'Paused'
+            ? Stream.never
+            : observePreviews(root, admissionRevision, heights, layout),
         ),
       )
     }
@@ -220,10 +223,19 @@ const makeView = () => {
         h.DataAttribute('live-previews', String(model.isReady)),
       ],
       [
-        h.keyed('span')(String(model.admissionRevision), [
-          h.Class(['contents'].join(' ')),
-          h.OnMount(ObservePreviews({ admissionRevision: model.admissionRevision })),
-        ]),
+        h.keyed('span')(
+          `${model.admissionRevision}:${previewLayoutKey(inputs.settings)}:${model.columns}`,
+          [
+            h.Class(['contents'].join(' ')),
+            h.OnMount(
+              ObservePreviews({
+                admissionRevision: model.admissionRevision,
+                heights: model.reservedPreviewHeights,
+                layout: previewLayoutKey(inputs.settings),
+              }),
+            ),
+          ],
+        ),
         lazyFluid(viewFluid, [
           model.fluid,
           inputs.settings,
@@ -386,6 +398,8 @@ const implementation = {
     return {
       model: {
         isReady: false,
+        previewHeights: flags.previewHeights ?? {},
+        reservedPreviewHeights: flags.previewHeights ?? {},
         preview,
         embeddedConfiguration,
         embeddedLocationConfiguration: Option.none(),
@@ -400,6 +414,21 @@ const implementation = {
   }),
   update: GalleryComposition.makeUpdate.compose(
     GalleryComposition.makeUpdate({
+      MeasuredPreviewHeights: GalleryBlock.makeStep((model, { heights, admissionRevision }) => {
+        if (
+          admissionRevision !== model.admissionRevision ||
+          Object.entries(heights).every(
+            ([key, height]) =>
+              model.previewHeights[key]?.width === height.width &&
+              model.previewHeights[key]?.layout === height.layout &&
+              model.previewHeights[key]?.height === height.height,
+          )
+        )
+          return { model }
+        return GalleryBlock.makeFieldsStep(() => ({
+          previewHeights: () => ({ ...model.previewHeights, ...heights }),
+        }))
+      }),
       ObservedPreviews: GalleryBlock.makeStep((model, { hrefs, admissionRevision }) => {
         if (admissionRevision !== model.admissionRevision) return { model }
         const admitted = [...new Set([...model.admitted, ...hrefs])]

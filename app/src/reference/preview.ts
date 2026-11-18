@@ -1,3 +1,4 @@
+import { dataComponentCode } from '../playground/configs/data-components-code'
 import { Match } from 'effect'
 import type { ComponentPage } from '../../../lib/catalogue'
 import type { PlaygroundConfiguration } from '../playground/configuration'
@@ -17,6 +18,7 @@ import { sidebarCode } from '../playground/configs/sidebar-code'
 export const previewCode = (_page: ComponentPage, configuration: PlaygroundConfiguration): string =>
   Match.value(configuration).pipe(
     Match.tag('none', () => ''),
+    Match.tag('code-block', 'context-menu', 'data-table', dataComponentCode),
     Match.tag('chart', (c) => `const previewOptions = ${JSON.stringify(c.options, null, 2)}`),
     Match.tag('breadcrumb', breadcrumbCode),
     Match.tag('card', cardCode),

@@ -1,3 +1,4 @@
+import { KeyCaps } from '@foldkit-visuals/fluid/key-cap'
 import type { ScrollAreaProps } from '@foldkit-visuals/fluid/scroll-area'
 import { ScrollAreaBlock, layer as ScrollLayer } from '@foldkit-visuals/fluid/scroll-area'
 import { NavMenuBlock, hoverModeOf, navMenuLayer } from '@foldkit-visuals/fluid/nav-menu'
@@ -266,19 +267,10 @@ const plans = {
                           {
                             context,
                             active,
-                            className:
-                              'mt-px gap-0.5 px-0 font-mono text-site-micro leading-none [@media(hover:none)]:hidden',
-                            children: (model.isMac ? ['⌘', 'K'] : ['Ctrl', 'K']).map((key) =>
-                              h.kbd(
-                                [
-                                  h.Class(
-                                    // oxlint-disable-next-line shadcn/no-arbitrary-values -- Original app/components/site-command-menu.tsx:190 at cc276ca0 owns this exact keycap surface.
-                                    'inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-[2px] bg-[light-dark(rgb(23_23_23/0.08),rgb(245_245_245/0.08))] px-1 font-[inherit]',
-                                  ),
-                                ],
-                                [key],
-                              ),
-                            ),
+                            className: 'mt-px px-0 [@media(hover:none)]:hidden',
+                            children: [
+                              KeyCaps({ keys: model.isMac ? ['⌘', 'K'] : ['Ctrl', 'K'] }, h),
+                            ],
                           },
                           h,
                         ),

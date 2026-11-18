@@ -1,3 +1,4 @@
+import { PreviewHeights } from './gallery/geometry'
 import { ScrollAreaBlock } from '@foldkit-visuals/fluid/scroll-area'
 import { ReferenceQuery } from './reference/query'
 import { MobileDrawerBlock } from '@foldkit-visuals/fluid/mobile-drawer'
@@ -69,6 +70,7 @@ export const ApplicationBlock = Block.make('Application', {
     isEmbed: Schema.Boolean,
     chartStylesActive: Schema.Boolean,
     initialGalleryFlags: PreparedGalleryBaseline,
+    landingPreviewHeights: PreviewHeights,
     maybeLandingGallery: Schema.Option(GalleryBlock.Model),
     referenceQuery: ReferenceQuery.Model,
     maybeReference: Schema.Option(

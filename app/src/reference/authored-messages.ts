@@ -1,3 +1,4 @@
+import { MessageTranscriptExampleLayer } from './message-transcript-example'
 import { MessageAssetsQuery } from './message-assets-query'
 import { Query } from 'foldkit/experimental'
 import { hoverModeOf as tabsHoverModeOf } from '../../../components/docs/preview-controls'
@@ -71,33 +72,38 @@ export const layer = Root.makeLayer({
           }),
         ),
       ),
-      ...sections.map(({ key }) =>
-        Root.makeStep((model) =>
-          initAndInsert(Composers, model, {
-            key,
-            args: [
-              {
-                id: `docs-message-${key}`,
-                value: key === 'disabled' ? 'This composer is disabled' : '',
-                disabled: key === 'disabled',
-                reduceMotion: false,
-                ...(key === 'suggestions'
-                  ? { suggestions, placeholderSuggestion: 'Why is every other input box so stiff?' }
-                  : {}),
-                ...(key === 'attachments' ? { supportsFiles: true } : {}),
-                ...(key === 'queued'
-                  ? {
-                      status: 'streaming',
-                      supportsQueue: true,
-                      showQueue: false,
-                      supportsStop: true,
-                    }
-                  : {}),
-              },
-            ],
-          }),
+      ...sections
+        .filter(({ key }) => key !== 'transcript')
+        .map(({ key }) =>
+          Root.makeStep((model) =>
+            initAndInsert(Composers, model, {
+              key,
+              args: [
+                {
+                  id: `docs-message-${key}`,
+                  value: key === 'disabled' ? 'This composer is disabled' : '',
+                  disabled: key === 'disabled',
+                  reduceMotion: false,
+                  ...(key === 'suggestions'
+                    ? {
+                        suggestions,
+                        placeholderSuggestion: 'Why is every other input box so stiff?',
+                      }
+                    : {}),
+                  ...(key === 'attachments' ? { supportsFiles: true } : {}),
+                  ...(key === 'queued'
+                    ? {
+                        status: 'streaming',
+                        supportsQueue: true,
+                        showQueue: false,
+                        supportsStop: true,
+                      }
+                    : {}),
+                },
+              ],
+            }),
+          ),
         ),
-      ),
     ],
   })),
   update: Composition.makeUpdate({
@@ -242,6 +248,7 @@ export const layer = Root.makeLayer({
       TooltipLayer,
       ThinkingLayer,
       PreviewControlsLayer,
+      MessageTranscriptExampleLayer,
     ),
   ),
 )

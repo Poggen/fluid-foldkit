@@ -1,3 +1,4 @@
+import { MessageTranscriptExampleBlock } from './message-transcript-example'
 import { ComponentPresentation } from '../settings'
 import { Clock, Effect, Queue, Schema, Stream } from 'effect'
 import { Block } from 'foldkit'
@@ -33,6 +34,7 @@ export const AuthoredMessagesBlock = Block.make('AuthoredMessages', {
   key,
   InitArgs: Schema.Tuple([]),
   Model: Schema.Struct({
+    transcript: MessageTranscriptExampleBlock.Model,
     composers: Schema.Record(Schema.String, InputMessageBlock.Model),
     documentationTabs: Schema.Record(Schema.String, PreviewControlsBlock.Model),
     chats: Schema.Record(Schema.String, ChatMessageBlock.Model),

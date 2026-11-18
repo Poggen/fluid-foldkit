@@ -1,3 +1,4 @@
+import { renderDataComponent } from './data-components-view'
 import { Match, Option } from 'effect'
 import { createKeyedLazy } from 'foldkit/html'
 import type { FluidConfiguration } from '../../playground/configuration'
@@ -57,6 +58,9 @@ export const makeConfiguredView = (events: ConfiguredViewEvents) => {
     h: FluidViewBuilder,
   ) =>
     Match.value(configuration).pipe(
+      Match.tag('code-block', 'context-menu', 'data-table', (c) =>
+        renderDataComponent(model, c, settings, h),
+      ),
       Match.tag('input', 'textarea', 'field', 'input-group', 'checkbox', 'switch', 'select', (c) =>
         input(model, c, settings, h),
       ),

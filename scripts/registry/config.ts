@@ -2,10 +2,12 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import { readFileSync } from 'node:fs'
 import { Schema } from 'effect'
+import { release } from '../../lib/registry-release.ts'
+
+export { release }
 
 export const root = fileURLToPath(new URL('../..', import.meta.url))
 export const outputRoot = process.env.REGISTRY_OUTPUT ?? path.join(root, 'public')
-export const release = '0.1.0-preview.1'
 export const origin = process.env.REGISTRY_ORIGIN ?? 'http://127.0.0.1:5280'
 export const families = ['fluid', 'charts'] as const
 export type Family = (typeof families)[number]

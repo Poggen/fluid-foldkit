@@ -11,6 +11,7 @@ export const fluidFootprints: Readonly<
   banner: { size: 'medium', side: 'right' },
   accordion: { size: 'medium' },
   'carousel-dots': { size: 'large', side: 'right' },
+  'data-table': { size: 'large' },
   table: { size: 'medium' },
   calendar: { size: 'medium', side: 'right' },
   input: { size: 'small' },

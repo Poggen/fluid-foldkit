@@ -30,6 +30,7 @@ const sourcePreviewClasses: Readonly<Record<string, string>> = {
   'date-picker': 'flex w-full max-w-[280px] justify-center',
   combobox: 'w-full max-w-[280px]',
   table: 'w-full max-w-[420px]',
+  'data-table': 'flex w-full max-w-[640px] flex-col gap-3',
   banner: 'w-full max-w-[440px]',
   'ask-user-questions': 'w-full max-w-[420px] self-end',
   'thinking-steps': 'w-full max-w-[380px]',
@@ -41,6 +42,7 @@ const stagePadding = (page: ComponentPage) => {
   switch (page.slug) {
     case 'sidebar':
       return 'px-4 py-8'
+    case 'data-table':
     case 'table':
       return 'px-6 py-6'
     case 'card':

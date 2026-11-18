@@ -1,3 +1,4 @@
+import { PreviewHeights } from './geometry'
 import { Schema } from 'effect'
 import { Block } from 'foldkit'
 import { defineInMessageUnion, defineMessageUnion } from 'foldkit/message'
@@ -14,6 +15,7 @@ import { ComposerSamplesQuery } from '../reference/message-assets-query'
 const key = Symbol('Gallery')
 export const Message = defineMessageUnion({
   CompletedSignalReady: {},
+  MeasuredPreviewHeights: { heights: PreviewHeights, admissionRevision: Schema.Natural },
   ObservedPreviews: { hrefs: Schema.Array(Schema.String), admissionRevision: Schema.Natural },
 })
 export const GalleryBlock = Block.make('Gallery', {
@@ -40,6 +42,8 @@ export const GalleryBlock = Block.make('Gallery', {
   }),
   Model: Schema.Struct({
     preview: PreviewOptions,
+    previewHeights: PreviewHeights,
+    reservedPreviewHeights: PreviewHeights,
     composerSamples: ComposerSamplesQuery.Model,
     embeddedConfiguration: Schema.Option(PlaygroundConfiguration),
     embeddedLocationConfiguration: Schema.Option(PlaygroundConfiguration),

@@ -1,3 +1,6 @@
+import { layer as CodeBlockExampleLayer } from '../../../../registry/fluid/examples/src/code-block-example-block'
+import { layer as ContextMenuExampleLayer } from '../../../../registry/fluid/examples/src/context-menu-example-block'
+import { layer as DataTableExampleLayer } from '../../../../registry/fluid/examples/src/data-table-example-block'
 import { layer as ScrollAreaLayer } from '@foldkit-visuals/fluid/scroll-area'
 import { ConfiguredSidebarLayer } from './blocks'
 import { ConfiguredSidebarBinding } from './configured-sidebar-binding'
@@ -202,6 +205,9 @@ export const layer = Layer.suspend(() =>
   Layer.provide(
     Layer.mergeAll(
       ConfiguredSidebarLayer,
+      CodeBlockExampleLayer,
+      ContextMenuExampleLayer,
+      DataTableExampleLayer,
       AccordionLayer,
       navMenuLayer,
       BannerLayer,

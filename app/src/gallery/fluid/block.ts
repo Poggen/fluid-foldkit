@@ -1,3 +1,6 @@
+import { CodeBlockExampleBlock } from '../../../../registry/fluid/examples/src/code-block-example-block'
+import { ContextMenuExampleBlock } from '../../../../registry/fluid/examples/src/context-menu-example-block'
+import { DataTableExampleBlock } from '../../../../registry/fluid/examples/src/data-table-example-block'
 import { ScrollAreaBlock } from '@foldkit-visuals/fluid/scroll-area'
 import { ConfiguredSidebarBlock } from './blocks'
 import { AccordionGroupBlock as AccordionBlock } from '@foldkit-visuals/fluid/accordion'
@@ -50,6 +53,7 @@ export const FluidGalleryFlags = Schema.Struct({
   calendar: GalleryFlags.fields.calendar,
   calendarSelections: GalleryFlags.fields.calendarSelections,
   picker: GalleryFlags.fields.picker,
+  componentSlug: GalleryFlags.fields.componentSlug,
 })
 export interface FluidGalleryInputs {
   readonly settings: Settings
@@ -81,6 +85,9 @@ export const FluidGalleryBlock = Block.make('FluidGallery', {
   ChildInitContext: FluidGalleryFlags,
   Model: Schema.Struct({
     isPlayground: Schema.Boolean,
+    codeBlockExample: Schema.Option(CodeBlockExampleBlock.Model),
+    contextMenuExample: Schema.Option(ContextMenuExampleBlock.Model),
+    dataTableExample: Schema.Option(DataTableExampleBlock.Model),
     configuredSidebar: Schema.Option(ConfiguredSidebarBlock.Model),
     cardSelectedIndex: Schema.Natural,
     cardDismissedIndices: Schema.Array(Schema.Natural),
@@ -176,6 +183,8 @@ export const FluidGalleryBlock = Block.make('FluidGallery', {
   }),
   effects: Block.makeEffectsContract<
     never,
+    | Block.FactsOf<typeof CodeBlockExampleBlock>['programRequirements']
+    | Block.FactsOf<typeof DataTableExampleBlock>['programRequirements']
     | SiteEnvironment
     | Block.FactsOf<typeof InputBlock>['programRequirements']
     | Block.FactsOf<typeof CarouselDotsBlock>['programRequirements']

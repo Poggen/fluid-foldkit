@@ -7,6 +7,7 @@ import { Button } from './button.js'
 import { spring } from './lib/springs.js'
 import { cn } from './lib/utils.js'
 import type { MotionOptions } from './motion.js'
+import { KeyCaps } from './key-cap.js'
 import { resolvePresentation } from './presentation.js'
 import type { Icon, Presentation } from './presentation.js'
 import { askCurrent } from './ask-user-questions-state.js'
@@ -48,7 +49,7 @@ export function askFooter<M>(
     return null
   }
 
-  const { shape, size, icons, reducedMotion } = resolvePresentation(inputs)
+  const { size, icons, reducedMotion } = resolvePresentation(inputs)
   const compact = size.variant === 'compact'
   const backSlot = chrome.find((slot) => slot.key === 'back')
   const skipSlot = chrome.find((slot) => slot.key === 'skip')
@@ -64,22 +65,8 @@ export function askFooter<M>(
   const answer = flow.answers[question.id]
   const error = Option.getOrNull(flow.error)
 
-  const chip = (content: string, inverted = false) =>
-    h.kbd(
-      [
-        h.AriaHidden(true),
-        h.Class(
-          cn(
-            'inline-flex items-center justify-center gap-0.5 px-1 min-w-[18px] h-[18px] text-[length:var(--fs-micro,11px)] leading-none font-sans',
-            inverted
-              ? 'bg-background/15 text-background'
-              : 'bg-foreground/10 text-muted-foreground',
-            shape.bg,
-          ),
-        ),
-      ],
-      [content],
-    )
+  const chip = (keys: string, inverted = false) =>
+    KeyCaps({ keys, tone: inverted ? 'inverted' : 'default', attributes: [h.AriaHidden(true)] }, h)
 
   const keyboardIcon =
     (icon: Icon): Icon =>

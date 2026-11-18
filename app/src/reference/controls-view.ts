@@ -1,3 +1,4 @@
+import { KeyCap } from '@foldkit-visuals/fluid/key-cap'
 import { switchMotion } from '../gallery/fluid/core-bindings'
 import { previewToolbar } from './classes'
 import { Button } from '@foldkit-visuals/fluid/button'
@@ -34,13 +35,15 @@ export const controlsView = (
     [
       h.Class('playground-controls w-full pt-8'),
       h.AriaLabel(`${page.name} props`),
-      // SSR controls stay visible, but must not swallow a press before their handlers exist.
-      ...(ready ? [] : [h.Attribute('inert', '')]),
+      h.DataAttribute('playground-controls-path', path),
       h.OnMount(ShuffleShortcut()),
     ],
     [
       h.div(
-        [h.Class('flex h-8 items-center justify-between pl-2')],
+        [
+          h.Class('flex h-8 items-center justify-between pl-2'),
+          ...(ready ? [] : [h.Attribute('inert', '')]),
+        ],
         [
           h.h3([h.Class(`text-site-caption text-foreground`)], ['Playground variant']),
           Button(
@@ -69,15 +72,13 @@ export const controlsView = (
                       attributes: [h.OnClick(Message.RequestedShuffle()), h.AriaLabel('Shuffle')],
                       trailingIcon: (_options, iconHtml) => shuffleIcon(iconHtml),
                       children: [
-                        h.kbd(
-                          [
-                            h.Class(
-                              // oxlint-disable-next-line shadcn/no-arbitrary-values -- Original lib/docs/playground.tsx:234 at cc276ca0 owns this exact shortcut surface.
-                              'inline-flex h-[18px] min-w-[18px] shrink-0 items-center justify-center bg-[light-dark(rgb(23_23_23/0.08),rgb(245_245_245/0.08))] px-1 font-mono text-site-micro leading-none text-muted-foreground rounded-[2px] pointer-coarse:hidden',
-                            ),
-                            h.AriaHidden(true),
-                          ],
-                          ['X'],
+                        KeyCap(
+                          {
+                            children: 'X',
+                            className: 'pointer-coarse:hidden',
+                            attributes: [h.AriaHidden(true)],
+                          },
+                          h,
                         ),
                       ],
                       render: (attributes, children) =>
@@ -149,7 +150,7 @@ export const controlsView = (
                         key: control.key,
                         slotId: `prop-${control.key}`,
                         model: control.model,
-                        viewInputs: { settings: settings },
+                        viewInputs: { settings: settings, ready },
                       }),
                     ),
                   ],

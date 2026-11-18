@@ -9,6 +9,7 @@ export const sections = [
   { key: 'basic', title: 'Basic', height: 280 },
   { key: 'suggestions', title: 'Suggestions', height: 360 },
   { key: 'attachments', title: 'Attachments', height: 440 },
+  { key: 'transcript', title: 'Scrolling conversation', height: 440 },
   { key: 'queued', title: 'Queued messages', height: 440 },
   { key: 'left', title: 'Left Slot Only', height: 280 },
   { key: 'right', title: 'Right Slot Only', height: 280 },

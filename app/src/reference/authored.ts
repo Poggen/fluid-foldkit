@@ -1,3 +1,5 @@
+import { DataComponents } from './authored-composition'
+import { layer as DataComponentsLayer } from './authored-data-components'
 import { modifyFields } from 'foldkit/struct'
 import { authoredView } from './authored-view'
 import { layer as SidebarsLayer } from './authored-sidebars'
@@ -104,6 +106,7 @@ const reconcilePresentation = (settings: ComponentPresentation) =>
   AuthoredExamplesBlock.makeStep((model) =>
     Update.combineSteps([
       Forms.informOfPage({ slug: model.slug, presentation: settings }),
+      DataComponents.informOfPresentation({ presentation: settings }),
       Controls.informOfPresentation({ presentation: settings }),
       Charts.informOfPresentation({ presentation: settings }),
       Menus.informOfPresentation({ presentation: settings }),
@@ -193,6 +196,7 @@ export const layer = AuthoredExamplesBlock.makeLayer<typeof plans>(plans).pipe(
       AccordionGroupLayer,
       PreviewControlsLayer,
       FormsLayer,
+      DataComponentsLayer,
       ControlsLayer,
       ChartsLayer,
       MenusLayer,

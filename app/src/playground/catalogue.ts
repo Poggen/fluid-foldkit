@@ -172,6 +172,9 @@ const controls: Readonly<Record<string, ReadonlyArray<Control>>> = {
     toggle('showCloseButton', true),
   ],
   table: [size],
+  'data-table': [],
+  'context-menu': [disabled],
+  'code-block': [],
   'carousel-dots': [number('count', 4, 1, 8), toggle('autoplay', true), toggle('loop', true)],
   calendar: [
     choice('type', ['single', 'range'], 'range'),
