@@ -357,11 +357,7 @@ export const componentCatalogue: ReadonlyArray<CatalogueFamily> = [
     ],
     exampleKind: 'focused',
     states: 'Nested groups, shared navigation, trailing actions, resize and responsive drawers.',
-    testOwners: [
-      'nav-menu-authored.test.ts',
-      'sidebar-group-motion.test.ts',
-      'sidebar-recipes.test.ts',
-    ],
+    testOwners: ['nav-menu-authored.test.ts', 'sidebar-recipes.test.ts'],
     note: 'The approved hidden-link Tab exception was verified before canonical consolidation. Rebuilt canonical sidebar checks remain pending.',
   },
   {

@@ -108,6 +108,8 @@ test('native collapse resources consume real resize and current content on reope
     fixture,
     '<main id="style-contract-root" data-fixture="collapse"></main>',
   )
+  const pageErrors: Error[] = []
+  page.on('pageerror', (error) => pageErrors.push(error))
   for (const name of ['accordion', 'thinking', 'sidebar', 'submenu']) {
     const panel = page.locator(`[data-native-collapse="${name}"]`)
     await expect(panel).toHaveCSS('height', '124px')
@@ -115,10 +117,39 @@ test('native collapse resources consume real resize and current content on reope
     await expect(panel).toHaveCSS('height', '204px')
     await page.getByRole('button', { name: `Close ${name}`, exact: true }).click()
     await expect(panel).toHaveCSS('height', '0px')
+    if (name === 'sidebar' || name === 'submenu') await expect(panel).toHaveCSS('opacity', '0')
     await page.getByRole('button', { name: `Reopen ${name}`, exact: true }).click()
     await expect(panel).toHaveCSS('height', '240px')
-    if (name === 'sidebar') await expect(panel).toHaveCSS('overflow', 'visible')
+    if (name === 'sidebar' || name === 'submenu') {
+      await expect(panel).toHaveCSS('opacity', '1')
+      await expect(panel).toHaveCSS('overflow', name === 'sidebar' ? 'visible' : 'hidden')
+      await page.getByRole('button', { name: `Close ${name}`, exact: true }).click()
+      await expect(panel).toHaveCSS('overflow', 'hidden')
+    }
+    const retired = await panel.elementHandle()
     await page.getByRole('button', { name: `Dispose ${name}`, exact: true }).click()
     await expect(panel).toHaveCount(0)
+    if (name === 'sidebar' || name === 'submenu') {
+      if (!retired) throw new Error('Missing retired sidebar panel')
+      const overflow = await retired.evaluate(
+        async (node, attribute) => {
+          if (!(node instanceof HTMLElement)) throw new Error('Expected sidebar element')
+          document.body.append(node)
+          node.style.overflow = 'auto'
+          node.setAttribute(attribute, 'true')
+          const content = node.firstElementChild
+          if (!(content instanceof HTMLElement)) throw new Error('Expected sidebar content')
+          content.style.height = '128px'
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+          )
+          node.remove()
+          return node.style.overflow
+        },
+        name === 'sidebar' ? 'data-sidebar-group-open' : 'data-sidebar-sub-open',
+      )
+      expect(overflow).toBe('auto')
+    }
   }
+  expect(pageErrors).toEqual([])
 })
