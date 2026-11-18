@@ -31,7 +31,7 @@ import { docSection } from '../../../registry/fluid/examples/src/doc-section'
 import { AuthoredCarouselBlock, layer as CarouselLayer } from './authored-carousel'
 import { highlight, target } from '../motion'
 import { ComponentPresentation, presentation } from '../settings'
-import source from './authored-surfaces.ts?raw'
+import { documentationRuntime } from '../documentation-runtime'
 const documentationTabsFor = (
   models: Readonly<Record<string, typeof PreviewControlsBlock.Model.Type>>,
   section: string,
@@ -175,7 +175,7 @@ export const layer = Root.makeLayer({
       ['Basic', 'Empty'].map((title) =>
         docSection(h, {
           title,
-          source,
+          source: documentationRuntime().sources['authored-surfaces'],
           presentation: { context },
           className: 'w-full',
           pane: model.documentationTabs[title]?.tabs.selectedIndex === 1 ? 'code' : 'preview',

@@ -41,7 +41,11 @@ export const informPageViewport = (columns: 1 | 2 | 3) =>
 
 // Accepted route identity owns page Models, even when A→B→A rendering batches away B.
 // Physical Mount resources remain scoped to their rendered elements.
-export const reconcilePageVisit = (options: PreviewOptions, initial?: GalleryFlags) =>
+export const reconcilePageVisit = (
+  options: PreviewOptions,
+  initial?: GalleryFlags,
+  freshLanding = false,
+) =>
   ApplicationBlock.makeStep((model) => {
     const { path, isEmbed } = model
     const page = pageAt(path)
@@ -57,7 +61,7 @@ export const reconcilePageVisit = (options: PreviewOptions, initial?: GalleryFla
         .map((args) => ReferenceQueryBinding.requestCancel(args)),
       ApplicationBlock.makeFieldsStep((current) => ({
         chartStylesActive: () => current.chartStylesActive || page?.family === 'charts',
-        ...(!landing && Option.isSome(current.maybeLandingGallery)
+        ...((!landing || freshLanding) && Option.isSome(current.maybeLandingGallery)
           ? { maybeLandingGallery: () => Option.none() }
           : {}),
         ...(!reference && Option.isSome(current.maybeReference)
@@ -77,7 +81,9 @@ export const reconcilePageVisit = (options: PreviewOptions, initial?: GalleryFla
         if (!landing || Option.isSome(current.maybeLandingGallery)) return { model: current }
         return Update.combineSteps([
           ApplicationBlock.makeStep((parent) =>
-            initAndSet(MaybeLandingGalleryBinding, parent, { args: [flags] }),
+            initAndSet(MaybeLandingGalleryBinding, parent, {
+              args: [{ ...flags, admissionRevision: parent.routeRevision }],
+            }),
           ),
           MaybeLandingGalleryBinding.informOfPresentation({ presentation }),
           ...(current.columns === null

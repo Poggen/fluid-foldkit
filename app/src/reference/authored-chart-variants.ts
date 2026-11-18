@@ -39,7 +39,7 @@ import {
 } from './chart-variant-options'
 import { ComponentPresentation, presentation } from '../settings'
 import { docSection } from '../../../registry/fluid/examples/src/doc-section'
-import source from './chart-variant-options.ts?raw'
+import { documentationRuntime } from '../documentation-runtime'
 const legend = ChartLegend({
   Item: Schema.Struct({ label: Schema.String, value: Schema.Finite, color: Schema.String }),
 })
@@ -204,7 +204,7 @@ const makeView = () => {
         title,
         description,
         children,
-        source,
+        source: documentationRuntime().sources['chart-variant-options'],
         pane: paneForTabIndex(tabs.tabs.selectedIndex),
         tabsId: tabs.tabs.id,
         tabs: h.block(

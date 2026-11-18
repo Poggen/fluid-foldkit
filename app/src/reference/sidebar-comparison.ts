@@ -19,7 +19,7 @@ import { spring, shapeMap, surfaceClasses } from '@foldkit-visuals/fluid/tokens'
 import { docSection } from '../../../registry/fluid/examples/src/doc-section'
 import { ComponentPresentation, presentation } from '../settings'
 import { motion } from '../motion'
-import source from './sidebar-comparison.ts?raw'
+import { documentationRuntime } from '../documentation-runtime'
 const groups: ReadonlyArray<{
   readonly label: string
   readonly items: ReadonlyArray<{ readonly icon: IconName; readonly label: string }>
@@ -407,7 +407,7 @@ const implementation = {
               title: 'No icon rail version?',
               description:
                 'Hot take baked into this component: there’s no icon-only collapsed mode. On purpose. Icon rails look tidy in screenshots but fail in use. Six ambiguous glyphs, and you suddenly need to tooltip most of them until you’ve found the right one.',
-              source,
+              source: documentationRuntime().sources['sidebar-comparison'],
               pane: model.tabs.selectedIndex === 1 ? 'code' : 'preview',
               tabs: h.block(
                 Tabs.embedView({

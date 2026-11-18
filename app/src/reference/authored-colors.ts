@@ -25,7 +25,7 @@ import { docSection } from '../../../registry/fluid/examples/src/doc-section'
 import { motion, highlight, target } from '../motion'
 import { sliderMotion } from '../gallery/fluid/core-bindings'
 import { ComponentPresentation, presentation } from '../settings'
-import source from './authored-colors.ts?raw'
+import { documentationRuntime } from '../documentation-runtime'
 const panels = ['Default', 'With Swatches', 'OKLCH Format', 'Controlled']
 const popovers = ['Popover', 'Removable Trigger']
 const titles = [
@@ -252,7 +252,7 @@ export const layer = Root.makeLayer({
           }
           return docSection(h, {
             title,
-            source,
+            source: documentationRuntime().sources['authored-colors'],
             presentation: { context },
             pane: model.documentationTabs[title]?.tabs.selectedIndex === 1 ? 'code' : 'preview',
             tabsId: previewCodeTabId('color-picker', title),

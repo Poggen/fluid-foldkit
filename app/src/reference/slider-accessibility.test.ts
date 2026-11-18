@@ -2,6 +2,7 @@ import { it } from '@effect/vitest'
 import { Effect, Layer, Schedule, Schema } from 'effect'
 import { Block, Program, Runtime } from 'foldkit'
 import { expect } from 'vitest'
+import { prepareDocumentation } from '../documentation-runtime'
 import { sliderMotion } from '../gallery/fluid/core-bindings'
 import { motion, target } from '../motion'
 import { componentPresentation, defaults } from '../settings'
@@ -36,6 +37,7 @@ const layer = Consumer.makeLayer({
 
 it.live('every rendered showcase slider has an accessible name, including disabled controls', () =>
   Effect.gen(function* () {
+    yield* Effect.promise(() => prepareDocumentation('/components/slider'))
     const container = yield* Effect.acquireRelease(
       Effect.sync(() => {
         const wrapper = document.createElement('div')

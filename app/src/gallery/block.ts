@@ -391,7 +391,7 @@ const implementation = {
         embeddedLocationConfiguration: Option.none(),
         columns: null,
         admitted: fluidPages.slice(0, 5).map((page) => page.href),
-        admissionRevision: 0,
+        admissionRevision: flags.admissionRevision ?? 0,
       },
       childInitContext: { ...flags, preview: {} },
       steps: [Cartesian.informOfPreview({ preview })],

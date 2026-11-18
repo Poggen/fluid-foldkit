@@ -29,7 +29,7 @@ import { docSection } from '../../../registry/fluid/examples/src/doc-section'
 import { motion, target } from '../motion'
 import { reorder } from '../gallery/fluid/interactive-bindings'
 import { presentation } from '../settings'
-import source from './authored-messages.ts?raw'
+import { documentationRuntime } from '../documentation-runtime'
 export const authoredMessageView = (Message: typeof Root.Message) =>
   Composition.makeView.withInputs((model, { settings, ready }, h) => {
     if (!ready) return h.empty
@@ -284,7 +284,7 @@ export const authoredMessageView = (Message: typeof Root.Message) =>
                     return docSection(h, {
                       title: scene.title,
                       children: content,
-                      source,
+                      source: documentationRuntime().sources['authored-messages'],
                       pane:
                         model.documentationTabs[scene.key]?.tabs.selectedIndex === 1
                           ? 'code'

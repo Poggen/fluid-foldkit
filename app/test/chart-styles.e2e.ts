@@ -56,6 +56,7 @@ test('client chart navigation activates styles and retains the same sheet throug
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.goto('/components/input')
+  await page.waitForFunction(() => window.__releaseShowcaseInput === undefined)
   const styles = page.locator('style[data-chart-styles]')
   await expect.poll(() => styles.textContent()).toBe('')
   const node = await styles.elementHandle()

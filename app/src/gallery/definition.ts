@@ -18,7 +18,12 @@ export const Message = defineMessageUnion({
 })
 export const GalleryBlock = Block.make('Gallery', {
   key,
-  InitArgs: Schema.Tuple([GalleryFlags]),
+  InitArgs: Schema.Tuple([
+    Schema.Struct({
+      ...GalleryFlags.fields,
+      admissionRevision: Schema.optionalKey(Schema.Natural),
+    }),
+  ]),
   ChildInitContext: GalleryFlags,
   InMessage: defineInMessageUnion({
     RequestedAdmissionReset: {},

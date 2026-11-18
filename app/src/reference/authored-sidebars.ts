@@ -25,7 +25,7 @@ import { docSection } from '../../../registry/fluid/examples/src/doc-section'
 import { ComponentPresentation, presentation } from '../settings'
 import { motion, highlight } from '../motion'
 import { switchMotion } from '../gallery/fluid/core-bindings'
-import source from './sidebar-scene.ts?raw'
+import { documentationRuntime } from '../documentation-runtime'
 const key = Symbol('AuthoredSidebars')
 export const AuthoredSidebarsBlock = Block.make('AuthoredSidebars', {
   key,
@@ -150,7 +150,7 @@ const implementation = {
       return docSection(h, {
         title: scene.section,
         description: descriptions[scene.section] ?? '',
-        source,
+        source: documentationRuntime().sources['sidebar-scene'],
         pane: model.docTabs[scene.key]?.tabs.selectedIndex === 1 ? 'code' : 'preview',
         tabs: documentationTabs(scene.key),
         tabsId: previewCodeTabId('sidebars', scene.key),
@@ -182,7 +182,7 @@ const implementation = {
           title: 'Inside a dialog',
           description:
             'A settings dialog with the sidebar inside. 3 props make it fit: collapsible="none" drops the rail and the drawer, persist={false} skips the cookie, and h-full pins it to the dialog’s height. Below sm a Select takes over.',
-          source,
+          source: documentationRuntime().sources['sidebar-scene'],
           pane: model.docTabs.dialog?.tabs.selectedIndex === 1 ? 'code' : 'preview',
           tabs: documentationTabs('dialog'),
           tabsId: previewCodeTabId('sidebars', 'dialog'),

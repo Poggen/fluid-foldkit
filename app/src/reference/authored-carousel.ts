@@ -25,7 +25,7 @@ import { spring } from '@foldkit-visuals/fluid/tokens'
 import { docSection } from '../../../registry/fluid/examples/src/doc-section'
 import { motion, target, highlight } from '../motion'
 import { ComponentPresentation, presentation } from '../settings'
-import source from './authored-carousel.ts?raw'
+import { documentationRuntime } from '../documentation-runtime'
 const labels = ['Inbox', 'Drafts', 'Sent', 'Archive']
 const documentationTabsFor = (
   models: Readonly<Record<string, typeof PreviewControlsBlock.Model.Type>>,
@@ -191,7 +191,7 @@ export const layer = Root.makeLayer({
               key === 'Static'
                 ? 'Hover a dot to see its click area, then click it. The highlight glides from dot to dot.'
                 : 'Add autoplay and the pill fills, then the next slide comes in. Hover the slide to pause. Reduced motion turns the timer off.',
-            source,
+            source: documentationRuntime().sources['authored-carousel'],
             presentation: { context },
             pane: model.documentationTabs[key]?.tabs.selectedIndex === 1 ? 'code' : 'preview',
             tabsId: previewCodeTabId('carousel-dots', key),

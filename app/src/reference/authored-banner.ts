@@ -29,7 +29,7 @@ import { docSection } from '../../../registry/fluid/examples/src/doc-section'
 import { target } from '../motion'
 import { bannerMotion } from '../gallery/fluid/core-bindings'
 import { ComponentPresentation, presentation } from '../settings'
-import source from './authored-banner.ts?raw'
+import { documentationRuntime } from '../documentation-runtime'
 const statuses: ReadonlyArray<BannerStatus> = ['default', 'info', 'success', 'warning', 'error']
 const bannerKeys = [
   ...statuses.flatMap((status) => [`low-${status}`, `high-${status}`]),
@@ -221,7 +221,7 @@ export const layer = Root.makeLayer({
         children,
         description,
         className,
-        source,
+        source: documentationRuntime().sources['authored-banner'],
         presentation: { context },
         pane: model.documentationTabs[title]?.tabs.selectedIndex === 1 ? 'code' : 'preview',
         tabsId: previewCodeTabId('banner', title),

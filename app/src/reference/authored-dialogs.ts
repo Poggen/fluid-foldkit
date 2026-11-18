@@ -30,7 +30,7 @@ import { docSection } from '../../../registry/fluid/examples/src/doc-section'
 import { motion, highlight } from '../motion'
 import { switchMotion } from '../gallery/fluid/core-bindings'
 import { ComponentPresentation, presentation } from '../settings'
-import source from './authored-dialogs.ts?raw'
+import { documentationRuntime } from '../documentation-runtime'
 const sizes = [
   {
     key: 'small',
@@ -244,7 +244,7 @@ export const layer = Root.makeLayer({
         title,
         children,
         description,
-        source,
+        source: documentationRuntime().sources['authored-dialogs'],
         presentation: { context },
         className: 'flex flex-wrap items-center gap-2',
         pane: model.docTabs[title]?.tabs.selectedIndex === 1 ? 'code' : 'preview',

@@ -25,7 +25,7 @@ import { target } from '../motion'
 import type { Html } from 'foldkit/html'
 import { ComponentPresentation, presentation } from '../settings'
 import * as Scenes from './chart-scenes'
-import source from './chart-scenes.ts?raw'
+import { documentationRuntime } from '../documentation-runtime'
 const key = Symbol('AuthoredCharts')
 export const AuthoredChartsBlock = Block.make('AuthoredCharts', {
   key,
@@ -284,7 +284,16 @@ const makeView = () => {
               h.Class(pane === 'code' ? '' : 'hidden'),
             ],
             pane === 'code'
-              ? [codeBlock({ code: source, label: `${title} code`, context }, h)]
+              ? [
+                  codeBlock(
+                    {
+                      code: documentationRuntime().sources['chart-scenes'],
+                      label: `${title} code`,
+                      context,
+                    },
+                    h,
+                  ),
+                ]
               : [],
           ),
         ],

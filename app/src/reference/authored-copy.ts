@@ -21,7 +21,7 @@ import { docSection } from '../../../registry/fluid/examples/src/doc-section'
 import { ComponentPresentation, presentation } from '../settings'
 import { motion, target } from '../motion'
 import { reorder } from '../gallery/fluid/interactive-bindings'
-import source from './authored-copy.ts?raw'
+import { documentationRuntime } from '../documentation-runtime'
 const command = 'npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json'
 const scenes = [
   { title: 'Basic', keys: ['basic'] },
@@ -125,7 +125,7 @@ export const layer = Root.makeLayer({
       scenes.map((scene) =>
         docSection(h, {
           title: scene.title,
-          source,
+          source: documentationRuntime().sources['authored-copy'],
           presentation: appearance,
           pane: model.docTabs[scene.title]?.tabs.selectedIndex === 1 ? 'code' : 'preview',
           tabsId: previewCodeTabId('copy', scene.title),

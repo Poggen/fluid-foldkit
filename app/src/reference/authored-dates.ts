@@ -30,7 +30,7 @@ import type { DatePickerViewInputs } from '@foldkit-visuals/fluid/date-picker'
 import { docSection } from '../../../registry/fluid/examples/src/doc-section'
 import { ComponentPresentation, presentation } from '../settings'
 import { CalendarEnvironmentLayer } from '../gallery/flags'
-import source from './authored-dates.ts?raw'
+import { documentationRuntime } from '../documentation-runtime'
 const cases = [
   {
     key: 'date',
@@ -272,7 +272,7 @@ export const layer = Layer.unwrap(
                       docSection(h, {
                         title: scene.title,
                         description: scene.description,
-                        source,
+                        source: documentationRuntime().sources['authored-dates'],
                         presentation: { context },
                         pane:
                           model.docTabs[scene.key]?.tabs.selectedIndex === 1 ? 'code' : 'preview',

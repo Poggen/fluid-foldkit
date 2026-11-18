@@ -1,4 +1,7 @@
+import { prepareDocumentation } from './documentation-runtime'
 import { inject } from '@vercel/analytics'
+import { releaseEarlyInput, cancelEarlyInput } from './early-input'
+import { showStartupFailure } from './startup-failure'
 import { messageAssetsLayer } from './reference/message-assets'
 import { createQueuedStackFramesLayer } from '@foldkit-visuals/fluid/queued-stack'
 import { questionValidators } from './reference/authored-questions'
@@ -138,6 +141,7 @@ const environment = Layer.succeed(SiteEnvironment, {
                 : 'light'
               : settings.theme
           publishRootPresentation(document.documentElement, settings, theme, fontFailed)
+          releaseEarlyInput(window)
         }),
       ),
     ),
@@ -215,12 +219,20 @@ const hydrate = (diagnostics?: ReturnType<typeof createBrowserDiagnostics>) =>
     ),
   )
 
-if (import.meta.env.VITE_SHOWCASE_TRACE === '1') {
-  void import('./diagnostics/browser').then((module) =>
-    hydrate(module.createBrowserDiagnostics(window, document)),
-  )
-} else {
-  hydrate()
-}
+void prepareDocumentation(location.pathname).then(
+  () => {
+    if (import.meta.env.VITE_SHOWCASE_TRACE === '1') {
+      void import('./diagnostics/browser').then((module) =>
+        hydrate(module.createBrowserDiagnostics(window, document)),
+      )
+    } else {
+      hydrate()
+    }
+  },
+  () => {
+    cancelEarlyInput(window)
+    showStartupFailure(document, () => window.location.reload())
+  },
+)
 
 if (import.meta.env.VITE_VERCEL_ANALYTICS === '1') inject({ mode: 'production' })

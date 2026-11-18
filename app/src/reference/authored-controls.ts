@@ -49,7 +49,7 @@ import {
   radioLabels,
   badgeSamples,
 } from './control-scenes'
-import source from './authored-controls.ts?raw'
+import { documentationRuntime } from '../documentation-runtime'
 const key = Symbol('AuthoredControls')
 export const AuthoredControlsBlock = Block.make('AuthoredControls', {
   key,
@@ -277,7 +277,7 @@ export const layer = Root.makeLayer({
         title,
         children,
         className,
-        source,
+        source: documentationRuntime().sources['authored-controls'],
         presentation: { context },
         pane:
           model.docTabs[`${inputs.slug}:${title}`]?.tabs.selectedIndex === 1 ? 'code' : 'preview',

@@ -37,7 +37,7 @@ import {
   chipLeftQuestions,
 } from './question-data'
 import { stackedQuestions } from './stacked-question-data'
-import source from './authored-questions.ts?raw'
+import { documentationRuntime } from '../documentation-runtime'
 export const questionScenes: ReadonlyArray<{
   readonly key: string
   readonly title: string
@@ -253,7 +253,7 @@ export const layer = Root.makeLayer({
                   : [
                       docSection(h, {
                         title: scene.title,
-                        source,
+                        source: documentationRuntime().sources['authored-questions'],
                         presentation: { context },
                         pane:
                           model.documentationTabs[scene.key]?.tabs.selectedIndex === 1

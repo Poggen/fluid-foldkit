@@ -49,6 +49,7 @@ import { Update, Url } from 'foldkit'
 import { UrlRequest } from 'foldkit/navigation'
 import {
   Apply,
+  PrepareRoute,
   CopyInstall,
   FinishCopyFeedback,
   Navigate,
@@ -243,6 +244,8 @@ const init = ApplicationComposition.makeInit((flags, url) => {
   return {
     model: {
       path,
+      routeRevision: 0,
+      documentation: path === '/' ? 'unloaded' : 'ready',
       hash: new URL(href).hash,
       isEmbed: embed,
       chartStylesActive: false,
@@ -275,6 +278,13 @@ const init = ApplicationComposition.makeInit((flags, url) => {
     steps: [reconcilePageVisit(previewOptionsFromUrl(href), flags.page), requestFont(settings)],
   }
 })
+const acceptUrl = (url: typeof Url.Url.Type, freshLanding = false) => {
+  const href = Url.toString(url)
+  return Update.combineSteps([
+    changeSettings(settingsFromLocation(href), 'none', pathFromUrl(url), new URL(href).hash),
+    reconcilePageVisit(previewOptionsFromUrl(href), undefined, freshLanding),
+  ])
+}
 const update = ApplicationComposition.makeUpdate.compose(
   ApplicationComposition.makeUpdate({
     PressedSettingsShortcut: ApplicationBlock.makeStep((model, { key }) => {
@@ -352,14 +362,33 @@ const update = ApplicationComposition.makeUpdate.compose(
       ]),
     ),
     ChangedUrl: ApplicationBlock.makeStep((model, { url }) => {
-      const href = Url.toString(url)
-      const path = pathFromUrl(url)
-      const settings = settingsFromLocation(href)
+      const revision = model.routeRevision + 1
+      const landing = pathFromUrl(url) === '/'
+      const load = !landing && model.documentation !== 'ready'
       return Update.combineSteps([
-        changeSettings(settings, 'none', path, new URL(href).hash),
-        reconcilePageVisit(previewOptionsFromUrl(href)),
+        ApplicationBlock.makeFieldsStep(() => ({
+          routeRevision: () => revision,
+          pendingSettingsUrl: () => Option.none(),
+          documentation: () =>
+            model.documentation === 'ready' ? 'ready' : load ? 'loading' : 'unloaded',
+        })),
+        load
+          ? ApplicationBlock.makeCommandsStep(() => [PrepareRoute({ url, revision })])
+          : acceptUrl(url, landing && model.documentation === 'loading'),
       ])
     }),
+    PreparedUrl: ApplicationBlock.makeStep((model, { url, revision, success }) =>
+      revision !== model.routeRevision
+        ? { model }
+        : success
+          ? Update.combineSteps([
+              ApplicationBlock.makeFieldsStep(() => ({ documentation: () => 'ready' })),
+              acceptUrl(url),
+            ])
+          : ApplicationBlock.makeCommandsStep(() => [
+              Navigate({ href: Url.toString(url), external: true }),
+            ]),
+    ),
     SettledSettingsUrl: settledSettingsUrl,
     CompletedNavigate: ApplicationBlock.makeNoopStep(),
     CompletedApply: ApplicationBlock.makeNoopStep(),
@@ -422,6 +451,7 @@ const plans = Effect.gen(function* () {
     subscriptions: viewportSubscriptions,
     EffectsLayer: Layer.mergeAll(
       Navigate.layer,
+      PrepareRoute.layer,
       Apply.layer,
       CopyInstall.layer,
       FinishCopyFeedback.layer,

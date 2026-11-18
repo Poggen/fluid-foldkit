@@ -41,7 +41,7 @@ import { docSection } from '../../../registry/fluid/examples/src/doc-section'
 import { motion } from '../motion'
 import { ComponentPresentation, presentation } from '../settings'
 import { items, suggestions, tabs, types, sorts, sections } from './command-scenes'
-import source from './authored-commands.ts?raw'
+import { documentationRuntime } from '../documentation-runtime'
 const key = Symbol('AuthoredCommands')
 export const AuthoredCommandsBlock = Block.make('AuthoredCommands', {
   key,
@@ -372,7 +372,7 @@ export const layer = Root.makeLayer({
             title: scene.title,
             className: 'flex flex-wrap items-center gap-3',
             description: scene.description,
-            source,
+            source: documentationRuntime().sources['authored-commands'],
             presentation: { context },
             pane: model.docTabs[scene.key]?.tabs.selectedIndex === 1 ? 'code' : 'preview',
             tabs: documentationTabs(scene.key),

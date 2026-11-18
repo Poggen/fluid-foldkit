@@ -24,7 +24,7 @@ import { motion } from '../motion'
 import { ComponentPresentation, presentation } from '../settings'
 import { selectScenes, comboScenes } from './choice-scenes'
 import type { ChoiceScene } from './choice-scenes'
-import source from './authored-choices.ts?raw'
+import { documentationRuntime } from '../documentation-runtime'
 const key = Symbol('AuthoredChoices')
 export const AuthoredChoicesBlock = Block.make('AuthoredChoices', {
   key,
@@ -304,7 +304,7 @@ const makeView = () => {
         return docSection(h, {
           title: scene.title,
           ...(scene.description === undefined ? {} : { description: scene.description }),
-          source,
+          source: documentationRuntime().sources['authored-choices'],
           presentation: { context },
           pane: tabs?.tabs.selectedIndex === 1 ? 'code' : 'preview',
           tabsId: previewCodeTabId('choices', section),

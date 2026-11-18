@@ -16,7 +16,7 @@ import type { ApplicationComposition, applicationViewBindings } from './applicat
 import { ApplicationBlock } from './application-contract'
 import type { Message } from './application-contract'
 import { pageAt } from '../../lib/catalogue'
-import { articleAt, articleView } from './docs'
+import { documentationRuntime } from './documentation-runtime'
 import { systemAt } from './system'
 import { hero } from './hero'
 import { motion } from './motion'
@@ -148,6 +148,8 @@ export const makeRenderApplication = (bindings: typeof applicationViewBindings) 
     const context = presentation(settings)
     const page = pageAt(model.path)
     const landing = model.path === '/'
+    const article =
+      !landing && page === undefined ? documentationRuntime().articleAt(model.path) : undefined
     const reference = Option.getOrUndefined(model.maybeReference)
     const referenceGallery = Option.getOrUndefined(model.maybeReferenceGallery)
     const landingGallery = Option.getOrUndefined(model.maybeLandingGallery)
@@ -251,8 +253,8 @@ export const makeRenderApplication = (bindings: typeof applicationViewBindings) 
                 }),
               ),
             ]
-          : articleAt(model.path) !== undefined
-            ? [articleView(model.path, settings, h)]
+          : article !== undefined
+            ? [documentationRuntime().articleView(model.path, settings, h)]
             : [
                 h.header(
                   [h.Class(applicationClasses.pageHeading)],
@@ -264,7 +266,7 @@ export const makeRenderApplication = (bindings: typeof applicationViewBindings) 
                 ),
               ]
     return {
-      title: `${page?.name ?? articleAt(model.path)?.title ?? (landing ? 'Fluid × Bklit' : 'Page not found')} · Fluid Foldkit`,
+      title: `${page?.name ?? article?.title ?? (landing ? 'Fluid × Bklit' : 'Page not found')} · Fluid Foldkit`,
       body: motion.root(
         h.div(
           [
@@ -338,6 +340,7 @@ export const makeRenderApplication = (bindings: typeof applicationViewBindings) 
             h.main(
               [
                 h.Id('content'),
+                h.AriaBusy(model.documentation === 'loading'),
                 h.Class(
                   `relative flex min-h-0 w-full min-w-0 flex-1 flex-col bg-background site-content ${page === undefined ? '' : 'detail-page'}`,
                 ),

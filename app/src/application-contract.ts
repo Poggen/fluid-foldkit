@@ -27,6 +27,11 @@ const key = Symbol('ShowcaseApplication')
 export const Message = defineMessageUnion({
   ClickedLink: { request: UrlRequest },
   ChangedUrl: { url: Url.Url },
+  PreparedUrl: {
+    url: Url.Url,
+    revision: Schema.Natural,
+    success: Schema.Boolean,
+  },
   CompletedNavigate: {},
   CompletedApply: {},
   SettledSettingsUrl: { revision: Schema.Natural },
@@ -58,6 +63,8 @@ export const ApplicationBlock = Block.make('Application', {
   }),
   Model: Schema.Struct({
     path: Schema.String,
+    routeRevision: Schema.Natural,
+    documentation: Schema.Literals(['unloaded', 'loading', 'ready']),
     hash: Schema.String,
     isEmbed: Schema.Boolean,
     chartStylesActive: Schema.Boolean,

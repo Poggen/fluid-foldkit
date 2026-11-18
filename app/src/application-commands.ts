@@ -1,3 +1,6 @@
+import { pathFromUrl } from './route'
+import { prepareDocumentation } from './documentation-runtime'
+import { Url } from 'foldkit'
 import { Effect, Option, Schema, Stream } from 'effect'
 import { load, pushUrl, replaceUrl } from 'foldkit/navigation'
 import { ApplicationBlock, Message, PendingSettingsUrl } from './application-contract'
@@ -7,6 +10,23 @@ import { Settings } from './settings'
 import { CopySource } from './copy-feedback'
 import { buildInstallBrief } from './install-brief'
 import { Render } from 'foldkit'
+
+export const PrepareRoute = ApplicationBlock.makeCommand('PrepareRoute', {
+  args: {
+    url: Url.Url,
+    revision: Schema.Natural,
+  },
+  messages: [Message.PreparedUrl],
+  *handler() {
+    return (route) =>
+      Effect.tryPromise(() => prepareDocumentation(pathFromUrl(route.url))).pipe(
+        Effect.match({
+          onSuccess: () => Message.PreparedUrl({ ...route, success: true }),
+          onFailure: () => Message.PreparedUrl({ ...route, success: false }),
+        }),
+      )
+  },
+})
 
 export const Navigate = ApplicationBlock.makeCommand('Navigate', {
   args: {
