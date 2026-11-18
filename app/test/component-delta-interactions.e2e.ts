@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { expectUpstreamHomeTable } from './component-delta-home-fixture'
 
 test.describe.configure({ mode: 'parallel' })
@@ -356,29 +356,50 @@ test('DataTable collapsed search supports Escape and ArrowDown into the first ro
   await expect(table.locator('tbody [data-grid-cell]').first()).toBeFocused()
 })
 
-test('DataTable live controls preserve pagination and apply row and loading options', async ({
-  page,
-}) => {
+async function openTablePlayground(page: Page) {
   await page.goto('/components/data-table')
   const preview = page
     .getByRole('region', { name: 'Playground', exact: true })
     .locator('.reference-preview')
   const table = preview.locator('[data-fluid-data-table]')
-  const props = page.getByRole('complementary', { name: 'DataTable props', exact: true })
+  const props = page
+    .locator('#site-customizer')
+    .getByRole('complementary', { name: 'DataTable props', exact: true })
+  return { preview, table, props }
+}
+
+test('DataTable keeps the current page on wrap changes and exposes all rows when paging is disabled', async ({
+  page,
+}) => {
+  const { preview, table, props } = await openTablePlayground(page)
   await preview.getByRole('button', { name: 'Next page', exact: true }).click()
   await expect(preview).toContainText('Page 2 of 4')
-  await props.getByRole('switch', { name: 'Text wrap', exact: true }).click()
+  const wrap = props.getByRole('switch', { name: 'Text wrap', exact: true })
+  await wrap.click()
+  await expect(wrap).toHaveAttribute('aria-checked', 'true')
   await expect(preview).toContainText('Page 2 of 4')
   await props.getByRole('switch', { name: 'Pagination', exact: true }).click()
   await expect(table.locator('tbody [data-grid-body-row]')).toHaveCount(37)
+})
+
+test('DataTable can disable selection and editing from its live controls', async ({ page }) => {
+  const { table, props } = await openTablePlayground(page)
+  await expect(table.getByRole('checkbox').first()).toBeVisible()
   await props.getByRole('switch', { name: 'Row selection', exact: true }).click()
   await expect(table.getByRole('checkbox')).toHaveCount(0)
-  await props.getByRole('switch', { name: 'Editable cells', exact: true }).click()
+  const editable = props.getByRole('switch', { name: 'Editable cells', exact: true })
+  await editable.click()
+  await expect(editable).toHaveAttribute('aria-checked', 'false')
   await table.locator('tbody td[data-grid-column="name"]').first().click()
   await expect(table.locator('[data-grid-rich-editor]')).toHaveCount(0)
-  await props.getByRole('switch', { name: 'Loading', exact: true }).click()
+})
+
+test('DataTable leaves its loading state and renders the empty result', async ({ page }) => {
+  const { table, props } = await openTablePlayground(page)
+  const loading = props.getByRole('switch', { name: 'Loading', exact: true })
+  await loading.click()
   await expect(table).toHaveAttribute('aria-busy', 'true')
-  await props.getByRole('switch', { name: 'Loading', exact: true }).click()
+  await loading.click()
   await expect(table).toHaveAttribute('aria-busy', 'false')
   await props.getByRole('switch', { name: 'Empty', exact: true }).click()
   await expect(table.getByRole('cell', { name: 'No results', exact: true })).toBeVisible()
