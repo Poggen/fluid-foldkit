@@ -40,23 +40,10 @@ export const hierarchy = {
   ],
 }
 export const flowData: SankeyChartProps['data'] = {
-  nodes: [
-    { name: 'Search' },
-    { name: 'Direct' },
-    { name: 'Discover' },
-    { name: 'Explore' },
-    { name: 'Create' },
-    { name: 'Return' },
-  ],
+  nodes: [{ name: 'Visits' }, { name: 'New' }, { name: 'Returning' }],
   links: [
-    { source: 0, target: 2, value: 50 },
-    { source: 0, target: 3, value: 20 },
-    { source: 1, target: 2, value: 25 },
-    { source: 1, target: 3, value: 15 },
-    { source: 2, target: 3, value: 30 },
-    { source: 2, target: 5, value: 45 },
-    { source: 3, target: 4, value: 55 },
-    { source: 3, target: 5, value: 10 },
+    { source: 0, target: 1, value: 70 },
+    { source: 0, target: 2, value: 30 },
   ],
 }
 const Position = Schema.Array(Schema.Finite)
@@ -124,8 +111,8 @@ export const sunProps = {
 export const sankeyProps = {
   data: flowData,
   aspectRatio: '2 / 1',
-  margin: { left: 55, right: 55 },
-  children: [SankeyNode(), SankeyLink(), SankeyTooltip()],
+  margin: { top: 12, right: 75, bottom: 16, left: 60 },
+  children: [SankeyNode({ formatValue: String }), SankeyLink(), SankeyTooltip()],
 } satisfies SankeyChartProps
 export const mapProps = {
   data: geography,

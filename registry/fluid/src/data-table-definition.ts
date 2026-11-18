@@ -330,24 +330,28 @@ export const Table = DataTableBlock.makeRequiredFieldBinding(TableBlock, {
 })
 export type DataTableModel = typeof Model.Type
 
-export const HeaderMenu = DataTableBlock.makeRequiredFieldBinding(DropdownMenuBlock, {
+const HeaderMenuBinding = DataTableBlock.makeRequiredFieldBinding(DropdownMenuBlock, {
   field: 'headerMenu',
   init: {
     contextToArgs: (config: DataTableConfig) => [{ id: `${config.id}-header-menu`, open: false }],
   },
-}).withOutMessagePolicy({
+})
+export const HeaderMenu = HeaderMenuBinding.withOutMessagePolicy({
   fold: DataTableBlock.makeOutMessageFold(DropdownMenuBlock, {
     Events: ({ events }) =>
-      DataTableBlock.makeStep((model) => ({
-        model:
-          events.some((event) => event._tag === 'OpenChanged' && !event.open) &&
-          Option.getOrNull(model.menu)?.kind === 'column'
-            ? { ...model, menu: Option.none() }
-            : events.some((event) => event._tag === 'OpenChanged' && event.open) &&
-                Option.isSome(model.headerColumnId)
-              ? { ...model, menu: Option.some({ kind: 'column', id: model.headerColumnId.value }) }
-              : model,
-      })),
+      DataTableBlock.makeStep((model) => {
+        const change = events.find((event) => event._tag === 'OpenChanged')
+        if (!change || Option.isNone(model.headerColumnId)) return DataTableBlock.makeNoopStep()
+        if (!change.open && Option.getOrNull(model.menu)?.kind !== 'column')
+          return DataTableBlock.makeNoopStep()
+        const menu = change.open
+          ? Option.some({ kind: 'column' as const, id: model.headerColumnId.value })
+          : Option.none()
+        return Update.combineSteps([
+          DataTableBlock.makeFieldsStep(() => ({ menu: () => menu })),
+          HeaderMenuBinding.requestControlledOpen({ control: Option.some(change.open) }),
+        ])
+      }),
   }),
 })
 

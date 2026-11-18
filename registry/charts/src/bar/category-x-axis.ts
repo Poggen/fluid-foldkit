@@ -23,10 +23,19 @@ function labelsFor(
 ) {
   if (axis === undefined || axis.type === 'number' || !snapshot.bandWidth) return []
   const count = snapshot.categories.length
+  const spacing = Math.abs((snapshot.labelXs[1] ?? 0) - (snapshot.labelXs[0] ?? 0))
+  const labelWidth = snapshot.categories.reduce(
+    (width, label) => Math.max(width, label.length * 7.2),
+    0,
+  )
   const step =
-    axis.showAllLabels === true || count <= (axis.maxLabels ?? 12)
+    axis.showAllLabels === true
       ? 1
-      : Math.ceil(count / (axis.maxLabels ?? 12))
+      : Math.max(
+          1,
+          Math.ceil(count / (axis.maxLabels ?? 12)),
+          spacing > 0 ? Math.ceil((labelWidth + 8) / spacing) : 1,
+        )
   const crosshair = focused === null ? undefined : snapshot.focusXs[focused]
   const half = axis.tickerHalfWidth ?? 50
   return snapshot.categories.flatMap((text, index) => {

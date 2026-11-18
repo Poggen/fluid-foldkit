@@ -135,6 +135,7 @@ export function barSkeletonView<Message, Mounts>(
         props.innerHeight,
         props.durationSeconds ?? 2,
         onSweepObserved,
+        props.backgroundOpacity ?? 0,
       ),
     ),
     h.g([h.Attribute('mask', `url(#${id}-mask)`)], bars),

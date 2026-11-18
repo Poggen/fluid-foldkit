@@ -1,5 +1,6 @@
 import { resolveChartTooltipPlacement } from '@tanstack/charts/tooltip/model'
 import type { ChartTooltipPortalExtension } from '@tanstack/charts/tooltip/portal'
+import { tooltipBoxTarget } from '../cartesian/tooltip-box-geometry'
 
 export function familyTooltipPlacement(
   mode: 'live' | 'heatmap',
@@ -39,16 +40,19 @@ export function familyTooltipPlacement(
           const measured = (size ??= { width: element.offsetWidth, height: element.offsetHeight })
 
           if (mode === 'heatmap') {
-            const flipped = anchor.x + measured.width + offset > scene.width
-            element.style.setProperty(
-              '--bkm-tooltip-left',
-              `${flipped ? anchor.x - offset - measured.width : anchor.x + offset}px`,
+            const target = tooltipBoxTarget(
+              {
+                x: anchor.x,
+                y: anchor.y,
+                containerWidth: scene.width,
+                containerHeight: scene.height - bottomInset,
+                offset,
+              },
+              measured,
             )
-            element.style.setProperty(
-              '--bkm-tooltip-top',
-              `${Math.max(offset, Math.min(anchor.y - measured.height / 2, scene.height - bottomInset - measured.height - offset))}px`,
-            )
-            element.dataset.placement = flipped ? 'left' : 'right'
+            element.style.setProperty('--bkm-tooltip-left', `${target.left}px`)
+            element.style.setProperty('--bkm-tooltip-top', `${target.top}px`)
+            element.dataset.placement = target.flipped ? 'left' : 'right'
           } else {
             const resolved = resolveChartTooltipPlacement(
               anchor,

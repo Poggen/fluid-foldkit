@@ -87,8 +87,14 @@ export function liveBuilt({
   // bklit's x labels are `numTicks` fixed slots at 0..100% of the live window; only their text re-derives as it rolls.
   // The labels under the hover pill fade natively (tickLabels.opacity reads the pointer; see live-line/definition.ts).
   const xTickTimes = (() => {
-    const n = Math.max(2, xAxis?.numTicks ?? numXTicks)
     const start = frame?.xDomain[0] ?? 0
+    const labelWidth =
+      Math.max(formatTime(start).length, formatTime(start + windowSecs * 1000).length) * 7.2
+    const available = Math.max(0, (width || 800) - margin.left - margin.right)
+    const n = Math.max(
+      2,
+      Math.min(xAxis?.numTicks ?? numXTicks, Math.floor(available / (labelWidth + 12)) + 1),
+    )
 
     // xDomain is the view at the end of the roll; the labels' clock starts rollMs earlier, at the sample (live-xlabels.ts).
     return Array.from(

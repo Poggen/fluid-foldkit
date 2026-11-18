@@ -189,6 +189,7 @@ const makeView = () => {
         viewInputs: {
           context: presentation({ shape, size, hover }),
           variant: 'borderless',
+          className: 'min-w-0 w-auto px-2 text-site-body',
           ariaLabel: 'Heading font',
           animate: target.node,
         },
@@ -209,6 +210,7 @@ const makeView = () => {
         viewInputs: {
           context: presentation({ shape, size, hover }),
           variant: 'borderless',
+          className: 'min-w-0 w-auto px-2 text-site-body',
           ariaLabel: 'Heading weight',
           animate: target.node,
         },

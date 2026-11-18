@@ -493,7 +493,8 @@ export const chartPages: ReadonlyArray<ComponentPage> = [
   {
     slug: 'bar-skeleton',
     name: 'BarSkeleton',
-    description: 'Native Bklit / TanStack BarSkeleton composition.',
+    description:
+      'Animated loading bars. Set backgroundOpacity to keep the bars visible between sweeps.',
     family: 'charts',
     href: '/charts/bar-skeleton',
   },

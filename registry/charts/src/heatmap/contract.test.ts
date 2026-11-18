@@ -221,3 +221,38 @@ effectIt.effect(
     })
   },
 )
+
+it('thins crowded month labels while retaining all months on a wider grid', () => {
+  const monthlyData = Array.from({ length: 26 }, (_, column) => ({
+    bin: column,
+    bins: Array.from({ length: 7 }, (_, row) => ({
+      bin: row,
+      count: 1,
+      date: localCalendarDate(2026, 0, 4 + column * 7 + row),
+    })),
+  }))
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']
+  const labelsAt = (width: number) => {
+    const runtime = createChartRuntime<Readonly<CellDatum>, number | string, string>()
+    try {
+      const definition = heatmapDefinition(
+        { data: monthlyData, animate: false, children: [HeatmapCells(), HeatmapXAxis()] },
+        width,
+        'month-density',
+        { at: null, origin: () => null, now: () => 0 },
+        () => null,
+        localCalendarDate(2026, 6, 4),
+      )
+      return flat(runtime.render(definition, { width, height: 160 }).nodes)
+        .filter((node) => node.kind === 'label')
+        .map((node) => (node.kind === 'label' ? node.text : ''))
+        .filter((label) => months.includes(label))
+    } finally {
+      runtime.destroy()
+    }
+  }
+  expect(labelsAt(720)).toEqual(months)
+  const narrow = labelsAt(180)
+  expect(narrow.length).toBeGreaterThan(1)
+  expect(narrow.length).toBeLessThan(months.length)
+})

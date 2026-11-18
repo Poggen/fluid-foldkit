@@ -85,3 +85,12 @@ test('matching the crosshair inherits its spring without changing the independen
     ),
   ).toMatchObject({ stiffness: 90, damping: 18 })
 })
+
+test('narrow containers keep flipped tooltip panels inside the horizontal bounds', () => {
+  expect(
+    tooltipBoxTarget({ ...configuration, x: 130, containerWidth: 280 }, { width: 180, height: 80 }),
+  ).toMatchObject({ left: 0, flipped: true })
+  expect(
+    tooltipBoxTarget({ ...configuration, x: 130, containerWidth: 120 }, { width: 180, height: 80 }),
+  ).toMatchObject({ left: 0 })
+})

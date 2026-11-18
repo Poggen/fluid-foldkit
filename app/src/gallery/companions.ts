@@ -105,6 +105,7 @@ const Skeleton = CompanionGalleryBlock.makeRequiredFieldBinding(BarLoadingSkelet
         innerWidth: 280,
         innerHeight: 160,
         barCount: options.barCount ?? 14,
+        backgroundOpacity: 0.35,
         fill: 'var(--fluid-accent)',
       },
       false,
@@ -196,7 +197,14 @@ const renderSeriesPointMarker = (
   h: CompanionViewBuilder,
 ) => {
   return h.svg(
-    [h.ViewBox('0 0 260 140'), h.Role('img'), h.AriaLabel('Animated series marker')],
+    [
+      h.Width('260'),
+      h.Height('140'),
+      h.Class('w-full h-auto min-w-0'),
+      h.ViewBox('0 0 260 140'),
+      h.Role('img'),
+      h.AriaLabel('Animated series marker'),
+    ],
     [
       h.path([
         h.D('M10 110 Q60 120 95 80 T170 60 T250 20'),
@@ -213,7 +221,14 @@ const renderBarSkeleton = (
   h: CompanionViewBuilder,
 ) => {
   return h.svg(
-    [h.ViewBox('0 0 280 160'), h.Role('img'), h.AriaLabel('Loading chart')],
+    [
+      h.Width('280'),
+      h.Height('160'),
+      h.Class('w-full h-auto min-w-0'),
+      h.ViewBox('0 0 280 160'),
+      h.Role('img'),
+      h.AriaLabel('Loading chart'),
+    ],
     [h.block(Skeleton.embedView({ slotId: 'skeleton', model: skeletonModel }))],
   )
 }
@@ -229,7 +244,7 @@ const renderBrush = (
       h.div(
         [
           h.Style({
-            height: previewModel.height === undefined ? '360px' : `${previewModel.height + 232}px`,
+            height: `${(previewModel.height ?? 48) + 132}px`,
             minHeight: '0',
           }),
         ],
@@ -241,7 +256,7 @@ const renderBrush = (
               viewInputs: ChartBrushLayout({
                 data: brushModel.data,
                 enabled: brushModel.owner.enabled,
-                height: previewModel.height ?? 80,
+                height: previewModel.height ?? 48,
                 children: (layout) =>
                   h.block(
                     BrushMain.embedView({
@@ -249,6 +264,7 @@ const renderBrush = (
                       model: brushMainModel,
                       viewInputs: brushMain.inputs(brushMainModel.id, {
                         ...brushMainProps,
+                        height: 120,
                         ...(layout.xDomain === undefined
                           ? {}
                           : {
@@ -267,7 +283,7 @@ const renderBrush = (
         ],
       ),
       h.p(
-        [h.Class('text-muted-foreground text-[12px] ')],
+        [h.Class('text-muted-foreground text-[12px] mt-2')],
         ['Drag the handles to focus your view.'],
       ),
     ],

@@ -3,7 +3,6 @@ import type { SankeyInputLinkRow } from './marks'
 import type { NodeLayoutRow } from './label-geometry'
 
 interface NodeLayout extends NodeLayoutRow {
-  readonly value: number
   readonly depth: number
   readonly height: number
   readonly layer: number

@@ -3,7 +3,7 @@ import type { PatternPresetId, PatternPresetOptions } from '../kit/pattern/patte
 
 export interface XAxisConfig {
   /**
-   * Target number of tick labels along the x axis.
+   * Target number of tick labels along the x axis. Colliding labels are omitted at narrow widths.
    * @default 5
    */
   readonly numTicks?: number

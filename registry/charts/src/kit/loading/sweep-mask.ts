@@ -17,6 +17,7 @@ export function sweepMask<Message, Mounts>(
   height: number,
   durationSeconds: number,
   onSweepObserved: Message,
+  backgroundOpacity = 0,
 ): ReadonlyArray<Html> {
   return [
     h.linearGradient(
@@ -38,6 +39,16 @@ export function sweepMask<Message, Mounts>(
     h.mask(
       [h.Id(`${chartId}-mask`), h.Attribute('maskUnits', 'userSpaceOnUse')],
       [
+        ...(backgroundOpacity <= 0
+          ? []
+          : [
+              h.rect([
+                h.Width(String(width)),
+                h.Height(String(height)),
+                h.Fill('white'),
+                h.Attribute('fill-opacity', String(backgroundOpacity)),
+              ]),
+            ]),
         h.g(
           [h.Attribute('transform', `rotate(25 ${width / 2} ${height / 2})`)],
           [

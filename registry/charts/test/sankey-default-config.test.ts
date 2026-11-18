@@ -201,7 +201,12 @@ it.effect('Sankey public tooltip requests render defaults without a Tooltip carr
     expect(duplicate.querySelector('#default-config-tooltip')?.textContent).toContain('Units 12')
     expect(duplicate.querySelector('svg')?.textContent).toContain('Vehicles 12')
     expect(duplicate.querySelector('svg')?.textContent).not.toContain('Units 12')
-    expect(node.querySelector('svg')?.textContent).toContain('12 sessions')
+    expect(
+      [...node.querySelectorAll('svg text')]
+        .map((label) => label.textContent)
+        .filter((text) => text.endsWith(' sessions'))
+        .sort(),
+    ).toEqual(['12 sessions', '12 sessions', '6 sessions'])
     expect(duplicate.textContent).not.toContain('Discarded formatter')
 
     const invalid = yield* render('none', 'invalid')

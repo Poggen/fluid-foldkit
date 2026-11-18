@@ -114,6 +114,8 @@ test('Heatmap native cell navigation retains its inert body and source tooltip c
     const body = element(shell, ':scope > .ts-chart-tooltip__body[inert]')
     const panel = element(body, ':scope > .bkm-tooltip-panel')
     const content = element(panel, ':scope > .bkm-tooltip-content')
+    const dateText = element(content, '.ts-bkm-heatmap-tooltip-date').firstChild
+    const valueText = element(content, '.ts-bkm-heatmap-tooltip-value').firstChild
     expect(shell.children).toHaveLength(1)
     expect(body.children).toHaveLength(1)
     expect(panel.children).toHaveLength(1)
@@ -129,7 +131,9 @@ test('Heatmap native cell navigation retains its inert body and source tooltip c
     owner.key('ArrowDown', 1)
     expect(element(owner.container, '#heatmap-source-tooltip')).toBe(shell)
     expect(element(shell, ':scope > .ts-chart-tooltip__body[inert]')).toBe(body)
-    expect(element(body, ':scope > .bkm-tooltip-panel')).not.toBe(panel)
+    expect(element(body, ':scope > .bkm-tooltip-panel')).toBe(panel)
+    expect(element(body, '.ts-bkm-heatmap-tooltip-date').firstChild).toBe(dateText)
+    expect(element(body, '.ts-bkm-heatmap-tooltip-value').firstChild).toBe(valueText)
     expect(element(body, '.ts-bkm-heatmap-tooltip-date').textContent).toBe('November 9th 2026')
     expect(element(body, '.ts-bkm-heatmap-tooltip-value').textContent).toBe('2 contributions')
   } finally {
@@ -293,6 +297,63 @@ test('unknown days stay blank, skip native keyboard navigation and cannot show a
     expect(
       owner.container.querySelectorAll('g[data-ts-key^="heatmap-loading-shimmer"] rect'),
     ).toHaveLength(6)
+  } finally {
+    owner.dispose()
+  }
+})
+
+test('unchanged presentations preserve tooltip content and do not postpone its delay', () => {
+  const owner = setup({ showDelay: 40, hideDelay: 80 })
+  try {
+    owner.present(0)
+    vi.advanceTimersByTime(20)
+    owner.present(0)
+    vi.advanceTimersByTime(20)
+    expect(owner.shell.hidden).toBe(false)
+    const panel = element(owner.shell, '.bkm-tooltip-panel')
+    owner.present(0)
+    expect(element(owner.shell, '.bkm-tooltip-panel')).toBe(panel)
+    owner.present(null)
+    vi.advanceTimersByTime(40)
+    owner.present(null)
+    vi.advanceTimersByTime(40)
+    expect(owner.shell.hidden).toBe(true)
+  } finally {
+    owner.dispose()
+  }
+})
+
+test('cell navigation preserves the stylesheet while moving the hover highlight', () => {
+  const owner = setup()
+  try {
+    owner.key('Home', 0)
+    const root = element(owner.container, '[data-bkm-chart="heatmap"]')
+    const style = element(root, 'style')
+    const stylesheetText = style.firstChild
+    const first = root.querySelector('[data-hm-active]')
+    expect(first).not.toBeNull()
+    expect(root.hasAttribute('data-hm-focused')).toBe(true)
+    owner.key('ArrowDown', 1)
+    expect(style.firstChild).toBe(stylesheetText)
+    expect(first?.hasAttribute('data-hm-active')).toBe(false)
+    expect(root.querySelectorAll('[data-hm-active]')).toHaveLength(1)
+    owner.present(null)
+    expect(root.hasAttribute('data-hm-focused')).toBe(false)
+    expect(root.querySelector('[data-hm-active]')).toBeNull()
+    expect(style.firstChild).toBe(stylesheetText)
+  } finally {
+    owner.dispose()
+  }
+})
+
+test('a tooltip wider than the narrow grid stays at its left edge', () => {
+  const owner = setup()
+  vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(400)
+  vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(90)
+  try {
+    owner.key('Home', 0)
+    expect(owner.shell.style.getPropertyValue('--bkm-tooltip-left')).toBe('0px')
+    expect(owner.shell.style.getPropertyValue('--bkm-hm-tooltip-left')).toBe('0px')
   } finally {
     owner.dispose()
   }

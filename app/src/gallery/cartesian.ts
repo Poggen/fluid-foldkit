@@ -96,7 +96,7 @@ const admitGauge = CartesianGalleryBlock.makeStep((model) =>
             labelAlign: model.preview.labelAlign ?? 'center',
             defaultLabel: 'Capacity',
             activeFill: 'var(--fluid-accent)',
-            height: 210,
+            minWidth: 0,
           },
           'preview-gauge',
         ],
@@ -169,7 +169,10 @@ type CartesianViewBuilder = Parameters<
   Parameters<typeof CartesianGalleryComposition.makeView.withInputs>[0]
 >[2]
 const renderGauge = (gaugeModel: typeof GaugeBlock.Model.Type, h: CartesianViewBuilder) => {
-  return h.block(Gauge.embedView({ slotId: 'gauge', model: gaugeModel, viewInputs: {} }))
+  return h.div(
+    [h.Class('w-full max-w-72')],
+    [h.block(Gauge.embedView({ slotId: 'gauge', model: gaugeModel, viewInputs: {} }))],
+  )
 }
 const renderLine = (
   lineModel: typeof LineBlock.Model.Type,

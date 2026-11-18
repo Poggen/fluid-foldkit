@@ -108,7 +108,11 @@ export function timeSeriesXScale(
     return { ...base, axis: false }
   }
 
-  let labels: ChartAxisTickLabelOptions<Date> = { fontSize: 12, opacity: 1, thin: false }
+  let labels: ChartAxisTickLabelOptions<Date> = {
+    fontSize: 12,
+    opacity: 1,
+    thin: { minGap: 8, priority: 'ends' },
+  }
 
   if (innerHeight < 1) {
     labels = { ...labels, dy: innerHeight - 1 }

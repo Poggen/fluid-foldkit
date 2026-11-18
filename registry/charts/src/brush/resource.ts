@@ -16,7 +16,6 @@ export const brushObservationEvent = 'bkm-brush-observed'
 
 export function brushControl(
   range: Range,
-  props: Readonly<ChartBrushProps>,
   observe: (range: Range, kind: BrushObservation['kind']) => void,
 ): ChartControl<Date, number> {
   const control = brushX<number>({
@@ -30,7 +29,8 @@ export function brushControl(
     handleSize: 8,
     handleStyle: { fill: 'transparent', fillOpacity: 0 },
     selectionStyle: {
-      fill: props.selectionPattern?.color ?? 'var(--chart-1)',
+      // The SVG pattern overlay owns paint; the native rect only owns gestures.
+      fill: 'transparent',
       fillOpacity: 0.12,
       stroke: 'var(--chart-brush-border)',
     },
@@ -172,7 +172,7 @@ export class BrushResource<
     return Option.isNone(range)
       ? []
       : [
-          brushControl(range.value, this.#props, (value, kind) => {
+          brushControl(range.value, (value, kind) => {
             if (generation === this.#controlGeneration) {
               this.observe(value, kind)
             }

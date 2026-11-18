@@ -1,5 +1,5 @@
 import { textWidth } from './private/text-width'
-import type { SankeyNodeInput, SankeyInputLinkRow, LabelOrientation } from './marks'
+import type { SankeyNodeInput, LabelOrientation } from './marks'
 
 const NAME_FONT_SIZE = 13
 
@@ -28,6 +28,7 @@ interface LabelRow {
 }
 
 interface NodeLayoutRow {
+  readonly value: number
   readonly key: number
   readonly x0: number
   readonly x1: number
@@ -45,29 +46,17 @@ const intFmt = /* @__PURE__ */ new Intl.NumberFormat('en-US', { maximumFractionD
 
 const placeLabels = (
   nodes: ReadonlyArray<NodeLayoutRow>,
-  links: ReadonlyArray<SankeyInputLinkRow>,
   chart: { readonly x: number; readonly width: number },
   orientation: LabelOrientation,
   showValue: boolean,
   formatValue: (value: number) => string = (value) => `${intFmt.format(value)} sessions`,
 ): Array<LabelRow> =>
   nodes.map((node) => {
-    let total = 0
-
-    for (const row of links) {
-      const hit =
-        node.data.category === 'source' ? row.sourceKey === node.key : row.targetKey === node.key
-
-      if (hit) {
-        total += row.data.value
-      }
-    }
-
     const nodeW = Math.max(0, node.x1 - node.x0)
     const centerY = node.y0 + (node.y1 - node.y0) / 2
     const isLeft = node.x0 - chart.x < chart.width / 2
     const edge = isLeft ? node.x0 - LABEL_OFFSET : node.x0 + nodeW + LABEL_OFFSET
-    const base = { key: node.key, name: node.data.name, value: formatValue(total) }
+    const base = { key: node.key, name: node.data.name, value: formatValue(node.value) }
 
     if (orientation === 'vertical') {
       const half = VALUE_LABEL_GAP / 2

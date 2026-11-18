@@ -155,7 +155,7 @@ const buildHeatmapDefinition = (
         : {
             axis: {
               line: false,
-              // bklit heatmap-x-axis.tsx:25-52 draws one label per month, no collision test.
+              // Keep all month labels when they fit; narrow contribution grids need a readable gap.
               tickLabels: {
                 anchor: 'start' satisfies 'start',
                 dx: ({ bandwidth }: Readonly<{ bandwidth: number }>): number =>
@@ -163,7 +163,7 @@ const buildHeatmapDefinition = (
                 dy: -2.4,
                 fontSize: 12,
                 opacity: 1,
-                thin: false,
+                thin: { minGap: 8, priority: 'ends' },
               },
               ticks: {
                 format: (value: number | string): string => xLabelByTick.get(value) ?? '',

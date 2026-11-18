@@ -6,14 +6,10 @@ import type { HeatmapChartProps } from './options'
 import type { HeatmapScene } from './focus'
 import type { CellDatum } from './definition'
 import { loadingLabel } from '../cartesian/loading-label'
-import { applyChartStyle } from '../cartesian/style'
+import { tooltipBoxTarget } from '../cartesian/tooltip-box-geometry'
 import { gridTarget } from './keyboard'
 import { heatmapDefinition, heatmapPlan } from './build'
-import {
-  formatHeatmapContributionLabel,
-  formatHeatmapTooltipDate,
-  formatHeatmapTooltipWeekday,
-} from './format'
+import { heatmapTooltipContent } from './tooltip-content'
 import { heatmapResources, resourceElement } from './resources'
 import { createKeyboardHold } from '../kit/interaction/keyboard-hold'
 import { mountTapFocus } from '../kit/interaction/tap-focus'
@@ -32,6 +28,8 @@ export class HeatmapHost implements HeatmapHostContract<HeatmapChartProps['data'
   readonly #observeReplay: () => void
   #entryFrame = 0
   #focus: number | null
+  #plan: ReturnType<typeof heatmapPlan> | undefined
+  #activeCell: Element | null = null
   #scene: HeatmapScene | null = null
   #chart: ChartRendererHost<Readonly<CellDatum>, number | string, string> | undefined
   #interaction: ChartInteractionController<Readonly<CellDatum>, number | string, string> | undefined
@@ -42,6 +40,7 @@ export class HeatmapHost implements HeatmapHostContract<HeatmapChartProps['data'
   readonly #hoverStyle = document.createElement('style')
   readonly #tooltip = document.createElement('div')
   readonly #tooltipBody = document.createElement('div')
+  readonly #tooltipContent = heatmapTooltipContent(this.#tooltipBody)
   readonly #label = document.createElement('div')
   #loadingLabel: ReturnType<typeof loadingLabel> | undefined
   #loadingText = ''
@@ -150,7 +149,9 @@ export class HeatmapHost implements HeatmapHostContract<HeatmapChartProps['data'
     }
   }
   readonly #key = (event: KeyboardEvent) => {
-    const plan = heatmapPlan({ ...this.#props, data: this.#data }, this.#width, this.#date)
+    const plan = this.#plan
+
+    if (plan === undefined) return
 
     if (
       !(plan.cells?.interactive ?? true) ||
@@ -196,47 +197,22 @@ export class HeatmapHost implements HeatmapHostContract<HeatmapChartProps['data'
     }
 
     const paint = () => {
-      const panel = document.createElement('div')
-      panel.className = `bkm-tooltip-panel ${props.className ?? ''}`
-      const content = document.createElement('div')
-      content.className = 'bkm-tooltip-content'
-
-      for (const [className, text] of [
-        ['ts-bkm-heatmap-tooltip-date', formatHeatmapTooltipDate(point.datum.date)],
-        ['ts-bkm-heatmap-tooltip-weekday', formatHeatmapTooltipWeekday(point.datum.date)],
-        ['ts-bkm-heatmap-tooltip-divider'],
-        [
-          'ts-bkm-heatmap-tooltip-value',
-          (props.formatLabel ?? formatHeatmapContributionLabel)(
-            point.datum.count,
-            point.datum.date,
-          ),
-        ],
-      ]) {
-        const line = document.createElement('div')
-        line.className = className ?? ''
-        line.textContent = text ?? ''
-        content.append(line)
-      }
-
-      panel.append(content)
-      applyChartStyle(panel, { backgroundColor: props.backgroundColor, ...props.panelStyle })
-      this.#tooltipBody.replaceChildren(panel)
+      this.#tooltipContent(point.datum, props)
       this.#tooltip.hidden = false
       const anchorX = point.x + (this.#props.gap ?? 2) / 2
       const anchorY = point.y + (this.#props.gap ?? 2) / 2
 
       const size = this.#tooltip.getBoundingClientRect(),
-        p = heatmapPlan({ ...this.#props, data: this.#data }, this.#width, this.#date)
+        p = this.#plan
 
-      this.#tooltip.style.setProperty(
-        '--bkm-hm-tooltip-left',
-        `${anchorX + size.width + 16 > p.chartWidth ? anchorX - size.width - 16 : anchorX + 16}px`,
+      if (p === undefined) return
+
+      const target = tooltipBoxTarget(
+        { x: anchorX, y: anchorY, containerWidth: p.chartWidth, containerHeight: p.chartHeight },
+        size,
       )
-      this.#tooltip.style.setProperty(
-        '--bkm-hm-tooltip-top',
-        `${Math.max(16, Math.min(anchorY - size.height / 2, p.chartHeight - size.height - 16))}px`,
-      )
+      this.#tooltip.style.setProperty('--bkm-hm-tooltip-left', `${target.left}px`)
+      this.#tooltip.style.setProperty('--bkm-hm-tooltip-top', `${target.top}px`)
     }
 
     if (this.#tooltip.hidden && (props.showDelay ?? 0) > 0) {
@@ -246,8 +222,11 @@ export class HeatmapHost implements HeatmapHostContract<HeatmapChartProps['data'
     }
   }
   #hover() {
-    const p = heatmapPlan({ ...this.#props, data: this.#data }, this.#width, this.#date),
-      c = p.cells
+    const p = this.#plan
+
+    if (p === undefined) return
+
+    const c = p.cells
 
     const point = this.#scene?.points.find(
       (point) => point.datum.column * p.rowCount + point.datum.row === this.#focus,
@@ -255,19 +234,33 @@ export class HeatmapHost implements HeatmapHostContract<HeatmapChartProps['data'
 
     const scope = `[data-hm-id="${this.#id}"]`
     const base = `${scope} rect${keyStarts('heatmap-cells-')}{--bkm-hm-hover-opacity:attr(opacity type(<number>),1);--bkm-hm-hover-transform:scale(1)}`
-    const dim = `${scope} rect${keyStarts('heatmap-cells-')}{--bkm-hm-hover-opacity:${c?.inactiveOpacity ?? 0.3};--bkm-hm-hover-transform:scale(${c?.inactiveScale ?? 1})}`
+    const dim = `${scope}[data-hm-focused] rect${keyStarts('heatmap-cells-')}{--bkm-hm-hover-opacity:${c?.inactiveOpacity ?? 0.3};--bkm-hm-hover-transform:scale(${c?.inactiveScale ?? 1})}`
 
-    const target =
+    const target = `${scope} rect${keyStarts('heatmap-cells-')}[data-hm-active]{--bkm-hm-hover-opacity:1;--bkm-hm-hover-transform:scale(${c?.activeScale ?? 1})}`
+    const activeCell =
       point === undefined
-        ? ''
-        : `${scope} rect${keyStarts('heatmap-cells-')}${keyHas(`:${point.datum.column}-${point.datum.row}:`)}{--bkm-hm-hover-opacity:1;--bkm-hm-hover-transform:scale(${c?.activeScale ?? 1})}`
+        ? null
+        : this.#surface.querySelector(
+            `rect${keyStarts('heatmap-cells-')}${keyHas(`:${point.datum.column}-${point.datum.row}:`)}`,
+          )
+
+    if (activeCell !== this.#activeCell) {
+      this.#activeCell?.removeAttribute('data-hm-active')
+      activeCell?.setAttribute('data-hm-active', '')
+      this.#activeCell = activeCell
+    }
+
+    this.#root.toggleAttribute('data-hm-focused', point !== undefined)
 
     const legend =
       this.#level === null
         ? ''
         : `${scope} g${keyStarts('heatmap-cells-')}:not(${keyStarts(`heatmap-cells-l${this.#level}-`)}) rect{--bkm-hm-hover-opacity:${c?.inactiveOpacity ?? 0.3};--bkm-hm-hover-transform:scale(${c?.inactiveScale ?? 1})}${scope} g${keyStarts(`heatmap-cells-l${this.#level}-`)} rect{--bkm-hm-hover-transform:scale(${c?.activeScale ?? 1})}`
 
-    this.#hoverStyle.textContent = base + (point === undefined ? legend : dim + target)
+    const css = base + dim + target + (point === undefined ? legend : '')
+
+    // Replacing a stylesheet invalidates styles across the gallery; cell focus only changes attributes.
+    if (this.#hoverStyle.textContent !== css) this.#hoverStyle.textContent = css
     this.#tooltipFor(point ?? null)
   }
   #paint() {
@@ -277,6 +270,8 @@ export class HeatmapHost implements HeatmapHostContract<HeatmapChartProps['data'
 
     const props = { ...this.#props, data: this.#data },
       p = heatmapPlan(props, this.#width, this.#date)
+
+    this.#plan = p
 
     this.#resources.replaceChildren(
       ...heatmapResources(
@@ -406,6 +401,9 @@ export class HeatmapHost implements HeatmapHostContract<HeatmapChartProps['data'
     entered: boolean,
   ) {
     const changed = data !== this.#data || entered !== this.#entered
+
+    // Unrelated parent presentations must not rebuild the tooltip or restart its timers.
+    if (!changed && focus === this.#focus && level === this.#level) return
 
     if (level !== null && level !== this.#level) {
       this.#interaction?.setControlledFocus(null)

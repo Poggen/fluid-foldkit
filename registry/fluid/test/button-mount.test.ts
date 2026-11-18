@@ -6,6 +6,7 @@ import { defineMessageUnion } from 'foldkit/message'
 import { renderToString } from 'foldkit/experimental/server'
 import { inertHtml as h } from 'foldkit/html'
 import { Button } from '../src/button.js'
+import type { Icon } from '../src/presentation.js'
 
 const Model = Schema.Struct({ mounted: Schema.Boolean })
 const Message = defineMessageUnion({ Mounted: {} })
@@ -83,4 +84,44 @@ it('toolbar loading keeps the compact spinner and native busy control semantics'
   )
   expect(spinner).toHaveLength(1)
   expect(spinner[0]?.data?.attrs).toMatchObject({ width: '14', height: '14' })
+})
+
+it.each(['icon', 'icon-compact', 'icon-toolbar'] as const)(
+  '%s renders the supplied leading icon when children are empty',
+  (buttonSize) => {
+    const button = Button(
+      {
+        buttonSize,
+        leadingIcon: (options, html) =>
+          html.svg([html.Width(String(options.size)), html.DataAttribute('test-icon', 'leading')]),
+        children: [],
+      },
+      h,
+    )
+    const content = button?.children?.[1]
+    const wrapper = typeof content === 'object' ? content?.children?.[0] : undefined
+    const icon = typeof wrapper === 'object' ? wrapper?.children?.[0] : undefined
+    expect(typeof icon === 'object' ? icon?.sel : undefined).toBe('svg')
+    expect(typeof icon === 'object' ? icon?.data?.attrs : undefined).toMatchObject({
+      width: buttonSize === 'icon' ? '16' : '14',
+      'data-test-icon': 'leading',
+    })
+  },
+)
+
+it('icon buttons preserve explicit children and accept a trailing icon fallback', () => {
+  const icon: Icon = (options, html) => html.svg([html.Width(String(options.size))])
+  const explicit = h.svg([h.DataAttribute('test-icon', 'explicit')])
+  const contents = (button: ReturnType<typeof Button>) => {
+    const content = button?.children?.[1]
+    const wrapper = typeof content === 'object' ? content?.children?.[0] : undefined
+    return typeof wrapper === 'object' ? wrapper?.children : undefined
+  }
+  expect(
+    contents(Button({ buttonSize: 'icon', leadingIcon: icon, children: [explicit] }, h)),
+  ).toEqual([explicit])
+  const trailing = contents(
+    Button({ buttonSize: 'icon', trailingIcon: icon, children: [] }, h),
+  )?.[0]
+  expect(typeof trailing === 'object' ? trailing?.sel : undefined).toBe('svg')
 })

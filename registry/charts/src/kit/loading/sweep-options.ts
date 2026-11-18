@@ -19,6 +19,8 @@ export interface BarLoadingSkeletonProps {
   readonly barCount?: number
   readonly fill?: string
   readonly fillOpacity?: number
+  /** Optional persistent silhouette behind the animated sweep. Defaults to zero. */
+  readonly backgroundOpacity?: number
   readonly baseline?: 'bottom' | 'center'
   readonly barFraction?: number
   readonly durationSeconds?: number

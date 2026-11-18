@@ -226,7 +226,6 @@ const createSankeyMark = (
           config.role !== 'link' && config.showLabels
             ? placeLabels(
                 fullNodes,
-                fullLinks,
                 chart,
                 config.labelOrientation,
                 config.showValueLabels,

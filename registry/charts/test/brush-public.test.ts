@@ -73,6 +73,7 @@ it('keeps fractional millisecond brush geometry until the padded public Date bou
         visit(node.children)
       } else if (node.kind === 'rect' && node.className === 'selection') {
         widths.push(node.width)
+        expect(node.style?.fill).toBe('transparent')
       }
     }
   }
@@ -81,7 +82,7 @@ it('keeps fractional millisecond brush geometry until the padded public Date bou
     const scene = runtime.render(
       {
         ...definition,
-        controls: [brushControl({ start: 0, end: (481 / 600) * 1000 }, {}, () => {})],
+        controls: [brushControl({ start: 0, end: (481 / 600) * 1000 }, () => {})],
       },
       { width: 640, height: 100 },
     )

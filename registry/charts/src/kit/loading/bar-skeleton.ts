@@ -16,6 +16,7 @@ const Configuration = Schema.Struct({
   barCount: Schema.optionalKey(Schema.Number),
   fill: Schema.optionalKey(Schema.String),
   fillOpacity: Schema.optionalKey(Schema.Number),
+  backgroundOpacity: Schema.optionalKey(Schema.Number),
   baseline: Schema.optionalKey(Schema.Literals(['bottom', 'center'])),
   barFraction: Schema.optionalKey(Schema.Number),
   durationSeconds: Schema.optionalKey(Schema.Number),

@@ -101,7 +101,7 @@ test.each(['horizontal', 'vertical'] as const)(
       measure.mockClear()
       order.length = 0
       const scene = render(roles, measure)
-      expect(order).toEqual(['first', 'first:0', 'first:12', 'second', 'second:0', 'second:12'])
+      expect(order).toEqual(['first', 'first:12', 'first:12', 'second', 'second:12', 'second:12'])
       expect(style.mock.calls.filter(([element]) => element === document.body)).toHaveLength(1)
       expect(measure).toHaveBeenCalledTimes(8)
       expect(measure.mock.calls.every((call) => call[3] === family)).toBe(true)

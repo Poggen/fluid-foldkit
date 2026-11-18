@@ -140,7 +140,9 @@ function buttonContent<Message, Requirements>(
             '[&_svg]:stroke-[1.5] [&_svg]:transition-[stroke-width] [&_svg]:duration-80 group-hover:[&_svg]:stroke-[2]',
           ),
         ],
-        label,
+        label.length > 0
+          ? label
+          : [(leading ?? trailing)?.({ size: iconSize, strokeWidth: 1.5 }, h) ?? null],
       ),
     ]
   }

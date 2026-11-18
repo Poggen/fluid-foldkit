@@ -58,9 +58,8 @@ export function brushPlot<Row extends Readonly<Record<string, unknown>>>(
           ChartBrushSelectionOverlay(
             id,
             {
-              ...(brush.selectionPattern === undefined
-                ? props
-                : { ...props, pattern: brush.selectionPattern }),
+              ...props,
+              pattern: brush.selectionPattern ?? { preset: 'diagonal', color: 'var(--chart-1)' },
             },
             context,
           ),

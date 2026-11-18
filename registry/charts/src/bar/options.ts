@@ -169,7 +169,7 @@ export interface BarXAxisProps {
    */
   readonly tickerHalfWidth?: number
   /**
-   * Show every category label instead of thinning to `maxLabels`.
+   * Show every category label instead of thinning to `maxLabels` and available width.
    * @default false
    */
   readonly showAllLabels?: boolean

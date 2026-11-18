@@ -70,7 +70,21 @@ for (const viewport of [
       viewport.width < 1280
         ? page.getByRole('dialog', { name: 'Pages', exact: true })
         : page.locator('#site-customizer [data-customizer-content]')
-    await settings.getByRole('combobox', { name: 'Heading font', exact: true }).click()
+    const font = settings.getByRole('combobox', { name: 'Heading font', exact: true })
+    const theme = settings.getByRole('combobox', { name: 'Theme', exact: true })
+    const labelRight = (control: typeof font) =>
+      control
+        .locator('span.truncate')
+        .last()
+        .evaluate((label) => {
+          const text = document.createRange()
+          text.selectNodeContents(label)
+          return text.getBoundingClientRect().right
+        })
+    await expect
+      .poll(async () => Math.abs((await labelRight(font)) - (await labelRight(theme))))
+      .toBeLessThanOrEqual(1)
+    await font.click()
     const fontOption = page.getByRole('option', { name: 'Geist Serif', exact: true })
     await fontOption.click()
     await expect(fontOption).toBeHidden()
@@ -79,7 +93,7 @@ for (const viewport of [
       await expect(settings).toBeHidden()
     }
     await page.evaluate(() => document.fonts.ready)
-    await expect(hero).toHaveCSS('font-family', '"Geist Serif", serif')
+    await expect(hero).toHaveCSS('font-family', /^"?Geist Serif"?, serif$/)
     expect(await hero.evaluate((element) => getComputedStyle(element).fontFamily)).not.toBe(
       originalFont,
     )
@@ -95,7 +109,7 @@ for (const viewport of [
     if (viewport.width < 1280)
       await page.getByRole('button', { name: 'Pages', exact: true }).click()
     await page.getByRole('link', { name: 'Showcase', exact: true }).click()
-    await expect(hero).toHaveCSS('font-family', '"Geist Serif", serif')
+    await expect(hero).toHaveCSS('font-family', /^"?Geist Serif"?, serif$/)
     await inputCard.scrollIntoViewIfNeeded()
     await expect(input).toHaveValue('')
 

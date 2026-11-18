@@ -25,7 +25,13 @@ export function tooltipBoxTarget(props: TooltipBoxGeometry, size: TooltipPanelSi
   const flipped = props.x + size.width + offset > props.containerWidth
 
   return {
-    left: flipped ? props.x - offset - size.width : props.x + offset,
+    left: Math.max(
+      0,
+      Math.min(
+        flipped ? props.x - offset - size.width : props.x + offset,
+        props.containerWidth - size.width,
+      ),
+    ),
     top: Math.max(
       offset,
       Math.min(props.y - size.height / 2, props.containerHeight - size.height - offset),

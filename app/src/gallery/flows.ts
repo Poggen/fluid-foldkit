@@ -80,17 +80,29 @@ type FlowViewBuilder = Parameters<
 const renderSunburst = (
   sunModel: (typeof FlowGalleryBlock.Model.Type)['sun'],
   previewModel: (typeof FlowGalleryBlock.Model.Type)['preview'],
+  inGallery: boolean,
   h: FlowViewBuilder,
 ) => {
-  return h.block(
-    Sun.embedView({
-      slotId: 'sunburst',
-      model: sunModel,
-      viewInputs: sunburst.inputs('preview-sunburst', flowPreview(previewModel).sun, {
-        focus: (id) => Message.FocusedSun({ id }),
-        hover: (index) => Message.HoveredSun({ index }),
-      }),
-    }),
+  return h.div(
+    [
+      h.Class(
+        inGallery
+          ? 'flex w-full max-w-44 flex-col items-center'
+          : 'flex w-full flex-col items-center',
+      ),
+    ],
+    [
+      h.block(
+        Sun.embedView({
+          slotId: 'sunburst',
+          model: sunModel,
+          viewInputs: sunburst.inputs('preview-sunburst', flowPreview(previewModel).sun, {
+            focus: (id) => Message.FocusedSun({ id }),
+            hover: (index) => Message.HoveredSun({ index }),
+          }),
+        }),
+      ),
+    ],
   )
 }
 const renderSankey = (
@@ -134,7 +146,8 @@ const makeView = () => {
   const body = createKeyedLazy()
   return FlowGalleryComposition.makeView.withInputs((model, inputs, h) => {
     const cards = {
-      sunburst: () => body('sunburst', renderSunburst, [model.sun, model.preview, h]),
+      sunburst: () =>
+        body('sunburst', renderSunburst, [model.sun, model.preview, inputs.only === undefined, h]),
       sankey: () => body('sankey', renderSankey, [model.sankey, model.preview, h]),
       choropleth: () => body('choropleth', renderChoropleth, [model.map, model.preview, h]),
     }

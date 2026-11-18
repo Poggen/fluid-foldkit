@@ -255,7 +255,7 @@ const renderCarouselDots = (
       h.div(
         [
           h.Class(
-            'grid h-16 w-48 place-items-center overflow-hidden rounded-xl border border-border/60 bg-background',
+            'relative grid h-16 w-48 place-items-center overflow-hidden rounded-xl border border-border/60 bg-background',
           ),
           h.OnMouseEnter(events.HoveredCarousel({ paused: true })),
           h.OnMouseLeave(events.HoveredCarousel({ paused: false })),

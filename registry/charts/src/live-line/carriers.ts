@@ -55,7 +55,7 @@ export interface LiveLineConfig {
 }
 
 export interface LiveXAxisConfig {
-  /** Number of time labels. Defaults to the chart's `numXTicks`. */
+  /** Target number of time labels, reduced to fit narrow plots. Defaults to the chart's `numXTicks`. */
   readonly numTicks?: number
   /** Formats a time (in milliseconds since the epoch) into its label. Defaults to `HH:MM:SS`. */
   readonly formatTime?: (time: number) => string
