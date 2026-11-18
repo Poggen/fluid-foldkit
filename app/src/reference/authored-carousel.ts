@@ -9,7 +9,7 @@ import {
   previewCodeTabsViewInputs,
 } from '../../../components/docs/preview-code-tabs'
 import { resolvePresentation } from '@foldkit-visuals/fluid/presentation'
-// Derived from Fluid Functionalism cc276ca0's CarouselDots docs and slide-direction. MIT.
+/* @license Derived from Fluid Functionalism cc276ca0's CarouselDots docs and slide-direction. MIT. */
 import { Layer, Schema, Option } from 'effect'
 import { Block, Update } from 'foldkit'
 import { initAndInsert } from 'foldkit/binding'
@@ -66,7 +66,11 @@ export const AuthoredCarouselBlock = Block.make('AuthoredCarousel', {
   },
 })
 const Root = AuthoredCarouselBlock
-const config = (key: string, value: number, paused: boolean): CarouselDotsConfig => ({
+const config: (key: string, value: number, paused: boolean) => CarouselDotsConfig = (
+  key: string,
+  value: number,
+  paused: boolean,
+) => ({
   id: `docs-carousel-${key}`,
   count: 4,
   value,

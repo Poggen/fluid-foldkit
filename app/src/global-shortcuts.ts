@@ -2,7 +2,10 @@ import { Schema } from 'effect'
 import { currentFontFamily, type Settings, type SettingSelection } from './settings'
 export const SettingsShortcut = Schema.Literals(['t', 'f', 'r', 's', 'h'])
 export type SettingsShortcut = typeof SettingsShortcut.Type
-export const shortcutSelection = (settings: Settings, key: SettingsShortcut): SettingSelection => {
+export const shortcutSelection: (settings: Settings, key: SettingsShortcut) => SettingSelection = (
+  settings: Settings,
+  key: SettingsShortcut,
+) => {
   switch (key) {
     case 't':
       return {

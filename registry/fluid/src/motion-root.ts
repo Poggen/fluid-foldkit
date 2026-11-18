@@ -3,9 +3,8 @@ import type { Html } from 'foldkit/html'
 /** Snapshot retained projection leases before an ancestor's layout attributes change. */
 export function createMotionRoot(capture: () => void, flush: () => void) {
   const roots = new WeakMap<Element, { dependency: unknown }>()
-
-  return (vnode: Html, dependency: unknown): Html => {
-    if (vnode === null) return null
+  const root: (vnode: Html, dependency: unknown) => Html = (vnode: Html, dependency: unknown) => {
+    if (vnode === null) return null satisfies Html
 
     const previous = vnode.data?.hook
     let captured = false
@@ -44,6 +43,8 @@ export function createMotionRoot(capture: () => void, flush: () => void) {
           },
         },
       },
-    }
+    } satisfies Html
   }
+
+  return root
 }

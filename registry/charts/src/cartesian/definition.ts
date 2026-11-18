@@ -47,106 +47,26 @@ import { pushSeriesMarks } from './series-marks'
 import type { SeriesContext } from './series-marks'
 import type { HoverVisuals } from './hover-css'
 
-export { bklitYDomain } from './domains'
-
-export { axisId, DEFAULT_Y_AXIS_ID } from './series'
-
-export interface CartesianSnapshot<Row> {
-  readonly rowIndices?: ReadonlyArray<number>
-  readonly scatterPaint?: ScatterPaintProjection
-  readonly candleGeometry?: CandleProjection
-  readonly sourceGrid?: ReadonlyArray<SourceGridMask>
-  readonly extraDots?: ReadonlyArray<OverlayDot<Row>>
-  readonly overlayModel?: HoverOverlayModel<Row> | null
-  readonly resourceCss?: string
-  readonly resourceAttrs?: Readonly<Record<string, string>>
-  readonly resourceStyle?: Readonly<Record<string, string>>
-  readonly hoverEnabled?: boolean
-  readonly width: number
-  readonly height: number
-  readonly innerWidth: number
-  readonly innerHeight: number
-  readonly margin: Margin
-  readonly domains: {
-    readonly x: readonly [Date, Date]
-    readonly y: Readonly<Record<string, readonly [number, number]>>
-  }
-  readonly targetY: Readonly<Record<string, readonly [number, number]>>
-  readonly series: ReadonlyArray<ResolvedSeries>
-  readonly rows: ReadonlyArray<Row>
-  readonly hover: HoverVisuals
-  readonly tickTimes: ReadonlyArray<number>
-  readonly gridAttrs: ReturnType<typeof gridHostAttrs>
-}
-
-export interface CartesianCompilationOptions<Row, ExtraDatum = never> {
-  readonly tooltipSpring?: SpringConfig
-  readonly extraYValues?: ReadonlyArray<number>
-  readonly wipePadding?: (innerWidth: number) => number
-  readonly wipeArmedAt?: number | null
-  readonly extraDots?: (plot: {
-    readonly innerWidth: number
-    readonly innerHeight: number
-    readonly xDomain: readonly [Date, Date]
-    readonly yDomain: readonly [number, number]
-  }) => ReadonlyArray<OverlayDot<Row>>
-  readonly extraMarks?: (plot: {
-    readonly innerWidth: number
-    readonly innerHeight: number
-    readonly xDomain: readonly [Date, Date]
-    readonly yDomain: readonly [number, number]
-  }) => ReadonlyArray<SeriesMark<ExtraDatum>>
-  readonly id: string
-  readonly x: (row: Row) => Date
-  readonly children: ReadonlyArray<CartesianLayer<Row>>
-  readonly margin?: Partial<Margin>
-  readonly xDomain?: readonly [Date, Date]
-  readonly yDomain?: readonly [number, number]
-  readonly gridLoading?: boolean
-  readonly chartLoading?: boolean
-  readonly skeletonRows?: boolean
-  readonly animationDuration?: number
-  readonly wipe?: {
-    readonly progress: number
-    readonly duration: number
-    readonly conceal?: boolean
-  }
-  readonly clock?: () => number
-  readonly sourceHover?: boolean
-  readonly physicalReveal?: boolean
-  readonly tooltipExtension?: ChartTooltipExtension
-  readonly domainFrame?: TimeSeriesDomainFrame<Row>
-  readonly updateStep?: 'snap' | 'glide' | 'window'
-  readonly yDomainFrom?: Readonly<Record<string, readonly [number, number]>>
-  readonly onBuilt?: (snapshot: CartesianSnapshot<Row>) => void
-}
-
-const date = (milliseconds: number): Date => DateTime.toDateUtc(DateTime.makeUnsafe(milliseconds))
-
-function requireTimeSeriesLayers<Row>(children: ReadonlyArray<CartesianLayer<Row>>): void {
-  for (const child of children) {
-    if (child.kind === 'candlestick' || child.kind === 'scatter') {
-      throw new TypeError(`Cartesian ${child.kind} requires its family compiler`)
+const requireTimeSeriesLayers: <Row>(children: ReadonlyArray<CartesianLayer<Row>>) => void =
+  function requireTimeSeriesLayers<Row>(children: ReadonlyArray<CartesianLayer<Row>>) {
+    for (const child of children) {
+      if (child.kind === 'candlestick' || child.kind === 'scatter') {
+        throw new TypeError(`Cartesian ${child.kind} requires its family compiler`)
+      }
     }
   }
-}
-
-/** Empty loading charts use the same generated skeleton as the public loading input. */
-const emptySkeletonRows = (
-  length: number,
-  enabled: boolean | undefined,
-  key: string | undefined,
-): ReadonlyArray<ChartSkeletonDatum> =>
-  length === 0 && enabled === true ? generateChartSkeletonData({ dataKey: key ?? 'value' }) : []
 
 /** The source compiler preserves concrete row marks and engine-branded decorative grid marks. */
-export function buildTimeSeriesDefinition<
+export const buildTimeSeriesDefinition: <
   Row extends Readonly<Record<string, unknown>>,
   ExtraDatum = never,
 >(
   data: ReadonlyArray<Row>,
   options: CartesianCompilationOptions<Row, ExtraDatum>,
-): DomChartDefinition<Row | ExtraDatum, Date, number> {
+) => DomChartDefinition<Row | ExtraDatum, Date, number> = function buildTimeSeriesDefinition<
+  Row extends Readonly<Record<string, unknown>>,
+  ExtraDatum = never,
+>(data: ReadonlyArray<Row>, options: CartesianCompilationOptions<Row, ExtraDatum>) {
   const margin: Margin = { top: 40, right: 40, bottom: 40, left: 40, ...options.margin }
 
   requireTimeSeriesLayers(options.children)
@@ -172,7 +92,7 @@ export function buildTimeSeriesDefinition<
 
   const emptySkeleton = emptySkeletonRows(data.length, options.skeletonRows, skeletonKey)
 
-  const valueOf = (row: Row, item: ResolvedSeries): number =>
+  const valueOf: (row: Row, item: ResolvedSeries) => number = (row: Row, item: ResolvedSeries) =>
     options.skeletonRows === true && item.dataKey === skeletonKey
       ? Math.round(95 + Math.sin(data.indexOf(row) * 1.05) * 28 + data.indexOf(row) * 7)
       : seriesValueOf(item.kind)(row[item.dataKey])
@@ -243,7 +163,10 @@ export function buildTimeSeriesDefinition<
     | ReturnType<typeof segmentMarks>[number]
   >
 
-  const chart = ({ width, height }: ChartBuildContext): ChartSpec<Marks> => {
+  const chart: (argument0: ChartBuildContext) => ChartSpec<Marks> = ({
+    width,
+    height,
+  }: ChartBuildContext) => {
     plotSize = {
       innerWidth: width - margin.left - margin.right,
       innerHeight: height - margin.top - margin.bottom,
@@ -474,7 +397,7 @@ export function buildTimeSeriesDefinition<
         x: xScale,
         y: primaryY ?? { scale: scaleLinear().domain([0, 100]), axis: false },
       },
-    }
+    } satisfies ChartSpec<Marks>
   }
 
   const chartOptions = {
@@ -494,5 +417,96 @@ export function buildTimeSeriesDefinition<
     motion: timeSeriesMotion<Row | ExtraDatum>(options),
   } satisfies ChartDefinitionOptions<Row | ExtraDatum, Date, number>
 
-  return defineChart<Marks, ChartSpec<Marks>, typeof chartOptions>({ chart }, chartOptions)
+  return defineChart<Marks, ChartSpec<Marks>, typeof chartOptions>(
+    { chart },
+    chartOptions,
+  ) satisfies DomChartDefinition<Row | ExtraDatum, Date, number>
 }
+
+export { bklitYDomain } from './domains'
+
+export { axisId, DEFAULT_Y_AXIS_ID } from './series'
+
+export interface CartesianSnapshot<Row> {
+  readonly rowIndices?: ReadonlyArray<number>
+  readonly scatterPaint?: ScatterPaintProjection
+  readonly candleGeometry?: CandleProjection
+  readonly sourceGrid?: ReadonlyArray<SourceGridMask>
+  readonly extraDots?: ReadonlyArray<OverlayDot<Row>>
+  readonly overlayModel?: HoverOverlayModel<Row> | null
+  readonly resourceCss?: string
+  readonly resourceAttrs?: Readonly<Record<string, string>>
+  readonly resourceStyle?: Readonly<Record<string, string>>
+  readonly hoverEnabled?: boolean
+  readonly width: number
+  readonly height: number
+  readonly innerWidth: number
+  readonly innerHeight: number
+  readonly margin: Margin
+  readonly domains: {
+    readonly x: readonly [Date, Date]
+    readonly y: Readonly<Record<string, readonly [number, number]>>
+  }
+  readonly targetY: Readonly<Record<string, readonly [number, number]>>
+  readonly series: ReadonlyArray<ResolvedSeries>
+  readonly rows: ReadonlyArray<Row>
+  readonly hover: HoverVisuals
+  readonly tickTimes: ReadonlyArray<number>
+  readonly gridAttrs: ReturnType<typeof gridHostAttrs>
+}
+
+export interface CartesianCompilationOptions<Row, ExtraDatum = never> {
+  readonly tooltipSpring?: SpringConfig
+  readonly extraYValues?: ReadonlyArray<number>
+  readonly wipePadding?: (innerWidth: number) => number
+  readonly wipeArmedAt?: number | null
+  readonly extraDots?: (plot: {
+    readonly innerWidth: number
+    readonly innerHeight: number
+    readonly xDomain: readonly [Date, Date]
+    readonly yDomain: readonly [number, number]
+  }) => ReadonlyArray<OverlayDot<Row>>
+  readonly extraMarks?: (plot: {
+    readonly innerWidth: number
+    readonly innerHeight: number
+    readonly xDomain: readonly [Date, Date]
+    readonly yDomain: readonly [number, number]
+  }) => ReadonlyArray<SeriesMark<ExtraDatum>>
+  readonly id: string
+  readonly x: (row: Row) => Date
+  readonly children: ReadonlyArray<CartesianLayer<Row>>
+  readonly margin?: Partial<Margin>
+  readonly xDomain?: readonly [Date, Date]
+  readonly yDomain?: readonly [number, number]
+  readonly gridLoading?: boolean
+  readonly chartLoading?: boolean
+  readonly skeletonRows?: boolean
+  readonly animationDuration?: number
+  readonly wipe?: {
+    readonly progress: number
+    readonly duration: number
+    readonly conceal?: boolean
+  }
+  readonly clock?: () => number
+  readonly sourceHover?: boolean
+  readonly physicalReveal?: boolean
+  readonly tooltipExtension?: ChartTooltipExtension
+  readonly domainFrame?: TimeSeriesDomainFrame<Row>
+  readonly updateStep?: 'snap' | 'glide' | 'window'
+  readonly yDomainFrom?: Readonly<Record<string, readonly [number, number]>>
+  readonly onBuilt?: (snapshot: CartesianSnapshot<Row>) => void
+}
+
+const date: (milliseconds: number) => Date = (milliseconds: number) =>
+  DateTime.toDateUtc(DateTime.makeUnsafe(milliseconds))
+
+const emptySkeletonRows: (
+  length: number,
+  enabled: boolean | undefined,
+  key: string | undefined,
+) => ReadonlyArray<ChartSkeletonDatum> = (
+  length: number,
+  enabled: boolean | undefined,
+  key: string | undefined,
+) =>
+  length === 0 && enabled === true ? generateChartSkeletonData({ dataKey: key ?? 'value' }) : []

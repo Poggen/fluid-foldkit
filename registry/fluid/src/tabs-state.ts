@@ -4,6 +4,83 @@ import { Option, Schema } from 'effect'
 import { Rect } from './hover-observation.js'
 import type { HoverSnapshot } from './hover-observation.js'
 
+const highlight: (
+  current: Option.Option<typeof TabsHighlight.Type>,
+  rect: typeof Rect.Type | null,
+  generation: number,
+  exitRect: typeof Rect.Type | null,
+) => Option.Option<typeof TabsHighlight.Type> = function highlight(
+  current: Option.Option<typeof TabsHighlight.Type>,
+  rect: typeof Rect.Type | null,
+  generation: number,
+  exitRect: typeof Rect.Type | null,
+) {
+  if (rect !== null) {
+    return Option.some({
+      rect,
+      phase: 'Present',
+      generation:
+        Option.isSome(current) && current.value.phase === 'Present'
+          ? current.value.generation
+          : generation,
+      converge: false,
+    })
+  }
+
+  if (Option.isNone(current) || current.value.phase === 'Exiting') {
+    return current
+  }
+
+  return Option.some(
+    modifyFields(current.value, {
+      rect: (rect) => exitRect ?? rect,
+      phase: () => 'Exiting',
+      generation: () => generation,
+      converge: () => exitRect !== null,
+    }),
+  )
+}
+
+/** Public shortcut navigation selects enabled tabs; DOM roving focus has its own manual activation. */
+export const navigationIndex: (
+  items: ReadonlyArray<TabsItemDescriptor>,
+  current: number,
+  direction: typeof NavigationDirection.Type,
+  textDirection: 'ltr' | 'rtl',
+) => number | null = function navigationIndex(
+  items: ReadonlyArray<TabsItemDescriptor>,
+  current: number,
+  direction: typeof NavigationDirection.Type,
+  textDirection: 'ltr' | 'rtl',
+) {
+  const enabled = items.flatMap((item, index) => (item.disabled === true ? [] : [index]))
+
+  if (enabled.length === 0) {
+    return null
+  }
+
+  if (direction === 'First') {
+    return enabled[0] ?? null
+  }
+
+  if (direction === 'Last') {
+    return enabled.at(-1) ?? null
+  }
+
+  const delta = (direction === 'Right' ? 1 : -1) * (textDirection === 'rtl' ? -1 : 1)
+
+  for (let offset = 1; offset <= items.length; offset += 1) {
+    const index = (((current + delta * offset) % items.length) + items.length) % items.length
+    const item = items[index]
+
+    if (item !== undefined && item.disabled !== true) {
+      return index
+    }
+  }
+
+  return null
+}
+
 export const TabsItemDescriptor = Schema.Struct({
   value: Schema.String,
   disabled: Schema.optionalKey(Schema.Boolean),
@@ -54,38 +131,6 @@ export const tabsLogicalFields = {
 export const TabsLogicalState = Schema.Struct(tabsLogicalFields)
 
 export type TabsLogicalState = typeof TabsLogicalState.Type
-
-function highlight(
-  current: Option.Option<typeof TabsHighlight.Type>,
-  rect: typeof Rect.Type | null,
-  generation: number,
-  exitRect: typeof Rect.Type | null,
-): Option.Option<typeof TabsHighlight.Type> {
-  if (rect !== null) {
-    return Option.some({
-      rect,
-      phase: 'Present',
-      generation:
-        Option.isSome(current) && current.value.phase === 'Present'
-          ? current.value.generation
-          : generation,
-      converge: false,
-    })
-  }
-
-  if (Option.isNone(current) || current.value.phase === 'Exiting') {
-    return current
-  }
-
-  return Option.some(
-    modifyFields(current.value, {
-      rect: (rect) => exitRect ?? rect,
-      phase: () => 'Exiting',
-      generation: () => generation,
-      converge: () => exitRect !== null,
-    }),
-  )
-}
 
 export function synchronizeTabsHighlights(model: TabsLogicalState, hover: HoverSnapshot) {
   const selected = rectAt(hover.itemRects, model.selectedIndex) ?? null
@@ -151,38 +196,3 @@ export function synchronizeTabsLabels(model: TabsLogicalState) {
 }
 
 export const NavigationDirection = Schema.Literals(['Left', 'Right', 'First', 'Last'])
-
-/** Public shortcut navigation selects enabled tabs; DOM roving focus has its own manual activation. */
-export function navigationIndex(
-  items: ReadonlyArray<TabsItemDescriptor>,
-  current: number,
-  direction: typeof NavigationDirection.Type,
-  textDirection: 'ltr' | 'rtl',
-): number | null {
-  const enabled = items.flatMap((item, index) => (item.disabled === true ? [] : [index]))
-
-  if (enabled.length === 0) {
-    return null
-  }
-
-  if (direction === 'First') {
-    return enabled[0] ?? null
-  }
-
-  if (direction === 'Last') {
-    return enabled.at(-1) ?? null
-  }
-
-  const delta = (direction === 'Right' ? 1 : -1) * (textDirection === 'rtl' ? -1 : 1)
-
-  for (let offset = 1; offset <= items.length; offset += 1) {
-    const index = (((current + delta * offset) % items.length) + items.length) % items.length
-    const item = items[index]
-
-    if (item !== undefined && item.disabled !== true) {
-      return index
-    }
-  }
-
-  return null
-}

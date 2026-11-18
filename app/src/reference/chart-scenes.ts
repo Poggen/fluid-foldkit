@@ -1,4 +1,4 @@
-// Data and authored examples derived from toomingos/bklit-tanstack-charts-migration. MIT.
+/* @license Data and authored examples derived from toomingos/bklit-tanstack-charts-migration. MIT. */
 import { DateTime, Schema } from 'effect'
 import { Block } from 'foldkit'
 import {
@@ -42,7 +42,7 @@ export const BarRow = Schema.Struct({
   revenue: Schema.Finite,
   profit: Schema.Finite,
 })
-// The source's time-relative fixtures are captured once, keeping SSR and hydration deterministic.
+
 export const lineData = captured.line.map((row) =>
   LineRow.make({ ...row, date: DateTime.toDateUtc(DateTime.makeUnsafe(row.date)) }),
 )

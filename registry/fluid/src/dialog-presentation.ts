@@ -3,9 +3,11 @@ import type { PresentationContext } from './presentation.js'
 import type { DialogProps } from './dialog-contracts.js'
 
 /** Resolve child presentation before handing parent-owned content to a Dialog callback. */
-export function createDialogContentContext(
+export const createDialogContentContext: (
   props: Pick<DialogProps, 'context' | 'shape' | 'surface' | 'size' | 'presentation'>,
-): PresentationContext {
+) => PresentationContext = function createDialogContentContext(
+  props: Pick<DialogProps, 'context' | 'shape' | 'surface' | 'size' | 'presentation'>,
+) {
   const { size: _contentWidth, ...inherited } = props
   const presentation = { ...inherited, ...props.presentation }
   const resolved = resolvePresentation(presentation)

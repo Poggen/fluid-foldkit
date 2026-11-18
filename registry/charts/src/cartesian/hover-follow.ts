@@ -56,11 +56,10 @@ export class SourceFollow implements HoverGlide {
     this.onMove?.(values)
   }
 
-  jump(values: ReadonlyArray<number>): void {
+  jump(values: ReadonlyArray<number>) {
     for (const [index, value] of this.#values.entries()) {
       const next = values[index] ?? 0
-      // Update the pending follow target too, so an already queued postRender
-      // cannot revive a previous target after the immediate placement.
+
       value.set(next)
       value.jump(next)
     }
@@ -68,18 +67,18 @@ export class SourceFollow implements HoverGlide {
     this.#paint()
   }
 
-  glide(values: ReadonlyArray<number>): void {
+  glide(values: ReadonlyArray<number>) {
     for (const [index, value] of this.#values.entries()) {
       value.set(values[index] ?? 0)
     }
   }
 
-  stop(): void {
+  stop() {
     this.jump(this.#values.map((value) => value.get()))
     cancelFrame(this.#paint)
   }
 
-  destroy(): void {
+  destroy() {
     this.stop()
     this.#disposed = true
 

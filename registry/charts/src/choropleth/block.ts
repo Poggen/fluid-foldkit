@@ -71,7 +71,6 @@ const LifecycleMessage = defineMessageUnion({
   CompletedMount: {},
 })
 
-// Named Mount services are shared; acquisition dispatches to each recipe's typed element.
 const Prepare = ChoroplethNamespace.makeMount('Prepare', {
   messages: [LifecycleMessage.CompletedPrepare, LifecycleMessage.CompletedDetached],
   *handler() {
@@ -311,13 +310,12 @@ export function choroplethRecipe(name: string) {
           Layer.effect(
             ChoroplethRegistration,
             Effect.sync(() => {
-              // Restored Models can render a mounted drawing before any Prepare Mount runs.
               register()
               return register
             }),
           ),
         ),
-        // Shared Mount identities retain the capability belonging to this recipe.
+
         Layer.fresh,
       ),
     }

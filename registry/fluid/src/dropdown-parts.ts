@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Data, Option, Schema } from 'effect'
 import type { Attribute, ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
 import { childAttributes } from 'foldkit/html'
@@ -8,21 +8,15 @@ import { cn } from './lib/utils.js'
 import { typeClass } from './lib/type-scale.js'
 import { SURFACE_BG } from './lib/surface-classes.js'
 
-export interface DropdownPartProps extends Presentation {
-  readonly className?: string
-  readonly attributes?: ReadonlyArray<ChildAttribute>
-  readonly children?: ReadonlyArray<Html | string>
-  readonly render?: (
-    attributes: ReadonlyArray<ChildAttribute>,
-    children: ReadonlyArray<Html | string>,
-  ) => Html
-}
-
-function part<Message>(
+const part: <Message>(
   props: DropdownPartProps,
   attributes: ReadonlyArray<Attribute<Message>>,
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function part<Message>(
+  props: DropdownPartProps,
+  attributes: ReadonlyArray<Attribute<Message>>,
+  h: HtmlBuilder<Message>,
+) {
   const combined = [
     ...attributes.flatMap((attribute) =>
       '_tag' in attribute ? childAttributes([attribute]) : [attribute],
@@ -30,81 +24,73 @@ function part<Message>(
     ...(props.attributes ?? []),
   ]
 
-  return props.render
-    ? props.render(combined, props.children ?? [])
-    : h.div(combined, props.children ?? [])
+  return (
+    props.render
+      ? props.render(combined, props.children ?? [])
+      : h.div(combined, props.children ?? [])
+  ) satisfies Html
 }
 
-export function DropdownLabel<Message>(props: DropdownPartProps, h: HtmlBuilder<Message>): Html {
-  const { size } = resolvePresentation(props)
+export const DropdownLabel: <Message>(props: DropdownPartProps, h: HtmlBuilder<Message>) => Html =
+  function DropdownLabel<Message>(props: DropdownPartProps, h: HtmlBuilder<Message>) {
+    const { size } = resolvePresentation(props)
 
-  return part(
-    props,
-    [
-      h.Class(
-        cn(
-          'px-2 py-1.5 shrink-0 text-muted-foreground',
-          typeClass('caption', size.variant),
-          props.className,
+    return part(
+      props,
+      [
+        h.Class(
+          cn(
+            'px-2 py-1.5 shrink-0 text-muted-foreground',
+            typeClass('caption', size.variant),
+            props.className,
+          ),
         ),
-      ),
-    ],
-    h,
-  )
-}
+      ],
+      h,
+    ) satisfies Html
+  }
 
-export function DropdownSeparator<Message>(
+export const DropdownSeparator: <Message>(
   props: DropdownPartProps,
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function DropdownSeparator<Message>(props: DropdownPartProps, h: HtmlBuilder<Message>) {
   return part(
     props,
     [h.Role('separator'), h.Class(cn('my-1 -mx-1 h-px shrink-0 bg-border/60', props.className))],
     h,
-  )
+  ) satisfies Html
 }
 
-export function DropdownEmpty<Message>(props: DropdownPartProps, h: HtmlBuilder<Message>): Html {
-  const { size } = resolvePresentation(props)
+export const DropdownEmpty: <Message>(props: DropdownPartProps, h: HtmlBuilder<Message>) => Html =
+  function DropdownEmpty<Message>(props: DropdownPartProps, h: HtmlBuilder<Message>) {
+    const { size } = resolvePresentation(props)
 
-  return part(
-    props,
-    [
-      h.Class(
-        cn(
-          'min-h-(--fluid-results-height,64px)',
-          'my-auto px-2 py-6 text-center text-muted-foreground',
-          size.text,
-          props.className,
+    return part(
+      props,
+      [
+        h.Class(
+          cn(
+            'min-h-(--fluid-results-height,64px)',
+            'my-auto px-2 py-6 text-center text-muted-foreground',
+            size.text,
+            props.className,
+          ),
         ),
-      ),
-      h.Role('status'),
-      h.AriaLive('polite'),
-      h.DataAttribute('fluid-empty-results', ''),
-    ],
-    h,
-  )
-}
+        h.Role('status'),
+        h.AriaLive('polite'),
+        h.DataAttribute('fluid-empty-results', ''),
+      ],
+      h,
+    ) satisfies Html
+  }
 
-export const DROPDOWN_SEARCH_CHANGE = 'fluid-dropdown-search-change'
-
-export interface DropdownSearchProps<Message> extends Omit<
-  DropdownPartProps,
-  'children' | 'render'
-> {
-  readonly value: string
-  readonly onValueChange: (value: string) => Message
-  readonly placeholder?: string
-  readonly clearOnClose?: boolean
-  readonly autoFocus?: boolean
-  readonly inputAttributes?: ReadonlyArray<ChildAttribute>
-  readonly inputRender?: (attributes: ReadonlyArray<ChildAttribute>) => Html
-}
-
-export function DropdownSearch<Message>(
+export const DropdownSearch: <Message>(
   props: DropdownSearchProps<Message>,
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function DropdownSearch<Message>(
+  props: DropdownSearchProps<Message>,
+  h: HtmlBuilder<Message>,
+) {
   const { size, surface, icons } = resolvePresentation(props)
 
   const compact = size.variant === 'compact'
@@ -168,5 +154,30 @@ export function DropdownSearch<Message>(
       ),
       props.inputRender ? props.inputRender(attributes) : h.input(attributes),
     ],
-  )
+  ) satisfies Html
+}
+
+export interface DropdownPartProps extends Presentation {
+  readonly className?: string
+  readonly attributes?: ReadonlyArray<ChildAttribute>
+  readonly children?: ReadonlyArray<Html | string>
+  readonly render?: (
+    attributes: ReadonlyArray<ChildAttribute>,
+    children: ReadonlyArray<Html | string>,
+  ) => Html
+}
+
+export const DROPDOWN_SEARCH_CHANGE = 'fluid-dropdown-search-change'
+
+export interface DropdownSearchProps<Message> extends Omit<
+  DropdownPartProps,
+  'children' | 'render'
+> {
+  readonly value: string
+  readonly onValueChange: (value: string) => Message
+  readonly placeholder?: string
+  readonly clearOnClose?: boolean
+  readonly autoFocus?: boolean
+  readonly inputAttributes?: ReadonlyArray<ChildAttribute>
+  readonly inputRender?: (attributes: ReadonlyArray<ChildAttribute>) => Html
 }

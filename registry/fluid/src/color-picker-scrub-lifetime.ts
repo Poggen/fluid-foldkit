@@ -48,6 +48,27 @@ export function colorScrubLifetime(
       return false
     }
   }
+  const click: (event: MouseEvent) => Exclude<Channel, 'hex'> | null = (event: MouseEvent) => {
+    const ch = colorFieldChannel(event)
+    const input = colorField(event)?.querySelector('input')
+
+    if (ch === undefined || ch === 'hex' || input === null || input === undefined) {
+      return null satisfies Exclude<Channel, 'hex'> | null
+    }
+
+    if (current !== undefined) {
+      current.clicked = true
+    }
+
+    if (pendingClick !== undefined) {
+      pendingClick.clicked = true
+    }
+
+    input.focus()
+    input.select()
+
+    return ch satisfies Exclude<Channel, 'hex'> | null
+  }
 
   return {
     start(event: PointerEvent, input: HTMLInputElement | null) {
@@ -74,27 +95,7 @@ export function colorScrubLifetime(
         current.moved = true
       }
     },
-    click(event: MouseEvent): Exclude<Channel, 'hex'> | null {
-      const ch = colorFieldChannel(event)
-      const input = colorField(event)?.querySelector('input')
-
-      if (ch === undefined || ch === 'hex' || input === null || input === undefined) {
-        return null
-      }
-
-      if (current !== undefined) {
-        current.clicked = true
-      }
-
-      if (pendingClick !== undefined) {
-        pendingClick.clicked = true
-      }
-
-      input.focus()
-      input.select()
-
-      return ch
-    },
+    click,
     release(event: PointerEvent, cancelled: boolean) {
       const occurrence = current
 
@@ -134,7 +135,6 @@ export function colorScrubLifetime(
         }
       }
 
-      // Pinned Base UI delays the entire release handler only for Gecko.
       if (win.navigator.userAgent.includes('Firefox')) {
         releaseTimer = win.setTimeout(finish, 20)
       } else {

@@ -102,9 +102,18 @@ export const SliderAskExampleBlock = Block.make('SliderAskExample', {
 const R0 = SliderAskExampleBlock.makeRequiredFieldBinding(SliderBlock, {
   field: 'radix',
   init: {
-    contextToArgs: (): [SliderConfig] => [
-      { id: 'radix', value: [20, 70], size: 'compact', showSteps: true, min: 0, max: 100, step: 1 },
-    ],
+    contextToArgs: () =>
+      [
+        {
+          id: 'radix',
+          value: [20, 70],
+          size: 'compact',
+          showSteps: true,
+          min: 0,
+          max: 100,
+          step: 1,
+        },
+      ] satisfies [SliderConfig],
   },
 })
 
@@ -122,15 +131,16 @@ const Radix = R0.withOutMessagePolicy({
 const B0 = SliderAskExampleBlock.makeRequiredFieldBinding(SliderBlock, {
   field: 'base',
   init: {
-    contextToArgs: (): [SliderConfig] => [
-      {
-        id: 'base',
-        value: 0.5,
-        steps: [0.1, 0.5, 0.7, 1.1, 1.3],
-        showSteps: true,
-        valuePosition: 'tooltip',
-      },
-    ],
+    contextToArgs: () =>
+      [
+        {
+          id: 'base',
+          value: 0.5,
+          steps: [0.1, 0.5, 0.7, 1.1, 1.3],
+          showSteps: true,
+          valuePosition: 'tooltip',
+        },
+      ] satisfies [SliderConfig],
   },
 })
 
@@ -164,7 +174,8 @@ const Pips = P0.withOutMessagePolicy({
 const S0 = SliderAskExampleBlock.makeRequiredFieldBinding(SliderBlock, {
   field: 'scrubber',
   init: {
-    contextToArgs: (): [SliderConfig] => [{ id: 'scrubber', value: 40, variant: 'scrubber' }],
+    contextToArgs: () =>
+      [{ id: 'scrubber', value: 40, variant: 'scrubber' }] satisfies [SliderConfig],
   },
 })
 
@@ -465,10 +476,13 @@ export const SliderAskMotionLayer = Layer.mergeAll(
   scrubberMotion.layer,
 )
 
-export const sliderAskEnvironment = (
+export const sliderAskEnvironment: (
   document: Document | undefined,
   platform: string,
-): ReturnType<typeof createAskUserQuestionsLayer> =>
+) => ReturnType<typeof createAskUserQuestionsLayer> = (
+  document: Document | undefined,
+  platform: string,
+) =>
   createAskUserQuestionsLayer({
     document,
     platform,

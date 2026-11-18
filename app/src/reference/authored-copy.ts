@@ -3,7 +3,7 @@ import {
   previewCodeTabId,
   previewCodeTabsViewInputs,
 } from '../../../components/docs/preview-code-tabs'
-// Derived from Fluid Functionalism cc276ca0 InputCopy docs. MIT.
+/* @license Derived from Fluid Functionalism cc276ca0 InputCopy docs. MIT. */
 import { Layer, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { defineInMessageUnion } from 'foldkit/message'
@@ -31,7 +31,7 @@ const scenes = [
   { title: 'Disabled', keys: ['disabled'] },
   { title: 'Copy Callback', keys: ['callback'] },
 ]
-const config = (key: string): InputFamilyConfig => ({
+const config: (key: string) => InputFamilyConfig = (key: string) => ({
   valuePolicy: 'accept',
   copy: {
     id: `docs-copy-${key}`,

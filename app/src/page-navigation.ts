@@ -1,4 +1,3 @@
-// Documentation order follows the site's sidebar, as in the original DocPage.
 import type { HtmlBuilder } from 'foldkit/html'
 import { documentationPages } from '../../lib/catalogue'
 

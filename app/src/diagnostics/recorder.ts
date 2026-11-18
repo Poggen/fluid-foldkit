@@ -1,7 +1,7 @@
 import { Context, Exit, Option, Predicate, type Clock, type Tracer } from 'effect'
 import type { Runtime } from 'foldkit'
 
-export const messageRoute = (message: unknown): string => {
+export const messageRoute: (message: unknown) => string = (message: unknown) => {
   const parts: Array<string> = []
   let current = message
   while (parts.length < 16 && Predicate.hasProperty(current, '_tag')) {

@@ -1,4 +1,4 @@
-// Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT.
+/* @license Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT. */
 import { Match, SchemaGetter } from 'effect'
 import { rect, ruleX } from '@tanstack/charts'
 import type { ChartGradient } from '@tanstack/charts'
@@ -6,7 +6,35 @@ import { decorative } from '@tanstack/charts/mark/decorative'
 import type { CartesianLayer } from './layers'
 import type { SegmentBackgroundProps, SegmentLineProps } from './segment-options'
 
-// Retain Source's Date TimeClip, including invalid results, instead of DateTime's throwing boundary.
+/** Source reads only the first carrier for each role, independent of child order between roles. */
+export const readSegmentProps: <Row>(children: ReadonlyArray<CartesianLayer<Row>>) => SegmentProps =
+  function readSegmentProps<Row>(children: ReadonlyArray<CartesianLayer<Row>>) {
+    return {
+      background: children.find((child) => child.kind === 'segmentBackground')?.props,
+      lines: [
+        children.find((child) => child.kind === 'segmentLineFrom')?.props,
+        children.find((child) => child.kind === 'segmentLineTo')?.props,
+      ],
+    } satisfies SegmentProps
+  }
+
+/** Native domain population stays compiler-owned; this is Source's finite/equal-bound admission. */
+export const resolveSegmentProps: <Row>(
+  children: ReadonlyArray<CartesianLayer<Row>>,
+  domain: SegmentDomain,
+) => SegmentProps | null = function resolveSegmentProps<Row>(
+  children: ReadonlyArray<CartesianLayer<Row>>,
+  domain: SegmentDomain,
+) {
+  const props = readSegmentProps(children)
+
+  const present =
+    domain.explicit ||
+    (domain.count > 0 && (domain.first === domain.last || Number.isFinite(domain.first)))
+
+  return (present && hasSegments(props) ? props : null) satisfies SegmentProps | null
+}
+
 const segmentDate = Match.value(SchemaGetter.Date<number>()).pipe(
   Match.tag('Transform', (getter) => getter.transform),
   Match.orElse(() => {
@@ -22,18 +50,7 @@ export interface SegmentProps {
   ]
 }
 
-/** Source reads only the first carrier for each role, independent of child order between roles. */
-export function readSegmentProps<Row>(children: ReadonlyArray<CartesianLayer<Row>>): SegmentProps {
-  return {
-    background: children.find((child) => child.kind === 'segmentBackground')?.props,
-    lines: [
-      children.find((child) => child.kind === 'segmentLineFrom')?.props,
-      children.find((child) => child.kind === 'segmentLineTo')?.props,
-    ],
-  }
-}
-
-export const hasSegments = (props: SegmentProps): boolean =>
+export const hasSegments: (props: SegmentProps) => boolean = (props: SegmentProps) =>
   Boolean(props.background) || props.lines.some(Boolean)
 
 interface SegmentDomain {
@@ -41,20 +58,6 @@ interface SegmentDomain {
   readonly count: number
   readonly first: number
   readonly last: number
-}
-
-/** Native domain population stays compiler-owned; this is Source's finite/equal-bound admission. */
-export function resolveSegmentProps<Row>(
-  children: ReadonlyArray<CartesianLayer<Row>>,
-  domain: SegmentDomain,
-): SegmentProps | null {
-  const props = readSegmentProps(children)
-
-  const present =
-    domain.explicit ||
-    (domain.count > 0 && (domain.first === domain.last || Number.isFinite(domain.first)))
-
-  return present && hasSegments(props) ? props : null
 }
 
 interface SegmentContext {

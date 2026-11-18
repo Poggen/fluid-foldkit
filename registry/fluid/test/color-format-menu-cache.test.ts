@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { it } from '@effect/vitest'
 import { Cause, Effect, Exit, Layer, Schema } from 'effect'
@@ -102,7 +103,7 @@ function fixture(id: string) {
   })
   const Menu = Root.makeRequiredFieldBinding(ColorFormatMenuBlock, {
     field: 'menu',
-    init: { contextToArgs: (): [ColorFormatMenuConfig] => [{ id, format: 'hex' }] },
+    init: { contextToArgs: () => [{ id, format: 'hex' }] satisfies [ColorFormatMenuConfig] },
   }).withOutMessagePolicy({
     fold: Root.makeOutMessageFold(ColorFormatMenuBlock, { Selected: Root.makeNoopStep }),
   })

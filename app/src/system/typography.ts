@@ -1,5 +1,5 @@
 import { systemClasses } from './classes'
-// Adapted from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Adapted from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { Layer, Schema } from 'effect'
 import { Block } from 'foldkit'
 import { defineInMessageUnion, defineMessageUnion } from 'foldkit/message'

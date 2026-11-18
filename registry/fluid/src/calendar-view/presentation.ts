@@ -1,6 +1,5 @@
 import { Schema } from 'effect'
 
-// Data-only projection contract. Labels, formatters and dateLib remain Layer owned.
 export const PreviewBand = Schema.Struct({ from: Schema.Int, to: Schema.Int })
 
 export const DropdownItem = Schema.Struct({

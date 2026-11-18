@@ -1,7 +1,7 @@
 import { makeFileThumbnailResourcesLayer } from '../src/file-thumbnail-resources.js'
 import { expect, vi } from 'vitest'
 import { it as test } from '@effect/vitest'
-import { Deferred, Effect, Exit, Fiber, Layer } from 'effect'
+import { Effect, Exit, Fiber, Layer } from 'effect'
 import { loadPdfjs, makePdfjsLoaderLayer, PdfjsLoaderLayer } from '../src/file-thumbnail-pdf.js'
 
 import type { PdfjsModule, PdfPreviewError, PdfjsLoaderService } from '../src/file-thumbnail-pdf.js'
@@ -10,9 +10,8 @@ test.effect(
   'PDF loader Layer is SSR lazy and retains the first failed load across thumbnail requests',
   () =>
     Effect.gen(function* lazyLayer() {
-      const loader = vi
-        .fn<() => Promise<PdfjsModule>>()
-        .mockRejectedValue(new Error('worker unavailable'))
+      const consumer = { load: () => import('pdfjs-dist') }
+      const loader = vi.spyOn(consumer, 'load')
 
       const layer = makePdfjsLoaderLayer(loader)
       yield* Effect.scoped(Layer.build(layer))
@@ -23,6 +22,8 @@ test.effect(
         const second = yield* Effect.exit(loadPdfjs())
         expect(Exit.isFailure(first)).toBe(true)
         expect(Exit.isFailure(second)).toBe(true)
+        const firstError = yield* Effect.flip(loadPdfjs())
+        expect(firstError.message).toContain('DOMMatrix')
         expect(loader).toHaveBeenCalledTimes(1)
       }).pipe(Effect.provide(layer))
     }),
@@ -34,7 +35,8 @@ export const fullPdfModuleContract: Effect.Effect<
   PdfjsLoaderService
 > = loadPdfjs()
 
-export const consumeWholePdfModule = (module: PdfjsModule): PdfjsModule => module
+export const consumeWholePdfModule: (module: PdfjsModule) => PdfjsModule = (module: PdfjsModule) =>
+  module
 
 test.effect('invoking the browser PDF module without DOM capabilities returns a typed error', () =>
   Effect.gen(function* browserFailure() {
@@ -64,22 +66,25 @@ test.effect(
 
 test.effect('interrupting one PDF waiter does not cancel or poison the owning module load', () =>
   Effect.gen(function* independentWaiter() {
-    const settled = Promise.withResolvers<PdfjsModule>()
-    const started = yield* Deferred.make<boolean>()
-    const loader = vi.fn<() => Promise<PdfjsModule>>().mockReturnValue(settled.promise)
+    const release = Promise.withResolvers<void>()
+    const started = Promise.withResolvers<void>()
+    const consumer = {
+      load: () => {
+        started.resolve()
+        return release.promise.then(() => import('pdfjs-dist'))
+      },
+    }
+    const loader = vi.spyOn(consumer, 'load')
     const layer = makePdfjsLoaderLayer(loader)
     yield* Effect.gen(function* waitForSharedLoad() {
-      const first = yield* Effect.forkChild(
-        loadPdfjs().pipe(Effect.onExit(() => Deferred.succeed(started, true))),
-      )
-
-      yield* Effect.yieldNow
+      const first = yield* Effect.forkChild(loadPdfjs())
+      yield* Effect.promise(() => started.promise)
       yield* Fiber.interrupt(first)
-      yield* Deferred.await(started)
+      expect(Exit.hasInterrupts(yield* Fiber.await(first))).toBe(true)
       const second = yield* Effect.forkChild(Effect.flip(loadPdfjs()))
-      settled.reject(new Error('shared module failed'))
+      release.resolve()
       const error = yield* Fiber.join(second)
-      expect(error.message).toBe('shared module failed')
+      expect(error.message).toContain('DOMMatrix')
       expect(loader).toHaveBeenCalledTimes(1)
     }).pipe(Effect.provide(layer))
   }),

@@ -244,11 +244,15 @@ it.effect('UTC preparation keeps captured SSR today and explicit today overrides
   }),
 )
 
-const comparable = (value: {
+const comparable: (value: {
   readonly state: CalendarState
   readonly events: ReadonlyArray<Event>
   readonly focus?: number | null
-}): string => JSON.stringify(value).replaceAll('Etc/UTC', 'UTC')
+}) => string = (value: {
+  readonly state: CalendarState
+  readonly events: ReadonlyArray<Event>
+  readonly focus?: number | null
+}) => JSON.stringify(value).replaceAll('Etc/UTC', 'UTC')
 
 const dayIn = (state: CalendarState, day: string) => {
   const result = state.projection.months

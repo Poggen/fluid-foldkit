@@ -1,6 +1,5 @@
-// Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT.
-// Thin adapter over the native `sunburst` mark (no `states`, no labels in 1.0.0); focus emphasis is CSS off host attributes (push.ts).
-// The scene keeps the native sectors for hit testing; the sector layer (sunburst-layer.ts) paints them from the geometry this adapter publishes.
+/* @license Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT. */
+
 import type { SectorPush } from './push'
 import { Schema } from 'effect'
 import { joinClasses } from './private/cn'
@@ -83,8 +82,7 @@ export interface SunburstDecorations {
   readonly labelsDelayMs: number
 }
 
-// A leaving sector retains its key while its geometry collapses. Keeps its arc classes (push and emphasis rules still reach it); only the pointer cursor goes.
-const ghostOf = (area: Readonly<SceneArea>): SceneArea => {
+const ghostOf: (area: Readonly<SceneArea>) => SceneArea = (area: Readonly<SceneArea>) => {
   const kept = area.className
     ?.split(' ')
     .filter((name) => name !== 'bk-sunburst-branch')
@@ -97,11 +95,15 @@ const ghostOf = (area: Readonly<SceneArea>): SceneArea => {
 
 const isArea = (node: SceneNode): node is SceneArea => node.kind === 'area'
 
-const labelText = (
+const labelText: (
   area: Readonly<SceneArea>,
   node: SunburstNativeNode,
   style: SunburstLabelStyle,
-): SceneLabel => ({
+) => SceneLabel = (
+  area: Readonly<SceneArea>,
+  node: SunburstNativeNode,
+  style: SunburstLabelStyle,
+) => ({
   anchor: 'middle',
   baseline: 'middle',
   fontSize: style.fontSize,
@@ -118,8 +120,7 @@ const labelText = (
   y: 0,
 })
 
-// The label's box: a group whose opacity the layer steps at bklit's fit rule; the text inside is posed by the layer from the same geometry.
-const labelBox = (text: SceneLabel): SceneNode => ({
+const labelBox: (text: SceneLabel) => SceneNode = (text: SceneLabel) => ({
   ariaHidden: true,
   children: [text],
   className: LABEL_BOX_CLASS,
@@ -127,7 +128,6 @@ const labelBox = (text: SceneLabel): SceneNode => ({
   kind: 'group',
 })
 
-// Every sector's point owner carries a SunburstNativeNode datum.
 const rowSchema = Schema.Struct({
   id: Schema.String,
   parentId: Schema.NullOr(Schema.String),
@@ -150,21 +150,26 @@ const nativeNodeSchema = Schema.Struct({
   sourceIndexes: Schema.Array(Schema.Finite),
 })
 
-const nativeNodeOf = (area: Readonly<SceneArea>): SunburstNativeNode | undefined => {
+const nativeNodeOf: (area: Readonly<SceneArea>) => SunburstNativeNode | undefined = (
+  area: Readonly<SceneArea>,
+) => {
   const datum = area.pointOwner?.datum
 
   return Schema.is(nativeNodeSchema)(datum) ? datum : undefined
 }
 
-const depthOf = (area: Readonly<SceneArea>): number => nativeNodeOf(area)?.ancestorIds.length ?? 0
+const depthOf: (area: Readonly<SceneArea>) => number = (area: Readonly<SceneArea>) =>
+  nativeNodeOf(area)?.ancestorIds.length ?? 0
 
-// The overlay is the sector itself under its own key, hidden until its node is on the hovered path; the layer gives it the sector's geometry, so it morphs with the sector under it
-// (bklit's popped segment is its morphing geometry grown, sunburst-segment.tsx:58-69). Grow and ancestor push are radial geometry updates in the owned layer.
-const popFor = (
+const popFor: (
   sector: Readonly<SceneArea>,
   point: Readonly<ChartPoint<SunburstNativeNode, number, number>> | undefined,
   className: string | undefined,
-): SceneArea => ({
+) => SceneArea = (
+  sector: Readonly<SceneArea>,
+  point: Readonly<ChartPoint<SunburstNativeNode, number, number>> | undefined,
+  className: string | undefined,
+) => ({
   ...sector,
   ariaHidden: true,
   ...(className === undefined ? {} : { className }),
@@ -182,29 +187,38 @@ interface GroupBuild {
   readonly pops: Array<SceneArea>
   readonly labels: Array<[rank: Rank, box: SceneNode]>
   readonly entries: Map<string, Omit<TrailEntry, 'ghost'>>
-  /** Paint rank of each sector: bklit's `sortSunburstSegments` draws deeper rings first, later arcs first within a ring (inner rings last). */
+
   readonly rank: Map<SceneArea, Rank>
   readonly layout: Readonly<PolarLayoutContext>
 }
 
-const sectorClassName = (
+const sectorClassName: (
   point: SunburstPoint,
   arcIndex: number | undefined,
   _decorations: Readonly<SunburstDecorations>,
-): string | undefined => {
+) => string | undefined = (
+  point: SunburstPoint,
+  arcIndex: number | undefined,
+  _decorations: Readonly<SunburstDecorations>,
+) => {
   const arcClass = arcIndex === undefined ? undefined : `bk-sb-a${arcIndex}`
 
   return joinClasses(point.datum.external ? undefined : 'bk-sunburst-branch', arcClass) || undefined
 }
 
-/** Publishes the geometry the layer paints for the sector under `keys` (its overlay, label and label box share it). */
-const publish = (
+const publish: (
   decorations: Readonly<SunburstDecorations>,
   keys: ReadonlyArray<string | undefined>,
   arc: ArcValues,
   delayMs: number,
   arcId?: string,
-): void => {
+) => void = (
+  decorations: Readonly<SunburstDecorations>,
+  keys: ReadonlyArray<string | undefined>,
+  arc: ArcValues,
+  delayMs: number,
+  arcId?: string,
+) => {
   for (const key of keys) {
     if (key !== undefined) {
       decorations.feed.geometry.set(key, {
@@ -216,12 +230,17 @@ const publish = (
   }
 }
 
-const addSector = (
+const addSector: (
   build: GroupBuild,
   child: Readonly<SceneArea>,
   point: SunburstPoint,
   decorations: Readonly<SunburstDecorations>,
-): void => {
+) => void = (
+  build: GroupBuild,
+  child: Readonly<SceneArea>,
+  point: SunburstPoint,
+  decorations: Readonly<SunburstDecorations>,
+) => {
   const arc = decorations.arcOf(point.datum, build.layout)
 
   if (arc === undefined) {
@@ -256,7 +275,6 @@ const addSector = (
   const popKey = decorations.popOut > 0 ? `${sector.key}:pop` : undefined
 
   if (popKey !== undefined) {
-    // The overlay shares the sector geometry; the layer applies exact radial hover growth.
     build.pops.push(
       popFor(sector, point, arcIndex === undefined ? undefined : `bk-sb-p${arcIndex}`),
     )
@@ -282,20 +300,24 @@ const addSector = (
   })
 }
 
-const addGhost = (
+const addGhost: (
+  build: GroupBuild,
+  trail: SectorTrail,
+  argument2: readonly [string, TrailEntry],
+  decorations: Readonly<SunburstDecorations>,
+) => void = (
   build: GroupBuild,
   trail: SectorTrail,
   [key, previous]: readonly [string, TrailEntry],
   decorations: Readonly<SunburstDecorations>,
-): void => {
+) => {
   const ghost = ghostOf(previous.area)
   const arc = previous.ghost ? previous.arc : collapsedArc(previous.arc)
   build.rank.set(ghost, previous.rank)
   build.areas.push(ghost)
-  // Its label rides the collapse too and hides where bklit's would (the fit rule on the shrinking arc).
+
   const box = previous.label === undefined ? undefined : labelBox(previous.label)
-  // Its overlay collapses with it under the same key, so a zoom that brings the sector back grows the overlay from the
-  // point too instead of entering it at its final shape.
+
   const arcIndex = /(?:^| )bk-sb-a(\d+)(?: |$)/u.exec(ghost.className ?? '')?.[1]
   const popKey = decorations.popOut > 0 && arcIndex !== undefined ? `${ghost.key}:pop` : undefined
 
@@ -318,13 +340,11 @@ const addGhost = (
   }
 }
 
-// Sectors that left stay as collapsed, non-interactive areas (kept across renders, so the collapse is not cut short by the
-// native exit fade); a later zoom that brings one back finds its element and grows it from the point.
-const keepTrail = (
+const keepTrail: (
   build: GroupBuild,
   trail: SectorTrail,
   decorations: Readonly<SunburstDecorations>,
-): void => {
+) => void = (build: GroupBuild, trail: SectorTrail, decorations: Readonly<SunburstDecorations>) => {
   const live = new Set(build.areas.map((area) => area.key))
   const gone = [...trail].filter(([key]) => !live.has(key))
   trail.clear()
@@ -338,17 +358,20 @@ const keepTrail = (
   }
 }
 
-const paintOrder = ([depthA, indexA]: Rank, [depthB, indexB]: Rank): number =>
-  depthA === depthB ? indexB - indexA : depthB - depthA
+const paintOrder: (argument0: Rank, argument1: Rank) => number = (
+  [depthA, indexA]: Rank,
+  [depthB, indexB]: Rank,
+) => (depthA === depthB ? indexB - indexA : depthB - depthA) satisfies number
 
-const layers = (node: SceneGroup, { areas, pops, labels, rank }: GroupBuild): Array<SceneNode> => {
+const layers: (node: SceneGroup, argument1: GroupBuild) => Array<SceneNode> = (
+  node: SceneGroup,
+  { areas, pops, labels, rank }: GroupBuild,
+) => {
   pops.sort((a, b) => depthOf(a) - depthOf(b))
-  // The order must not depend on the zoom: the layer keeps one element per key, and a node detached and re-attached
-  // in one task starts no CSS transition, so a re-ordered dimmed sector would snap to full opacity. Absolute depth + bklit arc index (ghosts keep their last rank) is the same in every view.
+
   areas.sort((a, b) => paintOrder(rank.get(a) ?? [0, 0], rank.get(b) ?? [0, 0]))
   const out: Array<SceneNode> = [{ ...node, children: areas }]
-  // Labels paint above the pop-out overlay (bklit draws labels last); unrelated labels hide through the host's CSS rules.
-  // Same zoom-independent order as the sectors (see above), so no label box is re-inserted mid-zoom.
+
   labels.sort(([rankA], [rankB]) => paintOrder(rankA, rankB))
 
   if (pops.length > 0) {
@@ -372,15 +395,20 @@ const layers = (node: SceneGroup, { areas, pops, labels, rank }: GroupBuild): Ar
     })
   }
 
-  return out
+  return out satisfies Array<SceneNode>
 }
 
-const decorateGroup = (
+const decorateGroup: (
   node: SceneGroup,
   pointByKey: ReadonlyMap<string, SunburstPoint>,
   layout: Readonly<PolarLayoutContext>,
   decorations: Readonly<SunburstDecorations>,
-): Array<SceneNode> => {
+) => Array<SceneNode> = (
+  node: SceneGroup,
+  pointByKey: ReadonlyMap<string, SunburstPoint>,
+  layout: Readonly<PolarLayoutContext>,
+  decorations: Readonly<SunburstDecorations>,
+) => {
   const build: GroupBuild = {
     areas: [],
     entries: new Map(),
@@ -398,7 +426,6 @@ const decorateGroup = (
     }
   }
 
-  // Each data arc has one role; optional Segment configs only change its fill.
   const baseAreas = [...build.areas]
   build.areas.length = 0
   build.pops.length = 0
@@ -424,7 +451,6 @@ const decorateGroup = (
     }
   }
   if (decorations.trail !== undefined) {
-    // Removed data roles unmount immediately; zoom ghosts only belong to roles that still exist.
     for (const [key] of decorations.trail) {
       const role = Number(key.split(':role:').at(-1))
       if (role >= decorations.segmentRoles.length) decorations.trail.delete(key)
@@ -435,12 +461,17 @@ const decorateGroup = (
   return layers(node, build)
 }
 
-export const nativeSunburst = (
+export const nativeSunburst: (
   rows: ReadonlyArray<SunburstRowShape>,
   options: SunburstParentOptions<SunburstRowShape>,
   decorations: Readonly<SunburstDecorations>,
   renderer: Parameters<typeof sunburst>[1]['renderer'],
-): PolarMark<SunburstNativeNode, number, number, never, never> => {
+) => PolarMark<SunburstNativeNode, number, number, never, never> = (
+  rows: ReadonlyArray<SunburstRowShape>,
+  options: SunburstParentOptions<SunburstRowShape>,
+  decorations: Readonly<SunburstDecorations>,
+  renderer: Parameters<typeof sunburst>[1]['renderer'],
+) => {
   const base = sunburst(rows, { ...options, ...(renderer === undefined ? {} : { renderer }) })
 
   return {
@@ -460,10 +491,11 @@ export const nativeSunburst = (
           decorations.feed.labelsDelayMs = decorations.labelsDelayMs
           const pointByKey = new Map((scene.points ?? []).map((point) => [point.key, point]))
 
-          const nodes = scene.nodes.flatMap((node): Array<SceneNode> =>
-            node.kind === 'group'
-              ? decorateGroup(node, pointByKey, renderContext.layout, decorations)
-              : [node],
+          const nodes = scene.nodes.flatMap(
+            (node) =>
+              (node.kind === 'group'
+                ? decorateGroup(node, pointByKey, renderContext.layout, decorations)
+                : [node]) satisfies Array<SceneNode>,
           )
 
           return { ...scene, nodes }

@@ -27,6 +27,140 @@ import { PatternCircles } from '@foldkit-visuals/charts'
 import type { PatternPresetId } from '@foldkit-visuals/charts'
 import '@foldkit-visuals/charts/styles.css'
 import './style.css'
+const numericOption: (name: string, second?: boolean) => number | undefined = function (
+  name: string,
+  second = false,
+) {
+  const raw = query.get(second ? `second${name[0]?.toUpperCase()}${name.slice(1)}` : name)
+  if (raw === null) return undefined satisfies number | undefined
+  const value = Number(raw)
+  return (Number.isFinite(value) ? value : undefined) satisfies number | undefined
+}
+
+const geometryOptions: (
+  second?: boolean,
+) => Pick<BarProps, 'minBarHeight' | 'groupGap' | 'stackGap' | 'lineCap' | 'perspective'> =
+  function (second = false) {
+    const minimum = numericOption('minimum', second)
+    const gap = numericOption('gap', second)
+    const stackGap = numericOption('stackGap', second)
+    const raw = query.get(second ? 'secondRadius' : 'radius')
+    const radius: BarLineCap | undefined =
+      raw === 'round' || raw === 'butt' ? raw : numericOption('radius', second)
+    return {
+      ...(minimum === undefined ? {} : { minBarHeight: minimum }),
+      ...(gap === undefined ? {} : { groupGap: gap }),
+      ...(stackGap === undefined ? {} : { stackGap }),
+      ...(radius === undefined ? {} : { lineCap: radius }),
+      ...(query.has(second ? 'secondPerspective' : 'perspective') ? { perspective: true } : {}),
+    } satisfies Pick<BarProps, 'minBarHeight' | 'groupGap' | 'stackGap' | 'lineCap' | 'perspective'>
+  }
+
+const squarePreset: (value: string | null) => PatternPresetId = function squarePreset(
+  value: string | null,
+) {
+  switch (value) {
+    case 'none':
+    case 'diagonal':
+    case 'horizontal':
+    case 'vertical':
+    case 'cross':
+    case 'dots':
+    case 'circles':
+    case 'accent':
+      return value
+    default:
+      return 'dots'
+  }
+}
+
+const squareProps: (
+  alternate: boolean,
+  gradient: boolean,
+  companion: boolean,
+) => BarChartProps<typeof Row.Type> = function squareProps(
+  alternate: boolean,
+  gradient: boolean,
+  companion: boolean,
+) {
+  const start = companion ? '#18a878' : '#ff5500'
+  const end = companion ? '#c040df' : '#2864e8'
+  const paintStart = variablePaint ? 'var(--bar-paint-start)' : start
+  const paintEnd = variablePaint ? 'var(--bar-paint-end)' : end
+  const patternId = companion ? 'bar-paint-companion' : 'bar-paint'
+  const fill =
+    squareMode === 'gradient' || squareMode === 'fallback' ? paintStart : `url(#${patternId})`
+  const stops =
+    squareMode === 'fallback'
+      ? [{ offset: 50, color: 'orange' }]
+      : [
+          { offset: 0, color: paintStart },
+          { offset: 100, color: paintEnd },
+        ]
+  let result: BarChartProps<typeof Row.Type> = {
+    environment,
+    xDataKey: 'name',
+    missingValues: 'gap',
+    animationDuration: 1100,
+    ...(requestedBarWidth === undefined ? {} : { barWidth: requestedBarWidth }),
+    children: [
+      Grid(),
+      PatternCircles({ id: patternId, width: 8, height: 8, radius: 2, fill: paintStart }),
+      ...(mixed
+        ? [Bar({ ...barEntrance, dataKey: 'revenue', ...firstGeometry })]
+        : [
+            BarSquares({
+              dataKey: 'revenue',
+              fill,
+              stroke: start,
+              useGradient: gradient,
+              gradientStops: stops,
+              patternPreset: preset,
+              animate: entranceCase !== 'none',
+            }),
+          ]),
+      BarSquares({
+        dataKey: 'cost',
+        fill: '#aaa',
+        animate: entranceCase !== 'none',
+        ...(namedAxes ? { yAxisId: 'right' } : {}),
+      }),
+      ...decorations,
+      ...(namedAxes
+        ? [
+            YAxis({
+              yAxisId: 'right',
+              orientation: 'right',
+              formatValue: axis70Formatter,
+              ...(axis70.has('right') ? { orientation: 'right' } : {}),
+            }),
+          ]
+        : []),
+      initialHorizontal !== alternate ? BarYAxis() : BarXAxis(),
+      ...(alternate || axisCase === null
+        ? []
+        : axisCase === 'both'
+          ? [BarYAxis()]
+          : [
+              YAxis({
+                formatValue: axis70Formatter,
+                ...(axis70.has('right') ? { orientation: 'right' } : {}),
+              }),
+            ]),
+      ChartTooltip(matchCrosshair ? { matchCrosshair: true } : {}),
+    ],
+  }
+  if (enterTransition !== undefined) result = { ...result, enterTransition }
+  result = {
+    ...result,
+    orientation: initialHorizontal !== alternate ? 'horizontal' : 'vertical',
+    stacked: initialStacked !== alternate,
+    stackGap: numericOption('tooltipGap') ?? (alternate ? 2 : 0),
+  }
+  if (variablePaint)
+    result = { ...result, style: { '--bar-paint-start': start, '--bar-paint-end': end } }
+  return result
+}
 
 const query = new URLSearchParams(window.location.search)
 const matchCrosshair = query.has('matchCrosshair')
@@ -45,29 +179,6 @@ const initialHorizontal = query.has('horizontal')
 const initialStacked = query.has('stacked')
 const track = query.has('track')
 const depth = query.has('depth')
-function numericOption(name: string, second = false): number | undefined {
-  const raw = query.get(second ? `second${name[0]?.toUpperCase()}${name.slice(1)}` : name)
-  if (raw === null) return undefined
-  const value = Number(raw)
-  return Number.isFinite(value) ? value : undefined
-}
-function geometryOptions(
-  second = false,
-): Pick<BarProps, 'minBarHeight' | 'groupGap' | 'stackGap' | 'lineCap' | 'perspective'> {
-  const minimum = numericOption('minimum', second)
-  const gap = numericOption('gap', second)
-  const stackGap = numericOption('stackGap', second)
-  const raw = query.get(second ? 'secondRadius' : 'radius')
-  const radius: BarLineCap | undefined =
-    raw === 'round' || raw === 'butt' ? raw : numericOption('radius', second)
-  return {
-    ...(minimum === undefined ? {} : { minBarHeight: minimum }),
-    ...(gap === undefined ? {} : { groupGap: gap }),
-    ...(stackGap === undefined ? {} : { stackGap }),
-    ...(radius === undefined ? {} : { lineCap: radius }),
-    ...(query.has(second ? 'secondPerspective' : 'perspective') ? { perspective: true } : {}),
-  }
-}
 const firstGeometry = geometryOptions()
 const secondGeometry = geometryOptions(true)
 const requestedBarWidth = numericOption('barWidth')
@@ -103,32 +214,25 @@ const decorations = [
 ]
 const showCompanion = query.has('two')
 const variablePaint = query.has('variables')
-function squarePreset(value: string | null): PatternPresetId {
-  switch (value) {
-    case 'none':
-    case 'diagonal':
-    case 'horizontal':
-    case 'vertical':
-    case 'cross':
-    case 'dots':
-    case 'circles':
-    case 'accent':
-      return value
-    default:
-      return 'dots'
-  }
-}
 const preset = squareMode === 'none' ? 'none' : squarePreset(query.get('preset'))
-const enterTransition = ((): BarChartProps<typeof Row.Type>['enterTransition'] => {
+const enterTransition = (() => {
   switch (entranceCase) {
     case 'linear':
-      return { type: 'tween', duration: 0.6, ease: 'linear' }
+      return { type: 'tween', duration: 0.6, ease: 'linear' } satisfies BarChartProps<
+        typeof Row.Type
+      >['enterTransition']
     case 'spring':
-      return { type: 'spring', stiffness: 100, damping: 12 }
+      return { type: 'spring', stiffness: 100, damping: 12 } satisfies BarChartProps<
+        typeof Row.Type
+      >['enterTransition']
     case 'function':
-      return { type: 'tween', duration: 0.6, ease: (progress: number) => progress * progress }
+      return {
+        type: 'tween',
+        duration: 0.6,
+        ease: (progress: number) => progress * progress,
+      } satisfies BarChartProps<typeof Row.Type>['enterTransition']
     default:
-      return undefined
+      return undefined satisfies BarChartProps<typeof Row.Type>['enterTransition']
   }
 })()
 const barEntrance =
@@ -238,90 +342,6 @@ const alternateInputs = root.inputs('native-bar', {
     ChartTooltip(matchCrosshair ? { matchCrosshair: true } : {}),
   ],
 })
-
-function squareProps(
-  alternate: boolean,
-  gradient: boolean,
-  companion: boolean,
-): BarChartProps<typeof Row.Type> {
-  const start = companion ? '#18a878' : '#ff5500'
-  const end = companion ? '#c040df' : '#2864e8'
-  const paintStart = variablePaint ? 'var(--bar-paint-start)' : start
-  const paintEnd = variablePaint ? 'var(--bar-paint-end)' : end
-  const patternId = companion ? 'bar-paint-companion' : 'bar-paint'
-  const fill =
-    squareMode === 'gradient' || squareMode === 'fallback' ? paintStart : `url(#${patternId})`
-  const stops =
-    squareMode === 'fallback'
-      ? [{ offset: 50, color: 'orange' }]
-      : [
-          { offset: 0, color: paintStart },
-          { offset: 100, color: paintEnd },
-        ]
-  let result: BarChartProps<typeof Row.Type> = {
-    environment,
-    xDataKey: 'name',
-    missingValues: 'gap',
-    animationDuration: 1100,
-    ...(requestedBarWidth === undefined ? {} : { barWidth: requestedBarWidth }),
-    children: [
-      Grid(),
-      PatternCircles({ id: patternId, width: 8, height: 8, radius: 2, fill: paintStart }),
-      ...(mixed
-        ? [Bar({ ...barEntrance, dataKey: 'revenue', ...firstGeometry })]
-        : [
-            BarSquares({
-              dataKey: 'revenue',
-              fill,
-              stroke: start,
-              useGradient: gradient,
-              gradientStops: stops,
-              patternPreset: preset,
-              animate: entranceCase !== 'none',
-            }),
-          ]),
-      BarSquares({
-        dataKey: 'cost',
-        fill: '#aaa',
-        animate: entranceCase !== 'none',
-        ...(namedAxes ? { yAxisId: 'right' } : {}),
-      }),
-      ...decorations,
-      ...(namedAxes
-        ? [
-            YAxis({
-              yAxisId: 'right',
-              orientation: 'right',
-              formatValue: axis70Formatter,
-              ...(axis70.has('right') ? { orientation: 'right' } : {}),
-            }),
-          ]
-        : []),
-      initialHorizontal !== alternate ? BarYAxis() : BarXAxis(),
-      ...(alternate || axisCase === null
-        ? []
-        : axisCase === 'both'
-          ? [BarYAxis()]
-          : [
-              YAxis({
-                formatValue: axis70Formatter,
-                ...(axis70.has('right') ? { orientation: 'right' } : {}),
-              }),
-            ]),
-      ChartTooltip(matchCrosshair ? { matchCrosshair: true } : {}),
-    ],
-  }
-  if (enterTransition !== undefined) result = { ...result, enterTransition }
-  result = {
-    ...result,
-    orientation: initialHorizontal !== alternate ? 'horizontal' : 'vertical',
-    stacked: initialStacked !== alternate,
-    stackGap: numericOption('tooltipGap') ?? (alternate ? 2 : 0),
-  }
-  if (variablePaint)
-    result = { ...result, style: { '--bar-paint-start': start, '--bar-paint-end': end } }
-  return result
-}
 
 function squareInputs(id: string, companion: boolean) {
   const normal = root.inputs(id, squareProps(false, true, companion))

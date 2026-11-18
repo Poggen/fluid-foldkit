@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Option, Schema } from 'effect'
 import { GroupPresentation, GroupVisual } from './group-visual.js'
 
@@ -21,7 +21,9 @@ export interface TooltipOptions {
   readonly forceOpen?: boolean | undefined
   readonly followCursor?: 'x' | 'y' | undefined
 }
-export const configuration = (options: TooltipOptions): Configuration => ({
+export const configuration: (options: TooltipOptions) => Configuration = (
+  options: TooltipOptions,
+) => ({
   side: options.side ?? 'top',
   hoverable: options.hoverable ?? true,
   sideOffset: options.sideOffset ?? 8,
@@ -67,13 +69,17 @@ export const groupConfiguration = (options: GroupOptions, ownsGroup: boolean) =>
   presentation: options.presentation ?? 'independent',
 })
 
-export const initialGroup = (options: GroupOptions = {}, ownsGroup = false): Group => ({
-  ...groupConfiguration(options, ownsGroup),
-  active: Option.none(),
-  cooldownGeneration: 0,
-  visual: GroupVisual.Empty({ generation: 0 }),
-  preferredSide: Option.none(),
-})
+export const initialGroup: (options?: GroupOptions, ownsGroup?: boolean) => Group = (
+  options: GroupOptions = {},
+  ownsGroup = false,
+) =>
+  ({
+    ...groupConfiguration(options, ownsGroup),
+    active: Option.none(),
+    cooldownGeneration: 0,
+    visual: GroupVisual.Empty({ generation: 0 }),
+    preferredSide: Option.none(),
+  }) satisfies Group
 export const InteractionContext = Schema.Struct({ presentation: Presentation, group: Group })
 export type InteractionContext = typeof InteractionContext.Type
 export const Admission = Schema.Struct({

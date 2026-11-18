@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { DropdownResourcesServerLayer } from '../src/dropdown-resources.js'
 import { expect } from 'vitest'

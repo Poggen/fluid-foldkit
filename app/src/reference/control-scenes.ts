@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism cc276ca0 docs. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0 docs. MIT, copyright 2026 Micka Touillaud. */
 import type { SliderConfig } from '@foldkit-visuals/fluid/slider'
 export const sliderScenes: ReadonlyArray<{
   readonly title: string

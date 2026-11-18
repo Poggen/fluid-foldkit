@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { it } from '@effect/vitest'
 import { Effect, Layer, Schedule, Schema } from 'effect'
@@ -31,9 +32,10 @@ const Consumer = Block.make('PopupAccessibility', {
 const Popup = Consumer.makeRequiredFieldBinding(ColorPopupBlock, {
   field: 'popup',
   init: {
-    contextToArgs: (): Block.FactsOf<typeof ColorPopupBlock>['initArgs'] => [
-      { id: 'color', kind: 'popover', defaultOpen: true },
-    ],
+    contextToArgs: () =>
+      [{ id: 'color', kind: 'popover', defaultOpen: true }] satisfies Block.FactsOf<
+        typeof ColorPopupBlock
+      >['initArgs'],
   },
 }).withOutMessagePolicy({
   fold: Consumer.makeOutMessageFold(ColorPopupBlock, {
@@ -45,11 +47,12 @@ const Popup = Consumer.makeRequiredFieldBinding(ColorPopupBlock, {
 const DatePicker = Consumer.makeRequiredFieldBinding(PopupBlock, {
   field: 'date',
   init: {
-    contextToArgs: (): Block.FactsOf<typeof PopupBlock>['initArgs'] => [
-      { id: 'date-popup', anchorId: 'positioning-key', kind: 'trigger', align: 'start' },
-      true,
-      false,
-    ],
+    contextToArgs: () =>
+      [
+        { id: 'date-popup', anchorId: 'positioning-key', kind: 'trigger', align: 'start' },
+        true,
+        false,
+      ] satisfies Block.FactsOf<typeof PopupBlock>['initArgs'],
   },
 }).withOutMessagePolicy({
   fold: Consumer.makeOutMessageFold(PopupBlock, {

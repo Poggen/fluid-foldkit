@@ -9,16 +9,22 @@ export type ChoroplethCarrier =
   | { readonly role: 'graticule'; readonly props: ChoroplethGraticuleProps }
   | { readonly role: 'tooltip'; readonly props: ChoroplethTooltipProps }
 
-export const ChoroplethFeatureComponent = (
+export const ChoroplethFeatureComponent: (props?: ChoroplethFeatureProps) => ChoroplethCarrier = (
   props: ChoroplethFeatureProps = {},
-): ChoroplethCarrier => ({ role: 'feature', props })
+) => ({ role: 'feature', props }) satisfies ChoroplethCarrier
 
-export const ChoroplethGraticule = (props: ChoroplethGraticuleProps = {}): ChoroplethCarrier => ({
-  role: 'graticule',
-  props,
-})
+export const ChoroplethGraticule: (props?: ChoroplethGraticuleProps) => ChoroplethCarrier = (
+  props: ChoroplethGraticuleProps = {},
+) =>
+  ({
+    role: 'graticule',
+    props,
+  }) satisfies ChoroplethCarrier
 
-export const ChoroplethTooltip = (props: ChoroplethTooltipProps = {}): ChoroplethCarrier => ({
-  role: 'tooltip',
-  props,
-})
+export const ChoroplethTooltip: (props?: ChoroplethTooltipProps) => ChoroplethCarrier = (
+  props: ChoroplethTooltipProps = {},
+) =>
+  ({
+    role: 'tooltip',
+    props,
+  }) satisfies ChoroplethCarrier

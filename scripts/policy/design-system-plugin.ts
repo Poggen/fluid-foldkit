@@ -20,7 +20,10 @@ const classBuilderImports = {
   immutableAliasesOnly: true,
 }
 
-const isClassBuilder = (value: ESTree.Expression, context: Context): boolean => {
+const isClassBuilder: (value: ESTree.Expression, context: Context) => boolean = (
+  value: ESTree.Expression,
+  context: Context,
+) => {
   if (isBuilder(value, context)) return true
   const identity = importIdentity(
     value,
@@ -31,16 +34,16 @@ const isClassBuilder = (value: ESTree.Expression, context: Context): boolean => 
   return identity?.module === 'foldkit/html' && identity.name === 'inertHtml'
 }
 
-const classCount = (
+const classCount: (
   value: ESTree.Expression,
   context: Context,
-  seen = new Set<ESTree.Node>(),
-): number => {
+  seen?: Set<ESTree.Node>,
+) => number = (value: ESTree.Expression, context: Context, seen = new Set<ESTree.Node>()) => {
   const node = resolveValue(value, context)
-  if (seen.has(node)) return 0
+  if (seen.has(node)) return 0 satisfies number
   const path = new Set([...seen, node])
   const count = (expression: ESTree.Expression) => classCount(expression, context, path)
-  const returns = (statement: ESTree.Node): number => {
+  const returns: (statement: ESTree.Node) => number = (statement: ESTree.Node) => {
     if (statement.type === 'ReturnStatement')
       return statement.argument === null ? 0 : count(statement.argument)
     if (statement.type === 'BlockStatement') return Math.max(0, ...statement.body.map(returns))
@@ -57,20 +60,20 @@ const classCount = (
         (total, item) =>
           total + (item === null ? 0 : count(item.type === 'SpreadElement' ? item.argument : item)),
         0,
-      )
+      ) satisfies number
     case 'ConditionalExpression':
-      return Math.max(count(node.consequent), count(node.alternate))
+      return Math.max(count(node.consequent), count(node.alternate)) satisfies number
     case 'LogicalExpression':
-      return node.operator === '&&'
-        ? count(node.right)
-        : Math.max(count(node.left), count(node.right))
+      return (
+        node.operator === '&&' ? count(node.right) : Math.max(count(node.left), count(node.right))
+      ) satisfies number
     case 'CallExpression': {
       if (
         node.callee.type === 'MemberExpression' &&
         staticPropertyName(node.callee) === 'Class' &&
         isClassBuilder(node.callee.object, context)
       )
-        return 1
+        return 1 satisfies number
       const callee = resolveValue(node.callee, context)
       const variable =
         callee.type === 'Identifier'
@@ -88,13 +91,15 @@ const classCount = (
         fn.type !== 'FunctionExpression' &&
         fn.type !== 'ArrowFunctionExpression'
       )
-        return 0
-      if (fn.body === null || path.has(fn)) return 0
+        return 0 satisfies number
+      if (fn.body === null || path.has(fn)) return 0 satisfies number
       path.add(fn)
-      return fn.body.type === 'BlockStatement' ? returns(fn.body) : count(fn.body)
+      return (
+        fn.body.type === 'BlockStatement' ? returns(fn.body) : count(fn.body)
+      ) satisfies number
     }
     default:
-      return 0
+      return 0 satisfies number
   }
 }
 
@@ -203,7 +208,6 @@ const ownedUtility =
 const ownedProperty =
   /^(?:padding|height|min-height|max-height|background|border|border-radius|box-shadow|font|font-size|font-weight|line-height|letter-spacing|color)(?:-|$)/u
 
-// Colons inside arbitrary selectors and values are not variant separators.
 const baseClass = (token: string) => {
   let depth = 0
   let start = 0

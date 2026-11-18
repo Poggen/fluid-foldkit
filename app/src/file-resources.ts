@@ -6,7 +6,6 @@ import {
 import type { createInputMessageFileRegistry } from '@foldkit-visuals/fluid/input-message'
 import portrait from '../../lib/assets/micka.png'
 
-// Static documentation assets keep their URL; uploaded files use the native scoped blob registry.
 export const showcaseFileLayer = (files: ReturnType<typeof createInputMessageFileRegistry>) =>
   Layer.effect(
     FileThumbnailResources,

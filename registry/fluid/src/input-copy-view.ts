@@ -6,7 +6,7 @@ import type { InputCopyViewBuilder } from './input-copy-core.js'
 import type { Model } from './input-copy-state.js'
 import type { Message, ResultLifetime } from './input-copy-effects.js'
 import type { DocumentTooltipOccurrenceViewInputs } from './tooltip-native-public.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { childAttributes } from 'foldkit/html'
 import type { ChildAttribute, Html, TaggedAttribute } from 'foldkit/html'
 import { cn } from './lib/utils.js'
@@ -17,27 +17,7 @@ import type { TargetMotionOptions } from './motion-target.js'
 import { resolvePresentation } from './presentation.js'
 import type { Presentation } from './presentation.js'
 
-export interface InputCopyTooltip {
-  readonly shapeClass: string
-  readonly content: string
-  readonly delayDuration: number
-  readonly sideOffset: number
-  readonly forceOpen: boolean | undefined
-}
-
-export interface InputCopyViewInputs extends Presentation {
-  readonly label?: string
-  readonly className?: string
-  readonly attributes?: ReadonlyArray<ChildAttribute>
-  readonly animate: (node: Html, options: TargetMotionOptions) => Html
-  /** Real native Tooltip composition; must report visibility through the public operation. */
-  readonly tooltip: (
-    context: { readonly trigger: DocumentTooltipOccurrenceViewInputs['trigger'] },
-    options: InputCopyTooltip,
-  ) => Html
-}
-
-export function inputCopyPaint(
+export const inputCopyPaint: (
   model: typeof Model.Type,
   inputs: InputCopyViewInputs,
   h: InputCopyViewBuilder,
@@ -52,7 +32,22 @@ export function inputCopyPaint(
       { readonly _tag: 'OnCustomEvent' }
     >
   },
-): Html {
+) => Html = function inputCopyPaint(
+  model: typeof Model.Type,
+  inputs: InputCopyViewInputs,
+  h: InputCopyViewBuilder,
+  events: {
+    readonly copy: typeof Message.Type
+    readonly mount: ReadonlyArray<ChildAttribute<Mount.RequirementsOf<typeof ResultLifetime>>>
+    readonly down: ReturnType<InputCopyViewBuilder['OnPointerDown']>
+    readonly enter: ReturnType<InputCopyViewBuilder['OnMouseEnter']>
+    readonly leave: ReturnType<InputCopyViewBuilder['OnMouseLeave']>
+    readonly completed: Extract<
+      TaggedAttribute<typeof Message.Type>,
+      { readonly _tag: 'OnCustomEvent' }
+    >
+  },
+) {
   const p = resolvePresentation(inputs)
   const buttonVariant = model.variant === 'button'
   const displayedButtonVariant = model.displayedVariant === 'button'
@@ -295,4 +290,24 @@ export function inputCopyPaint(
     },
     h,
   )
+}
+
+export interface InputCopyTooltip {
+  readonly shapeClass: string
+  readonly content: string
+  readonly delayDuration: number
+  readonly sideOffset: number
+  readonly forceOpen: boolean | undefined
+}
+
+export interface InputCopyViewInputs extends Presentation {
+  readonly label?: string
+  readonly className?: string
+  readonly attributes?: ReadonlyArray<ChildAttribute>
+  readonly animate: (node: Html, options: TargetMotionOptions) => Html
+  /** Real native Tooltip composition; must report visibility through the public operation. */
+  readonly tooltip: (
+    context: { readonly trigger: DocumentTooltipOccurrenceViewInputs['trigger'] },
+    options: InputCopyTooltip,
+  ) => Html
 }

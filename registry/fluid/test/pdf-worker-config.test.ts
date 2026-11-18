@@ -1,5 +1,6 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
-import { expect, vi } from 'vitest'
+import { expect } from 'vitest'
 import { it } from '@effect/vitest'
 import { Effect, Stream } from 'effect'
 import { loadPdfjs, makePdfjsLoaderLayer } from '../src/file-thumbnail-pdf.js'
@@ -8,14 +9,6 @@ import {
   makeFileThumbnailResourcesLayer,
   setPdfWorkerSrc,
 } from '../src/file-thumbnail.js'
-
-vi.mock('pdfjs-dist', () => ({
-  version: '5.4.149',
-  GlobalWorkerOptions: { workerSrc: '' },
-  getDocument: () => {
-    throw new Error('PDF decode deliberately unavailable in this worker-config test')
-  },
-}))
 
 it.effect(
   'public thumbnail setter configures its own lazy resource loader and retargets that loaded module',
@@ -57,7 +50,7 @@ it.effect('preserves the version-matched CDN default when no worker override is 
     yield* Effect.gen(function* () {
       const loaded = yield* loadPdfjs()
       expect(loaded.GlobalWorkerOptions.workerSrc).toBe(
-        'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.149/build/pdf.worker.min.mjs',
+        `https://cdn.jsdelivr.net/npm/pdfjs-dist@${module.version}/build/pdf.worker.min.mjs`,
       )
     }).pipe(Effect.provide(makePdfjsLoaderLayer(() => Promise.resolve(module))))
   }),

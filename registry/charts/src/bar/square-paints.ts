@@ -10,6 +10,33 @@ import { patternResourceView, scopedPatternId } from '../kit/pattern/resources'
 import type { PatternResource } from '../kit/pattern/types'
 import { bklitSurfaceStyle } from '../cartesian/style'
 
+export const hasSquarePaints: <Row>(props: BarChartProps<Row>) => boolean =
+  function hasSquarePaints<Row>(props: BarChartProps<Row>) {
+    return (props.orientation !== 'horizontal' &&
+      props.stacked !== true &&
+      resolveBarSeries(props.children).some(
+        (series) => series.squares?.useGradient === true,
+      )) satisfies boolean
+  }
+
+export const squareFill: (uid: string, series: BarSeries, row: number) => string =
+  function squareFill(uid: string, series: BarSeries, row: number) {
+    const props = series.squares
+
+    if (props?.useGradient !== true) {
+      return series.fill
+    }
+
+    const ids = squarePaintIds(uid, series.index, row)
+
+    const patterned =
+      series.fill.startsWith('url(') &&
+      props.patternPreset !== undefined &&
+      props.patternPreset !== 'none'
+
+    return `url(#${patterned ? ids.pattern : ids.gradient})`
+  }
+
 interface SquareGradient {
   readonly id: string
   readonly baseline: number
@@ -17,39 +44,17 @@ interface SquareGradient {
   readonly stops: ReadonlyArray<{ readonly offset: number; readonly color: string }>
 }
 
-const paintId = (series: number, row: number, role: string): string =>
-  `square-${series}-${row}-${role}`
+const paintId: (series: number, row: number, role: string) => string = (
+  series: number,
+  row: number,
+  role: string,
+) => `square-${series}-${row}-${role}`
 
 export function squarePaintIds(uid: string, series: number, row: number) {
   return {
     gradient: scopedPatternId(`${uid}-square-paints`, paintId(series, row, 'gradient')),
     pattern: scopedPatternId(`${uid}-square-paints`, paintId(series, row, 'pattern')),
   }
-}
-
-export function hasSquarePaints<Row>(props: BarChartProps<Row>): boolean {
-  return (
-    props.orientation !== 'horizontal' &&
-    props.stacked !== true &&
-    resolveBarSeries(props.children).some((series) => series.squares?.useGradient === true)
-  )
-}
-
-export function squareFill(uid: string, series: BarSeries, row: number): string {
-  const props = series.squares
-
-  if (props?.useGradient !== true) {
-    return series.fill
-  }
-
-  const ids = squarePaintIds(uid, series.index, row)
-
-  const patterned =
-    series.fill.startsWith('url(') &&
-    props.patternPreset !== undefined &&
-    props.patternPreset !== 'none'
-
-  return `url(#${patterned ? ids.pattern : ids.gradient})`
 }
 
 function gradientView(gradient: SquareGradient) {
@@ -123,7 +128,7 @@ export function squarePaintResources<Row extends Readonly<Record<string, unknown
       const ids = squarePaintIds(uid, item.index, datum.index)
       gradients.push({
         id: ids.gradient,
-        // Engine rectangles use chart coordinates; sibling defs must include the plot offset.
+
         baseline: viewport.margin.top + frame.baseline,
         top: viewport.margin.top + frame.columnTop,
         stops:

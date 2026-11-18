@@ -1,7 +1,10 @@
 import type { ProjectionHolder } from './focus'
 
-const writeVar = (host: HTMLElement, name: string, value: string): void =>
-  host.style.setProperty(name, value)
+const writeVar: (host: HTMLElement, name: string, value: string) => void = (
+  host: HTMLElement,
+  name: string,
+  value: string,
+) => host.style.setProperty(name, value)
 
 /** Zoom and pan state of the map, in the shape of a 2D affine matrix. */
 export interface TransformMatrix {
@@ -24,7 +27,7 @@ interface Point {
   readonly y: number
 }
 
-const identityMatrix = (): TransformMatrix => ({
+const identityMatrix: () => TransformMatrix = () => ({
   scaleX: 1,
   scaleY: 1,
   skewX: 0,
@@ -33,14 +36,13 @@ const identityMatrix = (): TransformMatrix => ({
   translateY: 0,
 })
 
-/** Screen = scene * k + (x, y). */
 interface ZoomTransform {
   readonly k: number
   readonly x: number
   readonly y: number
 }
 
-const toMatrix = (t: ZoomTransform): TransformMatrix => ({
+const toMatrix: (t: ZoomTransform) => TransformMatrix = (t: ZoomTransform) => ({
   scaleX: t.k,
   scaleY: t.k,
   skewX: 0,
@@ -49,13 +51,15 @@ const toMatrix = (t: ZoomTransform): TransformMatrix => ({
   translateY: t.y,
 })
 
-const fromMatrix = (m: Readonly<TransformMatrix>): ZoomTransform => ({
+const fromMatrix: (m: Readonly<TransformMatrix>) => ZoomTransform = (
+  m: Readonly<TransformMatrix>,
+) => ({
   k: m.scaleX,
   x: m.translateX,
   y: m.translateY,
 })
 
-const invertPoint = (t: ZoomTransform, p: Point): Point => ({
+const invertPoint: (t: ZoomTransform, p: Point) => Point = (t: ZoomTransform, p: Point) => ({
   x: (p.x - t.x) / t.k,
   y: (p.y - t.y) / t.k,
 })
@@ -77,13 +81,10 @@ export interface ChoroplethZoomInstance<Action = void> {
   readonly toString: () => string
 }
 
-// bklit wheel step: 5% per tick.
 const WHEEL_IN = 1.05
 
 const WHEEL_OUT = 0.95
 
-// bklit pinch (visx defaultPinchDelta): every pinch event steps the scale by 1.1 (spreading, or no change) or 0.9 (closing) about the
-// touch midpoint. use-gesture emits the pinch start event, one event per touchmove (two on the second) and one when the gesture ends.
 const PINCH_IN = 1.1
 
 const PINCH_OUT = 0.9
@@ -107,7 +108,6 @@ interface Spread {
   readonly mid: Point
 }
 
-// CSS custom properties are not in CSSProperties; this widens it with the three the zoom writes.
 type ZoomVars = Readonly<Record<string, string | number>> & {
   readonly '--bkm-zk': number
   readonly '--bkm-zx': string
@@ -115,25 +115,28 @@ type ZoomVars = Readonly<Record<string, string | number>> & {
 }
 
 /** Host custom properties carrying the transform; CSS maps them onto the marks layer (no definition rebuild, no React work per frame). */
-const zoomStyle = (m: Readonly<TransformMatrix>): ZoomVars => ({
+const zoomStyle: (m: Readonly<TransformMatrix>) => ZoomVars = (m: Readonly<TransformMatrix>) => ({
   '--bkm-zk': m.scaleX,
   '--bkm-zx': `${m.translateX}px`,
   '--bkm-zy': `${m.translateY}px`,
 })
 
-const swallow = (event: Event): void => {
+const swallow: (event: Event) => void = (event: Event) => {
   event.preventDefault()
   event.stopImmediatePropagation()
 }
 
-const applyTransform = (host: HTMLElement, holder: ProjectionHolder, t: ZoomTransform): void => {
+const applyTransform: (host: HTMLElement, holder: ProjectionHolder, t: ZoomTransform) => void = (
+  host: HTMLElement,
+  holder: ProjectionHolder,
+  t: ZoomTransform,
+) => {
   holder.transform = { k: t.k, x: t.x, y: t.y }
   writeVar(host, '--bkm-zk', String(t.k))
   writeVar(host, '--bkm-zx', `${t.x}px`)
   writeVar(host, '--bkm-zy', `${t.y}px`)
 }
 
-/** Programmatic transform ops of the bound gesture layer; deltas and points are in scene units, like d3-zoom's scaleBy / translateBy / translateTo. */
 interface ZoomControl {
   readonly set: (t: ZoomTransform) => void
   readonly scaleBy: (factor: number, point?: Point) => void
@@ -162,34 +165,40 @@ export const mountGeoZoom = ({
   let current: ZoomTransform = fromMatrix(initial)
   let releaseDrag: (() => void) | null = null
 
-  const commit = (t: ZoomTransform, afterApply?: () => void): void => {
+  const commit: (t: ZoomTransform, afterApply?: () => void) => void = (
+    t: ZoomTransform,
+    afterApply?: () => void,
+  ) => {
     current = t
     applyTransform(host, holder, t)
     afterApply?.()
     observe(toMatrix(t), isDragging)
   }
 
-  const clampK = (k: number): number => Math.max(min, Math.min(max, k))
+  const clampK: (k: number) => number = (k: number) => Math.max(min, Math.min(max, k))
 
-  const scaleAbout = (t: ZoomTransform, k: number, p: Point): ZoomTransform => {
+  const scaleAbout: (t: ZoomTransform, k: number, p: Point) => ZoomTransform = (
+    t: ZoomTransform,
+    k: number,
+    p: Point,
+  ) => {
     const anchor = invertPoint(t, p)
 
     return { k, x: p.x - anchor.x * k, y: p.y - anchor.y * k }
   }
 
-  const local = (clientX: number, clientY: number): Point => {
+  const local: (clientX: number, clientY: number) => Point = (clientX: number, clientY: number) => {
     const box = host.getBoundingClientRect()
 
     return { x: clientX - box.left - host.clientLeft, y: clientY - box.top - host.clientTop }
   }
 
-  const centre = (): Point => ({ x: host.clientWidth / 2, y: host.clientHeight / 2 })
+  const centre: () => Point = () => ({ x: host.clientWidth / 2, y: host.clientHeight / 2 })
 
-  const isControl = (target: EventTarget | null): boolean =>
+  const isControl: (target: EventTarget | null) => boolean = (target: EventTarget | null) =>
     target instanceof Element && target.closest('button, a, input, select, textarea') !== null
 
-  // Mouse: wheel zooms about the pointer, a drag pans (touch is handled below, following bklit's use-gesture).
-  const onWheel = (event: WheelEvent): void => {
+  const onWheel: (event: WheelEvent) => void = (event: WheelEvent) => {
     if (isControl(event.target)) {
       return
     }
@@ -197,7 +206,6 @@ export const mountGeoZoom = ({
     event.preventDefault()
     const k = current.k * (event.deltaY > 0 ? WHEEL_OUT : WHEEL_IN)
 
-    // Source visx Zoom rejects the entire out-of-range step; its wheel handler still prevents scroll.
     if (k < min || k > max) {
       return
     }
@@ -206,8 +214,7 @@ export const mountGeoZoom = ({
     })
   }
 
-  const onMouseDown = (event: MouseEvent): void => {
-    // A mouse event with no view (dispatched, or fired while the document tears down) has no window to track the drag on.
+  const onMouseDown: (event: MouseEvent) => void = (event: MouseEvent) => {
     const view = event.view
 
     if (view === null || event.ctrlKey || isControl(event.target)) {
@@ -219,11 +226,10 @@ export const mountGeoZoom = ({
     let anchor = invertPoint(current, local(event.clientX, event.clientY))
     let moved = false
 
-    const onMove = (move: MouseEvent): void => {
+    const onMove: (move: MouseEvent) => void = (move: MouseEvent) => {
       swallow(move)
       moved ||= move.clientX !== event.clientX || move.clientY !== event.clientY
 
-      // bklit's visx/use-gesture drag anchors on the first move event, so that first delta never pans.
       if (dragAnchorPending) {
         dragAnchorPending = false
         anchor = invertPoint(current, local(move.clientX, move.clientY))
@@ -235,12 +241,11 @@ export const mountGeoZoom = ({
       commit({ k: current.k, x: p.x - anchor.x * current.k, y: p.y - anchor.y * current.k })
     }
 
-    const onUp = (up: MouseEvent): void => {
+    const onUp: (up: MouseEvent) => void = (up: MouseEvent) => {
       release()
       swallow(up)
 
       if (moved) {
-        // The click that ends a drag must not reach the map; the capture guard lasts one task (d3-drag/src/nodrag.js:20).
         view.addEventListener('click', swallow, { capture: true })
         clickView = view
         clickTimer = view.setTimeout(() => {
@@ -254,7 +259,7 @@ export const mountGeoZoom = ({
       observe(toMatrix(current), false)
     }
 
-    const release = (): void => {
+    const release: () => void = () => {
       view.removeEventListener('mousemove', onMove, { capture: true })
       view.removeEventListener('mouseup', onUp, { capture: true })
       view.removeEventListener('dragstart', swallow, { capture: true })
@@ -293,21 +298,19 @@ export const mountGeoZoom = ({
 
   control.set(fromMatrix(initial))
 
-  // Touch: one finger pans (first move anchors, like the mouse), two fingers pinch in fixed 1.1 / 0.9 steps about their midpoint.
   let panLast: Point | null = null
   let pinchStart = 0
   let pinchMoves = 0
   let pinchFactor = PINCH_IN
 
-  const touchPoint = (touch: Touch | null): Point => {
+  const touchPoint: (touch: Touch | null) => Point = (touch: Touch | null) => {
     if (touch === null) throw new TypeError('Pinch requires two touches')
     const box = host.getBoundingClientRect()
 
     return { x: touch.clientX - box.left, y: touch.clientY - box.top }
   }
 
-  const spread = (touches: TouchList): Spread => {
-    // Both touches exist: the handler is entered only with two touches.
+  const spread: (touches: TouchList) => Spread = (touches: TouchList) => {
     const a = touchPoint(touches.item(0))
     const b = touchPoint(touches.item(1))
 
@@ -319,7 +322,7 @@ export const mountGeoZoom = ({
 
   let pinchMid: Point = { x: 0, y: 0 }
 
-  const pinchStep = (steps: number): void => {
+  const pinchStep: (steps: number) => void = (steps: number) => {
     for (let i = 0; i < steps; i += 1) {
       const k = current.k * pinchFactor
 
@@ -331,14 +334,17 @@ export const mountGeoZoom = ({
     }
   }
 
-  const pinchTo = (touches: TouchList, steps: number): void => {
+  const pinchTo: (touches: TouchList, steps: number) => void = (
+    touches: TouchList,
+    steps: number,
+  ) => {
     const { distance, mid } = spread(touches)
     pinchFactor = distance < pinchStart ? PINCH_OUT : PINCH_IN
     pinchMid = mid
     pinchStep(steps)
   }
 
-  const onTouchStart = (event: TouchEvent): void => {
+  const onTouchStart: (event: TouchEvent) => void = (event: TouchEvent) => {
     if (isControl(event.target)) {
       return
     }
@@ -363,7 +369,7 @@ export const mountGeoZoom = ({
     }
   }
 
-  const onTouchMove = (event: TouchEvent): void => {
+  const onTouchMove: (event: TouchEvent) => void = (event: TouchEvent) => {
     if (event.cancelable) {
       event.preventDefault()
     }
@@ -388,7 +394,7 @@ export const mountGeoZoom = ({
     }
   }
 
-  const onTouchEnd = (event: TouchEvent): void => {
+  const onTouchEnd: (event: TouchEvent) => void = (event: TouchEvent) => {
     if (event.touches.length < 2 && pinchStart > 0) {
       pinchStart = 0
       pinchStep(1)
@@ -405,10 +411,10 @@ export const mountGeoZoom = ({
   host.addEventListener('touchend', onTouchEnd)
   host.addEventListener('touchcancel', onTouchEnd)
 
-  const destroy = (): void => {
+  const destroy: () => void = () => {
     host.removeEventListener('wheel', onWheel)
     host.removeEventListener('mousedown', onMouseDown)
-    // A drag still held at unmount would leave its window listeners behind; their mouseup would run against a dead chart.
+
     releaseDrag?.()
 
     if (clickTimer !== undefined) clickView?.clearTimeout(clickTimer)

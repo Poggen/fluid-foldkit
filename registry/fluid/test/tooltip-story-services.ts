@@ -1,8 +1,6 @@
 import { Effect, Layer, Stream } from 'effect'
 import { TooltipDom } from '../src/tooltip-native/resources.js'
 
-// Stories exercise serializable transitions without mounting a browser occurrence.
-// Unexpected DOM execution fails instead of passing with inert production resources.
 export const TooltipStoryLayer = Layer.succeed(
   TooltipDom,
   TooltipDom.of({

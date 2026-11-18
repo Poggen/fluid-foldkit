@@ -7,8 +7,9 @@ import { Background, Line } from '../src/cartesian/layers'
 import { activeBackground, backgroundCss, backgroundResources } from '../src/cartesian/background'
 import { renderPatternPreset } from '../src/kit/pattern/presets'
 
-const descendants = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<SceneNode> =>
-  nodes.flatMap((node) => [node, ...(node.kind === 'group' ? descendants(node.children) : [])])
+const descendants: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<SceneNode> = (
+  nodes: ReadonlyArray<SceneNode>,
+) => nodes.flatMap((node) => [node, ...(node.kind === 'group' ? descendants(node.children) : [])])
 
 const data = [1, 2].map((value, index) => ({
   date: DateTime.toDateUtc(DateTime.makeUnsafe(index * 86_400_000)),

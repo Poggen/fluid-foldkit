@@ -1,4 +1,3 @@
-// Gauge notches remain keyed areaX paths across straight, tapered, and rounded geometry changes.
 import { scaleLinear } from '@tanstack/charts/scales/linear'
 import { defineChart } from '@tanstack/charts/scene'
 import { areaX } from '@tanstack/charts/area-x'
@@ -13,33 +12,28 @@ import {
 import type { FillOptions, GaugeNotchRow } from './notches'
 import { notchPolygonCurve } from './notch-path'
 
-// The server reserve uses this renderer; the live host supplies the per-notch Motion owner.
 export const gaugeMotion = motion({ initial: false, respectReducedMotion: true })
 
 export const ARC_ASPECT = 21 / 16
 
-// Linear notches are laid out in normalized x units so no pixel measurement is needed.
 const LINEAR_UNITS = 1000
 
 const UNIT = 1000
 
-// bklit's tapered linear notch: the inner (bottom) edge is 28/42 of the outer.
 const TAPER_RATIO = 28 / 42
 
-// Original GaugeNotchSvg animates only entrance opacity/scale. Geometry and fill
-// are plain props, and removed active notches disappear immediately. The live owner
-// handles entrance; the renderer commits geometry without an additional morph spring.
-// Every notch's fill goes through the chart's native colour scale (key -> fill), so the track and the active notches are one mark each.
-const bgKey = (row: GaugeNotchRow): string => `b${row.index}`
+const bgKey: (row: GaugeNotchRow) => string = (row: GaugeNotchRow) => `b${row.index}`
 
-const activeKey = (row: GaugeNotchRow): string => `a${row.index}`
+const activeKey: (row: GaugeNotchRow) => string = (row: GaugeNotchRow) => `a${row.index}`
 
 interface ColorScaleSpec {
   readonly domain: ReadonlyArray<string>
   readonly range: ReadonlyArray<string>
 }
 
-const vertexFillScale = (rows: ReadonlyArray<GaugeNotchRow>): ColorScaleSpec => {
+const vertexFillScale: (rows: ReadonlyArray<GaugeNotchRow>) => ColorScaleSpec = (
+  rows: ReadonlyArray<GaugeNotchRow>,
+) => {
   const notches = rows.filter((row, index) => index === 0 || rows[index - 1]?.index !== row.index)
 
   return {
@@ -67,15 +61,18 @@ export interface GaugeDefinitionInput {
   readonly fill: Omit<FillOptions, 'linear'>
 }
 
-const axes = (
+const axes: (
   unitsW: number,
   unitsH: number,
-): Record<'x' | 'y', { axis: false; scale: ReturnType<typeof scaleLinear> }> => ({
+) => Record<'x' | 'y', { axis: false; scale: ReturnType<typeof scaleLinear> }> = (
+  unitsW: number,
+  unitsH: number,
+) => ({
   x: { axis: false, scale: scaleLinear().domain([0, unitsW]) },
   y: { axis: false, scale: scaleLinear().domain([unitsH, 0]) },
 })
 
-const linearRows = (i: GaugeDefinitionInput): Array<GaugeNotchRow> =>
+const linearRows: (i: GaugeDefinitionInput) => Array<GaugeNotchRow> = (i: GaugeDefinitionInput) =>
   linearNotches({
     ...i.fill,
     height: i.trackHeight,
@@ -87,11 +84,11 @@ const linearRows = (i: GaugeDefinitionInput): Array<GaugeNotchRow> =>
     width: LINEAR_UNITS,
   })
 
-const polygonRows = (
+const polygonRows: (
   i: GaugeDefinitionInput,
   unitsW: number,
   unitsH: number,
-): Array<GaugeNotchRow> => {
+) => Array<GaugeNotchRow> = (i: GaugeDefinitionInput, unitsW: number, unitsH: number) => {
   if (i.linear) {
     const rows = linearRows(i)
 
@@ -114,11 +111,9 @@ const polygonRows = (
   })
 }
 
-// One areaX per notch group (z), one row per vertex with x1 = x2, so the curve receives the four pixel vertices and writes the
-// (optionally corner-cut) path. Arc uses uniform units with the canvas aspect.
-const polygonDefinition = (
+const polygonDefinition: (
   i: GaugeDefinitionInput,
-): DomChartDefinition<GaugeNotchRow, number, number> => {
+) => DomChartDefinition<GaugeNotchRow, number, number> = (i: GaugeDefinitionInput) => {
   const unitsW = i.linear ? LINEAR_UNITS : (i.fixedArc?.width ?? UNIT * ARC_ASPECT)
   const unitsH = i.linear ? i.trackHeight : (i.fixedArc?.height ?? UNIT)
   const rows = polygonRows(i, unitsW, unitsH)
@@ -162,6 +157,7 @@ const polygonDefinition = (
   })
 }
 
-export const buildGaugeDefinition = (
+export const buildGaugeDefinition: (
   input: GaugeDefinitionInput,
-): DomChartDefinition<GaugeNotchRow, number, number> => polygonDefinition(input)
+) => DomChartDefinition<GaugeNotchRow, number, number> = (input: GaugeDefinitionInput) =>
+  polygonDefinition(input)

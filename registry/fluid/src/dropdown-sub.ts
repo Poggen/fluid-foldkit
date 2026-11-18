@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { Html, HtmlBuilder } from 'foldkit/html'
 import { childAttributes } from 'foldkit/html'
 import { DropdownItem } from './dropdown-item.js'
@@ -6,13 +6,15 @@ import type { DropdownItemContext, DropdownItemProps } from './dropdown-item.js'
 import { resolvePresentation } from './presentation.js'
 import { cn } from './lib/utils.js'
 
-export type DropdownSubTriggerProps = Omit<DropdownItemProps, 'checked' | 'closeOnClick'>
-
-export function DropdownSubTrigger<Message>(
+export const DropdownSubTrigger: <Message>(
   props: DropdownSubTriggerProps,
   context: DropdownItemContext,
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function DropdownSubTrigger<Message>(
+  props: DropdownSubTriggerProps,
+  context: DropdownItemContext,
+  h: HtmlBuilder<Message>,
+) {
   const { size, icons } = resolvePresentation(context)
 
   const lit = context.activeIndex === props.index
@@ -47,5 +49,7 @@ export function DropdownSubTrigger<Message>(
     },
     context,
     h,
-  )
+  ) satisfies Html
 }
+
+export type DropdownSubTriggerProps = Omit<DropdownItemProps, 'checked' | 'closeOnClick'>

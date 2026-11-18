@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 export function mountInputContainer(element: Element, publish: (focused: boolean) => void) {
   const input = element.querySelector('input')
   const container = element.querySelector('[data-slot=input-container]')

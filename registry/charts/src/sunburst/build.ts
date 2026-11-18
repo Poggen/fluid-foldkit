@@ -16,6 +16,36 @@ import {
 } from './colors'
 import type { SunburstSegmentProps, SunburstLabelsProps } from './carriers'
 
+export const sameSunburstDrawing: (a: SunburstChartProps, b: SunburstChartProps) => boolean =
+  function sameSunburstDrawing(a: SunburstChartProps, b: SunburstChartProps) {
+    const values = (p: SunburstChartProps) => [
+      p.data,
+      p.size,
+      p.focusId,
+      p.hoverPop,
+      p.padding,
+      p.enterTransition?.duration,
+      p.enterStaggerScale,
+      p.hoveredIndex === undefined,
+      ...p.children.flatMap((child) =>
+        child.role === 'segment'
+          ? [child.props.index, child.props.color, child.props.fill, child.props.fillOpacity]
+          : child.role === 'labels'
+            ? [child.props.fontSize, child.props.fill, child.props.stroke, child.props.strokeWidth]
+            : child.role === 'center'
+              ? ['center']
+              : [],
+      ),
+    ]
+
+    const left = values(a),
+      right = values(b)
+
+    return (
+      left.length === right.length && left.every((value, index) => Object.is(value, right[index]))
+    )
+  }
+
 export function sunburstPlan(props: SunburstChartProps, state: State) {
   const model = buildArcs(props.data),
     focus =
@@ -117,32 +147,3 @@ export function sunburstResources(size: number, now: () => number) {
 }
 
 export { buildDefinition }
-
-export function sameSunburstDrawing(a: SunburstChartProps, b: SunburstChartProps): boolean {
-  const values = (p: SunburstChartProps) => [
-    p.data,
-    p.size,
-    p.focusId,
-    p.hoverPop,
-    p.padding,
-    p.enterTransition?.duration,
-    p.enterStaggerScale,
-    p.hoveredIndex === undefined,
-    ...p.children.flatMap((child) =>
-      child.role === 'segment'
-        ? [child.props.index, child.props.color, child.props.fill, child.props.fillOpacity]
-        : child.role === 'labels'
-          ? [child.props.fontSize, child.props.fill, child.props.stroke, child.props.strokeWidth]
-          : child.role === 'center'
-            ? ['center']
-            : [],
-    ),
-  ]
-
-  const left = values(a),
-    right = values(b)
-
-  return (
-    left.length === right.length && left.every((value, index) => Object.is(value, right[index]))
-  )
-}

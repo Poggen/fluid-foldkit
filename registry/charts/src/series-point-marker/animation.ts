@@ -2,6 +2,82 @@ import { Cause, Effect, Queue, Schema, Stream } from 'effect'
 import type { ViewState } from 'foldkit/mount'
 import type { SeriesPointMarkerProps } from './props'
 
+/** One physical acquisition owns its observer, committed facts and exact returned Animation. */
+export const observeSeriesPointMarker: <Message>(
+  element: Element,
+  states: Stream.Stream<ViewState>,
+  completed: Message,
+) => Stream.Stream<Message> = function observeSeriesPointMarker<Message>(
+  element: Element,
+  states: Stream.Stream<ViewState>,
+  completed: Message,
+) {
+  return Stream.callback<Message>((queue) =>
+    Effect.gen(function* () {
+      const resource = yield* Effect.acquireRelease(
+        Effect.sync(() =>
+          makeEntranceResource(element, (cause) => {
+            Queue.failCauseUnsafe(queue, cause)
+          }),
+        ),
+        (owned) => Effect.sync(owned.release),
+      )
+
+      yield* Stream.runForEach(states, (state) =>
+        Effect.sync(() => {
+          resource.observeState(state)
+          Queue.offerUnsafe(queue, completed)
+        }),
+      )
+    }),
+  ) satisfies Stream.Stream<Message>
+}
+
+const tokenNumber: (token: string) => number = function tokenNumber(token: string) {
+  const value = Number(token)
+
+  if (numberToken(value) !== token) {
+    throw new TypeError('Invalid SeriesPointMarker numeric transport token')
+  }
+
+  return value
+}
+
+/** Numeric tokens preserve Object.is distinctions that raw JSON numbers lose. */
+export const entranceAttribute: (props: SeriesPointMarkerProps) => string =
+  function entranceAttribute(props: SeriesPointMarkerProps) {
+    return Schema.encodeSync(Codec)([
+      props.dataKey,
+      numberToken(props.index),
+      numberToken(props.revealEpoch),
+      numberToken(props.revealDelay),
+      numberToken(props.enterDuration),
+      numberToken(props.enterBlur ?? 2),
+    ])
+  }
+
+const dependencies: (encoded: string | null) => Dependencies = function dependencies(
+  encoded: string | null,
+) {
+  const [dataKey, index, epoch, delay, duration, blur] = Schema.decodeUnknownSync(Codec)(encoded)
+
+  return [
+    dataKey,
+    tokenNumber(index),
+    tokenNumber(epoch),
+    tokenNumber(delay),
+    tokenNumber(duration),
+    tokenNumber(blur),
+  ]
+}
+
+const same: (previous: Dependencies | undefined, next: Dependencies) => boolean = function same(
+  previous: Dependencies | undefined,
+  next: Dependencies,
+) {
+  return previous !== undefined && previous.every((value, index) => Object.is(value, next[index]))
+}
+
 export const ENTRANCE_ATTRIBUTE = 'data-bkm-series-point-enter'
 
 const Tokens = Schema.Tuple([
@@ -17,46 +93,8 @@ const Codec = Schema.fromJsonString(Tokens)
 
 type Dependencies = readonly [string, number, number, number, number, number]
 
-const numberToken = (value: number): string => (Object.is(value, -0) ? '-0' : String(value))
-
-function tokenNumber(token: string): number {
-  const value = Number(token)
-
-  if (numberToken(value) !== token) {
-    throw new TypeError('Invalid SeriesPointMarker numeric transport token')
-  }
-
-  return value
-}
-
-/** Numeric tokens preserve Object.is distinctions that raw JSON numbers lose. */
-export function entranceAttribute(props: SeriesPointMarkerProps): string {
-  return Schema.encodeSync(Codec)([
-    props.dataKey,
-    numberToken(props.index),
-    numberToken(props.revealEpoch),
-    numberToken(props.revealDelay),
-    numberToken(props.enterDuration),
-    numberToken(props.enterBlur ?? 2),
-  ])
-}
-
-function dependencies(encoded: string | null): Dependencies {
-  const [dataKey, index, epoch, delay, duration, blur] = Schema.decodeUnknownSync(Codec)(encoded)
-
-  return [
-    dataKey,
-    tokenNumber(index),
-    tokenNumber(epoch),
-    tokenNumber(delay),
-    tokenNumber(duration),
-    tokenNumber(blur),
-  ]
-}
-
-function same(previous: Dependencies | undefined, next: Dependencies): boolean {
-  return previous !== undefined && previous.every((value, index) => Object.is(value, next[index]))
-}
+const numberToken: (value: number) => string = (value: number) =>
+  Object.is(value, -0) ? '-0' : String(value)
 
 function makeEntranceResource(element: Element, onDefect: (cause: Cause.Cause<never>) => void) {
   let animation: Animation | undefined
@@ -66,7 +104,7 @@ function makeEntranceResource(element: Element, onDefect: (cause: Cause.Cause<ne
   let pausedByResource = false
   let disposed = false
 
-  const release = (): void => {
+  const release: () => void = () => {
     if (disposed) {
       return
     }
@@ -83,7 +121,7 @@ function makeEntranceResource(element: Element, onDefect: (cause: Cause.Cause<ne
     }
   }
 
-  const reconcile = (next: Dependencies): void => {
+  const reconcile: (next: Dependencies) => void = (next: Dependencies) => {
     if (same(accepted, next)) {
       return
     }
@@ -108,16 +146,18 @@ function makeEntranceResource(element: Element, onDefect: (cause: Cause.Cause<ne
     accepted = next
   }
 
-  const processCommittedRecords = (records: ReadonlyArray<MutationRecord>): void => {
+  const processCommittedRecords: (records: ReadonlyArray<MutationRecord>) => void = (
+    records: ReadonlyArray<MutationRecord>,
+  ) => {
     for (let index = 0; index < records.length; index += 1) {
       const next = records[index + 1]
-      // The next oldValue is this atomic write's committed newValue.
+
       const encoded = next === undefined ? element.getAttribute(ENTRANCE_ATTRIBUTE) : next.oldValue
       reconcile(dependencies(encoded))
     }
   }
 
-  const observeState = (state: ViewState): void => {
+  const observeState: (state: ViewState) => void = (state: ViewState) => {
     if (disposed) {
       return
     }
@@ -173,31 +213,4 @@ function makeEntranceResource(element: Element, onDefect: (cause: Cause.Cause<ne
   }
 
   return { observeState, release }
-}
-
-/** One physical acquisition owns its observer, committed facts and exact returned Animation. */
-export function observeSeriesPointMarker<Message>(
-  element: Element,
-  states: Stream.Stream<ViewState>,
-  completed: Message,
-): Stream.Stream<Message> {
-  return Stream.callback<Message>((queue) =>
-    Effect.gen(function* () {
-      const resource = yield* Effect.acquireRelease(
-        Effect.sync(() =>
-          makeEntranceResource(element, (cause) => {
-            Queue.failCauseUnsafe(queue, cause)
-          }),
-        ),
-        (owned) => Effect.sync(owned.release),
-      )
-
-      yield* Stream.runForEach(states, (state) =>
-        Effect.sync(() => {
-          resource.observeState(state)
-          Queue.offerUnsafe(queue, completed)
-        }),
-      )
-    }),
-  )
 }

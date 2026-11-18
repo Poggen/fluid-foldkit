@@ -179,7 +179,6 @@ export const changeSettings = (
     ])
   })
 
-// The originating picker has already accepted this value in its controlled owner fold.
 export const acceptLandingAccent = (accent: string) =>
   ApplicationBlock.makeStep((model) => {
     const theme = resolveSettings(model.settings, model.systemTheme).theme

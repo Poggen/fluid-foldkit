@@ -1,54 +1,20 @@
 import { Effect, Queue, Schema, Stream } from 'effect'
 
-export const LegendRectangle = Schema.Struct({
-  index: Schema.Natural,
-  x: Schema.Finite,
-  y: Schema.Finite,
-  width: Schema.Finite,
-  height: Schema.Finite,
-})
-
-export const LegendMeasurement = Schema.Struct({
-  width: Schema.Finite,
-  height: Schema.Finite,
-  rows: Schema.Array(LegendRectangle),
-})
-
-export function legendRows(element: Element): ReadonlyArray<Element> {
-  return [...element.querySelectorAll('[data-bkm-legend-index]')].filter(
-    (row) => row.closest('[data-bkm-legend-owner]') === element,
-  )
-}
-
-function ownFocusIndex(element: Element, target: EventTarget | null): number | null {
-  const ElementClass = element.ownerDocument.defaultView?.Element
-
-  if (
-    ElementClass === undefined ||
-    !(target instanceof ElementClass) ||
-    target.closest('[data-bkm-legend-owner]') !== element
-  ) {
-    return null
-  }
-
-  const row = target.closest('[data-bkm-legend-index]')
-
-  if (row === null || row.closest('[data-bkm-legend-owner]') !== element) {
-    return null
-  }
-
-  const index = Number(row.attributes.getNamedItem('data-bkm-legend-index')?.value ?? null)
-
-  return Schema.is(Schema.Natural)(index) ? index : null
-}
-
 /** The Mount owns this observer; view pause, unmount and replacement release it. */
-export function observeLegend<MeasurementMessage, FocusMessage>(
+export const observeLegend: <MeasurementMessage, FocusMessage>(
   element: Element,
   states: Stream.Stream<'Live' | 'Paused'>,
   measured: (value: typeof LegendMeasurement.Type) => MeasurementMessage,
   focused: (index: number | null) => FocusMessage,
-): Stream.Stream<MeasurementMessage | FocusMessage> {
+) => Stream.Stream<MeasurementMessage | FocusMessage> = function observeLegend<
+  MeasurementMessage,
+  FocusMessage,
+>(
+  element: Element,
+  states: Stream.Stream<'Live' | 'Paused'>,
+  measured: (value: typeof LegendMeasurement.Type) => MeasurementMessage,
+  focused: (index: number | null) => FocusMessage,
+) {
   return states.pipe(
     Stream.switchMap((state) =>
       state === 'Live'
@@ -144,5 +110,50 @@ export function observeLegend<MeasurementMessage, FocusMessage>(
           })
         : Stream.never,
     ),
+  ) satisfies Stream.Stream<MeasurementMessage | FocusMessage>
+}
+
+export const legendRows: (element: Element) => ReadonlyArray<Element> = function legendRows(
+  element: Element,
+) {
+  return [...element.querySelectorAll('[data-bkm-legend-index]')].filter(
+    (row) => row.closest('[data-bkm-legend-owner]') === element,
   )
 }
+
+const ownFocusIndex: (element: Element, target: EventTarget | null) => number | null =
+  function ownFocusIndex(element: Element, target: EventTarget | null) {
+    const ElementClass = element.ownerDocument.defaultView?.Element
+
+    if (
+      ElementClass === undefined ||
+      !(target instanceof ElementClass) ||
+      target.closest('[data-bkm-legend-owner]') !== element
+    ) {
+      return null
+    }
+
+    const row = target.closest('[data-bkm-legend-index]')
+
+    if (row === null || row.closest('[data-bkm-legend-owner]') !== element) {
+      return null
+    }
+
+    const index = Number(row.attributes.getNamedItem('data-bkm-legend-index')?.value ?? null)
+
+    return Schema.is(Schema.Natural)(index) ? index : null
+  }
+
+export const LegendRectangle = Schema.Struct({
+  index: Schema.Natural,
+  x: Schema.Finite,
+  y: Schema.Finite,
+  width: Schema.Finite,
+  height: Schema.Finite,
+})
+
+export const LegendMeasurement = Schema.Struct({
+  width: Schema.Finite,
+  height: Schema.Finite,
+  rows: Schema.Array(LegendRectangle),
+})

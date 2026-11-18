@@ -11,6 +11,7 @@ export const fontAdmissionEnvironment = () => {
   inner.append(container)
   let hasBox = true
 
+  // oxlint-disable-next-line landmines-testing/no-test-doubles -- Hidden and unsupported host capability inputs; native font-contracts verifies actual font loading and visible admission.
   const visibility = vi.fn(
     (options?: CheckVisibilityOptions) =>
       hasBox &&
@@ -61,6 +62,7 @@ export const fontAdmissionEnvironment = () => {
     }
   }
 
+  // oxlint-disable-next-line landmines-testing/no-test-doubles -- Hidden and unsupported host capability inputs; native font-contracts verifies actual font loading and visible admission.
   vi.stubGlobal('ResizeObserver', Observer)
 
   return {
@@ -76,6 +78,7 @@ export const fontAdmissionEnvironment = () => {
     },
     unsupported: (kind: 'observer' | 'visibility' | 'option') => {
       if (kind === 'observer') {
+        // oxlint-disable-next-line landmines-testing/no-test-doubles -- Hidden and unsupported host capability inputs; native font-contracts verifies actual font loading and visible admission.
         Object.defineProperty(window, 'ResizeObserver', { configurable: true, value: undefined })
       } else if (kind === 'visibility') {
         Object.defineProperty(container, 'checkVisibility', {
@@ -83,6 +86,7 @@ export const fontAdmissionEnvironment = () => {
           value: undefined,
         })
       } else {
+        // oxlint-disable-next-line landmines-testing/no-test-doubles -- Hidden and unsupported host capability inputs; native font-contracts verifies actual font loading and visible admission.
         visibility.mockImplementation(() => true)
       }
     },

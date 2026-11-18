@@ -1,28 +1,15 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
 import type { Presentation } from './presentation.js'
 import type { ScrollAreaProps } from './scroll-area.js'
 
-interface SidebarContentCommonProps extends Presentation {
-  readonly content: () => ReadonlyArray<Html>
-  readonly contentClassName?: string
-  readonly className?: string
-  readonly viewportClassName?: string
-  readonly attributes?: ReadonlyArray<ChildAttribute>
-  readonly viewportAttributes?: ReadonlyArray<ChildAttribute>
-}
-
-export type SidebarContentProps = SidebarContentCommonProps &
-  (
-    | { readonly occurrence: 'desktop'; readonly scroll: (inputs: ScrollAreaProps) => Html }
-    | { readonly occurrence: 'mobile'; readonly scroll?: never }
-  )
-
-// Layout only. The caller owns Scroll, its Binding and the descendant callback frame.
-export function SidebarContent<Message, Requirements>(
+export const SidebarContent: <Message, Requirements>(
   inputs: SidebarContentProps,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function SidebarContent<Message, Requirements>(
+  inputs: SidebarContentProps,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   if (inputs.occurrence === 'mobile') {
     return h.div(
       [h.Class('scroll-divider [--scroll-divider-inset:8px] flex min-h-0 w-full flex-1 flex-col')],
@@ -38,7 +25,7 @@ export function SidebarContent<Message, Requirements>(
           inputs.content(),
         ),
       ],
-    )
+    ) satisfies Html
   }
 
   return inputs.scroll({
@@ -61,5 +48,20 @@ export function SidebarContent<Message, Requirements>(
         inputs.content(),
       ),
     ],
-  })
+  }) satisfies Html
 }
+
+interface SidebarContentCommonProps extends Presentation {
+  readonly content: () => ReadonlyArray<Html>
+  readonly contentClassName?: string
+  readonly className?: string
+  readonly viewportClassName?: string
+  readonly attributes?: ReadonlyArray<ChildAttribute>
+  readonly viewportAttributes?: ReadonlyArray<ChildAttribute>
+}
+
+export type SidebarContentProps = SidebarContentCommonProps &
+  (
+    | { readonly occurrence: 'desktop'; readonly scroll: (inputs: ScrollAreaProps) => Html }
+    | { readonly occurrence: 'mobile'; readonly scroll?: never }
+  )

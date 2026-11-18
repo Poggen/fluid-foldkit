@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 /** This Source policy moves among authored visible rows; it does not keep a second cursor. */
 export function selectionTarget(
   items: ReadonlyArray<{ readonly index: number }>,

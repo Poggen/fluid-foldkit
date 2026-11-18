@@ -2,7 +2,6 @@ import { Effect, Layer } from 'effect'
 import { DialogResourcesLayer } from '@foldkit-visuals/fluid/dialog'
 import type { DialogCallbacks } from '@foldkit-visuals/fluid/dialog'
 
-/** Stable construction-time policies; the caller selects only a public scalar id. */
 function makeDialogHookCallbacks(
   document: Document,
   traceRef: (element: HTMLElement | null) => void,
@@ -22,8 +21,8 @@ function makeDialogHookCallbacks(
     interact: { onInteractOutside: (event) => event.preventDefault() },
     ref: { contentRef: traceRef },
   }
-  return (_id: string, policy?: string): DialogCallbacks =>
-    policies[policy ?? 'none'] ?? policies.none ?? {}
+  return (_id: string, policy?: string) =>
+    (policies[policy ?? 'none'] ?? policies.none ?? {}) satisfies DialogCallbacks
 }
 
 /** Logging runs synchronously with the construction Layer's captured Effect context. */

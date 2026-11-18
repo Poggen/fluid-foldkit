@@ -119,7 +119,6 @@ export const WaitBeforeMorph = Root.makeCommand('WaitBeforeMorph', {
   },
 })
 
-// The demo owns floating-composer layout; native widgets retain their interaction and motion owners.
 export const ObserveTranscript = Root.makeMountStream('ObserveTranscript', {
   args: { section: Schema.String },
   messages: [Root.Message.Mounted, Root.Message.MeasuredComposer],

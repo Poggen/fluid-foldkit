@@ -12,7 +12,6 @@ const LABEL_FONT = {
   value: { size: 14, weight: 600 },
 }
 
-// bklit: ring half-extent as a share of the chart cross axis.
 const VALUE_LINE = 20
 
 const SMALL_LINE = 16
@@ -27,7 +26,6 @@ const GROUP_PAD = 0.08
 
 const SPREAD_BAND = 0.16
 
-// The painted inset TanStack's rect mark gives a band (rect `inset` default).
 interface FontMetrics {
   /** Rounded font ascent / descent: what an HTML line box centres (the baseline sits (ascent - descent) / 2 below the line centre). */
   readonly ascent: number
@@ -36,12 +34,12 @@ interface FontMetrics {
   readonly xHeight: number
 }
 
-const fontMetrics = (
+const fontMetrics: (
   fontSize: number,
   fontWeight: number,
   fontFamily: string,
   measure: boolean,
-): FontMetrics => {
+) => FontMetrics = (fontSize: number, fontWeight: number, fontFamily: string, measure: boolean) => {
   const metrics = measure
     ? fontContext(fontSize, fontWeight, fontFamily)?.measureText('x')
     : undefined
@@ -69,7 +67,6 @@ interface Placed {
   readonly py: number
 }
 
-/** A stage cell in px: its origin, size and centre. */
 interface LabelBox {
   readonly cxPx: number
   readonly cyPx: number
@@ -81,15 +78,24 @@ interface LabelBox {
 
 type Put = (item: LabelItem, px: number, py: number, anchor: LabelAnchor) => void
 
-const labelItems = (
+const labelItems: (
   config: FunnelMarkConfig,
   fontFamily: string,
   stage: FunnelStageInput,
   pct: number,
-): Array<LabelItem> => {
+) => Array<LabelItem> = (
+  config: FunnelMarkConfig,
+  fontFamily: string,
+  stage: FunnelStageInput,
+  pct: number,
+) => {
   const items: Array<LabelItem> = []
 
-  const width = (t: string, size: number, weight: number): number =>
+  const width: (t: string, size: number, weight: number) => number = (
+    t: string,
+    size: number,
+    weight: number,
+  ) =>
     config.measureText
       ? textWidth(t, size, weight, fontFamily, SSR_WIDTH_RATIO)
       : t.length * size * SSR_WIDTH_RATIO
@@ -121,17 +127,18 @@ const labelItems = (
   return items
 }
 
-const findItem = (
+const findItem: (
   items: ReadonlyArray<LabelItem>,
   kind: LabelItem['kind'],
-): LabelItem | undefined => items.find((it) => it.kind === kind)
+) => LabelItem | undefined = (items: ReadonlyArray<LabelItem>, kind: LabelItem['kind']) =>
+  items.find((it) => it.kind === kind)
 
-const placeSpread = (
+const placeSpread: (
   items: ReadonlyArray<LabelItem>,
   box: LabelBox,
   horizontal: boolean,
   put: Put,
-): void => {
+) => void = (items: ReadonlyArray<LabelItem>, box: LabelBox, horizontal: boolean, put: Put) => {
   const value = findItem(items, 'value')
   const pctItem = findItem(items, 'pct')
   const name = findItem(items, 'name')
@@ -164,13 +171,17 @@ const placeSpread = (
   }
 }
 
-// bklit pads the group by 8% of the cell WIDTH on both axes (CSS percentage padding is width-relative).
-const groupOffset = (
+const groupOffset: (
   align: FunnelMarkConfig['labelAlign'],
   size: number,
   total: number,
   cellW: number,
-): number => {
+) => number = (
+  align: FunnelMarkConfig['labelAlign'],
+  size: number,
+  total: number,
+  cellW: number,
+) => {
   const pad = cellW * GROUP_PAD
 
   if (align === 'start') {
@@ -184,12 +195,17 @@ const groupOffset = (
   return (total - size) / 2
 }
 
-const alignedLeft = (
+const alignedLeft: (
   align: FunnelMarkConfig['labelAlign'],
   left: number,
   groupWidth: number,
   width: number,
-): number => {
+) => number = (
+  align: FunnelMarkConfig['labelAlign'],
+  left: number,
+  groupWidth: number,
+  width: number,
+) => {
   if (align === 'start') {
     return left
   }
@@ -197,13 +213,17 @@ const alignedLeft = (
   return align === 'end' ? left + groupWidth - width : left + (groupWidth - width) / 2
 }
 
-// Grouped: a tight stack (gap-1.5) placed within the cell by labelAlign.
-const placeGrouped = (
+const placeGrouped: (
   items: ReadonlyArray<LabelItem>,
   box: LabelBox,
   config: Pick<FunnelMarkConfig, 'horizontal' | 'labelAlign' | 'labelOrientation'>,
   put: Put,
-): void => {
+) => void = (
+  items: ReadonlyArray<LabelItem>,
+  box: LabelBox,
+  config: Pick<FunnelMarkConfig, 'horizontal' | 'labelAlign' | 'labelOrientation'>,
+  put: Put,
+) => {
   const { horizontal, labelAlign } = config
   const { cxPx, cyPx, cellPxStart, cellPyStart, cellW, cellH } = box
 
@@ -220,7 +240,6 @@ const placeGrouped = (
     ? items.reduce((sum, it) => sum + it.height, 0) + gapTotal
     : Math.max(0, ...items.map((it) => it.height))
 
-  // bklit: horizontal funnels place the group vertically; vertical funnels place it horizontally.
   const left = horizontal ? cxPx - gw / 2 : cellPxStart + groupOffset(labelAlign, gw, cellW, cellW)
   const top = horizontal ? cellPyStart + groupOffset(labelAlign, gh, cellH, cellW) : cyPx - gh / 2
   const itemAlign = horizontal ? 'center' : labelAlign
@@ -242,16 +261,21 @@ const placeGrouped = (
   }
 }
 
-/** Plot geometry in px from the plot's top-left, shared by rings, grid and labels. */
-// Spread/grouped label nodes of one stage: the pill, then value, percentage and name text, in one group that fades as a layer (bklit's label overlay).
-const labelNodes = (
+const labelNodes: (
   config: FunnelMarkConfig,
   geo: FunnelGeometry,
   frame: Frame,
   fonts: Readonly<Record<LabelItem['kind'], FontMetrics>>,
   index: number,
   items: ReadonlyArray<LabelItem>,
-): Array<SceneNode> => {
+) => Array<SceneNode> = (
+  config: FunnelMarkConfig,
+  geo: FunnelGeometry,
+  frame: Frame,
+  fonts: Readonly<Record<LabelItem['kind'], FontMetrics>>,
+  index: number,
+  items: ReadonlyArray<LabelItem>,
+) => {
   const { horizontal } = config
   const cellPxStart = horizontal ? geo.cellStart(index) : 0
   const cellW = horizontal ? geo.cellPx : geo.W
@@ -279,9 +303,10 @@ const labelNodes = (
     placeGrouped(items, box, config, put)
   }
 
-  // HTML line boxes put the baseline (ascent - descent) / 2 below the line centre and paint it on a whole pixel; SVG text is placed by
-  // its x-height centre, so each label's y is that rounded baseline minus half the x-height.
-  const textY = (kind: LabelItem['kind'], centre: number): number => {
+  const textY: (kind: LabelItem['kind'], centre: number) => number = (
+    kind: LabelItem['kind'],
+    centre: number,
+  ) => {
     const metrics = fonts[kind]
 
     return Math.round(centre + (metrics.ascent - metrics.descent) / 2) - metrics.xHeight / 2

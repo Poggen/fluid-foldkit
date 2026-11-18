@@ -16,8 +16,9 @@ export const recipe = BarChart({ name: 'bar-axis-geometry', Row })
 export const BarAxisGeometryKey = Symbol('BarAxisGeometry')
 export const Chart = Block.make(recipe.namespace, { key: BarAxisGeometryKey, ...recipe.contract })
 export const subject = { block: Chart, layer: Chart.makeLayer(recipe.plans(Chart)) }
-export const flatten = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<SceneNode> =>
-  nodes.flatMap((node) => (node.kind === 'group' ? flatten(node.children) : [node]))
+export const flatten: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<SceneNode> = (
+  nodes: ReadonlyArray<SceneNode>,
+) => nodes.flatMap((node) => (node.kind === 'group' ? flatten(node.children) : [node]))
 
 export const props: BarChartProps<typeof Row.Type> = {
   width: 400,

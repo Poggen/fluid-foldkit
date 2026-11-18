@@ -12,11 +12,15 @@ import type { RingData, RingChartProps } from './options'
 import { RingHost } from './host'
 import { ringGeometry } from './geometry'
 
-export function ringInputs<Row extends RingData = RingData>(
+export const ringInputs: <Row extends RingData = RingData>(
+  id: string,
+  props: RingChartProps,
+  containerRef?: ContainerRef,
+) => PolarInputs<Row> = function ringInputs<Row extends RingData = RingData>(
   id: string,
   props: RingChartProps,
   containerRef: ContainerRef = createContainerRef(),
-): PolarInputs<Row> {
+) {
   const inputs: PolarInputs<Row> = {
     mount: (element, data, focus, observe, clock, observeSize) =>
       new RingHost(element, props, id, data, focus, observe, clock, observeSize, containerRef),
@@ -102,7 +106,9 @@ export function ringInputs<Row extends RingData = RingData>(
     },
   }
 
-  return props.size === undefined ? inputs : { ...inputs, size: props.size }
+  return (
+    props.size === undefined ? inputs : { ...inputs, size: props.size }
+  ) satisfies PolarInputs<Row>
 }
 
 export function RingChart<RowSchema extends Schema.Codec<RingData, Schema.Json>>({

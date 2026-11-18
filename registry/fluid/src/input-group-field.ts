@@ -3,7 +3,7 @@ import { fontWeights } from './lib/font-weight.js'
 import { modifyFields } from 'foldkit/struct'
 import { mountInputContainer } from './input-group-observer.js'
 import { inputBackground, inputRing } from './input-group-style.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import * as Primitive from '@foldkit/ui/input'
 import { inputControlDefault } from './input-group-control.js'
 import { Effect, Queue, Schema, Stream, Number } from 'effect'

@@ -80,7 +80,11 @@ const view = DialogExampleComposition.makeView((model, h) => {
       h,
     )
 
-  const options = (label: string, title: string, description: string): DialogProps => ({
+  const options: (label: string, title: string, description: string) => DialogProps = (
+    label: string,
+    title: string,
+    description: string,
+  ) => ({
     animate: motion.node,
     context: presentation,
     presentation: { size: density },

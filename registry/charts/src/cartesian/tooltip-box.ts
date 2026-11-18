@@ -52,8 +52,8 @@ const DrawingElement =
         #configuration: TooltipBoxConfiguration | undefined
         #resource: ReturnType<typeof createTooltipBoxResource> | undefined
         #placeholder: Comment | undefined
-        get configuration(): TooltipBoxConfiguration | undefined {
-          return this.#configuration
+        get configuration() {
+          return this.#configuration satisfies TooltipBoxConfiguration | undefined
         }
         set configuration(value: TooltipBoxConfiguration | undefined) {
           this.#configuration = value
@@ -100,7 +100,6 @@ const DrawingElement =
           }
         }
         acquire(policy: TooltipBoxMotionPolicy) {
-          // Validate before creating an observer or changing the portal topology.
           this.#container()
 
           try {

@@ -89,4 +89,4 @@ test('source boundaries enforce the relocated runtime scopes through Oxlint', ()
     for (const file of files) rmSync(file, { force: true })
     rmSync(directory, { recursive: true, force: true })
   }
-}, 30_000)
+})

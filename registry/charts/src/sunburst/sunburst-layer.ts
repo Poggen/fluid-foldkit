@@ -1,8 +1,7 @@
 import { applyStyle, paintLabel } from './paint'
 import { renderChartSvg } from '@tanstack/charts/svg'
-// Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT.
-// Sunburst sector layer (gap #35: no public enter-from or exit-to arc geometry): the sunburst mark takes this documented layer renderer, which owns its SVG
-// and draws every sector, pop-out overlay and label from the chart's own geometry, tweened on bklit's curves. Shape follows ring/progress-layer.ts.
+/* @license Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT. */
+
 import type { ChartLayerRenderer, SceneNode } from '@tanstack/charts'
 import { createSvgLayer, paintKeyed, setOrRemove, SVG_NS, translateOf } from './private/svg-layer'
 import { prefersReducedMotion } from './private/reduced-motion'
@@ -41,7 +40,7 @@ export interface SectorFeed {
   onPainted: (() => void) | null
 }
 
-export const createSectorFeed = (size: number): SectorFeed => ({
+export const createSectorFeed: (size: number) => SectorFeed = (size: number) => ({
   geometry: new Map(),
   presented: new Map(),
   enterTransition: undefined,
@@ -67,19 +66,23 @@ interface NodeState {
   readonly element: SVGElement
   readonly apply: (arc: ArcValues) => void
   readonly isArea: boolean
-  /** The geometry on screen when no track runs. */
+
   cur: ArcValues | null
-  /** The last target the mark published (a track may run to a turn-shifted copy of it). */
+
   target: ArcValues | null
   track: Track | null
   intro: ReturnType<typeof createIntroProgress> | null
 }
 
-export const createSectorLayer = (
+export const createSectorLayer: (
   feed: SectorFeed,
   _renderStart: { readonly current: number | null },
   now: () => number,
-): ChartLayerRenderer<unknown, number, number> => {
+) => ChartLayerRenderer<unknown, number, number> = (
+  feed: SectorFeed,
+  _renderStart: { readonly current: number | null },
+  now: () => number,
+) => {
   const layer = createSvgLayer('bkm-sunburst-sectors', (svg) => {
     const presentation = createSectorPresentation(feed)
     const states = new Map<string, NodeState>()
@@ -92,7 +95,10 @@ export const createSectorLayer = (
     let frame = 0
     let scale = 1
 
-    const arcNow = (state: NodeState, now: number): ArcValues => {
+    const arcNow: (state: NodeState, now: number) => ArcValues = (
+      state: NodeState,
+      now: number,
+    ) => {
       const { track } = state
 
       if (track === null || state.cur === null) {
@@ -104,7 +110,10 @@ export const createSectorLayer = (
       return progress >= 1 ? track.to : lerpArc(track.from, track.to, track.ease(progress))
     }
 
-    const paintState = (state: NodeState, arc: ArcValues): void => {
+    const paintState: (state: NodeState, arc: ArcValues) => void = (
+      state: NodeState,
+      arc: ArcValues,
+    ) => {
       const entry = feed.geometry.get(state.key)
       const visual = hoverArc(arc, entry?.arcId, feed.growth)
       const progress = state.intro?.progress ?? 1
@@ -140,7 +149,7 @@ export const createSectorLayer = (
       for (const state of states.values()) paintState(state, arcNow(state, current))
     }
 
-    const tick = (now: number): void => {
+    const tick: (now: number) => void = (now: number) => {
       let running = false
 
       for (const state of states.values()) {
@@ -157,17 +166,21 @@ export const createSectorLayer = (
         }
       }
 
-      // Next frame of the sector tween: bklit drives zoom and enter as motion values per frame (sunburst-chart.tsx:244, sunburst-segment.tsx:78-81).
       frame = running ? requestAnimationFrame(tick) : 0
     }
 
-    const wake = (): void => {
+    const wake: () => void = () => {
       if (frame === 0) {
         frame = requestAnimationFrame(tick)
       }
     }
 
-    const sync = (state: NodeState, id: string, introPending: boolean, current: number): void => {
+    const sync: (state: NodeState, id: string, introPending: boolean, current: number) => void = (
+      state: NodeState,
+      id: string,
+      introPending: boolean,
+      current: number,
+    ) => {
       const geometry = feed.geometry.get(id)
 
       if (geometry === undefined) {
@@ -196,7 +209,6 @@ export const createSectorLayer = (
       state.target = arc
 
       if (view !== null && feed.view !== view && !reduced) {
-        // Approved Sunburst exception: keep physical continuity instead of Original's logical-focus restart.
         const from = arcNow(state, current)
         state.cur = from
         state.track = {
@@ -214,7 +226,7 @@ export const createSectorLayer = (
       }
     }
 
-    const create = (node: SceneNode): NodeState | null => {
+    const create: (node: SceneNode) => NodeState | null = (node: SceneNode) => {
       if (node.kind === 'area') {
         const path = document.createElementNS(SVG_NS, 'path')
 
@@ -273,10 +285,13 @@ export const createSectorLayer = (
       return null
     }
 
-    const elementOf = (
+    const elementOf: (
       node: SceneNode,
       id: string,
-    ): { readonly element: SVGElement; readonly state: NodeState | null } | null => {
+    ) => { readonly element: SVGElement; readonly state: NodeState | null } | null = (
+      node: SceneNode,
+      id: string,
+    ) => {
       const existing = elements.get(id)
 
       if (existing !== undefined) {
@@ -294,12 +309,12 @@ export const createSectorLayer = (
       return { element, state }
     }
 
-    const paintNode = (
+    const paintNode: (
       node: SceneNode,
       id: string,
       introPending: boolean,
       now: number,
-    ): SVGElement | null => {
+    ) => SVGElement | null = (node: SceneNode, id: string, introPending: boolean, now: number) => {
       if (node.kind !== 'area' && node.kind !== 'label' && node.kind !== 'group') {
         return null
       }
@@ -343,18 +358,24 @@ export const createSectorLayer = (
       return element
     }
 
-    const paintNodes = (
+    const paintNodes: (
       nodes: ReadonlyArray<SceneNode>,
       parent: SVGElement,
       path: string,
       introPending: boolean,
       now: number,
-    ): void => {
+    ) => void = (
+      nodes: ReadonlyArray<SceneNode>,
+      parent: SVGElement,
+      path: string,
+      introPending: boolean,
+      now: number,
+    ) => {
       paintKeyed(nodes, parent, path, seen, (node, id) => paintNode(node, id, introPending, now))
     }
 
     return {
-      destroy: (): void => {
+      destroy: () => {
         presentation.destroy()
         cancelAnimationFrame(frame)
         frame = 0
@@ -367,7 +388,7 @@ export const createSectorLayer = (
       subscribePresentationPoints: (
         ...args: Parameters<typeof presentation.subscribePresentationPoints>
       ) => presentation.subscribePresentationPoints(...args),
-      render: (scene): void => {
+      render: (scene) => {
         const current = now()
         scale = scene.width / feed.size
         reduced = prefersReducedMotion()
@@ -406,11 +427,10 @@ export const createSectorLayer = (
     }
   })
 
-  // compose captures this instance and dispatches custom scene nodes by renderer identity.
   layer.prerender = (scene, options) => {
     const scale = scene.width / feed.size
 
-    const paint = (node: SceneNode): Array<SceneNode> => {
+    const paint: (node: SceneNode) => Array<SceneNode> = (node: SceneNode) => {
       const entry = feed.geometry.get(node.key)
 
       if (node.kind === 'group') {

@@ -1,4 +1,4 @@
-// Fluid Functionalism cc276ca0 command-menu docs and preset data. MIT.
+/* @license Fluid Functionalism cc276ca0 command-menu docs and preset data. MIT. */
 export {
   sourceItems as items,
   sourceTabs as tabs,

@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test'
 import { fileURLToPath } from 'node:url'
 import { bundleRuntimeFixture, mountRuntimeFixture } from './style-contract-helpers'
-import type { SankeyDocuments } from '../../registry/charts/test/sankey-iframe-fixture'
-import type { SankeyProbe } from '../../registry/charts/test/sankey-presentation-fixture'
+import type { SankeyDocuments } from '../../registry/charts/test/sankey-iframe.fixture'
+import type { SankeyProbe } from '../../registry/charts/test/sankey-presentation.fixture'
 declare global {
   interface Window {
     sankeyProbe: SankeyProbe
@@ -14,7 +14,7 @@ let code = ''
 test.beforeAll(async () => {
   code = await bundleRuntimeFixture(
     fileURLToPath(
-      new URL('../../registry/charts/test/sankey-presentation-fixture.ts', import.meta.url),
+      new URL('../../registry/charts/test/sankey-presentation.fixture.ts', import.meta.url),
     ),
   )
 })
@@ -159,7 +159,7 @@ test('native surfaces retain live geometry across main and iframe document realm
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
   const fixture = await bundleRuntimeFixture(
-    fileURLToPath(new URL('../../registry/charts/test/sankey-iframe-fixture.ts', import.meta.url)),
+    fileURLToPath(new URL('../../registry/charts/test/sankey-iframe.fixture.ts', import.meta.url)),
   )
   await mountRuntimeFixture(page, '/charts/sankey', fixture)
   const initial = await page.evaluate(async () => {

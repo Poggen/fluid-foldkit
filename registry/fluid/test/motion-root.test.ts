@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { it } from '@effect/vitest'
 import { Effect, Layer, Schema } from 'effect'
@@ -37,11 +38,12 @@ function subject() {
   const events: string[] = []
   const reads: BoundsRead[] = []
   const elements: Element[] = []
+  const mounted = Promise.withResolvers<void>()
   const children = [
     { index: 0, key: {} },
     { index: 1, key: {} },
   ]
-  const withPreviousHooks = (vnode: Html): Html => {
+  const withPreviousHooks: (vnode: Html) => Html = (vnode: Html) => {
     if (vnode === null) throw new Error('Expected the snapshot root')
     return {
       ...vnode,
@@ -81,6 +83,7 @@ function subject() {
                     const element = visual.current
                     if (!(element instanceof HTMLElement)) throw new Error('Missing child')
                     elements.push(element)
+                    if (elements.length === children.length) mounted.resolve()
                     Object.defineProperty(element, 'getBoundingClientRect', {
                       configurable: true,
                       value: () => {
@@ -110,6 +113,7 @@ function subject() {
     events,
     reads,
     elements,
+    mounted: mounted.promise,
   }
 }
 
@@ -129,7 +133,8 @@ it.live('root snapshots precede ancestor mutations and preserve geometry through
     host.append(container)
     const app = Runtime.embed(Program.makeElement({ block: Root, layer: fixture.layer, container }))
     try {
-      yield* Effect.promise(() => vi.waitFor(() => expect(fixture.elements).toHaveLength(2)))
+      yield* Effect.promise(() => fixture.mounted)
+      expect(fixture.elements).toHaveLength(2)
       expect(fixture.events).toContain('previous-insert')
       const original = [...fixture.elements]
 

@@ -3,28 +3,19 @@ import type { DepthEntry } from './geometry'
 import type { BarDatum } from './model'
 import type { BarDepthProviderProps, BarDepthSegment } from './options'
 
-export interface DepthFrame {
-  readonly bandWidth: number
-  readonly bandStep: number
-  readonly categoryStart: (category: string) => number
-  readonly valueY: (value: number, series?: string) => number
-  readonly innerWidth: number
-  readonly plotLeft: number
-}
-
-export interface ProjectedDepthEntry extends DepthEntry {
-  readonly segments: ReadonlyArray<BarDepthSegment>
-}
-
 /** Source provider geometry is shared by every surface and its SVG silhouette. */
-export function projectDepthEntry<Row>(
+export const projectDepthEntry: <Row>(
   datum: BarDatum<Row>,
   provider: BarDepthProviderProps<Row> | undefined,
   frame: DepthFrame,
-): ProjectedDepthEntry | undefined {
-  if (!frame.bandWidth) return undefined
+) => ProjectedDepthEntry | undefined = function projectDepthEntry<Row>(
+  datum: BarDatum<Row>,
+  provider: BarDepthProviderProps<Row> | undefined,
+  frame: DepthFrame,
+) {
+  if (!frame.bandWidth) return undefined satisfies ProjectedDepthEntry | undefined
   const bandX = frame.categoryStart(datum.category)
-  if (!Number.isFinite(bandX)) return undefined
+  if (!Number.isFinite(bandX)) return undefined satisfies ProjectedDepthEntry | undefined
   const segments =
     provider?.segmentsAccessor?.(datum.source)?.filter((segment) => segment.value > 0) ?? []
   const total = segments.reduce((sum, segment) => sum + segment.value, 0)
@@ -44,25 +35,14 @@ export function projectDepthEntry<Row>(
     minBarHeight: provider?.minBarHeight ?? 0,
     ...(top === undefined || total <= 0 ? {} : { topSegmentFraction: top.value / total }),
   })
-  return entry === undefined ? undefined : { ...entry, segments }
+  return (entry === undefined ? undefined : { ...entry, segments }) satisfies
+    | ProjectedDepthEntry
+    | undefined
 }
 
-export function depthSidePieces(entry: ProjectedDepthEntry, baseColor: string) {
-  if (entry.segments.length === 0)
-    return [{ points: sidePoints(entry, entry.topY, entry.bottomY), color: baseColor }]
-  const total = entry.segments.reduce((sum, segment) => sum + segment.value, 0)
-  let cursor = entry.bottomY
-  return entry.segments.map((segment, index) => {
-    const natural = (segment.value / total) * entry.naturalHeight
-    const height =
-      index === entry.segments.length - 1 ? Math.max(0, natural - entry.topYTrim) : natural
-    const bottom = cursor
-    cursor -= height
-    return { points: sidePoints(entry, cursor, bottom), color: segment.color ?? baseColor }
-  })
-}
-
-export function depthSilhouette(entry: DepthEntry): string {
+export const depthSilhouette: (entry: DepthEntry) => string = function depthSilhouette(
+  entry: DepthEntry,
+) {
   const {
     bandX: x,
     bandWidth: width,
@@ -97,4 +77,32 @@ export function depthSilhouette(entry: DepthEntry): string {
             [x, bottom],
           ]
   return points.map(([px, py], index) => `${index === 0 ? 'M' : 'L'} ${px} ${py}`).join(' ') + ' Z'
+}
+
+export interface DepthFrame {
+  readonly bandWidth: number
+  readonly bandStep: number
+  readonly categoryStart: (category: string) => number
+  readonly valueY: (value: number, series?: string) => number
+  readonly innerWidth: number
+  readonly plotLeft: number
+}
+
+export interface ProjectedDepthEntry extends DepthEntry {
+  readonly segments: ReadonlyArray<BarDepthSegment>
+}
+
+export function depthSidePieces(entry: ProjectedDepthEntry, baseColor: string) {
+  if (entry.segments.length === 0)
+    return [{ points: sidePoints(entry, entry.topY, entry.bottomY), color: baseColor }]
+  const total = entry.segments.reduce((sum, segment) => sum + segment.value, 0)
+  let cursor = entry.bottomY
+  return entry.segments.map((segment, index) => {
+    const natural = (segment.value / total) * entry.naturalHeight
+    const height =
+      index === entry.segments.length - 1 ? Math.max(0, natural - entry.topYTrim) : natural
+    const bottom = cursor
+    cursor -= height
+    return { points: sidePoints(entry, cursor, bottom), color: segment.color ?? baseColor }
+  })
 }

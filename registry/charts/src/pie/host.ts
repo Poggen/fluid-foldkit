@@ -36,7 +36,7 @@ export class PieHost implements PolarHost<PieData> {
     this.#id = id
     this.#host = mountPolar(element, data, focused, observe, clock, this.#frame(), observeSize)
   }
-  #frame(): PolarFrame<PieData, PieArcRow> {
+  #frame() {
     const props = this.#props
     const id = this.#id
 
@@ -158,9 +158,9 @@ export class PieHost implements PolarHost<PieData> {
     const named = props.className === undefined ? sized : { ...sized, className: props.className }
     const styled = props.style === undefined ? named : { ...named, style: props.style }
 
-    return props.onHoverChange === undefined
-      ? styled
-      : { ...styled, onHoverChange: props.onHoverChange }
+    return (
+      props.onHoverChange === undefined ? styled : { ...styled, onHoverChange: props.onHoverChange }
+    ) satisfies PolarFrame<PieData, PieArcRow>
   }
   configure(props: PieChartProps) {
     if (props === this.#props) {

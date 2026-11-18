@@ -1,28 +1,17 @@
-// Derived from Fluid Functionalism 200b4534 and its pinned Radix/Base primitives. MIT.
+/* @license Derived from Fluid Functionalism 200b4534 and its pinned Radix/Base primitives. MIT. */
 import { Effect, Queue, Stream } from 'effect'
 import { DropdownObservation } from './dropdown-observation.js'
 import type { DropdownTriggerObservation } from './dropdown-observation.js'
 import type { DropdownResourceOptions } from './dropdown-resources.js'
-const virtualMousePress = (event: PointerEvent, android: boolean) =>
-  (!android && event.width === 0 && event.height === 0) ||
-  (event.width === 1 &&
-    event.height === 1 &&
-    event.pressure === 0 &&
-    event.detail === 0 &&
-    event.pointerType === 'mouse' &&
-    (android || event.buttons === 0))
-export interface DropdownTriggerInput {
-  readonly id: string
-  readonly sub: boolean
-  readonly direction: 'ltr' | 'rtl'
-  readonly element: Element
-  readonly viewStateChanges: Stream.Stream<'Live' | 'Paused'>
-}
-export function observeDropdownTrigger(
+export const observeDropdownTrigger: (
   document: Document,
   options: DropdownResourceOptions,
   input: DropdownTriggerInput,
-): Stream.Stream<DropdownTriggerObservation> {
+) => Stream.Stream<DropdownTriggerObservation> = function observeDropdownTrigger(
+  document: Document,
+  options: DropdownResourceOptions,
+  input: DropdownTriggerInput,
+) {
   return input.viewStateChanges.pipe(
     Stream.switchMap((state) =>
       state === 'Paused'
@@ -120,8 +109,7 @@ export function observeDropdownTrigger(
                         send(DropdownObservation.RequestedOpen({ open: nextOpen }))
                       }
                     }
-                    // Base Select waits for the browser's mousedown focus before opening.
-                    // Virtual screen-reader presses must publish before its focus resync.
+
                     if (pressFrame !== undefined) {
                       window?.cancelAnimationFrame(pressFrame)
                     }
@@ -180,7 +168,6 @@ export function observeDropdownTrigger(
                         event.detail === 0 && trigger.getAttribute('aria-expanded') !== 'true'
                           ? DropdownObservation.PressedOpeningKey({ key: 'Enter' })
                           : DropdownObservation.ClickedTrigger({
-                              // The controller may open on hover before its DOM commit.
                               withinHoverAdmission:
                                 event.detail > 0 &&
                                 trigger.dataset.openOnHover === 'true' &&
@@ -237,4 +224,20 @@ export function observeDropdownTrigger(
           ),
     ),
   )
+}
+
+const virtualMousePress = (event: PointerEvent, android: boolean) =>
+  (!android && event.width === 0 && event.height === 0) ||
+  (event.width === 1 &&
+    event.height === 1 &&
+    event.pressure === 0 &&
+    event.detail === 0 &&
+    event.pointerType === 'mouse' &&
+    (android || event.buttons === 0))
+export interface DropdownTriggerInput {
+  readonly id: string
+  readonly sub: boolean
+  readonly direction: 'ltr' | 'rtl'
+  readonly element: Element
+  readonly viewStateChanges: Stream.Stream<'Live' | 'Paused'>
 }

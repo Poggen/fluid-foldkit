@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { Attribute, ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
 import type { SidebarActionRun, SidebarGroupActionContext } from './sidebar-actions.js'
 import { resolvePresentation } from './presentation.js'
@@ -11,48 +11,13 @@ import { spring } from './lib/springs.js'
 import { sidebarGroupMotion, sidebarMenuSubMotion } from './sidebar-group-motion.js'
 import { hoverSubtreeAttributes } from './hover.js'
 
-export interface SidebarPartProps {
-  readonly children: ReadonlyArray<Html | string>
-  readonly className?: string
-}
-
-const part =
-  (name: string, base: string) =>
-  <Message>(props: SidebarPartProps, h: HtmlBuilder<Message>): Html =>
-    h.div([h.DataAttribute('sidebar', name), h.Class(cn(base, props.className))], props.children)
-
-export const SidebarHeader = part('header', 'flex shrink-0 flex-col gap-2 p-2')
-
-export const SidebarFooter = part('footer', 'mt-auto flex shrink-0 flex-col gap-2 p-2')
-
-export { SidebarContent } from './sidebar-content.js'
-export type { SidebarContentProps } from './sidebar-content.js'
-export { SidebarTrigger } from './sidebar-trigger.js'
-export type { SidebarTriggerProps, SidebarTriggerButton } from './sidebar-trigger.js'
-export { SidebarToggleTooltipContent } from './sidebar-tooltip-content.js'
-
-export const SidebarGroupContent = part('group-content', 'w-full')
-
-export {
-  SidebarAction,
-  SidebarGroupActions,
-  SidebarMenuActions,
-  SidebarMenuAction,
-  SidebarGroupAction,
-} from './sidebar-actions.js'
-
-export type {
-  SidebarActionContext,
-  SidebarMenuActionContext,
-  SidebarGroupActionContext,
-  SidebarActionRun,
-  SidebarMenuActionRun,
-} from './sidebar-actions.js'
-
-export function SidebarMenuBadge<Message>(
+export const SidebarMenuBadge: <Message>(
   props: SidebarPartProps & Presentation & { readonly active?: boolean },
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function SidebarMenuBadge<Message>(
+  props: SidebarPartProps & Presentation & { readonly active?: boolean },
+  h: HtmlBuilder<Message>,
+) {
   const { size } = resolvePresentation(props)
   return h.div(
     [
@@ -72,17 +37,16 @@ export function SidebarMenuBadge<Message>(
       }),
     ],
     props.children,
-  )
+  ) satisfies Html
 }
 
-export interface SidebarMenuItemProps extends SidebarPartProps, Presentation {
-  readonly attributes?: ReadonlyArray<ChildAttribute>
-}
-
-export function SidebarMenuItem<Message>(
+export const SidebarMenuItem: <Message>(
   props: SidebarMenuItemProps,
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function SidebarMenuItem<Message>(
+  props: SidebarMenuItemProps,
+  h: HtmlBuilder<Message>,
+) {
   const { size } = resolvePresentation(props)
   return h.li(
     [
@@ -98,13 +62,16 @@ export function SidebarMenuItem<Message>(
       ),
     ],
     props.children,
-  )
+  ) satisfies Html
 }
 
-export function SidebarMenuSubItem<Message>(
+export const SidebarMenuSubItem: <Message>(
   props: SidebarMenuItemProps,
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function SidebarMenuSubItem<Message>(
+  props: SidebarMenuItemProps,
+  h: HtmlBuilder<Message>,
+) {
   const { size } = resolvePresentation(props)
   return h.li(
     [
@@ -120,19 +87,16 @@ export function SidebarMenuSubItem<Message>(
       ),
     ],
     props.children,
-  )
+  ) satisfies Html
 }
 
-export interface SidebarMenuSubProps<Message = never> extends SidebarPartProps, Presentation {
-  readonly open?: boolean
-  readonly attributes?: ReadonlyArray<Attribute<Message>>
-  readonly animate: (node: Html, options: MotionOptions) => Html
-}
-
-export function SidebarMenuSub<Message>(
+export const SidebarMenuSub: <Message>(
   props: SidebarMenuSubProps<Message>,
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function SidebarMenuSub<Message>(
+  props: SidebarMenuSubProps<Message>,
+  h: HtmlBuilder<Message>,
+) {
   const open = props.open ?? true
 
   return props.animate(
@@ -162,26 +126,34 @@ export function SidebarMenuSub<Message>(
       ],
     ),
     { initial: false, animate: {}, resource: sidebarMenuSubMotion },
-  )
+  ) satisfies Html
 }
 
-export function SidebarSeparator<Message>(h: HtmlBuilder<Message>): Html {
-  return h.div([
-    h.DataAttribute('sidebar', 'separator'),
-    h.Role('separator'),
-    h.AriaOrientation('horizontal'),
-    h.Class('mx-2 h-px shrink-0 bg-border'),
-  ])
-}
+export const SidebarSeparator: <Message>(h: HtmlBuilder<Message>) => Html =
+  function SidebarSeparator<Message>(h: HtmlBuilder<Message>) {
+    return h.div([
+      h.DataAttribute('sidebar', 'separator'),
+      h.Role('separator'),
+      h.AriaOrientation('horizontal'),
+      h.Class('mx-2 h-px shrink-0 bg-border'),
+    ]) satisfies Html
+  }
 
-export function SidebarInput<Message>(
+export const SidebarInput: <Message>(
   props: Presentation & {
     readonly attributes?: ReadonlyArray<Attribute<Message>>
     readonly placeholder?: string
     readonly className?: string
   },
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function SidebarInput<Message>(
+  props: Presentation & {
+    readonly attributes?: ReadonlyArray<Attribute<Message>>
+    readonly placeholder?: string
+    readonly className?: string
+  },
+  h: HtmlBuilder<Message>,
+) {
   const { shape, size } = resolvePresentation(props)
 
   return h.input([
@@ -191,10 +163,10 @@ export function SidebarInput<Message>(
     h.Class(
       `w-full bg-transparent px-3 text-foreground placeholder:text-muted-foreground outline-none ring-1 ring-transparent transition-[background-color,box-shadow] duration-80 hover:bg-muted/50 hover:ring-border focus:bg-card focus:ring-border focus-visible:ring-[color:var(--focus-ring,#6B97FF)] ${size.variant === 'compact' ? 'h-7' : 'h-8'} ${size.field} ${shape.input} ${props.className ?? ''}`,
     ),
-  ])
+  ]) satisfies Html
 }
 
-export function SidebarGroup<Message>(
+export const SidebarGroup: <Message>(
   props: SidebarPartProps &
     Presentation &
     (
@@ -209,7 +181,22 @@ export function SidebarGroup<Message>(
         }
     ),
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function SidebarGroup<Message>(
+  props: SidebarPartProps &
+    Presentation &
+    (
+      | { readonly label?: never }
+      | {
+          readonly id: string
+          readonly label: string
+          readonly open: boolean
+          readonly actions?: (context: SidebarGroupActionContext) => SidebarActionRun
+          readonly animate: (node: Html, options: MotionOptions) => Html
+          readonly onToggle: (open: boolean) => Message
+        }
+    ),
+  h: HtmlBuilder<Message>,
+) {
   if (props.label === undefined) {
     return h.div(
       [
@@ -217,7 +204,7 @@ export function SidebarGroup<Message>(
         h.Class(cn('relative flex w-full min-w-0 flex-col p-2', props.className)),
       ],
       props.children,
-    )
+    ) satisfies Html
   }
 
   const { shape, size, icons } = resolvePresentation(props)
@@ -315,33 +302,37 @@ export function SidebarGroup<Message>(
         { initial: false, animate: {}, resource: sidebarGroupMotion },
       ),
     ],
-  )
+  ) satisfies Html
 }
 
-export function SidebarInset<Message>(props: SidebarPartProps, h: HtmlBuilder<Message>): Html {
-  return h.main(
-    [
-      h.DataAttribute('slot', 'sidebar-inset'),
-      h.Class(
-        cn(
-          'relative flex min-h-0 w-full min-w-0 flex-1 flex-col bg-background',
-          'peer-data-[variant=inset]:m-2 peer-data-[variant=inset]:peer-data-[side=left]:ml-0 peer-data-[variant=inset]:peer-data-[side=right]:mr-0',
-          'peer-data-[variant=inset]:peer-data-[state=collapsed]:peer-data-[side=left]:ml-2 peer-data-[variant=inset]:peer-data-[state=collapsed]:peer-data-[side=right]:mr-2',
-          'transition-[margin] duration-80',
-          'peer-data-[variant=inset]:rounded-xl',
-          'peer-data-[variant=inset]:bg-surface-2 peer-data-[variant=inset]:shadow-surface-2',
-          props.className,
+export const SidebarInset: <Message>(props: SidebarPartProps, h: HtmlBuilder<Message>) => Html =
+  function SidebarInset<Message>(props: SidebarPartProps, h: HtmlBuilder<Message>) {
+    return h.main(
+      [
+        h.DataAttribute('slot', 'sidebar-inset'),
+        h.Class(
+          cn(
+            'relative flex min-h-0 w-full min-w-0 flex-1 flex-col bg-background',
+            'peer-data-[variant=inset]:m-2 peer-data-[variant=inset]:peer-data-[side=left]:ml-0 peer-data-[variant=inset]:peer-data-[side=right]:mr-0',
+            'peer-data-[variant=inset]:peer-data-[state=collapsed]:peer-data-[side=left]:ml-2 peer-data-[variant=inset]:peer-data-[state=collapsed]:peer-data-[side=right]:mr-2',
+            'transition-[margin] duration-80',
+            'peer-data-[variant=inset]:rounded-xl',
+            'peer-data-[variant=inset]:bg-surface-2 peer-data-[variant=inset]:shadow-surface-2',
+            props.className,
+          ),
         ),
-      ),
-    ],
-    props.children,
-  )
-}
+      ],
+      props.children,
+    ) satisfies Html
+  }
 
-export function SidebarGroupLabel<Message>(
+export const SidebarGroupLabel: <Message>(
   props: SidebarPartProps & Presentation,
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function SidebarGroupLabel<Message>(
+  props: SidebarPartProps & Presentation,
+  h: HtmlBuilder<Message>,
+) {
   const { size } = resolvePresentation(props)
   return h.div(
     [
@@ -355,17 +346,24 @@ export function SidebarGroupLabel<Message>(
       ),
     ],
     props.children,
-  )
+  ) satisfies Html
 }
 
-export function SidebarMenuSkeleton<Message>(
+export const SidebarMenuSkeleton: <Message>(
   props: Presentation & {
     readonly index?: number
     readonly showIcon?: boolean
     readonly className?: string
   },
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function SidebarMenuSkeleton<Message>(
+  props: Presentation & {
+    readonly index?: number
+    readonly showIcon?: boolean
+    readonly className?: string
+  },
+  h: HtmlBuilder<Message>,
+) {
   const { size } = resolvePresentation(props)
   const widths = ['62%', '74%', '55%', '82%', '68%']
 
@@ -396,5 +394,56 @@ export function SidebarMenuSkeleton<Message>(
         h.Style({ maxWidth: widths[(props.index ?? 0) % widths.length] ?? '62%' }),
       ]),
     ],
-  )
+  ) satisfies Html
+}
+
+export interface SidebarPartProps {
+  readonly children: ReadonlyArray<Html | string>
+  readonly className?: string
+}
+
+const part =
+  (name: string, base: string) =>
+  <Message>(props: SidebarPartProps, h: HtmlBuilder<Message>) =>
+    h.div(
+      [h.DataAttribute('sidebar', name), h.Class(cn(base, props.className))],
+      props.children,
+    ) satisfies Html
+
+export const SidebarHeader = part('header', 'flex shrink-0 flex-col gap-2 p-2')
+
+export const SidebarFooter = part('footer', 'mt-auto flex shrink-0 flex-col gap-2 p-2')
+
+export { SidebarContent } from './sidebar-content.js'
+export type { SidebarContentProps } from './sidebar-content.js'
+export { SidebarTrigger } from './sidebar-trigger.js'
+export type { SidebarTriggerProps, SidebarTriggerButton } from './sidebar-trigger.js'
+export { SidebarToggleTooltipContent } from './sidebar-tooltip-content.js'
+
+export const SidebarGroupContent = part('group-content', 'w-full')
+
+export {
+  SidebarAction,
+  SidebarGroupActions,
+  SidebarMenuActions,
+  SidebarMenuAction,
+  SidebarGroupAction,
+} from './sidebar-actions.js'
+
+export type {
+  SidebarActionContext,
+  SidebarMenuActionContext,
+  SidebarGroupActionContext,
+  SidebarActionRun,
+  SidebarMenuActionRun,
+} from './sidebar-actions.js'
+
+export interface SidebarMenuItemProps extends SidebarPartProps, Presentation {
+  readonly attributes?: ReadonlyArray<ChildAttribute>
+}
+
+export interface SidebarMenuSubProps<Message = never> extends SidebarPartProps, Presentation {
+  readonly open?: boolean
+  readonly attributes?: ReadonlyArray<Attribute<Message>>
+  readonly animate: (node: Html, options: MotionOptions) => Html
 }

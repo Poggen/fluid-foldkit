@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
 // @effect-diagnostics nodeBuiltinImport:off -- Oxlint checks the repository's module boundaries with Node path and builtin-module APIs.
 import {
   importIdentity,
@@ -29,7 +30,10 @@ const isWithin = (filename: string, directory: string) =>
 const isBrowserZone = (filename: string) =>
   /^registry\/(?:fluid|charts)\/(?:src|examples\/src)\//u.test(filename)
 
-const normalizeWorkspacePath = (filename: string, specifier: string): string | null => {
+const normalizeWorkspacePath: (filename: string, specifier: string) => string | null = (
+  filename: string,
+  specifier: string,
+) => {
   if (specifier.startsWith('.'))
     return path.posix.normalize(path.posix.join(path.posix.dirname(filename), specifier))
   if (specifier.startsWith('app/') || specifier.startsWith('registry/'))
@@ -69,13 +73,21 @@ const browserServerModule = (filename: string, specifier: string) => {
   )
 }
 
-const isRequireFunction = (
+const isRequireFunction: (
+  expression: ESTree.Expression,
+  scope: Scope,
+  context: RuleContext,
+  seen?: Set<ESTree.Node>,
+) => boolean = (
   expression: ESTree.Expression,
   scope: Scope,
   context: RuleContext,
   seen = new Set<Definition['node']>(),
-): boolean => {
-  const isRequireBinding = (name: string, bindingScope: Scope): boolean => {
+) => {
+  const isRequireBinding: (name: string, bindingScope: Scope) => boolean = (
+    name: string,
+    bindingScope: Scope,
+  ) => {
     const variable = variableOf(name, bindingScope)
 
     if (name === 'require' && !isDeclaredLocally(name, bindingScope)) {
@@ -129,23 +141,19 @@ const isRequireFunction = (
   if (value.type === 'CallExpression') {
     const identity = importIdentity(value.callee, scope, context, { namespaces: new Set<string>() })
 
-    return (
-      identity?.name === 'createRequire' &&
-      (identity.module === 'module' || identity.module === 'node:module')
-    )
+    return (identity?.name === 'createRequire' &&
+      (identity.module === 'module' || identity.module === 'node:module')) satisfies boolean
   }
 
   if (value.type === 'Identifier') {
-    return isRequireBinding(value.name, scope)
+    return isRequireBinding(value.name, scope) satisfies boolean
   }
 
-  return (
-    value.type === 'MemberExpression' &&
+  return (value.type === 'MemberExpression' &&
     staticPropertyName(value) === 'require' &&
     value.object.type === 'Identifier' &&
     value.object.name === 'module' &&
-    !isDeclaredLocally(value.object.name, scope)
-  )
+    !isDeclaredLocally(value.object.name, scope)) satisfies boolean
 }
 
 const moduleSourceVisitors = (

@@ -96,12 +96,8 @@ export const Search = ApplicationBlock.makeRequiredFieldBinding(SearchBlock, {
 export const Navigation = ApplicationBlock.makeRequiredFieldBinding(NavigationBlock, {
   field: 'navigation',
   init: {
-    contextToArgs: ({ settings, path }): [Settings, string, string, 'desktop'] => [
-      settings,
-      path,
-      'desktop',
-      'desktop',
-    ],
+    contextToArgs: ({ settings, path }) =>
+      [settings, path, 'desktop', 'desktop'] satisfies [Settings, string, string, 'desktop'],
   },
 }).withOutMessagePolicy({
   fold: ApplicationBlock.makeOutMessageFold(NavigationBlock, {
@@ -111,12 +107,8 @@ export const Navigation = ApplicationBlock.makeRequiredFieldBinding(NavigationBl
 export const MobileMenu = ApplicationBlock.makeRequiredFieldBinding(NavigationBlock, {
   field: 'mobileMenu',
   init: {
-    contextToArgs: ({ settings, path }): [Settings, string, string, 'mobile'] => [
-      settings,
-      path,
-      'mobile',
-      'mobile',
-    ],
+    contextToArgs: ({ settings, path }) =>
+      [settings, path, 'mobile', 'mobile'] satisfies [Settings, string, string, 'mobile'],
   },
 }).withOutMessagePolicy({
   fold: ApplicationBlock.makeOutMessageFold(NavigationBlock, {

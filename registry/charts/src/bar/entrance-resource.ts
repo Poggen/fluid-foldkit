@@ -12,7 +12,9 @@ import type { BarDatum } from './model'
 import { resolveBarSeries } from './model'
 import type { BarChartProps, BarProps } from './options'
 
-const rectangles = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<SceneRect> =>
+const rectangles: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<SceneRect> = (
+  nodes: ReadonlyArray<SceneNode>,
+) =>
   nodes.flatMap((node) => {
     if (node.kind === 'group') {
       return rectangles(node.children)

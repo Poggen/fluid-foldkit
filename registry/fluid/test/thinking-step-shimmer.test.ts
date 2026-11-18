@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import shimmerCss from '../src/styles/thinking-indicator.css?raw'
 import { it } from '@effect/vitest'
@@ -21,7 +22,9 @@ const Root = Block.make('ThinkingStepShimmer', {
 })
 const Step = Root.makeRequiredFieldBinding(ThinkingStepBlock, {
   field: 'step',
-  init: { contextToArgs: (): [ThinkingStepConfig] => [{ id: 'shimmer-step', status: 'active' }] },
+  init: {
+    contextToArgs: () => [{ id: 'shimmer-step', status: 'active' }] satisfies [ThinkingStepConfig],
+  },
 })
 const Composition = Root.makeComposition({ bindings: [Step] })
 const init = Composition.makeInit(() => ({ model: {} }))

@@ -1,5 +1,5 @@
-// Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT.
-/** @internal */
+/* @license Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT. */
+
 export const sunburstCssVars = {
   background: 'var(--chart-background)',
   foreground: 'var(--chart-foreground)',
@@ -26,11 +26,9 @@ const OPACITY_STEP = 0.15
 
 const OPACITY_FLOOR = 0.45
 
-/**
- * Relative depth within the current focus view (1 = innermost visible ring).
- * @internal
- */
-export const opacityForRelativeDepth = (relativeDepth: number): number => {
+export const opacityForRelativeDepth: (relativeDepth: number) => number = (
+  relativeDepth: number,
+) => {
   if (relativeDepth <= 1) {
     return 1
   }
@@ -41,7 +39,10 @@ export const opacityForRelativeDepth = (relativeDepth: number): number => {
 const PERCENT = 100
 
 /** Fill alpha rides color-mix because the native sunburst mark takes one numeric fillOpacity per mark. */
-export const withAlpha = (color: string, alpha: number): string => {
+export const withAlpha: (color: string, alpha: number) => string = (
+  color: string,
+  alpha: number,
+) => {
   if (alpha >= 1 || color.startsWith('url(')) {
     return color
   }

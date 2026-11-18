@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom -- real public Program and Tooltip DOM resource boundary
 import { TooltipStoryLayer } from './tooltip-story-services.js'
 import { it } from '@effect/vitest'

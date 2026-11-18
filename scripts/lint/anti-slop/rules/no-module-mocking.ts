@@ -3,12 +3,32 @@ import type { ESTree, SourceCode } from '@oxlint/plugins'
 
 import { resolveVariable } from '../shared/scope.ts'
 
-const moduleMockMethods = new Set(['doMock', 'mock', 'unstable_mockModule'])
-
-function importedName(node: ESTree.Node): string | null {
+const importedName: (node: ESTree.Node) => string | null = function importedName(
+  node: ESTree.Node,
+) {
   if (node.type !== 'ImportSpecifier') return null
   return node.imported.type === 'Identifier' ? node.imported.name : node.imported.value
 }
+
+const moduleMockCall: (sourceCode: SourceCode, callee: ESTree.Expression) => boolean =
+  function moduleMockCall(sourceCode: SourceCode, callee: ESTree.Expression) {
+    if (!('property' in callee) || !('object' in callee) || !('computed' in callee)) return false
+    if (!isTestFrameworkObject(sourceCode, callee.object)) return false
+    const property = callee.property
+    const method = callee.computed
+      ? property.type === 'Literal' &&
+        (property.value === 'doMock' ||
+          property.value === 'mock' ||
+          property.value === 'unstable_mockModule')
+        ? property.value
+        : null
+      : property.type === 'Identifier'
+        ? property.name
+        : null
+    return method !== null && moduleMockMethods.has(method)
+  }
+
+const moduleMockMethods = new Set(['doMock', 'mock', 'unstable_mockModule'])
 
 function isTestFrameworkObject(
   sourceCode: SourceCode,
@@ -34,23 +54,6 @@ function isTestFrameworkObject(
     const name = importedName(definition.node)
     return (source === 'vitest' && name === 'vi') || (source === '@jest/globals' && name === 'jest')
   })
-}
-
-function moduleMockCall(sourceCode: SourceCode, callee: ESTree.Expression): boolean {
-  if (!('property' in callee) || !('object' in callee) || !('computed' in callee)) return false
-  if (!isTestFrameworkObject(sourceCode, callee.object)) return false
-  const property = callee.property
-  const method = callee.computed
-    ? property.type === 'Literal' &&
-      (property.value === 'doMock' ||
-        property.value === 'mock' ||
-        property.value === 'unstable_mockModule')
-      ? property.value
-      : null
-    : property.type === 'Identifier'
-      ? property.name
-      : null
-  return method !== null && moduleMockMethods.has(method)
 }
 
 /** Ban test framework module mocking in favor of real dependency seams. */

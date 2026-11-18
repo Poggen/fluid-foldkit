@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Schema } from 'effect'
 import { defineMessageUnion } from 'foldkit/message'
 import { NumberDisplay } from './color-number-locale.js'

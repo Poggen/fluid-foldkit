@@ -7,6 +7,202 @@ import { livePlot, parseHeight } from './geometry'
 import { yTickValues } from './live-yaxis'
 import { pickStep, stepRaw, shownDomain, rollYAt } from './live-frame'
 
+export const advanceLive: (
+  retained: LiveState,
+  props: LiveLineChartProps,
+  revision: number,
+  width: number,
+  clock: LiveClock,
+  dataIdentity?: string,
+) => LiveState = function (
+  retained: LiveState,
+  props: LiveLineChartProps,
+  revision: number,
+  width: number,
+  clock: LiveClock,
+  dataIdentity = 'initial',
+) {
+  const previous = rebaseLiveClock(retained, clock.timeOrigin)
+
+  if (width === 0) return previous satisfies LiveState
+  const { margin, innerHeight, plot, yAxis } = liveMetrics(props, width, previous.state)
+  const line = props.children.find((c) => c.kind === 'liveLine')?.props
+  const lerpSpeed = props.lerpSpeed ?? 0.08
+  const minGap = yAxis?.minGap ?? 36
+
+  const changed =
+    previous.revision !== revision ||
+    previous.width !== width ||
+    ((previous.frame?.seed ?? false) && !props.paused)
+
+  if (!changed && !previous.clockActive) return previous satisfies LiveState
+
+  const planned = changed
+    ? planLiveFrame(
+        {
+          width,
+          data: props.data,
+          dataIdentity,
+          value: props.value,
+          dataKey: line?.dataKey ?? props.dataKey ?? 'value',
+          top: margin.top,
+          windowSecs: props.window ?? 30,
+          exaggerate: props.exaggerate ?? false,
+          lerpSpeed,
+          paused: props.paused ?? false,
+          pxPerMs: plot.pxPerMs,
+          plotWidth: plot.plotWidth,
+          stepSecs: plot.stepSecs,
+          innerHeight,
+          minGap,
+          plotRight: plot.plotRight,
+          rollEdge: plot.rollEdge,
+          introRun: previous.introStarted,
+          ...clock,
+        },
+        previous.state,
+        previous.pick,
+      )
+    : {
+        state: {
+          ...previous.state,
+          roll: previous.state.roll === null ? null : { ...previous.state.roll },
+        },
+        pick: {
+          ...previous.pick,
+          raw:
+            previous.pick.raw === null
+              ? null
+              : ([previous.pick.raw[0], previous.pick.raw[1]] satisfies [number, number]),
+        },
+        frame: previous.frame,
+      }
+
+  const { state, pick } = planned
+
+  const frame =
+    planned.frame !== null && props.paused && previous.frame !== null
+      ? previous.frame
+      : planned.frame
+
+  if (frame === null)
+    return new LiveState(
+      state,
+      pick,
+      null,
+      revision,
+      width,
+      previous.introStarted,
+      false,
+      previous.labelDomain,
+      previous.labelInterval,
+      [],
+      [],
+      false,
+      clock.timeOrigin,
+    ) satisfies LiveState
+
+  if (frame === previous.frame && !previous.clockActive)
+    return new LiveState(
+      state,
+      pick,
+      frame,
+      revision,
+      width,
+      previous.introStarted,
+      previous.follow,
+      previous.labelDomain,
+      previous.labelInterval,
+      previous.labelValues,
+      previous.leavingLabels,
+      false,
+      clock.timeOrigin,
+    ) satisfies LiveState
+
+  if (state.roll !== null && state.roll.at === null) state.roll.at = clock.timelineNow
+  const raw = stepRaw(pick, frame.yTarget, lerpSpeed)
+  const frameChanged = frame !== previous.frame
+  let clockActive = !props.paused && (frameChanged || previous.clockActive)
+  let domain = frameChanged ? frame.yDomain : previous.labelDomain
+  let interval = frameChanged ? frame.interval : previous.labelInterval
+  const follow = frameChanged ? frame.intro || (previous.frame?.intro ?? false) : previous.follow
+
+  if (clock.now - pick.commit >= 32) {
+    pick.commit = clock.now
+    interval = pickStep(pick, raw, innerHeight, minGap)
+
+    if (
+      !frame.seed &&
+      (state.roll === null ||
+        (state.roll.at !== null && clock.timelineNow - state.roll.at >= state.roll.dur))
+    )
+      clockActive = false
+
+    if (!frame.seed && follow)
+      domain = shownDomain(
+        frame.yDomain,
+        rollYAt(state.roll, clock.timelineNow),
+        margin.top,
+        innerHeight,
+      )
+  }
+
+  if (domain[0] === previous.labelDomain[0] && domain[1] === previous.labelDomain[1])
+    domain = previous.labelDomain
+  const values = yTickValues(domain, interval, innerHeight, yAxis?.allowDecimals !== false)
+  const was = !frameChanged || follow ? [...previous.labelValues, ...previous.leavingLabels] : []
+  const currentValues = new Set(values)
+  const leaving = [...new Set(was.filter((value) => !currentValues.has(value)))]
+
+  return new LiveState(
+    state,
+    pick,
+    frame,
+    revision,
+    width,
+    true,
+    follow,
+    domain,
+    interval,
+    values,
+    leaving,
+    clockActive,
+    clock.timeOrigin,
+  ) satisfies LiveState
+}
+
+export const rebaseLiveClock: (previous: LiveState, timeOrigin: number) => LiveState =
+  function rebaseLiveClock(previous: LiveState, timeOrigin: number) {
+    if (previous.timeOrigin === timeOrigin) return previous
+
+    if (previous.timeOrigin === null) {
+      const { ...retained } = previous
+
+      return { ...retained, timeOrigin }
+    }
+
+    const offset = previous.timeOrigin - timeOrigin
+    const { ...retained } = previous
+
+    return {
+      ...retained,
+      timeOrigin,
+      state: {
+        ...previous.state,
+        stamp: previous.state.stamp + offset,
+        dispStamp: previous.state.dispStamp + offset,
+        roll:
+          previous.state.roll === null
+            ? null
+            : {
+                ...previous.state.roll,
+                at: previous.state.roll.at === null ? null : previous.state.roll.at + offset,
+              },
+      },
+      pick: { ...previous.pick, commit: previous.pick.commit + offset },
+    }
+  }
+
 export class LiveConfiguration {
   readonly props: LogicalProps
   readonly sourceData: LiveLineChartProps['data']
@@ -118,192 +314,4 @@ export function liveMetrics(props: LiveLineChartProps, width: number, state: Fra
     plot,
     yAxis,
   }
-}
-
-export function rebaseLiveClock(previous: LiveState, timeOrigin: number): LiveState {
-  if (previous.timeOrigin === timeOrigin) return previous
-
-  if (previous.timeOrigin === null) {
-    const { ...retained } = previous
-
-    return { ...retained, timeOrigin }
-  }
-
-  const offset = previous.timeOrigin - timeOrigin
-  const { ...retained } = previous
-
-  return {
-    ...retained,
-    timeOrigin,
-    state: {
-      ...previous.state,
-      stamp: previous.state.stamp + offset,
-      dispStamp: previous.state.dispStamp + offset,
-      roll:
-        previous.state.roll === null
-          ? null
-          : {
-              ...previous.state.roll,
-              at: previous.state.roll.at === null ? null : previous.state.roll.at + offset,
-            },
-    },
-    pick: { ...previous.pick, commit: previous.pick.commit + offset },
-  }
-}
-
-export function advanceLive(
-  retained: LiveState,
-  props: LiveLineChartProps,
-  revision: number,
-  width: number,
-  clock: LiveClock,
-  dataIdentity = 'initial',
-): LiveState {
-  const previous = rebaseLiveClock(retained, clock.timeOrigin)
-
-  if (width === 0) return previous
-  const { margin, innerHeight, plot, yAxis } = liveMetrics(props, width, previous.state)
-  const line = props.children.find((c) => c.kind === 'liveLine')?.props
-  const lerpSpeed = props.lerpSpeed ?? 0.08
-  const minGap = yAxis?.minGap ?? 36
-
-  const changed =
-    previous.revision !== revision ||
-    previous.width !== width ||
-    ((previous.frame?.seed ?? false) && !props.paused)
-
-  if (!changed && !previous.clockActive) return previous
-
-  const planned = changed
-    ? planLiveFrame(
-        {
-          width,
-          data: props.data,
-          dataIdentity,
-          value: props.value,
-          dataKey: line?.dataKey ?? props.dataKey ?? 'value',
-          top: margin.top,
-          windowSecs: props.window ?? 30,
-          exaggerate: props.exaggerate ?? false,
-          lerpSpeed,
-          paused: props.paused ?? false,
-          pxPerMs: plot.pxPerMs,
-          plotWidth: plot.plotWidth,
-          stepSecs: plot.stepSecs,
-          innerHeight,
-          minGap,
-          plotRight: plot.plotRight,
-          rollEdge: plot.rollEdge,
-          introRun: previous.introStarted,
-          ...clock,
-        },
-        previous.state,
-        previous.pick,
-      )
-    : {
-        state: {
-          ...previous.state,
-          roll: previous.state.roll === null ? null : { ...previous.state.roll },
-        },
-        pick: {
-          ...previous.pick,
-          raw:
-            previous.pick.raw === null
-              ? null
-              : ([previous.pick.raw[0], previous.pick.raw[1]] satisfies [number, number]),
-        },
-        frame: previous.frame,
-      }
-
-  const { state, pick } = planned
-
-  const frame =
-    planned.frame !== null && props.paused && previous.frame !== null
-      ? previous.frame
-      : planned.frame
-
-  if (frame === null)
-    return new LiveState(
-      state,
-      pick,
-      null,
-      revision,
-      width,
-      previous.introStarted,
-      false,
-      previous.labelDomain,
-      previous.labelInterval,
-      [],
-      [],
-      false,
-      clock.timeOrigin,
-    )
-
-  if (frame === previous.frame && !previous.clockActive)
-    return new LiveState(
-      state,
-      pick,
-      frame,
-      revision,
-      width,
-      previous.introStarted,
-      previous.follow,
-      previous.labelDomain,
-      previous.labelInterval,
-      previous.labelValues,
-      previous.leavingLabels,
-      false,
-      clock.timeOrigin,
-    )
-
-  if (state.roll !== null && state.roll.at === null) state.roll.at = clock.timelineNow
-  const raw = stepRaw(pick, frame.yTarget, lerpSpeed)
-  const frameChanged = frame !== previous.frame
-  let clockActive = !props.paused && (frameChanged || previous.clockActive)
-  let domain = frameChanged ? frame.yDomain : previous.labelDomain
-  let interval = frameChanged ? frame.interval : previous.labelInterval
-  const follow = frameChanged ? frame.intro || (previous.frame?.intro ?? false) : previous.follow
-
-  if (clock.now - pick.commit >= 32) {
-    pick.commit = clock.now
-    interval = pickStep(pick, raw, innerHeight, minGap)
-
-    if (
-      !frame.seed &&
-      (state.roll === null ||
-        (state.roll.at !== null && clock.timelineNow - state.roll.at >= state.roll.dur))
-    )
-      clockActive = false
-
-    if (!frame.seed && follow)
-      domain = shownDomain(
-        frame.yDomain,
-        rollYAt(state.roll, clock.timelineNow),
-        margin.top,
-        innerHeight,
-      )
-  }
-
-  if (domain[0] === previous.labelDomain[0] && domain[1] === previous.labelDomain[1])
-    domain = previous.labelDomain
-  const values = yTickValues(domain, interval, innerHeight, yAxis?.allowDecimals !== false)
-  const was = !frameChanged || follow ? [...previous.labelValues, ...previous.leavingLabels] : []
-  const currentValues = new Set(values)
-  const leaving = [...new Set(was.filter((value) => !currentValues.has(value)))]
-
-  return new LiveState(
-    state,
-    pick,
-    frame,
-    revision,
-    width,
-    true,
-    follow,
-    domain,
-    interval,
-    values,
-    leaving,
-    clockActive,
-    clock.timeOrigin,
-  )
 }

@@ -1,5 +1,5 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import { typeClasses, fieldTouchClass, type TypeScaleRole } from './type-scale.js'
 
 export type SizeVariant = 'default' | 'compact'
@@ -46,8 +46,6 @@ export interface SizeClasses {
 }
 
 export const sizeMap: Record<SizeVariant, SizeClasses> = {
-  // 36px — the default control height. Matches a 13px label with comfortable
-  // breathing room and keeps controls a workable pointer target.
   default: {
     variant: 'default',
     control: 'h-9',
@@ -62,9 +60,7 @@ export const sizeMap: Record<SizeVariant, SizeClasses> = {
     gap: 'gap-2',
     icon: 16,
   },
-  // 28px — the compact height for dense surfaces: filter bars, toolbars,
-  // table headers, sidebars. One step down in text (12px) and icon (14px)
-  // so the whole control shrinks together, not just its box.
+
   compact: {
     variant: 'compact',
     control: 'h-7',

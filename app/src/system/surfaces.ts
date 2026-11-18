@@ -1,5 +1,5 @@
 import { SurfaceStageBlock, layer as SurfaceStageLayer } from './surface-stage'
-// Adapted from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Adapted from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { Effect, Layer, Option, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { childAttributes } from 'foldkit/html'
@@ -199,12 +199,17 @@ export const layer = Layer.unwrap(
         const panelShape = { rounded: 'rounded-2xl', pill: 'rounded-3xl', sharp: 'rounded-[1px]' }[
           settings.shape
         ]
-        const nested = (
+        const nested: (
+          level: number,
+          last: number,
+          parent: PresentationContext,
+          first?: boolean,
+        ) => ReturnType<typeof h.div> = (
           level: number,
           last: number,
           parent: PresentationContext,
           first = true,
-        ): ReturnType<typeof h.div> =>
+        ) =>
           Elevated(
             {
               context: parent,
@@ -223,7 +228,7 @@ export const layer = Layer.unwrap(
               ],
             },
             h,
-          )
+          ) satisfies ReturnType<typeof h.div>
         const levels = () =>
           h.div(
             [h.Class('flex gap-3 p-4 w-max')],

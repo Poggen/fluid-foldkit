@@ -1,5 +1,5 @@
-// File-header presentation adapted from Foldcn (MIT), copyright 2026 elianiva.
-// https://github.com/elianiva/foldcn/tree/4f719c0c0961880805992032d92646b35a6006aa
+/* @license File-header presentation adapted from Foldcn (MIT), copyright 2026 elianiva. */
+
 import { defaultIcons } from '@foldkit-visuals/fluid/icons'
 import { Button } from '@foldkit-visuals/fluid/button'
 import type { PresentationContext } from '@foldkit-visuals/fluid/presentation'

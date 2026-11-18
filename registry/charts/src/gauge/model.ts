@@ -1,6 +1,25 @@
 import { Schema, Struct } from 'effect'
 import { GaugeEnterTransition, GaugeProps } from './props'
 
+export const gaugePresentation: (
+  configuration: GaugeConfiguration,
+  inputs: GaugeViewInputs,
+) => GaugeProps = function gaugePresentation(
+  configuration: GaugeConfiguration,
+  inputs: GaugeViewInputs,
+) {
+  const { enterTransition, ...logical } = configuration
+
+  const transition =
+    inputs.enterTransition === undefined ? enterTransition : inputs.enterTransition(enterTransition)
+
+  return {
+    ...logical,
+    ...(transition === undefined ? {} : { enterTransition: transition }),
+    ...(inputs.children === undefined ? {} : { children: inputs.children() }),
+  }
+}
+
 const Easing = Schema.Union([Schema.Array(Schema.Finite), Schema.String])
 
 export const GaugeTransitionConfiguration = Schema.Struct({
@@ -23,20 +42,4 @@ export interface GaugeViewInputs {
     configuration: GaugeTransitionConfiguration | undefined,
   ) => GaugeEnterTransition | undefined
   readonly children?: () => GaugeProps['children']
-}
-
-export function gaugePresentation(
-  configuration: GaugeConfiguration,
-  inputs: GaugeViewInputs,
-): GaugeProps {
-  const { enterTransition, ...logical } = configuration
-
-  const transition =
-    inputs.enterTransition === undefined ? enterTransition : inputs.enterTransition(enterTransition)
-
-  return {
-    ...logical,
-    ...(transition === undefined ? {} : { enterTransition: transition }),
-    ...(inputs.children === undefined ? {} : { children: inputs.children() }),
-  }
 }

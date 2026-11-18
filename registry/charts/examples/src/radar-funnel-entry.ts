@@ -20,19 +20,31 @@ import './style.css'
 const flags = new URLSearchParams(window.location.search)
 
 const enterTransition: FunnelChartProps['enterTransition'] = Match.value(flags.get('enter')).pipe(
-  Match.when('spring', (): FunnelChartProps['enterTransition'] => ({
-    type: 'spring',
-    stiffness: 100,
-    damping: 8,
-  })),
-  Match.when('linear', (): FunnelChartProps['enterTransition'] => ({
-    duration: 0.7,
-    ease: 'linear',
-  })),
-  Match.when('function', (): FunnelChartProps['enterTransition'] => ({
-    duration: 0.7,
-    ease: (value: number) => value * value,
-  })),
+  Match.when(
+    'spring',
+    () =>
+      ({
+        type: 'spring',
+        stiffness: 100,
+        damping: 8,
+      }) satisfies FunnelChartProps['enterTransition'],
+  ),
+  Match.when(
+    'linear',
+    () =>
+      ({
+        duration: 0.7,
+        ease: 'linear',
+      }) satisfies FunnelChartProps['enterTransition'],
+  ),
+  Match.when(
+    'function',
+    () =>
+      ({
+        duration: 0.7,
+        ease: (value: number) => value * value,
+      }) satisfies FunnelChartProps['enterTransition'],
+  ),
   Match.orElse(constUndefined),
 )
 
@@ -42,7 +54,10 @@ const zero = flags.has('zero')
 
 const controlled = flags.has('controlled')
 
-const radarSizing = (props: RadarChartProps, size: number): RadarChartProps => {
+const radarSizing: (props: RadarChartProps, size: number) => RadarChartProps = (
+  props: RadarChartProps,
+  size: number,
+) => {
   if (zero) {
     return { ...props, size: 0 }
   }

@@ -10,38 +10,24 @@ import { patternPresetTileSize } from '../kit/pattern/pattern-preset-helpers'
 import { buildHeatmapSeparatorGradientStops, getHeatmapSeparatorLineY } from './separators'
 import type { HeatmapSeparatorStyle } from './context'
 
-export interface SvgResource {
-  readonly tag: 'pattern' | 'path' | 'rect' | 'circle' | 'linearGradient' | 'stop'
-  readonly attributes: Readonly<Record<string, string | number>>
-  readonly children: ReadonlyArray<SvgResource>
-}
-
-const node = (
-  tag: SvgResource['tag'],
-  attributes: SvgResource['attributes'],
-  children: ReadonlyArray<SvgResource> = [],
-): SvgResource => ({ tag, attributes, children })
-
-const path = (kind: string, height: number): string =>
-  kind === 'horizontal'
-    ? `M 0,${height / 2} l ${height},0`
-    : kind === 'vertical'
-      ? `M ${height / 2}, 0 l 0, ${height}`
-      : kind === 'diagonalRightToLeft'
-        ? `M 0,0 l ${height},${height}\n      M ${-height / 4},${0.75 * height} l ${height / 2},${height / 2}\n      M ${0.75 * height},${-height / 4} l ${height / 2},${height / 2}`
-        : `M 0,${height} l ${height},${-height} M ${-height / 4},${height / 4} l ${height / 2},${-height / 2}\n            M ${0.75 * height},${1.25 * height} l ${height / 2},${-height / 2}`
-
-export function heatmapResources(
+export const heatmapResources: (
+  styles: HeatmapLevelStyles,
+  id: string,
+  x: number,
+  y: number,
+  separator?: HeatmapSeparatorStyle | null,
+  innerHeight?: number,
+) => ReadonlyArray<SvgResource> = function (
   styles: HeatmapLevelStyles,
   id: string,
   x: number,
   y: number,
   separator?: HeatmapSeparatorStyle | null,
   innerHeight = 0,
-): ReadonlyArray<SvgResource> {
-  const nodes = styles.flatMap((style, level): Array<SvgResource> => {
+) {
+  const nodes = styles.flatMap((style, level) => {
     if (!isHeatmapLevelPattern(style) || style.pattern === undefined) {
-      return []
+      return [] satisfies Array<SvgResource>
     }
 
     const options = heatmapLevelPatternRenderOptions(style),
@@ -137,7 +123,7 @@ export function heatmapResources(
         'xlink:href': `#${scoped}-base`,
         patternTransform: `translate(${x} ${y})`,
       }),
-    ]
+    ] satisfies Array<SvgResource>
   })
 
   if (separator?.gradient !== undefined) {
@@ -171,10 +157,10 @@ export function heatmapResources(
     )
   }
 
-  return nodes
+  return nodes satisfies ReadonlyArray<SvgResource>
 }
 
-export function resourceHtml(resource: SvgResource): Html {
+export const resourceHtml: (resource: SvgResource) => Html = function (resource: SvgResource) {
   const attributes = Object.entries(resource.attributes).map(([name, value]) =>
     h.Attribute(name, String(value)),
   )
@@ -197,7 +183,9 @@ export function resourceHtml(resource: SvgResource): Html {
   }
 }
 
-export function resourceElement(resource: SvgResource): SVGElement {
+export const resourceElement: (resource: SvgResource) => SVGElement = function resourceElement(
+  resource: SvgResource,
+) {
   const element = document.createElementNS('http://www.w3.org/2000/svg', resource.tag)
 
   for (const [name, value] of Object.entries(resource.attributes)) {
@@ -212,3 +200,28 @@ export function resourceElement(resource: SvgResource): SVGElement {
 
   return element
 }
+
+export interface SvgResource {
+  readonly tag: 'pattern' | 'path' | 'rect' | 'circle' | 'linearGradient' | 'stop'
+  readonly attributes: Readonly<Record<string, string | number>>
+  readonly children: ReadonlyArray<SvgResource>
+}
+
+const node: (
+  tag: SvgResource['tag'],
+  attributes: SvgResource['attributes'],
+  children?: ReadonlyArray<SvgResource>,
+) => SvgResource = (
+  tag: SvgResource['tag'],
+  attributes: SvgResource['attributes'],
+  children: ReadonlyArray<SvgResource> = [],
+) => ({ tag, attributes, children }) satisfies SvgResource
+
+const path: (kind: string, height: number) => string = (kind: string, height: number) =>
+  kind === 'horizontal'
+    ? `M 0,${height / 2} l ${height},0`
+    : kind === 'vertical'
+      ? `M ${height / 2}, 0 l 0, ${height}`
+      : kind === 'diagonalRightToLeft'
+        ? `M 0,0 l ${height},${height}\n      M ${-height / 4},${0.75 * height} l ${height / 2},${height / 2}\n      M ${0.75 * height},${-height / 4} l ${height / 2},${height / 2}`
+        : `M 0,${height} l ${height},${-height} M ${-height / 4},${height / 4} l ${height / 2},${-height / 2}\n            M ${0.75 * height},${1.25 * height} l ${height / 2},${-height / 2}`

@@ -2,12 +2,17 @@ import type { CartesianLayer } from './layers'
 import type { Interaction, loadingFlags } from './state'
 import { propsFor } from './table'
 
-export function paintTimeSeriesStatus<Row>(
+export const paintTimeSeriesStatus: <Row>(
   element: HTMLElement,
   state: Interaction,
   children: ReadonlyArray<CartesianLayer<Row>>,
   flags: ReturnType<typeof loadingFlags>,
-): void {
+) => void = function paintTimeSeriesStatus<Row>(
+  element: HTMLElement,
+  state: Interaction,
+  children: ReadonlyArray<CartesianLayer<Row>>,
+  flags: ReturnType<typeof loadingFlags>,
+) {
   if (flags.chartLoading) {
     element.dataset.bkmStatus = 'loading'
   } else {

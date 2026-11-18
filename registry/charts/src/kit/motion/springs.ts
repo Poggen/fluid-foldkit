@@ -1,5 +1,3 @@
-// bklit's spring constants, one place. Every value cites the bklit source it reproduces (repos/bklit-ui/packages/ui/src).
-
 export interface Spring {
   readonly stiffness: number
   readonly damping: number
@@ -27,7 +25,6 @@ export const LIVE_Y_TICK_SPRING: Spring = { damping: 24, mass: 1, stiffness: 180
 /** Default notch enter of the gauge (charts/gauge.tsx:31-35). */
 export const GAUGE_NOTCH_ENTER_SPRING: Spring = { damping: 20, mass: 1, stiffness: 300 }
 
-// ChartMarkers cluster (charts/markers/marker-group.tsx).
 /** Body fanned variant {scale .6, opacity 0, blur 2px}, delayed by animationDuration + groupIndex * 100ms (:232-234). */
 export const MARKER_BODY_SPRING: Spring = { damping: 25, mass: 1, stiffness: 300 }
 

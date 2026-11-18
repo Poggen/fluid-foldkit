@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { modifyFields } from 'foldkit/struct'
 import { Effect, Layer, Option, Predicate, Schema, Number as EffectNumber } from 'effect'
 import { Block } from 'foldkit'
@@ -251,7 +251,7 @@ const inMessageUpdate = SliderComposition.makeInMessageUpdate({
     if (model.drag !== 'idle') return { model: next }
 
     const targeted = sliderTargets(next)
-    // Equal settings can still need to correct a rejected controlled drag.
+
     const retarget = targeted !== next || settings.compact !== model.settings.compact
 
     return {

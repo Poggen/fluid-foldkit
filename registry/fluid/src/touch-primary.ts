@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534; original hook adapted from Lina by SameerJS6.
+/* @license Derived from Fluid Functionalism 200b4534; original hook adapted from Lina by SameerJS6. */
 import { modifyFields } from 'foldkit/struct'
 import { Context, Effect, Layer, Queue, Schema, Stream } from 'effect'
 import { Block } from 'foldkit'
@@ -102,4 +102,4 @@ export const layer = TouchPrimaryBlock.makeLayer({
 })
 
 /** Native projection: bind TouchPrimaryBlock once where the source mounts its hook. */
-export const useTouchPrimary = (model: Model): boolean => model.isTouchPrimary
+export const useTouchPrimary: (model: Model) => boolean = (model: Model) => model.isTouchPrimary

@@ -73,17 +73,22 @@ export const controls = [
   },
 ] satisfies ReadonlyArray<Control<keyof Configuration>>
 
-export const controlsFor = (configuration: Configuration): ReadonlyArray<Control> =>
+export const controlsFor: (configuration: Configuration) => ReadonlyArray<Control> = (
+  configuration: Configuration,
+) =>
   controls.map((control) => ({
     ...control,
     enabled: control.prop !== 'orientation' || configuration.numberOfMonths === 2,
   }))
 export const calendarRuleRevision = (days: Configuration['days']) =>
   days === 'booked' ? 1 : days === 'weekdays' ? 2 : 0
-export const calendarRulesForRevision = (
+export const calendarRulesForRevision: (
   revision: number,
   today: Date,
-): ReturnType<Parameters<typeof makeCalendarEnvironment>[0]> => {
+) => ReturnType<Parameters<typeof makeCalendarEnvironment>[0]> = (
+  revision: number,
+  today: Date,
+) => {
   if (revision === 2) return { available: { dayOfWeek: [1, 2, 3, 4, 5] } }
   if (revision !== 1) return {}
   const start = DateTime.startOf(

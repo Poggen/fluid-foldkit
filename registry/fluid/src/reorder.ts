@@ -10,6 +10,38 @@ import { REORDER_EVENT, REORDER_LIVE_EVENT } from './reorder-scope.js'
 import type { ReorderScope } from './reorder-scope.js'
 import type { ReorderAxis } from './reorder-order.js'
 
+export const reorderItemAttributes: (
+  axis?: ReorderAxis,
+  style?: Readonly<Record<string, string>>,
+) => ReadonlyArray<ChildAttribute> = function reorderItemAttributes(
+  axis: ReorderAxis = 'y',
+  style: Readonly<Record<string, string>> = {},
+) {
+  const itemStyle = { ...style }
+
+  for (const property of [
+    'zIndex',
+    'z-index',
+    'userSelect',
+    'user-select',
+    'WebkitUserSelect',
+    '-webkit-user-select',
+    'touchAction',
+    'touch-action',
+  ])
+    delete itemStyle[property]
+
+  return childAttributes([
+    inertHtml.Attribute(
+      'class',
+      '[-webkit-touch-callout:none] z-[unset] [user-select:none] [-webkit-user-select:none]',
+    ),
+    inertHtml.Attribute('draggable', 'false'),
+    inertHtml.DataAttribute('fluid-reorder-item', ''),
+    inertHtml.Style({ ...itemStyle, touchAction: axis === 'y' ? 'pan-x' : 'pan-y' }),
+  ])
+}
+
 export { createReorderScope } from './reorder-scope.js'
 
 export type { ReorderScope } from './reorder-scope.js'
@@ -159,33 +191,3 @@ export const layer = ReorderBlock.makeLayer({
   view,
   EffectsLayer: Observe.layer,
 })
-
-export function reorderItemAttributes(
-  axis: ReorderAxis = 'y',
-  style: Readonly<Record<string, string>> = {},
-): ReadonlyArray<ChildAttribute> {
-  const itemStyle = { ...style }
-  // These drag constraints already took precedence over the caller's style before utility authoring.
-  for (const property of [
-    'zIndex',
-    'z-index',
-    'userSelect',
-    'user-select',
-    'WebkitUserSelect',
-    '-webkit-user-select',
-    'touchAction',
-    'touch-action',
-  ])
-    delete itemStyle[property]
-
-  return childAttributes([
-    // Raw class attributes compose with the caller's checked Class in Foldkit's public renderer.
-    inertHtml.Attribute(
-      'class',
-      '[-webkit-touch-callout:none] z-[unset] [user-select:none] [-webkit-user-select:none]',
-    ),
-    inertHtml.Attribute('draggable', 'false'),
-    inertHtml.DataAttribute('fluid-reorder-item', ''),
-    inertHtml.Style({ ...itemStyle, touchAction: axis === 'y' ? 'pan-x' : 'pan-y' }),
-  ])
-}

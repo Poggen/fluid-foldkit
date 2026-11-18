@@ -40,8 +40,9 @@ const projection = buildProjectionPath({
   endValue: 40,
 })
 
-const allNodes = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<SceneNode> =>
-  nodes.flatMap((node) => (node.kind === 'group' ? [node, ...allNodes(node.children)] : [node]))
+const allNodes: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<SceneNode> = (
+  nodes: ReadonlyArray<SceneNode>,
+) => nodes.flatMap((node) => (node.kind === 'group' ? [node, ...allNodes(node.children)] : [node]))
 
 const draw = (chart: Story.TestBlock<typeof subject>, children: ReadonlyArray<CartesianLayer>) => {
   const props = { children: [Line({ dataKey: 'value' }), ...children], animationDuration: 0 }

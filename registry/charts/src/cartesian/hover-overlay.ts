@@ -22,9 +22,11 @@ export type {
   OverlayShape,
 } from './hover-overlay-model'
 
-// A retained sibling of the chart renderer owns hover presentation. Line/Area
-// follow Original's Motion frame phases; other families keep their existing owner.
-const writeVar = (element: HTMLElement, key: string, value: string): void => {
+const writeVar: (element: HTMLElement, key: string, value: string) => void = (
+  element: HTMLElement,
+  key: string,
+  value: string,
+) => {
   element.style.setProperty(key, value)
 }
 
@@ -32,20 +34,25 @@ const SVG_NS = 'http://www.w3.org/2000/svg'
 
 const PILL_ROW = 24
 
-const translate = (v: ReadonlyArray<number>): string => `translate(${v[0] ?? 0}px,${v[1] ?? 0}px)`
+const translate: (v: ReadonlyArray<number>) => string = (v: ReadonlyArray<number>) =>
+  `translate(${v[0] ?? 0}px,${v[1] ?? 0}px)`
 
-const translateX = (v: ReadonlyArray<number>): string => `translateX(${v[0] ?? 0}px)`
+const translateX: (v: ReadonlyArray<number>) => string = (v: ReadonlyArray<number>) =>
+  `translateX(${v[0] ?? 0}px)`
 
-/** The pill's own layer sits on whole device pixels, where `left` used to snap it (bklit places its pill by `left`, chart-tooltip.tsx:422-423); a fractional layer offset would resample the text. */
-const translateXDevicePx = (v: ReadonlyArray<number>): string => {
+const translateXDevicePx: (v: ReadonlyArray<number>) => string = (v: ReadonlyArray<number>) => {
   const dpr = window.devicePixelRatio || 1
 
   return `translateX(${Math.round((v[0] ?? 0) * dpr) / dpr}px)`
 }
 
-const translateY = (v: ReadonlyArray<number>): string => `translateY(${v[0] ?? 0}px)`
+const translateY: (v: ReadonlyArray<number>) => string = (v: ReadonlyArray<number>) =>
+  `translateY(${v[0] ?? 0}px)`
 
-const div = (cls: string, parent?: HTMLElement): HTMLDivElement => {
+const div: (cls: string, parent?: HTMLElement) => HTMLDivElement = (
+  cls: string,
+  parent?: HTMLElement,
+) => {
   const el = document.createElement('div')
   el.className = cls
   parent?.append(el)
@@ -76,7 +83,7 @@ export class HoverOverlay<Row> {
     this.clock = clock
   }
   private gradientCount = 0
-  destroy(): void {
+  destroy() {
     this.motion.clear()
     this.el?.remove()
     this.el = null
@@ -98,17 +105,17 @@ export class HoverOverlay<Row> {
   private readonly motion = new HoverMotion()
 
   /** Built on first client use: the overlay is created during render, which also runs on the server. */
-  get root(): HTMLDivElement {
+  get root() {
     if (!this.el) {
       this.el = div('bkm-hov')
       this.el.setAttribute('aria-hidden', 'true')
     }
 
-    return this.el
+    return this.el satisfies HTMLDivElement
   }
 
   /** The model and plot of the latest draw; rebuilds the elements (a draw is a resize or a data change, never a hover move) and replays the current focus without motion. */
-  update(model: HoverOverlayModel<Row> | null, plot: OverlayPlot, margin: ChartMargin): void {
+  update(model: HoverOverlayModel<Row> | null, plot: OverlayPlot, margin: ChartMargin) {
     const key =
       model?.sourceMotion === true
         ? hoverPresentationKey(model, plot) +
@@ -122,7 +129,6 @@ export class HoverOverlay<Row> {
     this.margin = margin
     this.presentationKey = key
 
-    // A server render draws during render (onBuilt): no DOM and no frames there; the client builds on its own first draw.
     if (typeof document === 'undefined') {
       return
     }
@@ -165,7 +171,7 @@ export class HoverOverlay<Row> {
   }
 
   /** Moves the indicator to the focused row (`null` hides it at once, like bklit unmounting the crosshair and dots). */
-  focus(time: number | null, row: Row | null, force = false): void {
+  focus(time: number | null, row: Row | null, force = false) {
     const { model, plot, margin } = this
 
     if (time === null || row === null || !model || !plot || !margin) {
@@ -236,7 +242,7 @@ export class HoverOverlay<Row> {
     }
   }
 
-  private focusPill(model: HoverOverlayModel<Row>, time: number, x: number, enter: boolean): void {
+  private focusPill(model: HoverOverlayModel<Row>, time: number, x: number, enter: boolean) {
     const { pill } = this
 
     if (!pill || !model.pill) {
@@ -259,7 +265,6 @@ export class HoverOverlay<Row> {
 
     const run = layout.monthOf[index] ?? 0
 
-    // First-render sets happen before useSpring's insertion-effect attachment in Original.
     if (enter && model.sourceMotion === true) {
       pill.days?.jump([-index * PILL_ROW])
       pill.months?.jump([-run * PILL_ROW])
@@ -290,7 +295,7 @@ export class HoverOverlay<Row> {
     rule: NonNullable<HoverOverlayModel<Row>['crosshair']>,
     plot: OverlayPlot,
     margin: ChartMargin,
-  ): void {
+  ) {
     const height = Math.max(0, plot.innerHeight)
     const wrap = div(
       'bkm-hov-x [top:var(--bkm-rule-top)] [height:var(--bkm-rule-height)]',
@@ -298,8 +303,7 @@ export class HoverOverlay<Row> {
     )
     wrap.style.setProperty('--bkm-rule-top', `${margin.top}px`)
     wrap.style.setProperty('--bkm-rule-height', `${height}px`)
-    // An svg rect like bklit's TooltipIndicator (tooltip-indicator.tsx:163-200), moved by an in-svg transform so it rasterizes at the same subpixel position
-    // (an HTML div or a composited layer antialiases the 1px edge differently).
+
     const svg = document.createElementNS(SVG_NS, 'svg')
     svg.setAttribute('width', '1')
     svg.setAttribute('height', String(height))
@@ -318,7 +322,7 @@ export class HoverOverlay<Row> {
     svg.append(mark)
     wrap.append(svg)
     this.paintRule?.(Predicate.isString(rule.color) ? rule.color : 'var(--chart-crosshair)')
-    // bklit's crosshair rides the tooltipSpring (charts/chart-config-context.tsx:20).
+
     this.ruleGlide = this.motion.create(
       mark,
       this.positionSpring(),
@@ -329,11 +333,11 @@ export class HoverOverlay<Row> {
     )
   }
 
-  private buildDot(dot: OverlayDot<Row>, plot: OverlayPlot): DotView<Row> {
+  private buildDot(dot: OverlayDot<Row>, plot: OverlayPlot) {
     const el = div('bkm-hov-dot', this.root)
     if (!dot.glide) el.classList.add('[transform:var(--bkm-dot-position)]')
     const svg = document.createElementNS(SVG_NS, 'svg')
-    // 1x1, not 0x0: a zero-sized svg is not rendered.
+
     svg.setAttribute('width', '1')
     svg.setAttribute('height', '1')
     svg.classList.add('overflow-visible')
@@ -379,11 +383,10 @@ export class HoverOverlay<Row> {
             this.model?.sourceMotion === true,
           )
         : null,
-    }
+    } satisfies DotView<Row>
   }
 
-  /** The pill's x spring (bklit's pill rides the crosshair's tooltipSpring); each frame it writes the pill's live x (svg px) to the host, where the x-axis tick fade reads it (date-pill.ts pillTickStaticCss). */
-  private pillGlide(wrap: HTMLElement): HoverGlide {
+  private pillGlide(wrap: HTMLElement) {
     const source = this.model?.sourceMotion === true
 
     const glide = this.motion.create(
@@ -404,15 +407,12 @@ export class HoverOverlay<Row> {
       }
     }
 
-    return glide
+    return glide satisfies HoverGlide
   }
 
-  private buildPill(
-    spec: NonNullable<HoverOverlayModel<Row>['pill']>,
-    plot: OverlayPlot,
-  ): PillView {
+  private buildPill(spec: NonNullable<HoverOverlayModel<Row>['pill']>, plot: OverlayPlot) {
     const wrap = div('bkm-hov-pill [top:var(--bkm-pill-top)]', this.root)
-    // The native pill sat with its 32px capsule centred 20px above the host bottom (bklit date pill: bottom 4px, z-50).
+
     wrap.style.setProperty('--bkm-pill-top', `${plot.height - 36}px`)
     const box = div('bkm-hov-pill-box', wrap)
     const { layout } = spec
@@ -422,10 +422,18 @@ export class HoverOverlay<Row> {
       text.className = 'bkm-hov-pill-text'
       div('bkm-hov-pill-row', box).append(text)
 
-      return { days: null, el: wrap, glide: this.pillGlide(wrap), months: null, text }
+      return {
+        days: null,
+        el: wrap,
+        glide: this.pillGlide(wrap),
+        months: null,
+        text,
+      } satisfies PillView
     }
 
-    const column = (values: ReadonlyArray<string>): HoverGlide => {
+    const column: (values: ReadonlyArray<string>) => HoverGlide = (
+      values: ReadonlyArray<string>,
+    ) => {
       const col = div('bkm-hov-pill-col', box)
       const stack = div('bkm-hov-pill-stack', col)
 
@@ -434,7 +442,6 @@ export class HoverOverlay<Row> {
         row.textContent = value
       }
 
-      // bklit's ticker springs both stacks with useSpring(0, { stiffness: 400, damping: 35 }) (tooltip/date-ticker.tsx:81-82).
       return this.motion.create(
         stack,
         DATE_PILL_SPRING,
@@ -446,9 +453,9 @@ export class HoverOverlay<Row> {
     }
 
     const months = column(layout.months)
-    // bklit always mounts the day stack, empty for month-only labels: its gap-1 keeps the capsule 4px wider (date-ticker.tsx:96-125).
+
     const days = column(layout.days)
 
-    return { days, el: wrap, glide: this.pillGlide(wrap), months, text: null }
+    return { days, el: wrap, glide: this.pillGlide(wrap), months, text: null } satisfies PillView
   }
 }

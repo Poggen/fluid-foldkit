@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { rectAt, emptyGeometry } from './lib/indexed-geometry.js'
 import { Effect, Layer, Option, Schema } from 'effect'
 import { Block, Update } from 'foldkit'

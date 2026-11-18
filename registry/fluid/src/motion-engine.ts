@@ -16,95 +16,10 @@ export function createMotionEngine<Options extends MotionTargetProperties>(
   id: string,
   adapter?: MotionAdapter<Options>,
 ) {
-  const nodes = new Map<Element, MountedMotion<Options>>()
-  const resources = createMotionResources()
-  const pending = new Map<Element, Options>()
-  let insertScheduled = false
-
-  const presenceRequests = new Map<Element, boolean>()
-  let disposed = false
-  let active = false
-
-  const props = (options: Options, element: Element): MotionNodeOptions =>
-    motionProps(
-      options,
-      () => {
-        const live = nodes.get(element)
-
-        if (disposed || live === undefined) {
-          return
-        }
-
-        const notifyComplete =
-          live.options.present === false
-            ? live.exitCompletion
-            : live.declaredOptions.onAnimationComplete
-
-        notifyComplete?.(live.element)
-      },
-      (values: ResolvedValues) => {
-        const live = nodes.get(element)
-
-        if (!disposed && live !== undefined) {
-          live.declaredOptions.onUpdate?.(values, live.element)
-        }
-      },
-      adapter?.props(options, element),
-    )
-
-  let awaitCompletion: Effect.Success<ReturnType<typeof acquireMotionCompletion>> | undefined
-
-  function finishOwnExit(element: Element, generation: number) {
-    const current = nodes.get(element)
-
-    if (
-      !current ||
-      current.generation !== generation ||
-      current.options.present !== false ||
-      !current.exitSettled ||
-      current.exitDispatched
-    ) {
-      return
-    }
-
-    if (adapter?.isAnimating(current.element) === true) {
-      return
-    }
-
-    for (const child of nodes.values()) {
-      if (
-        child.element === element ||
-        !element.contains(child.element) ||
-        child.options.present !== false
-      ) {
-        continue
-      }
-
-      if (!child.exitSettled || adapter?.isAnimating(child.element) === true) {
-        return
-      }
-    }
-
-    nodes.set(element, { ...current, exitDispatched: true })
-    element.dispatchEvent(new CustomEvent(EXIT_COMPLETE_EVENT, { bubbles: false }))
-  }
-
-  function completeExit(element: Element, generation: number) {
-    finishOwnExit(element, generation)
-    let parent = element.parentElement
-
-    while (parent !== null) {
-      const current = nodes.get(parent)
-
-      if (current !== undefined) {
-        finishOwnExit(parent, current.generation)
-      }
-
-      parent = parent.parentElement
-    }
-  }
-
-  function resolvePresence(element: Element, options: Options): Options {
+  const resolvePresence: (element: Element, options: Options) => Options = function resolvePresence(
+    element: Element,
+    options: Options,
+  ) {
     let { present } = options
     let parent = element.parentElement
 
@@ -118,25 +33,16 @@ export function createMotionEngine<Options extends MotionTargetProperties>(
     return { ...options, present: present ?? true }
   }
 
-  function settleTargetAnimation(element: Element, generation: number) {
-    const live = nodes.get(element)
-
-    if (disposed || live?.generation !== generation || live.options.present !== false) {
-      return
-    }
-
-    nodes.set(live.element, { ...live, exitSettled: true })
-    completeExit(live.element, generation)
-  }
-
-  function animate(
+  const animate: (
     current: MountedMotion<Options>,
     declaredOptions: Options,
-  ): MountedMotion<Options> {
+  ) => MountedMotion<Options> = function animate(
+    current: MountedMotion<Options>,
+    declaredOptions: Options,
+  ) {
     const options = resolvePresence(current.element, declaredOptions)
     const wasExiting = current.generation > 0 && current.options.present === false
 
-    // Source keeps the exiting vnode's props until its presence owner settles.
     if (wasExiting && options.present === false) {
       const unchanged = { ...current, declaredOptions }
       nodes.set(current.element, unchanged)
@@ -206,7 +112,9 @@ export function createMotionEngine<Options extends MotionTargetProperties>(
     return next
   }
 
-  function mount(element: Element): MountedMotion<Options> | undefined {
+  const mount: (element: Element) => MountedMotion<Options> | undefined = function mount(
+    element: Element,
+  ) {
     const existing = nodes.get(element)
 
     if (existing) {
@@ -295,6 +203,108 @@ export function createMotionEngine<Options extends MotionTargetProperties>(
     nodes.set(element, current)
 
     return animate(current, requested)
+  }
+
+  const nodes = new Map<Element, MountedMotion<Options>>()
+  const resources = createMotionResources()
+  const pending = new Map<Element, Options>()
+  let insertScheduled = false
+
+  const presenceRequests = new Map<Element, boolean>()
+  let disposed = false
+  let active = false
+
+  const props: (options: Options, element: Element) => MotionNodeOptions = (
+    options: Options,
+    element: Element,
+  ) =>
+    motionProps(
+      options,
+      () => {
+        const live = nodes.get(element)
+
+        if (disposed || live === undefined) {
+          return
+        }
+
+        const notifyComplete =
+          live.options.present === false
+            ? live.exitCompletion
+            : live.declaredOptions.onAnimationComplete
+
+        notifyComplete?.(live.element)
+      },
+      (values: ResolvedValues) => {
+        const live = nodes.get(element)
+
+        if (!disposed && live !== undefined) {
+          live.declaredOptions.onUpdate?.(values, live.element)
+        }
+      },
+      adapter?.props(options, element),
+    )
+
+  let awaitCompletion: Effect.Success<ReturnType<typeof acquireMotionCompletion>> | undefined
+
+  function finishOwnExit(element: Element, generation: number) {
+    const current = nodes.get(element)
+
+    if (
+      !current ||
+      current.generation !== generation ||
+      current.options.present !== false ||
+      !current.exitSettled ||
+      current.exitDispatched
+    ) {
+      return
+    }
+
+    if (adapter?.isAnimating(current.element) === true) {
+      return
+    }
+
+    for (const child of nodes.values()) {
+      if (
+        child.element === element ||
+        !element.contains(child.element) ||
+        child.options.present !== false
+      ) {
+        continue
+      }
+
+      if (!child.exitSettled || adapter?.isAnimating(child.element) === true) {
+        return
+      }
+    }
+
+    nodes.set(element, { ...current, exitDispatched: true })
+    element.dispatchEvent(new CustomEvent(EXIT_COMPLETE_EVENT, { bubbles: false }))
+  }
+
+  function completeExit(element: Element, generation: number) {
+    finishOwnExit(element, generation)
+    let parent = element.parentElement
+
+    while (parent !== null) {
+      const current = nodes.get(parent)
+
+      if (current !== undefined) {
+        finishOwnExit(parent, current.generation)
+      }
+
+      parent = parent.parentElement
+    }
+  }
+
+  function settleTargetAnimation(element: Element, generation: number) {
+    const live = nodes.get(element)
+
+    if (disposed || live?.generation !== generation || live.options.present !== false) {
+      return
+    }
+
+    nodes.set(live.element, { ...live, exitSettled: true })
+    completeExit(live.element, generation)
   }
 
   function drainPending() {
@@ -434,7 +444,6 @@ export function createMotionEngine<Options extends MotionTargetProperties>(
 
   const layer = Layer.effectDiscard(
     Effect.gen(function* () {
-      // Server renders do not mount DOM nodes and must not consume the client motion scope.
       if (typeof document === 'undefined') return
 
       const complete = yield* acquireMotionCompletion(settleTargetAnimation)
@@ -455,6 +464,42 @@ export function createMotionEngine<Options extends MotionTargetProperties>(
       )
     }),
   )
+  const node: (vnode: Html, options: Options) => Html = (vnode: Html, options: Options) => {
+    if (vnode === null) {
+      return null satisfies Html
+    }
+
+    const previous = vnode.data?.hook
+
+    return {
+      ...vnode,
+      data: {
+        ...vnode.data,
+        hook: {
+          ...previous,
+          insert(node) {
+            previous?.insert?.(node)
+            insert(node, options)
+          },
+          prepatch(oldNode, node) {
+            beforePatch(oldNode, options)
+            previous?.prepatch?.(oldNode, node)
+          },
+          postpatch(oldNode, node) {
+            previous?.postpatch?.(oldNode, node)
+            afterPatch(node, options)
+          },
+          destroy(node) {
+            if (node.elm instanceof HTMLElement || node.elm instanceof SVGElement) {
+              release(node.elm)
+            }
+
+            previous?.destroy?.(node)
+          },
+        },
+      },
+    } satisfies Html
+  }
 
   return {
     layer,
@@ -462,41 +507,6 @@ export function createMotionEngine<Options extends MotionTargetProperties>(
     captureLayout: () => {
       adapter?.capture()
     },
-    node: (vnode: Html, options: Options): Html => {
-      if (vnode === null) {
-        return null
-      }
-
-      const previous = vnode.data?.hook
-
-      return {
-        ...vnode,
-        data: {
-          ...vnode.data,
-          hook: {
-            ...previous,
-            insert(node) {
-              previous?.insert?.(node)
-              insert(node, options)
-            },
-            prepatch(oldNode, node) {
-              beforePatch(oldNode, options)
-              previous?.prepatch?.(oldNode, node)
-            },
-            postpatch(oldNode, node) {
-              previous?.postpatch?.(oldNode, node)
-              afterPatch(node, options)
-            },
-            destroy(node) {
-              if (node.elm instanceof HTMLElement || node.elm instanceof SVGElement) {
-                release(node.elm)
-              }
-
-              previous?.destroy?.(node)
-            },
-          },
-        },
-      }
-    },
+    node,
   }
 }

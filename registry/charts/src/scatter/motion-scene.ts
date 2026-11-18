@@ -12,24 +12,8 @@ import type { Margin } from '../cartesian/context-types'
 import type { ScatterSeries } from './series'
 import { scatterPointClass, scatterSeriesClass } from './paint'
 
-const leaves = (node: SceneNode): ReadonlyArray<SceneDot> => {
-  if (node.kind === 'group') {
-    return node.children.flatMap(leaves)
-  }
-
-  return node.kind === 'dot' ? [node] : []
-}
-
-const originalPoint = <Row>(
-  point: ChartPoint,
-  rows: ReadonlyArray<Row>,
-): point is ChartPoint<Row, Date, number> =>
-  rows.some((row) => row === point.datum) &&
-  point.xValue instanceof Date &&
-  Predicate.isNumber(point.yValue)
-
 /** Ordinary dot projections retain their original interaction records under Source's paint groups. */
-export function scatterSeriesScene<Row>(
+export const scatterSeriesScene: <Row>(
   marks: ReadonlyArray<SeriesMark<Row>>,
   rows: ReadonlyArray<Row>,
   series: ScatterSeries,
@@ -40,7 +24,18 @@ export function scatterSeriesScene<Row>(
   generation: number,
   renderer: ChartLayerRenderer<Row, Date, number>,
   occurrences: WeakMap<ChartPoint, number>,
-): SeriesMark<Row> {
+) => SeriesMark<Row> = function scatterSeriesScene<Row>(
+  marks: ReadonlyArray<SeriesMark<Row>>,
+  rows: ReadonlyArray<Row>,
+  series: ScatterSeries,
+  scope: string,
+  seriesIndex: number,
+  margin: Margin,
+  entering: boolean,
+  generation: number,
+  renderer: ChartLayerRenderer<Row, Date, number>,
+  occurrences: WeakMap<ChartPoint, number>,
+) {
   return createMark(
     (context) => {
       const children = marks.map((mark) => mark.initialize(context))
@@ -152,5 +147,21 @@ export function scatterSeriesScene<Row>(
     },
     false,
     renderer,
-  )
+  ) satisfies SeriesMark<Row>
 }
+
+const leaves: (node: SceneNode) => ReadonlyArray<SceneDot> = (node: SceneNode) => {
+  if (node.kind === 'group') {
+    return node.children.flatMap(leaves)
+  }
+
+  return node.kind === 'dot' ? [node] : []
+}
+
+const originalPoint = <Row>(
+  point: ChartPoint,
+  rows: ReadonlyArray<Row>,
+): point is ChartPoint<Row, Date, number> =>
+  rows.some((row) => row === point.datum) &&
+  point.xValue instanceof Date &&
+  Predicate.isNumber(point.yValue)

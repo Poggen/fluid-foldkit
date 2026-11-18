@@ -11,7 +11,9 @@ import { gridLineStyle } from './grid-guides'
 import type { gridRowGuides } from './grid-guides'
 import { dataTickValues } from './data-ticks'
 
-function axisFormat(axis: YAxisConfig): (value: number) => string {
+const axisFormat: (axis: YAxisConfig) => (value: number) => string = function axisFormat(
+  axis: YAxisConfig,
+) {
   return (
     axis.formatValue ??
     ((value) =>
@@ -19,6 +21,47 @@ function axisFormat(axis: YAxisConfig): (value: number) => string {
         ? `${(value / 1000).toFixed(0)}k`
         : String(value))
   )
+}
+
+export const timeSeriesXScale: (
+  axis: XAxisConfig | undefined,
+  domain: readonly [Date, Date],
+  ticks: ReturnType<typeof timeSeriesTicks>,
+  format: (value: Date) => string,
+  innerHeight: number,
+  explicitDomain: boolean,
+) => ChartPositionScaleOptions<Date> = function timeSeriesXScale(
+  axis: XAxisConfig | undefined,
+  domain: readonly [Date, Date],
+  ticks: ReturnType<typeof timeSeriesTicks>,
+  format: (value: Date) => string,
+  innerHeight: number,
+  explicitDomain: boolean,
+) {
+  const base: ChartPositionScaleOptions<Date> = { scale: scaleUtc().domain(domain), grid: false }
+
+  if (axis === undefined) {
+    return { ...base, axis: false }
+  }
+
+  let labels: ChartAxisTickLabelOptions<Date> = { fontSize: 12, opacity: 1, thin: false }
+
+  if (innerHeight < 1) {
+    labels = { ...labels, dy: innerHeight - 1 }
+  }
+
+  if (explicitDomain) {
+    labels = { ...labels, motion: false }
+  }
+
+  return {
+    ...base,
+    axis: {
+      line: false,
+      ticks: { ...ticks, size: 0, padding: 14.4, format },
+      tickLabels: labels,
+    },
+  }
 }
 
 export function timeSeriesYScales(
@@ -69,7 +112,6 @@ export function timeSeriesTicks<Row>(
   explicitDomain: readonly [Date, Date] | undefined,
   overlaysWidenX = false,
 ) {
-  // Upstream keeps forecast endpoints labelled instead of using nice calendar ticks.
   if (overlaysWidenX) {
     const count = axis?.numTicks ?? 5
     const first = xDomain[0].getTime()
@@ -92,40 +134,6 @@ export function timeSeriesTicks<Row>(
   return axis?.tickMode === 'domain'
     ? { count: axis.numTicks ?? 5 }
     : { values: dataTickValues(visibleRows, x, axis?.numTicks ?? 5, explicitDomain) }
-}
-
-export function timeSeriesXScale(
-  axis: XAxisConfig | undefined,
-  domain: readonly [Date, Date],
-  ticks: ReturnType<typeof timeSeriesTicks>,
-  format: (value: Date) => string,
-  innerHeight: number,
-  explicitDomain: boolean,
-): ChartPositionScaleOptions<Date> {
-  const base: ChartPositionScaleOptions<Date> = { scale: scaleUtc().domain(domain), grid: false }
-
-  if (axis === undefined) {
-    return { ...base, axis: false }
-  }
-
-  let labels: ChartAxisTickLabelOptions<Date> = { fontSize: 12, opacity: 1, thin: false }
-
-  if (innerHeight < 1) {
-    labels = { ...labels, dy: innerHeight - 1 }
-  }
-
-  if (explicitDomain) {
-    labels = { ...labels, motion: false }
-  }
-
-  return {
-    ...base,
-    axis: {
-      line: false,
-      ticks: { ...ticks, size: 0, padding: 14.4, format },
-      tickLabels: labels,
-    },
-  }
 }
 
 export function seriesYValues<Row>(

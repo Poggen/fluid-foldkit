@@ -48,7 +48,10 @@ export const SliderComfortableBlock = Block.make('SliderComfortable', {
 
 const Slider = SliderComfortableBlock.makeRequiredFieldBinding(SliderBlock, {
   field: 'slider',
-  init: { contextToArgs: (config: SliderComfortableConfig): [SliderComfortableConfig] => [config] },
+  init: {
+    contextToArgs: (config: SliderComfortableConfig) =>
+      [config] satisfies [SliderComfortableConfig],
+  },
 }).withOutMessagePolicy({
   forward: SliderComfortableBlock.makeOutMessageForward(SliderBlock, {
     Changed: ({ value }) => (Predicate.isNumber(value) ? OutMessage.Changed({ value }) : undefined),

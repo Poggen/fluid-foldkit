@@ -6,16 +6,7 @@ import type { PresentationContext } from '../presentation.js'
 import type { TargetMotionScope } from '../motion-target.js'
 import type { CalendarViewInputs } from './contracts.js'
 
-// The containing application's DocumentTooltip Binding owns two registrations:
-// `${key}:previous` and `${key}:next`. It calls add once through public Steps.
-// Its render callback supplies the real DocumentTooltip renderer below.
-// Its required renderTrigger callback invokes the registered bound trigger.
-// registerTrigger stores it only in a Map local to the current parent view call.
-export function calendarTooltipKeys(key: string): ReadonlyArray<string> {
-  return [`${key}:previous`, `${key}:next`]
-}
-
-export function calendarViewInputs<Message>(
+export const calendarViewInputs: <Message>(
   h: HtmlBuilder<Message>,
   options: {
     readonly key: string
@@ -33,7 +24,25 @@ export function calendarViewInputs<Message>(
     readonly fill?: boolean
     readonly cellSize?: number
   },
-): CalendarViewInputs {
+) => CalendarViewInputs = function calendarViewInputs<Message>(
+  h: HtmlBuilder<Message>,
+  options: {
+    readonly key: string
+    readonly context: PresentationContext
+    readonly motion: TargetMotionScope
+    readonly keyboardTrigger: boolean
+    readonly tooltip: (
+      key: string,
+      inputs: Omit<DocumentTooltipOccurrenceViewInputs, 'trigger'>,
+    ) => Html
+    readonly registerTrigger: (
+      key: string,
+      render: Parameters<CalendarViewInputs['tooltip']>[0]['render'],
+    ) => void
+    readonly fill?: boolean
+    readonly cellSize?: number
+  },
+) {
   const presentation = resolvePresentation({ context: options.context })
   const icon = presentation.icons['chevron-right']
 
@@ -74,5 +83,12 @@ export function calendarViewInputs<Message>(
     },
   }
 
-  return options.cellSize === undefined ? inputs : { ...inputs, cellSize: options.cellSize }
+  return (
+    options.cellSize === undefined ? inputs : { ...inputs, cellSize: options.cellSize }
+  ) satisfies CalendarViewInputs
 }
+
+export const calendarTooltipKeys: (key: string) => ReadonlyArray<string> =
+  function calendarTooltipKeys(key: string) {
+    return [`${key}:previous`, `${key}:next`]
+  }

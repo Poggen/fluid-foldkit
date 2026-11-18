@@ -31,13 +31,13 @@ export class TimeSeriesDomainFrame<Row> {
     this.#reduced = reduced
   }
 
-  get active(): boolean {
-    return this.#active
+  get active() {
+    return this.#active satisfies boolean
   }
 
-  #sample(now: number): Domains | undefined {
+  #sample(now: number) {
     if (this.#target === undefined) {
-      return this.#current
+      return this.#current satisfies Domains | undefined
     }
 
     const elapsed = now - this.#started
@@ -56,10 +56,10 @@ export class TimeSeriesDomainFrame<Row> {
     )
     this.#active &&= elapsed < this.#duration
 
-    return this.#current
+    return this.#current satisfies Domains | undefined
   }
 
-  #canAnimate(state: Interaction | undefined, props: TimeSeriesProps<Row>): boolean {
+  #canAnimate(state: Interaction | undefined, props: TimeSeriesProps<Row>) {
     const phase = state?.phase
 
     const livePhase =
@@ -69,10 +69,10 @@ export class TimeSeriesDomainFrame<Row> {
 
     const enabled = state?.configuration.yDomainTween ?? props.yDomainTween !== false
 
-    return livePhase && enabled && !this.#reduced()
+    return (livePhase && enabled && !this.#reduced()) satisfies boolean
   }
 
-  resolve(target: Domains, fixed: Domains = {}): Map<string, readonly [number, number]> {
+  resolve(target: Domains, fixed: Domains = {}) {
     const now = this.#clock()
     this.#sample(now)
     this.#fixed = new Map(Object.entries(fixed))
@@ -99,6 +99,9 @@ export class TimeSeriesDomainFrame<Row> {
       this.#active = false
     }
 
-    return new Map(Object.entries(this.#sample(now) ?? target))
+    return new Map(Object.entries(this.#sample(now) ?? target)) satisfies Map<
+      string,
+      readonly [number, number]
+    >
   }
 }

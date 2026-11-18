@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { it } from '@effect/vitest'
 import { Effect } from 'effect'
@@ -16,9 +17,9 @@ const subject = { block: Chart, layer: Chart.makeLayer(recipe.plans(Chart)) }
 const data = [{ time: 123, value: 7 }]
 const observed = { time: 123_000, value: 7, x: 20, y: 30, pinned: false }
 
-const propsFor = (
+const propsFor: (
   content: ChartTooltipProps<LiveLineTooltipDatum>['content'],
-): LiveLineChartProps => ({
+) => LiveLineChartProps = (content: ChartTooltipProps<LiveLineTooltipDatum>['content']) => ({
   data,
   value: 7,
   paused: true,

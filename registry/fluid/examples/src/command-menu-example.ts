@@ -228,10 +228,13 @@ const update = CommandMenuExampleComposition.makeUpdate({
 })
 
 const view = CommandMenuExampleComposition.makeView((model, h) => {
-  const footerInputs = (
+  const footerInputs: (
     activeItem: CommandMenuItem | undefined,
     mac: boolean,
-  ): Parameters<typeof CommandMenuFooter>[0] => {
+  ) => Parameters<typeof CommandMenuFooter>[0] = (
+    activeItem: CommandMenuItem | undefined,
+    mac: boolean,
+  ) => {
     const base: Parameters<typeof CommandMenuFooter>[0] = {
       inDialog: true,
       mac,

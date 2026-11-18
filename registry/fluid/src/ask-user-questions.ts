@@ -1,7 +1,7 @@
 import { fontWeights } from './lib/font-weight.js'
 import * as RadioGroup from '@foldkit/ui/radioGroup'
 import * as Checkbox from '@foldkit/ui/checkbox'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Data, Layer, Option, Predicate } from 'effect'
 import { layer as HoverLayer } from './hover.js'
 import { layer as HighlightLayer } from './hover-highlight.js'

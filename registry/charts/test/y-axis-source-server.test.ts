@@ -13,7 +13,7 @@ import {
   scatterProps,
   rows,
   twentyTicks,
-} from './y-axis-source-fixture'
+} from './y-axis-source.fixture'
 
 export const SourceAxisBarKey = Symbol('SourceAxisBar')
 const BarBlock = Block.make(bar.namespace, { key: SourceAxisBarKey, ...bar.contract })

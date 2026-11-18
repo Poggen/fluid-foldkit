@@ -1,6 +1,6 @@
 import { makeInitIfMissingStep } from 'foldkit/binding'
 import { modifyFields } from 'foldkit/struct'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { DocumentTooltipOccurrenceViewInputs } from './tooltip-native-public.js'
 import { Array, Data, Layer, Option, Record as EffectRecord, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
@@ -250,8 +250,6 @@ const view = InputMessageFilesComposition.makeView.withInputs<InputMessageFilesV
             propagation: 'Stop',
           })
 
-          // The original FilePreviewTile does not forward AnimatePresence's pop-layout ref.
-          // Keep its space until the tile exits; survivors slide only after actual retirement.
           return InputMessageFileTile(
             {
               ...inputs,

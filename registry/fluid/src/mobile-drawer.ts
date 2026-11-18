@@ -1,7 +1,7 @@
 import { cn } from './lib/utils.js'
 import { cssStyle } from './lib/css-style.js'
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { DialogResources } from './dialog-resources.js'
 import { Layer, Schema } from 'effect'
 import { DialogControl } from './dialog-state.js'
@@ -79,7 +79,7 @@ export const MobileDrawerBlock = Block.make('MobileDrawer', {
 const Dialog = MobileDrawerBlock.makeRequiredFieldBinding(DialogBlock, {
   field: 'dialog',
   init: {
-    contextToArgs: (config: MobileDrawerConfig): [DialogConfig] => [config],
+    contextToArgs: (config: MobileDrawerConfig) => [config] satisfies [DialogConfig],
   },
 }).withOutMessagePolicy({
   fold: MobileDrawerBlock.makeOutMessageFold(DialogBlock, {

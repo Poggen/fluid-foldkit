@@ -9,7 +9,7 @@ import {
   previewCodeTabsViewInputs,
 } from '../../../components/docs/preview-code-tabs'
 import type { IconName } from '@foldkit-visuals/fluid/icons'
-// Fluid Functionalism cc276ca0 IconRailVsPeekDemo. MIT.
+/* @license Fluid Functionalism cc276ca0 IconRailVsPeekDemo. MIT. */
 import { Effect, Layer, Queue, Schema, Stream } from 'effect'
 import { Block } from 'foldkit'
 import { defineMessageUnion, defineInMessageUnion } from 'foldkit/message'

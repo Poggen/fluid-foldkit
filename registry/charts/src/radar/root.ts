@@ -22,13 +22,11 @@ function radarServerStyle(props: RadarChartProps) {
 
 export function RadarChart({ name }: { readonly name: string }) {
   const { namespace, contract, plans } = polarRecipe({ name, Row: RadarDatum })
-
-  return {
-    namespace,
-    contract,
-    plans,
-    configuration: polarControl,
-    inputs: (id: string, props: RadarChartProps): PolarInputs<RadarData> => ({
+  const inputs: (id: string, props: RadarChartProps) => PolarInputs<RadarData> = (
+    id: string,
+    props: RadarChartProps,
+  ) =>
+    ({
       layout: 'contents',
       mount: (element, data, focus, observe, clock, observeSize) =>
         new RadarHost(element, id, props, data, focus, observe, clock, observeSize),
@@ -64,7 +62,14 @@ export function RadarChart({ name }: { readonly name: string }) {
               ],
               [h.style([], [radarEntranceResource(id, props.levels ?? 5).css])],
             ),
-    }),
+    }) satisfies PolarInputs<RadarData>
+
+  return {
+    namespace,
+    contract,
+    plans,
+    configuration: polarControl,
+    inputs,
     context: (
       model: typeof contract.Model.Type,
       props: RadarChartProps,

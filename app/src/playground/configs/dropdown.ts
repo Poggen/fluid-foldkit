@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { Schema } from 'effect'
 import type { Control } from '../control-definition'
 import { Appearance } from './presentation'
@@ -88,7 +88,9 @@ export const controls = [
   },
 ] satisfies ReadonlyArray<Control<keyof Configuration>>
 
-export const controlsFor = (config: Configuration): ReadonlyArray<Control> =>
+export const controlsFor: (config: Configuration) => ReadonlyArray<Control> = (
+  config: Configuration,
+) =>
   controls.map((control) => ({
     ...control,
     enabled:

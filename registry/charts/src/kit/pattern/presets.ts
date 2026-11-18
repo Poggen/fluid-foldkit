@@ -4,14 +4,21 @@ import type { PatternPresetId, PatternPresetOptions } from './pattern-preset-hel
 import type { PatternLayer, PatternOrientationType, PatternCirclesProps } from './types'
 import { PatternCircles, PatternLines } from './primitives'
 
-function circlePreset(
+const circlePreset: (
   preset: 'dots' | 'circles',
   common: PatternCirclesProps,
   options: Readonly<PatternPresetOptions>,
   color: string,
   scale: number,
   tileStrokeWidth: number,
-): PatternLayer {
+) => PatternLayer = function circlePreset(
+  preset: 'dots' | 'circles',
+  common: PatternCirclesProps,
+  options: Readonly<PatternPresetOptions>,
+  color: string,
+  scale: number,
+  tileStrokeWidth: number,
+) {
   const explicitFill = options.fill !== undefined && options.fill !== ''
   const fill = explicitFill ? options.fill : undefined
   let appearance: PatternCirclesProps = { ...common }
@@ -48,11 +55,15 @@ function circlePreset(
   })
 }
 
-export function renderPatternPreset(
+export const renderPatternPreset: (
+  preset: PatternPresetId,
+  id: string,
+  options?: Readonly<PatternPresetOptions>,
+) => PatternLayer | undefined = function renderPatternPreset(
   preset: PatternPresetId,
   id: string,
   options: Readonly<PatternPresetOptions> = {},
-): PatternLayer | undefined {
+) {
   if (preset === 'none') {
     return undefined
   }
@@ -80,13 +91,13 @@ export function renderPatternPreset(
   }
 
   const orientation = Match.value(preset).pipe(
-    Match.when('cross', (): ReadonlyArray<PatternOrientationType> => [
-      'diagonal',
-      'diagonalRightToLeft',
-    ]),
-    Match.when('horizontal', (): ReadonlyArray<PatternOrientationType> => ['horizontal']),
-    Match.when('vertical', (): ReadonlyArray<PatternOrientationType> => ['vertical']),
-    Match.orElse((): ReadonlyArray<PatternOrientationType> => ['diagonal']),
+    Match.when(
+      'cross',
+      () => ['diagonal', 'diagonalRightToLeft'] satisfies ReadonlyArray<PatternOrientationType>,
+    ),
+    Match.when('horizontal', () => ['horizontal'] satisfies ReadonlyArray<PatternOrientationType>),
+    Match.when('vertical', () => ['vertical'] satisfies ReadonlyArray<PatternOrientationType>),
+    Match.orElse(() => ['diagonal'] satisfies ReadonlyArray<PatternOrientationType>),
   )
 
   return PatternLines({

@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { expect, it } from 'vitest'
 import { identityMatrix, mountGeoZoom } from './zoom'
@@ -8,7 +9,6 @@ const mouse = (target: EventTarget, type: string, x: number, y: number) =>
     new MouseEvent(type, { clientX: x, clientY: y, view: window, bubbles: true }),
   )
 
-// Happy DOM's WheelEvent omits MouseEvent coordinates; preserve the standard payload on its MouseEvent.
 const wheel = (deltaY: number) =>
   Object.assign(
     new MouseEvent('wheel', { clientX: 100, clientY: 80, bubbles: true, cancelable: true }),

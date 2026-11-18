@@ -2,6 +2,44 @@ import { Context, Effect, Layer, Option, Queue, Stream, Schema } from 'effect'
 import { defineMessageUnion } from 'foldkit/message'
 import { TabsItemObservation } from './tabs-state.js'
 
+const rovingIndex: (key: string, current: number, length: number, rtl: boolean) => number =
+  function rovingIndex(key: string, current: number, length: number, rtl: boolean) {
+    if (key === 'Home' || key === 'PageUp') {
+      return 0
+    }
+
+    if (key === 'End' || key === 'PageDown') {
+      return length - 1
+    }
+
+    const delta = (key === 'ArrowRight' ? 1 : -1) * (rtl ? -1 : 1)
+
+    return (current + delta + length) % length
+  }
+
+export const acceptedSelectionTabStop: (root: HTMLElement, selectedIndex: number) => number | null =
+  function acceptedSelectionTabStop(root: HTMLElement, selectedIndex: number) {
+    if (root.contains(root.ownerDocument.activeElement)) {
+      return null
+    }
+
+    const item = [...root.querySelectorAll<HTMLElement>('[data-fluid-hover-index]')].find(
+      (candidate) =>
+        candidate.closest('[data-slot=fluid-tabs]') === root &&
+        candidate.dataset.fluidHoverIndex === String(selectedIndex),
+    )
+
+    if (
+      item === undefined ||
+      item.hasAttribute('disabled') ||
+      item.getAttribute('aria-disabled') === 'true'
+    ) {
+      return null
+    }
+
+    return selectedIndex
+  }
+
 export const TabsObservation = defineMessageUnion({
   CapturedMount: {},
   CapturedItems: { items: Schema.Array(TabsItemObservation) },
@@ -40,20 +78,6 @@ export const TabsObserverRootsLayer = Layer.effect(
 )
 
 const disabled = (item: HTMLElement) => item.getAttribute('aria-disabled') === 'true'
-
-function rovingIndex(key: string, current: number, length: number, rtl: boolean): number {
-  if (key === 'Home' || key === 'PageUp') {
-    return 0
-  }
-
-  if (key === 'End' || key === 'PageDown') {
-    return length - 1
-  }
-
-  const delta = (key === 'ArrowRight' ? 1 : -1) * (rtl ? -1 : 1)
-
-  return (current + delta + length) % length
-}
 
 function mountTabsRoot(element: HTMLElement, publish: Emit) {
   let live = true
@@ -189,7 +213,10 @@ function mountTabsRoot(element: HTMLElement, publish: Emit) {
     }
   }
 
-  const activateKey = (event: KeyboardEvent, item: HTMLElement): boolean => {
+  const activateKey: (event: KeyboardEvent, item: HTMLElement) => boolean = (
+    event: KeyboardEvent,
+    item: HTMLElement,
+  ) => {
     if (event.key !== 'Enter' && event.key !== ' ') {
       return false
     }
@@ -357,26 +384,4 @@ export function captureTabsRoot(roots: Map<HTMLElement, RootObservation>, id: st
   }
 
   return null
-}
-
-export function acceptedSelectionTabStop(root: HTMLElement, selectedIndex: number): number | null {
-  if (root.contains(root.ownerDocument.activeElement)) {
-    return null
-  }
-
-  const item = [...root.querySelectorAll<HTMLElement>('[data-fluid-hover-index]')].find(
-    (candidate) =>
-      candidate.closest('[data-slot=fluid-tabs]') === root &&
-      candidate.dataset.fluidHoverIndex === String(selectedIndex),
-  )
-
-  if (
-    item === undefined ||
-    item.hasAttribute('disabled') ||
-    item.getAttribute('aria-disabled') === 'true'
-  ) {
-    return null
-  }
-
-  return selectedIndex
 }

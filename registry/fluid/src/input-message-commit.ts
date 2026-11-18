@@ -1,14 +1,18 @@
 import type { Html } from 'foldkit/html'
-
-export const INPUT_MESSAGE_COMMIT_EVENT = 'fluid-input-message-commit'
 /** Signals the declared browser observer after controlled DOM property writes, like Source's layout effect. */
-export function inputMessageCommit(
+export const inputMessageCommit: (
   node: Html,
   value: string,
   minRows: number,
   maxRows: number,
   editRevision: number,
-): Html {
+) => Html = function inputMessageCommit(
+  node: Html,
+  value: string,
+  minRows: number,
+  maxRows: number,
+  editRevision: number,
+) {
   if (node === null) return null
   const previous = node.data?.hook
   const revision = JSON.stringify([value, minRows, maxRows, editRevision])
@@ -43,3 +47,5 @@ export function inputMessageCommit(
     },
   }
 }
+
+export const INPUT_MESSAGE_COMMIT_EVENT = 'fluid-input-message-commit'

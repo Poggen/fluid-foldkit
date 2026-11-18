@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom -- real Cartesian drawing owner with public input slots
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { DateTime, Schema } from 'effect'

@@ -1,7 +1,31 @@
 import type { HoverMode } from './hover-observation.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Predicate, Schema } from 'effect'
 import { modifyFields } from 'foldkit/struct'
+
+export const carouselClock: (config: CarouselDotsConfig) => CarouselClock = function carouselClock(
+  config: CarouselDotsConfig,
+) {
+  const options =
+    config.autoplay === undefined || Predicate.isBoolean(config.autoplay) ? {} : config.autoplay
+
+  const autoplay =
+    Boolean(config.autoplay) && config.progress === undefined && config.externalProgress !== true
+
+  return {
+    resourceIdentity: config.resourceIdentity ?? 'default',
+    count: config.count,
+    value: config.value,
+    autoplay,
+    duration: options.duration ?? 3000,
+    paused: options.paused ?? false,
+    loop: options.loop ?? true,
+    externalProgress: config.externalProgress ?? false,
+    progress: config.progress ?? (autoplay ? 0 : 1),
+    waiting: false,
+    reducedMotion: config.reducedMotion ?? false,
+  }
+}
 
 export interface CarouselDotsAutoplay {
   readonly duration?: number
@@ -39,28 +63,6 @@ export type CarouselClock = typeof CarouselClock.Type
 
 export const carouselFillAt = (progress: number) =>
   `translateX(calc(${Math.min(Math.max(progress, 0), 1) - 1} * (100% - 6px)))`
-
-export function carouselClock(config: CarouselDotsConfig): CarouselClock {
-  const options =
-    config.autoplay === undefined || Predicate.isBoolean(config.autoplay) ? {} : config.autoplay
-
-  const autoplay =
-    Boolean(config.autoplay) && config.progress === undefined && config.externalProgress !== true
-
-  return {
-    resourceIdentity: config.resourceIdentity ?? 'default',
-    count: config.count,
-    value: config.value,
-    autoplay,
-    duration: options.duration ?? 3000,
-    paused: options.paused ?? false,
-    loop: options.loop ?? true,
-    externalProgress: config.externalProgress ?? false,
-    progress: config.progress ?? (autoplay ? 0 : 1),
-    waiting: false,
-    reducedMotion: config.reducedMotion ?? false,
-  }
-}
 
 export function advanceCarousel(clock: CarouselClock, elapsed: number) {
   if (

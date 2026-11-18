@@ -8,7 +8,7 @@ import {
   previewCodeTabId,
   previewCodeTabsViewInputs,
 } from '../../../components/docs/preview-code-tabs'
-// Fluid Functionalism cc276ca0 Sidebar authored sections. MIT.
+/* @license Fluid Functionalism cc276ca0 Sidebar authored sections. MIT. */
 import { Layer, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { initAndInsert } from 'foldkit/binding'

@@ -1,7 +1,7 @@
 import { MessageAssetsQuery } from './message-assets-query'
 import { Result } from 'effect'
 import { Number } from 'effect'
-// Native child owners for the cc276ca0 InputMessage demos.
+
 import { Option } from 'effect'
 import { AsyncData, Update } from 'foldkit'
 import { initAndInsert } from 'foldkit/binding'

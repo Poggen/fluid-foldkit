@@ -7,7 +7,7 @@ import { cn } from '../kit/classes'
 import { formatLegendValue, legendProgress } from './parts'
 import type { LegendRowMessages } from './parts'
 
-export function chartLegendRow<Message, Mounts, Item extends LegendItemData>(
+export const chartLegendRow: <Message, Mounts, Item extends LegendItemData>(
   h: HtmlBuilder<Message, Mounts>,
   id: string,
   item: Item,
@@ -15,7 +15,15 @@ export function chartLegendRow<Message, Mounts, Item extends LegendItemData>(
   hoveredIndex: number | null,
   props: ChartLegendProps<Item>,
   messages: LegendRowMessages<Message>,
-): Html {
+) => Html = function chartLegendRow<Message, Mounts, Item extends LegendItemData>(
+  h: HtmlBuilder<Message, Mounts>,
+  id: string,
+  item: Item,
+  index: number,
+  hoveredIndex: number | null,
+  props: ChartLegendProps<Item>,
+  messages: LegendRowMessages<Message>,
+) {
   const context = chartLegendItemContext(item, index, hoveredIndex)
 
   const common = [
@@ -40,7 +48,7 @@ export function chartLegendRow<Message, Mounts, Item extends LegendItemData>(
         ...common,
       ],
       legendChildren(props.renderItem(context)),
-    )
+    ) satisfies Html
   }
 
   const marker =
@@ -114,5 +122,5 @@ export function chartLegendRow<Message, Mounts, Item extends LegendItemData>(
       ),
     ],
     [body],
-  )
+  ) satisfies Html
 }

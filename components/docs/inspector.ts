@@ -1,4 +1,4 @@
-// Inspired by Fluid Functionalism's InspectOverlay. MIT, copyright 2026 Micka Touillaud.
+/* @license Inspired by Fluid Functionalism's InspectOverlay. MIT, copyright 2026 Micka Touillaud. */
 import { Effect, Layer, Queue, Schema, Stream } from 'effect'
 import { Block, Update } from 'foldkit'
 import { defineMessageUnion } from 'foldkit/message'
@@ -55,7 +55,7 @@ const Observe = InspectorBlock.makeMountStream('ObservePreview', {
                     const document = element.ownerDocument
                     const window = document.defaultView
                     if (window === null) return () => {}
-                    // Native manual popover keeps viewport geometry above transformed page motion.
+
                     const overlay = element instanceof HTMLElement ? element : null
                     overlay?.showPopover?.()
                     let current: Element | null = null
@@ -106,7 +106,7 @@ const Observe = InspectorBlock.makeMountStream('ObservePreview', {
                     frame.addEventListener('focusin', inspect)
                     window.addEventListener('scroll', read, true)
                     window.addEventListener('resize', read)
-                    // Focus may precede deferred acquisition or survive a paused view.
+
                     inspectTarget(document.activeElement)
                     return () => {
                       overlay?.hidePopover?.()

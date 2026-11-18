@@ -1,5 +1,6 @@
 // oxlint-disable no-comments/no-comments -- Vitest needs the real DOM environment for native Motion ownership.
 
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 
 // oxlint-enable no-comments/no-comments -- Resume comment policy after required test metadata.
@@ -55,6 +56,7 @@ for (const { name, resource, openAttribute, settledOverflow } of [
           }
         }
 
+        // oxlint-disable-next-line landmines-testing/no-test-doubles -- Controlled ResizeObserver delivery exercises reopen/resize races; native resize keeper: host-geometry-contracts.e2e.ts.
         vi.stubGlobal('ResizeObserver', Observer)
         const panel = document.createElement('div')
         const inner = document.createElement('div')

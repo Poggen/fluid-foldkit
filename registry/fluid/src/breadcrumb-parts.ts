@@ -1,54 +1,17 @@
 import { sourceChildStyleAttributes } from './lib/source-style-attributes.js'
 import { fontWeights } from './lib/font-weight.js'
 import { Predicate } from 'effect'
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { childAttributes } from 'foldkit/html'
 import type { ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
 import { resolvePresentation } from './presentation.js'
 import type { Presentation } from './presentation.js'
 import { cn } from './lib/utils.js'
 
-export type BreadcrumbTriggerAttributes = ReadonlyArray<ChildAttribute>
-
-export type BreadcrumbElementRenderer = (
-  attributes: BreadcrumbTriggerAttributes,
-  children: ReadonlyArray<Html | string>,
-) => Html
-
-export interface BreadcrumbPartProps extends Presentation {
-  readonly className?: string
-  readonly attributes?: BreadcrumbTriggerAttributes
-  readonly children?: ReadonlyArray<Html | string>
-  readonly render?: (
-    attributes: BreadcrumbTriggerAttributes,
-    children: ReadonlyArray<Html | string>,
-    element?: BreadcrumbElementRenderer,
-  ) => Html
-}
-
-export interface BreadcrumbContext extends Presentation {
-  readonly separator?: Html | string | null | undefined
-  readonly truncated: ReadonlyArray<string>
-  readonly tooltip?:
-    | ((request: {
-        readonly id: string
-        readonly text: string
-        readonly enabled: boolean
-        readonly kind: 'link' | 'button' | 'page'
-        readonly render: (element?: BreadcrumbElementRenderer) => Html
-      }) => Html)
-    | undefined
-}
-
-export interface BreadcrumbCrumbProps extends BreadcrumbPartProps {
-  readonly id: string
-  readonly href?: string
-  readonly disabled?: boolean
-  readonly open?: boolean
-  readonly label?: string
-}
-
-export function BreadcrumbList<Message>(props: BreadcrumbPartProps, h: HtmlBuilder<Message>): Html {
+export const BreadcrumbList: <Message>(
+  props: BreadcrumbPartProps,
+  h: HtmlBuilder<Message>,
+) => Html = function BreadcrumbList<Message>(props: BreadcrumbPartProps, h: HtmlBuilder<Message>) {
   const { size } = resolvePresentation(props)
 
   return h.ol(
@@ -64,10 +27,13 @@ export function BreadcrumbList<Message>(props: BreadcrumbPartProps, h: HtmlBuild
       ...(props.attributes ?? []),
     ],
     props.children ?? [],
-  )
+  ) satisfies Html
 }
 
-export function BreadcrumbItem<Message>(props: BreadcrumbPartProps, h: HtmlBuilder<Message>): Html {
+export const BreadcrumbItem: <Message>(
+  props: BreadcrumbPartProps,
+  h: HtmlBuilder<Message>,
+) => Html = function BreadcrumbItem<Message>(props: BreadcrumbPartProps, h: HtmlBuilder<Message>) {
   return h.li(
     [
       h.DataAttribute('slot', 'breadcrumb-item'),
@@ -80,13 +46,16 @@ export function BreadcrumbItem<Message>(props: BreadcrumbPartProps, h: HtmlBuild
       ...(props.attributes ?? []),
     ],
     props.children ?? [],
-  )
+  ) satisfies Html
 }
 
-export function BreadcrumbEllipsis<Message>(
+export const BreadcrumbEllipsis: <Message>(
   props: BreadcrumbPartProps,
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function BreadcrumbEllipsis<Message>(
+  props: BreadcrumbPartProps,
+  h: HtmlBuilder<Message>,
+) {
   return h.span(
     [
       h.DataAttribute('slot', 'breadcrumb-ellipsis'),
@@ -101,38 +70,20 @@ export function BreadcrumbEllipsis<Message>(
       ),
       h.span([h.Class('sr-only')], ['More']),
     ],
-  )
+  ) satisfies Html
 }
 
-const wrapLabels = <Message>(children: ReadonlyArray<Html | string>, h: HtmlBuilder<Message>) =>
-  children.map((child) =>
-    Predicate.isString(child)
-      ? h.span([h.DataAttribute('slot', 'breadcrumb-label'), h.Class('min-w-0 truncate')], [child])
-      : child,
-  )
-
-const textOf = (props: BreadcrumbCrumbProps) =>
-  props.label ??
-  (props.children ?? [])
-    .filter((child): child is string => Predicate.isString(child))
-    .join('')
-    .trim()
-
-const separatorClassName = (compact: boolean, isDefault: boolean) =>
-  cn(
-    'inline-flex select-none items-center justify-center text-muted-foreground',
-    '[li:last-child_&]:hidden',
-    compact ? '[&>svg]:!size-3' : '[&>svg]:!size-3.5',
-    isDefault &&
-      'transition-transform duration-150 ease-out motion-reduce:transition-none [[aria-haspopup][data-state=open]>&]:rotate-90 [[aria-haspopup][data-popup-open]>&]:rotate-90 [[aria-haspopup][data-fluid-hover-active]>&]:rotate-90 [[aria-haspopup]:focus-visible>&]:rotate-90',
-  )
-
-function crumb<Message>(
+const crumb: <Message>(
   kind: 'link' | 'button' | 'page',
   props: BreadcrumbCrumbProps,
   context: BreadcrumbContext,
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function crumb<Message>(
+  kind: 'link' | 'button' | 'page',
+  props: BreadcrumbCrumbProps,
+  context: BreadcrumbContext,
+  h: HtmlBuilder<Message>,
+) {
   const presentation = resolvePresentation({ ...context, ...props })
   const { size, shape, icons } = presentation
   const compact = size.variant === 'compact'
@@ -188,7 +139,9 @@ function crumb<Message>(
     ...(props.attributes ?? []),
   ])
 
-  const render = (element?: BreadcrumbElementRenderer): Html => {
+  const render: (element?: BreadcrumbElementRenderer) => Html = (
+    element?: BreadcrumbElementRenderer,
+  ) => {
     if (props.render) {
       return props.render(attributes, children, element)
     }
@@ -210,31 +163,108 @@ function crumb<Message>(
 
   const text = textOf(props)
 
-  return context.tooltip && text
-    ? context.tooltip({
-        id: props.id,
-        text,
-        kind,
-        enabled: context.truncated.includes(props.id) && props.open !== true,
-        render,
-      })
-    : render()
+  return (
+    context.tooltip && text
+      ? context.tooltip({
+          id: props.id,
+          text,
+          kind,
+          enabled: context.truncated.includes(props.id) && props.open !== true,
+          render,
+        })
+      : render()
+  ) satisfies Html
 }
 
-export const BreadcrumbLink = <Message>(
-  props: BreadcrumbCrumbProps,
-  context: BreadcrumbContext,
-  h: HtmlBuilder<Message>,
-): Html => crumb('link', props, context, h)
+export type BreadcrumbTriggerAttributes = ReadonlyArray<ChildAttribute>
 
-export const BreadcrumbButton = <Message>(
-  props: BreadcrumbCrumbProps,
-  context: BreadcrumbContext,
-  h: HtmlBuilder<Message>,
-): Html => crumb('button', props, context, h)
+export type BreadcrumbElementRenderer = (
+  attributes: BreadcrumbTriggerAttributes,
+  children: ReadonlyArray<Html | string>,
+) => Html
 
-export const BreadcrumbPage = <Message>(
+export interface BreadcrumbPartProps extends Presentation {
+  readonly className?: string
+  readonly attributes?: BreadcrumbTriggerAttributes
+  readonly children?: ReadonlyArray<Html | string>
+  readonly render?: (
+    attributes: BreadcrumbTriggerAttributes,
+    children: ReadonlyArray<Html | string>,
+    element?: BreadcrumbElementRenderer,
+  ) => Html
+}
+
+export interface BreadcrumbContext extends Presentation {
+  readonly separator?: Html | string | null | undefined
+  readonly truncated: ReadonlyArray<string>
+  readonly tooltip?:
+    | ((request: {
+        readonly id: string
+        readonly text: string
+        readonly enabled: boolean
+        readonly kind: 'link' | 'button' | 'page'
+        readonly render: (element?: BreadcrumbElementRenderer) => Html
+      }) => Html)
+    | undefined
+}
+
+export interface BreadcrumbCrumbProps extends BreadcrumbPartProps {
+  readonly id: string
+  readonly href?: string
+  readonly disabled?: boolean
+  readonly open?: boolean
+  readonly label?: string
+}
+
+const wrapLabels = <Message>(children: ReadonlyArray<Html | string>, h: HtmlBuilder<Message>) =>
+  children.map((child) =>
+    Predicate.isString(child)
+      ? h.span([h.DataAttribute('slot', 'breadcrumb-label'), h.Class('min-w-0 truncate')], [child])
+      : child,
+  )
+
+const textOf = (props: BreadcrumbCrumbProps) =>
+  props.label ??
+  (props.children ?? [])
+    .filter((child): child is string => Predicate.isString(child))
+    .join('')
+    .trim()
+
+const separatorClassName = (compact: boolean, isDefault: boolean) =>
+  cn(
+    'inline-flex select-none items-center justify-center text-muted-foreground',
+    '[li:last-child_&]:hidden',
+    compact ? '[&>svg]:!size-3' : '[&>svg]:!size-3.5',
+    isDefault &&
+      'transition-transform duration-150 ease-out motion-reduce:transition-none [[aria-haspopup][data-state=open]>&]:rotate-90 [[aria-haspopup][data-popup-open]>&]:rotate-90 [[aria-haspopup][data-fluid-hover-active]>&]:rotate-90 [[aria-haspopup]:focus-visible>&]:rotate-90',
+  )
+
+export const BreadcrumbLink: <Message>(
   props: BreadcrumbCrumbProps,
   context: BreadcrumbContext,
   h: HtmlBuilder<Message>,
-): Html => crumb('page', props, context, h)
+) => Html = <Message>(
+  props: BreadcrumbCrumbProps,
+  context: BreadcrumbContext,
+  h: HtmlBuilder<Message>,
+) => crumb('link', props, context, h) satisfies Html
+
+export const BreadcrumbButton: <Message>(
+  props: BreadcrumbCrumbProps,
+  context: BreadcrumbContext,
+  h: HtmlBuilder<Message>,
+) => Html = <Message>(
+  props: BreadcrumbCrumbProps,
+  context: BreadcrumbContext,
+  h: HtmlBuilder<Message>,
+) => crumb('button', props, context, h) satisfies Html
+
+export const BreadcrumbPage: <Message>(
+  props: BreadcrumbCrumbProps,
+  context: BreadcrumbContext,
+  h: HtmlBuilder<Message>,
+) => Html = <Message>(
+  props: BreadcrumbCrumbProps,
+  context: BreadcrumbContext,
+  h: HtmlBuilder<Message>,
+) => crumb('page', props, context, h) satisfies Html

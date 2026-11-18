@@ -1,4 +1,3 @@
-// FillMode "pattern" levels resolve to scoped `url(#…)` fills, backed by the seam resources.
 import { getHeatmapContributionLevel } from './contribution-level'
 import type { PatternPresetId, PatternPresetOptions } from '../kit/pattern/pattern-preset-helpers'
 
@@ -80,22 +79,20 @@ const HEATMAP_DEFAULT_LEVEL_STYLES = [
   { color: HEATMAP_DEFAULT_LEVEL_COLORS[4], fillMode: 'solid', pattern: 'none' },
 ] satisfies HeatmapLevelStyles
 
-/** @internal */
-const heatmapLevelPatternId = (level: number): string => `heatmap-level-${level}`
+const heatmapLevelPatternId: (level: number) => string = (level: number) => `heatmap-level-${level}`
 
-// Default pattern tile scale for the "cross" preset, whose two-axis weave reads too dense at scale 1.
 const CROSS_PATTERN_DEFAULT_SCALE = 1.33
 
-/** @internal */
-const isHeatmapLevelPattern = (style: Readonly<HeatmapLevelStyle>): boolean =>
-  style.fillMode === 'pattern' && style.pattern !== undefined && style.pattern !== 'none'
+const isHeatmapLevelPattern: (style: Readonly<HeatmapLevelStyle>) => boolean = (
+  style: Readonly<HeatmapLevelStyle>,
+) => style.fillMode === 'pattern' && style.pattern !== undefined && style.pattern !== 'none'
 
-const heatmapPatternStrokeFallback = (color: string): string =>
+const heatmapPatternStrokeFallback: (color: string) => string = (color: string) =>
   `color-mix(in oklch, ${color} 45%, white)`
 
-const heatmapLevelPatternRenderOptions = (
+const heatmapLevelPatternRenderOptions: (
   style: Readonly<HeatmapLevelStyle>,
-): PatternPresetOptions => {
+) => PatternPresetOptions = (style: Readonly<HeatmapLevelStyle>) => {
   const preset = style.pattern ?? 'diagonal'
   let defaultScale = 1
 
@@ -121,7 +118,9 @@ const heatmapLevelPatternRenderOptions = (
   }
 }
 
-const heatmapLevelCellFillOpacity = (style: Readonly<HeatmapLevelStyle>): number => {
+const heatmapLevelCellFillOpacity: (style: Readonly<HeatmapLevelStyle>) => number = (
+  style: Readonly<HeatmapLevelStyle>,
+) => {
   if (!isHeatmapLevelPattern(style)) {
     return 1
   }
@@ -129,8 +128,9 @@ const heatmapLevelCellFillOpacity = (style: Readonly<HeatmapLevelStyle>): number
   return style.patternOpacity ?? 1
 }
 
-/** @internal */
-const levelStylesFromColors = (levelColors: HeatmapLevelColors): HeatmapLevelStyles => [
+const levelStylesFromColors: (levelColors: HeatmapLevelColors) => HeatmapLevelStyles = (
+  levelColors: HeatmapLevelColors,
+) => [
   { color: levelColors[0], fillMode: 'solid', pattern: 'none' },
   { color: levelColors[1], fillMode: 'solid', pattern: 'none' },
   { color: levelColors[2], fillMode: 'solid', pattern: 'none' },
@@ -138,11 +138,13 @@ const levelStylesFromColors = (levelColors: HeatmapLevelColors): HeatmapLevelSty
   { color: levelColors[4], fillMode: 'solid', pattern: 'none' },
 ]
 
-/** @internal */
-const resolveHeatmapLevelStyles = (
+const resolveHeatmapLevelStyles: (
   levelColors: HeatmapLevelColors | undefined,
   levelStyles: HeatmapLevelStyles | undefined,
-): HeatmapLevelStyles => {
+) => HeatmapLevelStyles = (
+  levelColors: HeatmapLevelColors | undefined,
+  levelStyles: HeatmapLevelStyles | undefined,
+) => {
   if (levelStyles) {
     return levelStyles
   }
@@ -154,26 +156,24 @@ const resolveHeatmapLevelStyles = (
   return HEATMAP_DEFAULT_LEVEL_STYLES
 }
 
-/** @internal */
-const buildHeatmapColorScaleFromStyles =
-  (levelStyles: HeatmapLevelStyles): ((count: number | null | undefined) => string) =>
-  (count: number | null | undefined) => {
+const buildHeatmapColorScaleFromStyles: (
+  levelStyles: HeatmapLevelStyles,
+) => (count: number | null | undefined) => string =
+  (levelStyles: HeatmapLevelStyles) => (count: number | null | undefined) => {
     const level = getHeatmapContributionLevel(count ?? 0)
 
     return levelStyles[level]?.color ?? levelStyles[0].color
   }
 
-/** @internal */
-const buildHeatmapColorScale = (
+const buildHeatmapColorScale: (
   levelColors: HeatmapLevelColors,
-): ((count: number | null | undefined) => string) =>
+) => (count: number | null | undefined) => string = (levelColors: HeatmapLevelColors) =>
   buildHeatmapColorScaleFromStyles(levelStylesFromColors(levelColors))
 
-/** @internal */
-const buildHeatmapFillScale =
-  (levelStyles: HeatmapLevelStyles): ((count: number | null | undefined) => string) =>
-  // The matching <pattern> defs are rendered by HeatmapPatternDefs, so this url() reference is always backed.
-  (count: number | null | undefined) => {
+const buildHeatmapFillScale: (
+  levelStyles: HeatmapLevelStyles,
+) => (count: number | null | undefined) => string =
+  (levelStyles: HeatmapLevelStyles) => (count: number | null | undefined) => {
     const level = getHeatmapContributionLevel(count ?? 0)
     const style = levelStyles[level] ?? levelStyles[0]
 
@@ -184,10 +184,8 @@ const buildHeatmapFillScale =
     return style.color
   }
 
-/** @internal */
 const defaultHeatmapColorScale = buildHeatmapColorScaleFromStyles(HEATMAP_DEFAULT_LEVEL_STYLES)
 
-/** @internal */
 const defaultHeatmapFillScale = buildHeatmapFillScale(HEATMAP_DEFAULT_LEVEL_STYLES)
 
 export type { HeatmapLevelColors, HeatmapLevelFillMode, HeatmapLevelStyle, HeatmapLevelStyles }

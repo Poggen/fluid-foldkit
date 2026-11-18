@@ -92,7 +92,10 @@ const RawSwitches = BreadcrumbExampleBlock.makeRecordBinding(SwitchBlock, { fiel
 
 const RawSelects = BreadcrumbExampleBlock.makeRecordBinding(SelectBlock, { field: 'selects' })
 
-const switchDisabled = (key: BooleanSetting, model: Model): boolean => {
+const switchDisabled: (key: BooleanSetting, model: Model) => boolean = (
+  key: BooleanSetting,
+  model: Model,
+) => {
   if (key === 'dropdownStep' || key === 'longName') {
     return model.settings.steps < 3
   }

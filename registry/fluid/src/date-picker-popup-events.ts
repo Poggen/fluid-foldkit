@@ -1,12 +1,14 @@
 import { Data, Option, Schema } from 'effect'
 import type { Message } from './date-picker-popup-definition.js'
-// Frozen Base UI event.mjs predicates (MIT); these distinguish assistive
-// activation from physical outside presses before deciding focus restoration.
+/* @license Frozen Base UI event.mjs predicates (MIT); these distinguish assistive */
 
-export function virtualClick(
+export const virtualClick: (
   event: MouseEvent | TouchEvent,
   window: Window & typeof globalThis,
-): boolean {
+) => boolean = function virtualClick(
+  event: MouseEvent | TouchEvent,
+  window: Window & typeof globalThis,
+) {
   if (!(event instanceof window.MouseEvent)) {
     return false
   }
@@ -28,10 +30,13 @@ export function virtualClick(
   return event.detail === 0 && (pointerType === undefined || pointerType === '')
 }
 
-export function virtualPointer(
+export const virtualPointer: (
   event: MouseEvent | TouchEvent,
   window: Window & typeof globalThis,
-): boolean {
+) => boolean = function virtualPointer(
+  event: MouseEvent | TouchEvent,
+  window: Window & typeof globalThis,
+) {
   if (!(event instanceof window.PointerEvent)) {
     return false
   }
@@ -55,6 +60,22 @@ export function virtualPointer(
   )
 }
 
+export const popupExitGeneration: (element: HTMLElement, event: Event) => number | null =
+  function popupExitGeneration(element: HTMLElement, event: Event) {
+    const window = element.ownerDocument.defaultView
+
+    if (
+      event.target !== element.querySelector('[data-popup-motion]') ||
+      element.dataset.popupOpen === 'true' ||
+      window === null ||
+      !(event instanceof window.CustomEvent)
+    ) {
+      return null
+    }
+
+    return Option.getOrNull(Schema.decodeUnknownOption(Schema.Int)(event.detail))
+  }
+
 export type PopupObservation =
   | typeof Message.DismissRequested.Type
   | typeof Message.ExitFinished.Type
@@ -64,18 +85,3 @@ export type ResourceEvent =
   | { readonly _tag: 'Message'; readonly message: PopupObservation }
 
 export const ResourceEvents = Data.taggedEnum<ResourceEvent>()
-
-export function popupExitGeneration(element: HTMLElement, event: Event): number | null {
-  const window = element.ownerDocument.defaultView
-
-  if (
-    event.target !== element.querySelector('[data-popup-motion]') ||
-    element.dataset.popupOpen === 'true' ||
-    window === null ||
-    !(event instanceof window.CustomEvent)
-  ) {
-    return null
-  }
-
-  return Option.getOrNull(Schema.decodeUnknownOption(Schema.Int)(event.detail))
-}

@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom -- real public selection Program and nested lifecycle
 import { renderSelectionContext } from './selection-context-parent.js'
 import { describe, expect } from 'vitest'

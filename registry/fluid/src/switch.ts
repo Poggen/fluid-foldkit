@@ -1,5 +1,5 @@
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { modifyFields } from 'foldkit/struct'
 import { defineSwitchPointer } from './switch-pointer'
 import * as Primitive from '@foldkit/ui/switch'
@@ -14,6 +14,16 @@ import type { SwitchAnimation } from './switch-motion.js'
 import { keepSwitchInputDefault } from './switch-input.js'
 import { resolvePresentation } from './presentation.js'
 import type { Presentation } from './presentation.js'
+
+export const switchViewInputs: (props: SwitchProps) => SwitchViewInputs = function switchViewInputs(
+  props: SwitchProps,
+) {
+  const { thumbTransition, ...rest } = props
+
+  return thumbTransition === undefined
+    ? rest
+    : { ...rest, getThumbTransition: () => thumbTransition }
+}
 
 export const switchMetrics = {
   default: { trackWidth: 34, trackHeight: 20, thumbSize: 16, pressExtend: 4, pressShrink: 4 },
@@ -70,14 +80,6 @@ export interface SwitchProps extends Presentation {
 
 export interface SwitchViewInputs extends Omit<SwitchProps, 'thumbTransition'> {
   readonly getThumbTransition?: () => NonNullable<MotionOptions['transition']>
-}
-
-export function switchViewInputs(props: SwitchProps): SwitchViewInputs {
-  const { thumbTransition, ...rest } = props
-
-  return thumbTransition === undefined
-    ? rest
-    : { ...rest, getThumbTransition: () => thumbTransition }
 }
 
 const Config = Schema.Struct({

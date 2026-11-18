@@ -1,10 +1,10 @@
 import { isNumeral, minus, plus, type NumberLocale } from './color-number-parse.js'
 
-export function numberInputAllowedKeys(
+export const numberInputAllowedKeys: (
   locale: NumberLocale,
   percent: boolean,
-  negative = true,
-): ReadonlyArray<string> {
+  negative?: boolean,
+) => ReadonlyArray<string> = function (locale: NumberLocale, percent: boolean, negative = true) {
   return [
     '.',
     ',',
@@ -18,27 +18,36 @@ export function numberInputAllowedKeys(
     '﹢',
     ...(negative ? ['-', '−', '－', '‒', '–', '—', '﹣'] : []),
     ...(percent ? ['%', '٪', '％', '﹪'] : []),
-  ]
+  ] satisfies ReadonlyArray<string>
 }
 
-export function validNumberInput(value: string, allowed: ReadonlyArray<string>): boolean {
-  if (value.trim() === '') {
-    return true
+export const validNumberInput: (value: string, allowed: ReadonlyArray<string>) => boolean =
+  function validNumberInput(value: string, allowed: ReadonlyArray<string>) {
+    if (value.trim() === '') {
+      return true
+    }
+
+    return Array.from(value).every(
+      (char) =>
+        isNumeral(char) || minus.test(char) || allowed.includes(char) || /\p{Cf}/u.test(char),
+    )
   }
 
-  return Array.from(value).every(
-    (char) => isNumeral(char) || minus.test(char) || allowed.includes(char) || /\p{Cf}/u.test(char),
-  )
-}
-
-export function allowNumberKey(
+export const allowNumberKey: (
   key: string,
   value: string,
   start: number | null,
   end: number | null,
   allowed: ReadonlyArray<string>,
   decimal: string,
-): boolean {
+) => boolean = function allowNumberKey(
+  key: string,
+  value: string,
+  start: number | null,
+  end: number | null,
+  allowed: ReadonlyArray<string>,
+  decimal: string,
+) {
   const covers = (index: number) => start !== null && end !== null && index >= start && index < end
   const all = start === 0 && end === value.length
 

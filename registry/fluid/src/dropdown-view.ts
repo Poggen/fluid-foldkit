@@ -20,6 +20,22 @@ import { spring } from './lib/springs.js'
 import { cn } from './lib/utils.js'
 import { Observe, ObserveTrigger } from './dropdown-composition.js'
 
+const dropdownPosition: (
+  model: typeof Model.Type,
+  inputs: DropdownProps,
+) => Required<Pick<DropdownProps, 'side' | 'align' | 'sideOffset' | 'alignOffset'>> =
+  function dropdownPosition(model: typeof Model.Type, inputs: DropdownProps) {
+    const state = model.controller
+    const submenuSide = inputs.direction === 'rtl' ? 'left' : 'right'
+
+    return {
+      side: inputs.side ?? (state.sub ? submenuSide : 'bottom'),
+      align: inputs.align ?? 'start',
+      sideOffset: inputs.sideOffset ?? 6,
+      alignOffset: inputs.alignOffset ?? (state.sub ? -4 : 0),
+    }
+  }
+
 type DropdownRuntime<Key extends symbol, ConfigSchema extends DropdownConfigSchema> = ReturnType<
   typeof createDropdownComposition<Key, ConfigSchema>
 >
@@ -56,21 +72,6 @@ function dropdownTrigger<Message>(
       }),
     },
   )
-}
-
-function dropdownPosition(
-  model: typeof Model.Type,
-  inputs: DropdownProps,
-): Required<Pick<DropdownProps, 'side' | 'align' | 'sideOffset' | 'alignOffset'>> {
-  const state = model.controller
-  const submenuSide = inputs.direction === 'rtl' ? 'left' : 'right'
-
-  return {
-    side: inputs.side ?? (state.sub ? submenuSide : 'bottom'),
-    align: inputs.align ?? 'start',
-    sideOffset: inputs.sideOffset ?? 6,
-    alignOffset: inputs.alignOffset ?? (state.sub ? -4 : 0),
-  }
 }
 
 export function dropdownView<const Key extends symbol, ConfigSchema extends DropdownConfigSchema>(

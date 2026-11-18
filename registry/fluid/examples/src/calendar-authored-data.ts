@@ -1,3 +1,4 @@
+import { constant } from 'effect/Function'
 import { exampleHoverConfig } from './example-presentation.js'
 import type { CalendarPrepareOptions } from '@foldkit-visuals/fluid/calendar/environment'
 import { Effect, Match, Random, Schema } from 'effect'
@@ -91,14 +92,17 @@ export const revisionFor = (days: Settings['days']) =>
     Match.exhaustive,
   )
 
-export const orientationFor = (key: string): Settings['orientation'] =>
+export const orientationFor: (key: string) => Settings['orientation'] = (key: string) =>
   Match.value(key).pipe(
-    Match.when('stacked', (): Settings['orientation'] => 'vertical'),
-    Match.when('range', (): Settings['orientation'] => 'horizontal'),
-    Match.orElse((): Settings['orientation'] => 'auto'),
+    Match.when('stacked', constant<Settings['orientation']>('vertical')),
+    Match.when('range', constant<Settings['orientation']>('horizontal')),
+    Match.orElse(constant<Settings['orientation']>('auto')),
   )
 
-export const occurrenceOptions = (key: string, today: Date): CalendarPrepareOptions => {
+export const occurrenceOptions: (key: string, today: Date) => CalendarPrepareOptions = (
+  key: string,
+  today: Date,
+) => {
   const options: CalendarPrepareOptions = {
     id: `authored-${key}`,
     controlled: true,
@@ -114,11 +118,11 @@ export const occurrenceOptions = (key: string, today: Date): CalendarPrepareOpti
   return ['single', 'big', 'week'].includes(key) ? { ...options, selected: today } : options
 }
 
-export const cellSizeFor = (value: string): Settings['cellSize'] =>
+export const cellSizeFor: (value: string) => Settings['cellSize'] = (value: string) =>
   Match.value(value).pipe(
-    Match.when('40', (): Settings['cellSize'] => 40),
-    Match.when('44', (): Settings['cellSize'] => 44),
-    Match.when('48', (): Settings['cellSize'] => 48),
+    Match.when('40', constant<Settings['cellSize']>(40)),
+    Match.when('44', constant<Settings['cellSize']>(44)),
+    Match.when('48', constant<Settings['cellSize']>(48)),
     Match.orElse(() => null),
   )
 

@@ -4,12 +4,17 @@ import type { SpringConfig } from './series-options'
 import { REST_PX } from '../kit/motion/spring-curve'
 import { CROSSHAIR_SPRING, TOOLTIP_BOX_SPRING } from '../kit/motion/springs'
 
-export function tooltipBoxMotion(
+export const tooltipBoxMotion: (
+  props:
+    | Pick<ChartTooltipProps, 'boxSpringConfig' | 'matchCrosshair' | 'springConfig' | 'damping'>
+    | undefined,
+  inheritedCrosshairSpring?: SpringConfig,
+) => ChartMotionTransition = function tooltipBoxMotion(
   props:
     | Pick<ChartTooltipProps, 'boxSpringConfig' | 'matchCrosshair' | 'springConfig' | 'damping'>
     | undefined,
   inheritedCrosshairSpring: SpringConfig = CROSSHAIR_SPRING,
-): ChartMotionTransition {
+) {
   const base = {
     type: 'spring',
     ...TOOLTIP_BOX_SPRING,

@@ -10,12 +10,17 @@ export interface SeriesBarProps<Key extends string = string> {
   readonly fadedOpacity?: number
 }
 
-export const SeriesBar = <const Key extends string>(
+export const SeriesBar: <const Key extends string>(
   props: SeriesBarProps<Key>,
-): { readonly kind: 'seriesBar'; readonly props: SeriesBarProps<Key> } => ({
-  kind: 'seriesBar',
-  props,
-})
+) => { readonly kind: 'seriesBar'; readonly props: SeriesBarProps<Key> } = <
+  const Key extends string,
+>(
+  props: SeriesBarProps<Key>,
+) =>
+  ({
+    kind: 'seriesBar',
+    props,
+  }) satisfies { readonly kind: 'seriesBar'; readonly props: SeriesBarProps<Key> }
 
 export interface ComposedChartProps<Row> extends Omit<TimeSeriesProps<Row>, 'children'> {
   readonly barSize?: number

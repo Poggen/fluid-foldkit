@@ -5,31 +5,12 @@ import type { HoverOverlayModel, OverlayDot } from '../cartesian/hover-overlay'
 import { Option, Predicate, Schema } from 'effect'
 import { scatterRolePaint } from './paint'
 
-const shortDateFmt = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
-
-const finiteNumber = Schema.decodeUnknownOption(Schema.Finite)
-
-const colorOr = <Row>(value: ChartTooltipProps<Row>['dotColor'], fallback: string): string =>
-  Predicate.isString(value) ? value : fallback
-
-interface TooltipModelInput<Row extends Readonly<Record<string, unknown>>> {
-  readonly paintScope: string
-  readonly tooltipProps: ChartTooltipProps<Row>
-  readonly series: ReadonlyArray<ScatterSeries>
-  readonly data: ReadonlyArray<Row>
-  readonly xOf: (d: Row) => Date
-  readonly pill: PillLayout | null
-}
-
 /** The hover indicator for the HoverOverlay the host owns (kit/cartesian/hover-overlay.ts): crosshair rule, the focused point's active-highlight copies (they jump), one tooltip dot per series (they glide) and the date pill. */
-export function tooltipOverlay<Row extends Readonly<Record<string, unknown>>>({
-  paintScope,
-  tooltipProps,
-  series,
-  data,
-  xOf,
-  pill,
-}: TooltipModelInput<Row>): HoverOverlayModel<Row> {
+export const tooltipOverlay: <Row extends Readonly<Record<string, unknown>>>(
+  argument0: TooltipModelInput<Row>,
+) => HoverOverlayModel<Row> = function tooltipOverlay<
+  Row extends Readonly<Record<string, unknown>>,
+>({ paintScope, tooltipProps, series, data, xOf, pill }: TooltipModelInput<Row>) {
   const head = series.at(0)
   const labelIndex = new Map<number, number>()
 
@@ -39,15 +20,12 @@ export function tooltipOverlay<Row extends Readonly<Record<string, unknown>>>({
     return shortDateFmt.format(xOf(row))
   })
 
-  const valueOf =
-    (dataKey: string) =>
-    (row: Row): number | undefined => {
-      const value = Option.getOrElse(finiteNumber(row[dataKey]), () => Number.NaN)
+  const valueOf = (dataKey: string) => (row: Row) => {
+    const value = Option.getOrElse(finiteNumber(row[dataKey]), () => Number.NaN)
 
-      return Number.isFinite(value) ? value : undefined
-    }
+    return (Number.isFinite(value) ? value : undefined) satisfies number | undefined
+  }
 
-  // bklit's active highlight: the focused point's markers redrawn on top at activeScale (the dimmed layer keeps its own copy beneath, like bklit). They snap, no tween.
   const dots: Array<OverlayDot<Row>> = []
 
   for (const [index, s] of series.entries()) {
@@ -92,7 +70,6 @@ export function tooltipOverlay<Row extends Readonly<Record<string, unknown>>>({
     })
   }
 
-  // bklit TooltipDot per series: r = dotSize (5), 2px background stroke, springing to the hovered point, painted over the rule.
   if (tooltipProps.showDots !== false) {
     for (const s of series) {
       dots.push({
@@ -128,5 +105,23 @@ export function tooltipOverlay<Row extends Readonly<Record<string, unknown>>>({
       head && pill !== undefined && tooltipProps.showDatePill !== false
         ? { labels, layout: pill }
         : null,
-  }
+  } satisfies HoverOverlayModel<Row>
+}
+
+const shortDateFmt = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
+
+const finiteNumber = Schema.decodeUnknownOption(Schema.Finite)
+
+const colorOr: <Row>(value: ChartTooltipProps<Row>['dotColor'], fallback: string) => string = <Row>(
+  value: ChartTooltipProps<Row>['dotColor'],
+  fallback: string,
+) => (Predicate.isString(value) ? value : fallback) satisfies string
+
+interface TooltipModelInput<Row extends Readonly<Record<string, unknown>>> {
+  readonly paintScope: string
+  readonly tooltipProps: ChartTooltipProps<Row>
+  readonly series: ReadonlyArray<ScatterSeries>
+  readonly data: ReadonlyArray<Row>
+  readonly xOf: (d: Row) => Date
+  readonly pill: PillLayout | null
 }

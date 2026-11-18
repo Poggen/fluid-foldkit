@@ -89,12 +89,15 @@ export const sidebarSceneView = (Message: typeof Root.Message) =>
                       ]),
                     ]
                   : []),
-              ].map((key): DocumentTooltipPopupEntry => ({
-                key,
-                shapeClass: shape.item,
-                portalContainerId: `${model.id}-frame`,
-                reducedMotion: 'user',
-              })),
+              ].map(
+                (key) =>
+                  ({
+                    key,
+                    shapeClass: shape.item,
+                    portalContainerId: `${model.id}-frame`,
+                    reducedMotion: 'user',
+                  }) satisfies DocumentTooltipPopupEntry,
+              ),
               renderContent: (key) =>
                 h.span(
                   [],

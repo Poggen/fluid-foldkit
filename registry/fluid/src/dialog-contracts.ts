@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { ChildAttribute, Html } from 'foldkit/html'
 import type { Presentation, PresentationContext } from './presentation.js'
 import type { MotionOptions } from './motion.js'

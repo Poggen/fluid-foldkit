@@ -1,4 +1,5 @@
 // oxlint-disable no-comments/no-comments -- The real renderer and Motion need browser classes during module acquisition.
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 // oxlint-enable no-comments/no-comments -- Resume source comment policy.
 
@@ -14,8 +15,9 @@ import { Effect, Option, Predicate } from 'effect'
 import { constant, constUndefined } from 'effect/Function'
 import { PieChart, PieData } from '../pie'
 
-const flat = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<SceneNode> =>
-  nodes.flatMap((n) => (n.kind === 'group' ? flat(n.children) : [n]))
+const flat: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<SceneNode> = (
+  nodes: ReadonlyArray<SceneNode>,
+) => nodes.flatMap((n) => (n.kind === 'group' ? flat(n.children) : [n]))
 
 it('renders source funnel layers, gradients, labels, grids and orientation using the real mark engine', () => {
   const runtime = createChartRuntime<FunnelDatum, number, number>()
@@ -181,16 +183,17 @@ it.effect('public Funnel hover animates beyond twenty-four stages and eight laye
   Effect.gen(function* () {
     yield* Effect.acquireRelease(
       Effect.sync(() => {
-        const observer = globalThis.ResizeObserver
-        globalThis.ResizeObserver = MeasuredResizeObserver
+        // oxlint-disable-next-line landmines-testing/no-test-doubles -- Finite layout delivery admits deterministic deep-stage keyframe assertions; the native Funnel keeper proves actual resize and spring rendering.
+        vi.stubGlobal('ResizeObserver', MeasuredResizeObserver)
 
+        // oxlint-disable-next-line landmines-testing/no-test-doubles -- HappyDOM has no layout engine; fixed positive host bounds feed the real Funnel layout and animation owners.
         const bounds = vi
           .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
           .mockReturnValue(new DOMRect(0, 0, 1000, 300))
 
         return () => {
           bounds.mockRestore()
-          globalThis.ResizeObserver = observer
+          vi.unstubAllGlobals()
         }
       }),
       (restore) => Effect.sync(restore),

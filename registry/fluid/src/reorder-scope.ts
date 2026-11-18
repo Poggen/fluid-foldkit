@@ -100,123 +100,134 @@ export function createReorderScope(motion: MotionScope) {
       () => Effect.sync(dispose),
     ),
   )
+  const groupCallback: (
+    node: Html,
+    nextIds: ReadonlyArray<string>,
+    nextAxis?: ReorderAxis,
+  ) => Html = (node: Html, nextIds: ReadonlyArray<string>, nextAxis: ReorderAxis = 'y') => {
+    if (!node) {
+      return node satisfies Html
+    }
+
+    const previous = node.data?.hook
+
+    return {
+      ...node,
+      data: {
+        ...node.data,
+        hook: {
+          ...previous,
+          insert(vnode) {
+            if (!active) {
+              throw new Error('Reorder scope requires its owning Layer')
+            }
+
+            previous?.insert?.(vnode)
+            commit(vnode, nextIds, nextAxis)
+          },
+          prepatch(old, next) {
+            motion.captureLayout()
+            previous?.prepatch?.(old, next)
+          },
+          postpatch(old, next) {
+            previous?.postpatch?.(old, next)
+            commit(next, nextIds, nextAxis)
+          },
+          destroy(vnode) {
+            for (const resource of drags) {
+              resource.suspend()
+            }
+
+            group?.removeEventListener(REORDER_LIVE_EVENT, setLive)
+            group = undefined
+            scroll.reset()
+            previous?.destroy?.(vnode)
+          },
+        },
+      },
+    } satisfies Html
+  }
+
+  const item: (node: Html, id: string, options: MotionOptions, itemAxis?: ReorderAxis) => Html = (
+    node: Html,
+    id: string,
+    options: MotionOptions,
+    itemAxis: ReorderAxis = axis,
+  ) => {
+    presence.set(id, options.present !== false)
+    let key = keys.get(id)
+
+    if (!key) {
+      key = {}
+      keys.set(id, key)
+    }
+
+    return motion.node(node, {
+      ...options,
+      layout: options.layout ?? true,
+      drag: itemAxis,
+      resource: {
+        key,
+        mount: (visual) => {
+          if (!(visual instanceof HTMLVisualElement)) {
+            throw new Error('Reorder.Item requires HTML')
+          }
+
+          const drag = mountReorderDrag(visual, {
+            axis: () => axis,
+            enabled: () => live && !disposed && ids.includes(id) && presence.get(id) !== false,
+            measure: (box) => {
+              if (ids.includes(id)) {
+                layouts.set(id, box)
+              }
+            },
+            move: (offset, info) => {
+              if (!group) {
+                return
+              }
+
+              if (!awaitingCommit) {
+                const next = reorderedIds(ids, layouts, id, offset, info.velocity[axis], axis)
+
+                if (next !== ids) {
+                  awaitingCommit = true
+                  group.dispatchEvent(new CustomEvent(REORDER_EVENT, { detail: { ids: next } }))
+                }
+              }
+
+              scroll.move(group, info.point[axis], axis, info.velocity[axis])
+            },
+            end: () => {
+              scroll.reset()
+            },
+          })
+
+          drags.add(drag)
+
+          const ownedRelease = () => {
+            drag.release()
+            drags.delete(drag)
+
+            if (releases.get(id) === ownedRelease) {
+              releases.delete(id)
+              layouts.delete(id)
+              keys.delete(id)
+              presence.delete(id)
+            }
+          }
+
+          releases.set(id, ownedRelease)
+
+          return ownedRelease
+        },
+      },
+    }) satisfies Html
+  }
 
   return {
     layer,
-    group(node: Html, nextIds: ReadonlyArray<string>, nextAxis: ReorderAxis = 'y'): Html {
-      if (!node) {
-        return node
-      }
-
-      const previous = node.data?.hook
-
-      return {
-        ...node,
-        data: {
-          ...node.data,
-          hook: {
-            ...previous,
-            insert(vnode) {
-              if (!active) {
-                throw new Error('Reorder scope requires its owning Layer')
-              }
-
-              previous?.insert?.(vnode)
-              commit(vnode, nextIds, nextAxis)
-            },
-            prepatch(old, next) {
-              // Parent prepatch precedes every keyed child move, unlike child prepatch.
-              motion.captureLayout()
-              previous?.prepatch?.(old, next)
-            },
-            postpatch(old, next) {
-              previous?.postpatch?.(old, next)
-              commit(next, nextIds, nextAxis)
-            },
-            destroy(vnode) {
-              for (const resource of drags) {
-                resource.suspend()
-              }
-
-              group?.removeEventListener(REORDER_LIVE_EVENT, setLive)
-              group = undefined
-              scroll.reset()
-              previous?.destroy?.(vnode)
-            },
-          },
-        },
-      }
-    },
-    item(node: Html, id: string, options: MotionOptions, itemAxis: ReorderAxis = axis): Html {
-      presence.set(id, options.present !== false)
-      let key = keys.get(id)
-
-      if (!key) {
-        key = {}
-        keys.set(id, key)
-      }
-
-      return motion.node(node, {
-        ...options,
-        layout: options.layout ?? true,
-        drag: itemAxis,
-        resource: {
-          key,
-          mount: (visual) => {
-            if (!(visual instanceof HTMLVisualElement)) {
-              throw new Error('Reorder.Item requires HTML')
-            }
-
-            const drag = mountReorderDrag(visual, {
-              axis: () => axis,
-              enabled: () => live && !disposed && ids.includes(id) && presence.get(id) !== false,
-              measure: (box) => {
-                if (ids.includes(id)) {
-                  layouts.set(id, box)
-                }
-              },
-              move: (offset, info) => {
-                if (!group) {
-                  return
-                }
-
-                if (!awaitingCommit) {
-                  const next = reorderedIds(ids, layouts, id, offset, info.velocity[axis], axis)
-
-                  if (next !== ids) {
-                    awaitingCommit = true
-                    group.dispatchEvent(new CustomEvent(REORDER_EVENT, { detail: { ids: next } }))
-                  }
-                }
-
-                scroll.move(group, info.point[axis], axis, info.velocity[axis])
-              },
-              end: () => {
-                scroll.reset()
-              },
-            })
-
-            drags.add(drag)
-
-            const ownedRelease = () => {
-              drag.release()
-              drags.delete(drag)
-
-              if (releases.get(id) === ownedRelease) {
-                releases.delete(id)
-                layouts.delete(id)
-                keys.delete(id)
-                presence.delete(id)
-              }
-            }
-
-            releases.set(id, ownedRelease)
-
-            return ownedRelease
-          },
-        },
-      })
-    },
+    group: groupCallback,
+    item,
   }
 }
 

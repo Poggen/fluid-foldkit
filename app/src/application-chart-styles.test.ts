@@ -116,10 +116,11 @@ it.effect(
         Story.Command.resolveAllExact(
           ...Array.makeBy(
             8,
-            (): [
-              typeof hoverTest.ControlHover,
-              ReturnType<typeof HoverBlock.Message.CompletedControl>,
-            ] => [hoverTest.ControlHover, HoverBlock.Message.CompletedControl()],
+            () =>
+              [hoverTest.ControlHover, HoverBlock.Message.CompletedControl()] satisfies [
+                typeof hoverTest.ControlHover,
+                ReturnType<typeof HoverBlock.Message.CompletedControl>,
+              ],
           ),
         ),
         Story.model((model) => {

@@ -12,13 +12,15 @@ import type { ChartBrushProps } from './options'
 import type { BrushInteraction, BrushObservation, Range } from './state'
 import { acceptedRange, shownRange, stripExtent } from './state'
 
-export const brushObservationEvent = 'bkm-brush-observed'
-
-export function brushControl(
+export const brushControl: (
   range: Range,
   props: Readonly<ChartBrushProps>,
   observe: (range: Range, kind: BrushObservation['kind']) => void,
-): ChartControl<Date, number> {
+) => ChartControl<Date, number> = function brushControl(
+  range: Range,
+  props: Readonly<ChartBrushProps>,
+  observe: (range: Range, kind: BrushObservation['kind']) => void,
+) {
   const control = brushX<number>({
     range: {
       value: range,
@@ -47,8 +49,6 @@ export function brushControl(
         throw new TypeError('Brush requires a finite time domain')
       }
 
-      // Visx retains pixel precision until its padded public Date callback.
-      // Keep the same brushX owner, with a numeric local scale to avoid early TimeClip.
       const scale = scaleLinear()
         .domain([start, end])
         .range([context.chart.x, context.chart.x + context.chart.width])
@@ -77,6 +77,8 @@ export function brushControl(
     },
   }
 }
+
+export const brushObservationEvent = 'bkm-brush-observed'
 
 export class BrushResource<
   Row extends Readonly<Record<string, unknown>>,
@@ -118,8 +120,6 @@ export class BrushResource<
     element.addEventListener('touchstart', this.#previewPress, true)
   }
 
-  // Visx publishes its current bounds at grab; brushX publishes only changed bounds.
-  // Observe that missing start notification without owning movement or release.
   readonly #previewPress = (event: Event) => {
     const realm = this.element.ownerDocument.defaultView
     const Element = realm?.Element
@@ -255,7 +255,6 @@ export class BrushResource<
       innerWidth: plot?.innerWidth ?? 0,
     }
 
-    // Physical resource ownership is revoked before releasing the renderer.
     this.element.dispatchEvent(new CustomEvent(brushObservationEvent, { detail: event }))
   }
 

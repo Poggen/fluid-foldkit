@@ -1,4 +1,4 @@
-// Adapted from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Adapted from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { Layer, Schema } from 'effect'
 import { Block } from 'foldkit'
 import { initAndInsert } from 'foldkit/binding'

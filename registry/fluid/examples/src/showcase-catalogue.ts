@@ -15,7 +15,10 @@ export const catalogueExampleFiles = new Set(
 const sourceUrl = (slug: string) =>
   `https://github.com/mickadesign/fluid-functionalism/blob/${FLUID_SOURCE_COMMIT}/app/docs/${slug}/page.tsx`
 
-const familyCard = (family: CatalogueFamily, route: (file: ShowcaseFile) => string): Html => {
+const familyCard: (family: CatalogueFamily, route: (file: ShowcaseFile) => string) => Html = (
+  family: CatalogueFamily,
+  route: (file: ShowcaseFile) => string,
+) => {
   const status = Match.value(family.exampleKind).pipe(
     Match.when('missing', () => 'Example unfinished'),
     Match.when('composed', () => 'Composed example; standalone unfinished'),
@@ -109,7 +112,9 @@ const familyCard = (family: CatalogueFamily, route: (file: ShowcaseFile) => stri
   )
 }
 
-export const showcaseCatalogue = (route: (file: ShowcaseFile) => string): ReadonlyArray<Html> => [
+export const showcaseCatalogue: (route: (file: ShowcaseFile) => string) => ReadonlyArray<Html> = (
+  route: (file: ShowcaseFile) => string,
+) => [
   h.p(
     [h.Class('max-w-[78ch] m-[20px_0_32px] text-example-quiet')],
     [

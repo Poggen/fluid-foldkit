@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
 import { Option, Schema } from 'effect'
 import { animateSingleValue, motionValue, frame, cancelFrame } from 'motion-dom'
 import type { AnimationPlaybackControlsWithThen, MotionValue } from 'motion-dom'
@@ -22,11 +22,11 @@ const decode = Schema.decodeUnknownOption(Codec)
 const decodeSide = Schema.decodeUnknownOption(GroupSide)
 export const GROUP_COMMIT_ATTRIBUTE = 'data-tooltip-group-commit'
 
-export const transferGeometry = (
+export const transferGeometry: (
   from: DOMRect,
   target: DOMRect,
   width: number,
-): TransferGeometry => {
+) => TransferGeometry = (from: DOMRect, target: DOMRect, width: number) => {
   const scale = target.width / width || 1
   return {
     left: (from.left - target.left) / scale,
@@ -86,7 +86,7 @@ export function observeGroupMotion(
       previous.style.opacity = String(values.previous.get())
     }
   }
-  // Motion's render queue deduplicates the geometry values changed in one update phase.
+
   const releases = Object.values(values).map((value) =>
     value.on('change', () => frame.render(paint)),
   )

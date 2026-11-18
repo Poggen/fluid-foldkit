@@ -9,7 +9,6 @@ import {
   type Run,
 } from './lib/selection-geometry.js'
 
-// Source row indices accept every JS number. Existing finite snapshots keep numeric JSON.
 export const SelectionRowIndex = Schema.Union([Schema.Finite, Schema.NumberFromString])
 
 export const SelectionRun = Schema.Struct({
@@ -81,10 +80,10 @@ export const selectionRuns = (model: SelectionModel, indices: ReadonlyArray<numb
 }
 
 /** Runs and first-frame seam geometry advance atomically in the pure update. */
-export const changeSelectionRuns = (
+export const changeSelectionRuns: (
   model: SelectionModel,
   runs: ReadonlyArray<Run>,
-): SelectionModel => {
+) => SelectionModel = (model: SelectionModel, runs: ReadonlyArray<Run>) => {
   if (
     runs.length === model.runs.length &&
     runs.every((run, index) => {
@@ -144,7 +143,9 @@ export const changeSelectionRuns = (
   })
 }
 
-export const renderSelection = (model: SelectionModel): SelectionModel => {
+export const renderSelection: (model: SelectionModel) => SelectionModel = (
+  model: SelectionModel,
+) => {
   const shapes = buildSelectionBlocks(
     model.runs,
     model.itemRects,

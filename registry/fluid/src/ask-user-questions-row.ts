@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Option } from 'effect'
 import type { Html, HtmlBuilder } from 'foldkit/html'
 import { askTextarea } from './ask-user-questions-textarea.js'
@@ -11,49 +11,15 @@ import { spring } from './lib/springs.js'
 import { cn } from './lib/utils.js'
 import { hoverItemAttributes } from './hover.js'
 
-function chipTone(multi: boolean, selected: boolean) {
-  if (multi) {
-    return selected ? 'bg-foreground text-background' : 'border border-border text-muted-foreground'
-  }
-
-  return selected ? 'text-foreground' : 'text-muted-foreground'
-}
-
-function rowVertical(stacked: boolean, compact: boolean) {
-  if (stacked) {
-    return compact ? 'min-h-12 py-1.5' : 'min-h-14 py-2'
-  }
-
-  return compact ? 'min-h-8 py-1' : 'min-h-10 py-1.5'
-}
-
-function rowHorizontal(left: boolean, multi: boolean) {
-  if (!left) {
-    return 'pl-3 pr-1.5'
-  }
-
-  return multi ? 'pl-1.5 pr-3' : 'pl-1.5 pr-1.5'
-}
-
-function rowTabIndex(other: boolean, index: number, first: number) {
-  if (other) {
-    return -1
-  }
-
-  return index === first || (first === -1 && index === 0) ? 0 : -1
-}
-
-function arrowVisible(
-  multi: boolean,
-  other: boolean,
-  active: boolean,
-  focused: boolean,
-  text: string,
-) {
-  return !multi && (other ? (active || focused) && text.trim().length > 0 : active)
-}
-
-export function askRow<M, R>(
+export const askRow: <M, R>(
+  flow: AskFlow,
+  inputs: AskUserQuestionsViewInputs,
+  id: string,
+  index: number,
+  activeIndex: number | null,
+  h: HtmlBuilder<M, R>,
+  hiddenControl?: Html,
+) => Html = function askRow<M, R>(
   flow: AskFlow,
   inputs: AskUserQuestionsViewInputs,
   id: string,
@@ -61,11 +27,11 @@ export function askRow<M, R>(
   activeIndex: number | null,
   h: HtmlBuilder<M, R>,
   hiddenControl: Html = null,
-): Html {
+) {
   const question = askCurrent(flow)
 
   if (!question) {
-    return null
+    return null satisfies Html
   }
 
   const { shape, size, icons, reducedMotion } = resolvePresentation(inputs)
@@ -280,5 +246,47 @@ export function askRow<M, R>(
       renderBody(),
     ),
     renderTrailing(),
-  ])
+  ]) satisfies Html
+}
+
+function chipTone(multi: boolean, selected: boolean) {
+  if (multi) {
+    return selected ? 'bg-foreground text-background' : 'border border-border text-muted-foreground'
+  }
+
+  return selected ? 'text-foreground' : 'text-muted-foreground'
+}
+
+function rowVertical(stacked: boolean, compact: boolean) {
+  if (stacked) {
+    return compact ? 'min-h-12 py-1.5' : 'min-h-14 py-2'
+  }
+
+  return compact ? 'min-h-8 py-1' : 'min-h-10 py-1.5'
+}
+
+function rowHorizontal(left: boolean, multi: boolean) {
+  if (!left) {
+    return 'pl-3 pr-1.5'
+  }
+
+  return multi ? 'pl-1.5 pr-3' : 'pl-1.5 pr-1.5'
+}
+
+function rowTabIndex(other: boolean, index: number, first: number) {
+  if (other) {
+    return -1
+  }
+
+  return index === first || (first === -1 && index === 0) ? 0 : -1
+}
+
+function arrowVisible(
+  multi: boolean,
+  other: boolean,
+  active: boolean,
+  focused: boolean,
+  text: string,
+) {
+  return !multi && (other ? (active || focused) && text.trim().length > 0 : active)
 }

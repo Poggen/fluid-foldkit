@@ -1,7 +1,7 @@
-export const formPreviewClass = (
+export const formPreviewClass: (
   family: 'input' | 'textarea' | 'checkbox',
   title: string,
-): string => {
+) => string = (family: 'input' | 'textarea' | 'checkbox', title: string) => {
   switch (family) {
     case 'input': {
       if (title === 'With a button') {
@@ -41,7 +41,7 @@ export const formPreviewClass = (
   }
 }
 
-export const fieldPreviewClass = (title: string): string => {
+export const fieldPreviewClass: (title: string) => string = (title: string) => {
   if (title === 'Horizontal') {
     return 'w-full max-w-md'
   }
@@ -53,7 +53,9 @@ export const fieldPreviewClass = (title: string): string => {
   return 'w-full max-w-sm'
 }
 
-export const formRouteShape = (value: string | null): 'pill' | 'sharp' | 'rounded' => {
+export const formRouteShape: (value: string | null) => 'pill' | 'sharp' | 'rounded' = (
+  value: string | null,
+) => {
   if (value === null) {
     return 'rounded'
   }
@@ -73,7 +75,9 @@ export const formRouteShape = (value: string | null): 'pill' | 'sharp' | 'rounde
   }
 }
 
-export const formRouteFamily = (path: string): 'input' | 'textarea' | 'checkbox' => {
+export const formRouteFamily: (path: string) => 'input' | 'textarea' | 'checkbox' = (
+  path: string,
+) => {
   if (path.includes('textarea')) {
     return 'textarea'
   }

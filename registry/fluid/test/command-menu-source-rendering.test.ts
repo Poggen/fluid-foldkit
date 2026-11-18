@@ -84,8 +84,6 @@ const renderingLayer = RenderingBlock.makeLayer({
   }),
 }).pipe(Layer.provide(CommandMenuLayer))
 
-// SSR owns rendering without executing the private child Mount handlers.
-// Selection is covered by command-menu-keyboard-order.test.ts and the matching showcase e2e.
 const assertRendered = (mode: Mode, assertion: (document: Window['document']) => void) =>
   Effect.gen(function* renderCommandMenu() {
     const { html } = yield* renderToString(

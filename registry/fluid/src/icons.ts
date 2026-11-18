@@ -1,5 +1,5 @@
-// SVG data: Lucide 0.564.0 (ISC; Feather-derived portions MIT).
-// See NOTICE
+/* @license SVG data: Lucide 0.564.0 (ISC; Feather-derived portions MIT). */
+/* @license See NOTICE */
 import type { Icon } from './presentation.js'
 import { ChevronRight } from './icons/chevron-right.js'
 import { ChevronDown } from './icons/chevron-down.js'
@@ -196,6 +196,7 @@ export const defaultIcons: Record<IconName, Icon> = {
   minus: Minus,
 }
 
-export const resolveIcons = (
-  overrides: Partial<Record<IconName, Icon>> = {},
-): Record<IconName, Icon> => ({ ...defaultIcons, ...overrides })
+export const resolveIcons: (
+  overrides?: Partial<Record<IconName, Icon>>,
+) => Record<IconName, Icon> = (overrides: Partial<Record<IconName, Icon>> = {}) =>
+  ({ ...defaultIcons, ...overrides }) satisfies Record<IconName, Icon>

@@ -1,8 +1,7 @@
-// Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT.
+/* @license Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT. */
 import { callbackGraph } from './callback-graph'
 import type { SankeyPropNode, SankeyPropLink } from './types'
-// Native sankeyDiagram owns the complete layout. Mounted Motion resources own entrance/hover
-// on the existing mark elements, so a hover never rebuilds the definition.
+
 import { link } from '@tanstack/charts/link'
 import {
   NAME_FONT_SIZE,
@@ -72,7 +71,6 @@ export interface SankeyMarkConfig {
   readonly enter: SankeyEnter
 }
 
-// The slice of a laid-out link row the mark callbacks read.
 interface SankeyInputLinkRow {
   readonly sourceIndex?: number | undefined
   readonly key: unknown
@@ -95,23 +93,25 @@ interface SankeyEnter {
 
 const SANKEY_LABEL_FILL = 'var(--bkm-foreground)'
 
-// bklit anchors text on the alphabetic baseline with dy=0.35em; the package text mark centres on a
-// middle baseline, leaving 0.0844em (Geist, measured) to add back.
+const flowGradientId: (index: number, occurrence?: number) => string = (
+  index: number,
+  occurrence?: number,
+) => `sankey-flow-${index}${occurrence === undefined ? '' : `-role-${occurrence}`}`
 
-const flowGradientId = (index: number, occurrence?: number): string =>
-  `sankey-flow-${index}${occurrence === undefined ? '' : `-role-${occurrence}`}`
-
-const mix = (color: string, percent: number): string =>
+const mix: (color: string, percent: number) => string = (color: string, percent: number) =>
   `color-mix(in srgb, ${color} ${Math.round(percent * 100)}%, transparent)`
 
-// Gradients live on the chart definition (objectBoundingBox 0..1); `reversed` puts the source colour at the right end when the
-// area between the side margins is narrower than a node (columns run right to left, as in bklit's userSpace gradient).
-const buildSankeyGradients = (
+const buildSankeyGradients: (
   data: SankeyInputData,
   nodeColor: (index: number) => string,
   reversed: boolean,
   occurrence?: number,
-): ReadonlyArray<ChartLinearGradient> =>
+) => ReadonlyArray<ChartLinearGradient> = (
+  data: SankeyInputData,
+  nodeColor: (index: number) => string,
+  reversed: boolean,
+  occurrence?: number,
+) =>
   data.links.map((linkDatum, index) => ({
     id: flowGradientId(index, occurrence),
     stops: [
@@ -124,7 +124,6 @@ const buildSankeyGradients = (
     y2: 0,
   }))
 
-// ---------------------------------------------------------------- labels
 interface LayoutNode {
   readonly key: number
   readonly layer: number
@@ -150,12 +149,17 @@ interface ColumnLayout<Node, Link> {
   readonly area: ColumnArea
 }
 
-const layoutColumns = <Node extends LayoutNode, Link extends LayoutLink>(
+const layoutColumns: <Node extends LayoutNode, Link extends LayoutLink>(
   nodes: ReadonlyArray<Node>,
   links: ReadonlyArray<Link>,
   chart: ColumnArea,
   config: Pick<SankeyMarkConfig, 'nodeWidth' | 'sideMargin'>,
-): ColumnLayout<Node, Link> => {
+) => ColumnLayout<Node, Link> = <Node extends LayoutNode, Link extends LayoutLink>(
+  nodes: ReadonlyArray<Node>,
+  links: ReadonlyArray<Link>,
+  chart: ColumnArea,
+  config: Pick<SankeyMarkConfig, 'nodeWidth' | 'sideMargin'>,
+) => {
   const area = {
     width: chart.width - config.sideMargin.left - config.sideMargin.right,
     x: chart.x + config.sideMargin.left,
@@ -183,21 +187,23 @@ const layoutColumns = <Node extends LayoutNode, Link extends LayoutLink>(
     x2: byKey.get(row.targetKey)?.x0 ?? row.x2,
   }))
 
-  return { area, links: joined, nodes: placed }
+  return { area, links: joined, nodes: placed } satisfies ColumnLayout<Node, Link>
 }
 
-// ---------------------------------------------------------------- the mark
-const createSankeyMark = (
+const createSankeyMark: (
   config: Readonly<SankeyMarkConfig>,
   measureTextWidth?: SankeyTextWidth,
-): ReturnType<typeof sankeyDiagram> => {
+) => ReturnType<typeof sankeyDiagram> = (
+  config: Readonly<SankeyMarkConfig>,
+  measureTextWidth?: SankeyTextWidth,
+) => {
   return sankeyDiagram({
     align: 'center',
     id: 'sankey',
     links: config.data.links,
     marks: (layout) => {
       const { chart: bounds, nodes: laidNodes, links: laidLinks } = layout
-      // SAFETY: sankeyDiagram's laid-out rows carry key/layer/x0..y2/width/data exactly as NodeLayoutRow and SankeyInputLinkRow declare (package row types are looser).
+      // WARNING: SAFETY: sankeyDiagram's laid-out rows carry key/layer/x0..y2/width/data exactly as NodeLayoutRow and SankeyInputLinkRow declare (package row types are looser).
       const columns = layoutColumns(
         laidNodes.map((row) => ({ ...row, key: row.sourceIndexes[0] ?? 0 })),
         laidLinks.map((row) => ({
@@ -234,7 +240,6 @@ const createSankeyMark = (
               )
             : []
 
-        // All label occurrences in this layout share the same body typography.
         if (labels.length > 0 && labelFamily === undefined)
           labelFamily =
             typeof document === 'undefined'
@@ -265,7 +270,7 @@ const createSankeyMark = (
           curve: BUMP_CURVE,
           id: `flow${suffix}`,
           lineCap: 'butt',
-          // The mounted resource draws measured distance along this exact curve.
+
           motion: false,
           stroke: (row, { index }: { readonly index: number }) => {
             const sourceColor = config.nodeColor(row.sourceKey, callbacks.nodes.get(row.sourceKey))
@@ -285,14 +290,13 @@ const createSankeyMark = (
           y2: 'y2',
         })
 
-        // One rect mark per node: rect `fill` is a constant, and a per-node color needs a per-node mark.
         const nodeMarks = nodeRows.map((row, nodeIndex) =>
           rect([row], {
             fill: config.nodeColor(row.key, callbacks.nodes.get(row.key)),
             id: `sankey-node-${nodeIndex}${suffix}`,
             inset: 0,
             key: 'key',
-            // The mounted SVG visual scales this complete native layout around its centre.
+
             motion: false,
             radius: config.lineCap,
             x1: 'x0',
@@ -379,13 +383,13 @@ const createSankeyMark = (
         config.roles === undefined ? build(config) : config.roles.flatMap(build)
       if (first !== undefined)
         return [first, ...rest] satisfies readonly [typeof first, ...typeof rest]
-      // The package requires a nonempty mark tuple even when normalized input has no drawable nodes.
+
       const empty = text([], { id: 'empty', text: () => '', x: () => 0, y: () => 0 })
       return [empty] satisfies readonly [typeof empty]
     },
     nodeKey: (_node, { index }) => index,
     nodePadding: config.nodePadding,
-    // Layout only: columns and node widths are placed by layoutColumns.
+
     nodeWidth: 1,
     nodes: config.data.nodes,
     source: (row) => row.source,

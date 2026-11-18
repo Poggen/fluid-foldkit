@@ -1,4 +1,4 @@
-// Adapted from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Adapted from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import type { SystemPage } from '../../../lib/system'
 
 interface PageNarrative {

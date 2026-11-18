@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Effect } from 'effect'
 import { createDialogPortalOwner } from './default-portal-host.js'
 import { createDialogBranches } from './dialog-branches.js'
@@ -109,7 +109,7 @@ export const createDialogRuntime = (document: Document, options: DialogResourceO
                   host: root.host,
                   modal: root.modal(),
                   hasContent: root.panel() !== null,
-                  // Base locks logical open; retaining the exit panel does not retain its scroll lease.
+
                   resourceOpen: root.open(),
                 },
               ]
@@ -252,7 +252,6 @@ export const createDialogRuntime = (document: Document, options: DialogResourceO
       `[data-fluid-dialog-trigger="${CSS.escape(root.id)}"]`,
     )
 
-    // Closing a sibling scope restores focus; it is not a new outside interaction.
     if (!restoringFocus) {
       outside(root, event, trigger?.contains(event.target) === true)
     }

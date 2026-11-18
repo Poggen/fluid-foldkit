@@ -34,7 +34,7 @@ export const controlsView = (
     [
       h.Class('playground-controls w-full pt-8'),
       h.AriaLabel(`${page.name} props`),
-      // SSR controls stay visible, but must not swallow a press before their handlers exist.
+
       ...(ready ? [] : [h.Attribute('inert', '')]),
       h.OnMount(ShuffleShortcut()),
     ],

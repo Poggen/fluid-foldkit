@@ -3,6 +3,7 @@ import { vi } from 'vitest'
 export const fontTestEnvironment = () => {
   let bounds = { width: 20, left: 0, right: 20, ascent: 9, descent: 3 }
 
+  // oxlint-disable-next-line landmines-testing/no-test-doubles -- Finite metric/frame/observer inputs cover cache and disposal races; native font-contracts verifies actual Canvas and admission.
   const measure = vi.fn((text: string) => ({
     width: text === 'November' ? bounds.width * 2 : bounds.width,
     actualBoundingBoxLeft: bounds.left,
@@ -53,12 +54,14 @@ export const fontTestEnvironment = () => {
     }
   }
 
+  // oxlint-disable-next-line landmines-testing/no-test-doubles -- Finite metric/frame/observer inputs cover cache and disposal races; native font-contracts verifies actual Canvas and admission.
   vi.stubGlobal('ResizeObserver', Observer)
   const fonts = new EventTarget()
   const fontDescriptor = Object.getOwnPropertyDescriptor(document, 'fonts')
   Object.defineProperty(document, 'fonts', { configurable: true, value: fonts })
   let nextFrame = 1
   const frames = new Map<number, FrameRequestCallback>()
+  // oxlint-disable-next-line landmines-testing/no-test-doubles -- Finite metric/frame/observer inputs cover cache and disposal races; native font-contracts verifies actual Canvas and admission.
   vi.spyOn(window, 'requestAnimationFrame').mockImplementation((deliver) => {
     const id = nextFrame
     nextFrame += 1
@@ -66,6 +69,7 @@ export const fontTestEnvironment = () => {
 
     return id
   })
+  // oxlint-disable-next-line landmines-testing/no-test-doubles -- Finite metric/frame/observer inputs cover cache and disposal races; native font-contracts verifies actual Canvas and admission.
   vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => {
     frames.delete(id)
   })

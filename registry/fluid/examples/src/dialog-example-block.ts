@@ -152,7 +152,7 @@ const Lab = LabRequests.withOutMessagePolicy({
       DialogExampleBlock.makeStep((model) =>
         Update.combineSteps([
           DialogExampleBlock.makeFieldsStep(() => ({
-            labChanges: (changes): Model['labChanges'] => [...changes, open],
+            labChanges: (changes) => [...changes, open] satisfies Model['labChanges'],
             isLabOwnerOpen: (current) =>
               model.isLabControlled && (open || model.isLabAcceptClose) ? open : current,
           })),

@@ -16,7 +16,7 @@ import {
 } from './documentation.js'
 import { docSection } from './doc-section.js'
 import source from './card-example-block.ts?raw'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { exampleHoverConfig } from './example-presentation.js'
 import { Layer, Schema } from 'effect'
 import { Block, Update } from 'foldkit'

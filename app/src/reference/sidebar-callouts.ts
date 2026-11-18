@@ -1,5 +1,5 @@
 import { modifyFields } from 'foldkit/struct'
-// Fluid Functionalism cc276ca0 FooterCalloutStack: same geometry, springs and tint ladder.
+/* @license Fluid Functionalism cc276ca0 FooterCalloutStack: same geometry, springs and tint ladder. */
 import { Effect, Layer, Queue, Schema, Stream } from 'effect'
 import { Block } from 'foldkit'
 import { defineMessageUnion } from 'foldkit/message'

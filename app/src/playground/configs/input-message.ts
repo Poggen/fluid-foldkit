@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { Schema } from 'effect'
 import type { Control } from '../control-definition'
 import { Appearance } from './presentation'
@@ -96,7 +96,9 @@ export const controls = [
   },
 ] satisfies ReadonlyArray<Control<keyof Configuration>>
 
-export const controlsFor = (_config: Configuration): ReadonlyArray<Control> => controls
+export const controlsFor: (_config: Configuration) => ReadonlyArray<Control> = (
+  _config: Configuration,
+) => controls
 
 export const suggestedPrompts = [
   'What is Fluid Functionalism about?',

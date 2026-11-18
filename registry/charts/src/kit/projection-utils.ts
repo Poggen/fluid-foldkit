@@ -10,12 +10,9 @@ const ProjectionDateCell = Schema.Union([Schema.Date, Schema.String, Schema.Fini
 
 const ProjectionValueCell = Schema.Finite
 
-// Fallback x-interval when the series has no usable adjacent-row or span delta (one day in ms).
 const FALLBACK_INTERVAL_MS_PER_DAY = 86_400_000
-// |dx| below this is treated as a vertical segment (zero slope) instead of dividing.
 
 const DEGENERATE_DX_THRESHOLD = 1e-6
-// Clamp bounds for the horizontal-tangent bezier tension parameter.
 
 const MAX_BEZIER_TENSION = 0.5
 
@@ -26,11 +23,9 @@ type ProjectionMode = 'auto' | 'target' | 'manual'
 type ProjectionAutoMethod = 'linearRegression' | 'lastSegment'
 
 type ProjectionCurveKind = 'linear' | 'bezier'
-/** @internal */
 
 type ProjectionPathDensity = 'stepped' | 'endpoints'
 
-/** @internal */
 interface BuildProjectionPathOptions {
   readonly sourceData: Array<ChartDatum>
   readonly seriesKey: string
@@ -44,7 +39,10 @@ interface BuildProjectionPathOptions {
   readonly points?: Array<ProjectionPoint>
 }
 
-const readDate = (row: Readonly<ChartDatum>, xDataKey: string): Date | undefined => {
+const readDate: (row: Readonly<ChartDatum>, xDataKey: string) => Date | undefined = (
+  row: Readonly<ChartDatum>,
+  xDataKey: string,
+) => {
   const raw = Option.getOrUndefined(
     Schema.decodeUnknownOption(ProjectionDateCell)(Reflect.get(row, xDataKey)),
   )
@@ -62,7 +60,10 @@ const readDate = (row: Readonly<ChartDatum>, xDataKey: string): Date | undefined
   return undefined
 }
 
-const readValue = (row: Readonly<ChartDatum>, seriesKey: string): number | undefined => {
+const readValue: (row: Readonly<ChartDatum>, seriesKey: string) => number | undefined = (
+  row: Readonly<ChartDatum>,
+  seriesKey: string,
+) => {
   const raw = Option.getOrUndefined(
     Schema.decodeUnknownOption(ProjectionValueCell)(Reflect.get(row, seriesKey)),
   )
@@ -70,10 +71,10 @@ const readValue = (row: Readonly<ChartDatum>, seriesKey: string): number | undef
   return isFiniteNumber(raw) ? raw : undefined
 }
 
-const resolveStartIndex = (
+const resolveStartIndex: (
   sourceData: ReadonlyArray<Readonly<ChartDatum>>,
   startIndex: number | undefined,
-): number => {
+) => number = (sourceData: ReadonlyArray<Readonly<ChartDatum>>, startIndex: number | undefined) => {
   if (!isFiniteNumber(startIndex)) {
     return Math.max(0, sourceData.length - 1)
   }
@@ -81,11 +82,15 @@ const resolveStartIndex = (
   return Math.min(Math.max(0, Math.floor(startIndex)), sourceData.length - 1)
 }
 
-const intervalFromAdjacentRows = (
+const intervalFromAdjacentRows: (
   sourceData: ReadonlyArray<Readonly<ChartDatum>>,
   xDataKey: string,
   startIndex: number,
-): number | undefined => {
+) => number | undefined = (
+  sourceData: ReadonlyArray<Readonly<ChartDatum>>,
+  xDataKey: string,
+  startIndex: number,
+) => {
   if (startIndex < 1) {
     return undefined
   }
@@ -104,10 +109,10 @@ const intervalFromAdjacentRows = (
   return delta > 0 ? delta : undefined
 }
 
-const intervalFromSeriesSpan = (
+const intervalFromSeriesSpan: (
   sourceData: ReadonlyArray<Readonly<ChartDatum>>,
   xDataKey: string,
-): number | undefined => {
+) => number | undefined = (sourceData: ReadonlyArray<Readonly<ChartDatum>>, xDataKey: string) => {
   if (sourceData.length < 2) {
     return undefined
   }
@@ -126,20 +131,28 @@ const intervalFromSeriesSpan = (
   return span > 0 ? span / (sourceData.length - 1) : undefined
 }
 
-const resolveIntervalMs = (
+const resolveIntervalMs: (
   sourceData: ReadonlyArray<Readonly<ChartDatum>>,
   xDataKey: string,
   startIndex: number,
-): number =>
+) => number = (
+  sourceData: ReadonlyArray<Readonly<ChartDatum>>,
+  xDataKey: string,
+  startIndex: number,
+) =>
   intervalFromAdjacentRows(sourceData, xDataKey, startIndex) ??
   intervalFromSeriesSpan(sourceData, xDataKey) ??
   FALLBACK_INTERVAL_MS_PER_DAY
 
-const readHistoryPoint = (
+const readHistoryPoint: (
   row: Readonly<ChartDatum> | undefined,
   seriesKey: string,
   xDataKey: string,
-): HistoryPoint | undefined => {
+) => HistoryPoint | undefined = (
+  row: Readonly<ChartDatum> | undefined,
+  seriesKey: string,
+  xDataKey: string,
+) => {
   if (row === undefined) {
     return undefined
   }
@@ -161,9 +174,9 @@ interface CollectHistoryPointsOptions {
   readonly startIndex: number
 }
 
-const collectHistoryPoints = (
+const collectHistoryPoints: (
   options: Readonly<CollectHistoryPointsOptions>,
-): Array<HistoryPoint> => {
+) => Array<HistoryPoint> = (options: Readonly<CollectHistoryPointsOptions>) => {
   const { sourceData, seriesKey, xDataKey, startIndex } = options
   const historyPoints: Array<HistoryPoint> = []
 
@@ -178,50 +191,61 @@ const collectHistoryPoints = (
   return historyPoints
 }
 
-/** @internal */
-const computeProjectionAnchorTangentSlope = (
+const computeProjectionAnchorTangentSlope: (
+  sourceData: Array<ChartDatum>,
+  seriesKey: string,
+  xDataKey?: string,
+  startIndexProp?: number,
+) => number = (
   sourceData: Array<ChartDatum>,
   seriesKey: string,
   xDataKey = 'date',
   startIndexProp?: number,
-): number => {
+) => {
   if (sourceData.length < 2) {
-    return 0
+    return 0 satisfies number
   }
 
   const startIndex = resolveStartIndex(sourceData, startIndexProp)
 
-  return slopeFromLastSegment(collectHistoryPoints({ seriesKey, sourceData, startIndex, xDataKey }))
+  return slopeFromLastSegment(
+    collectHistoryPoints({ seriesKey, sourceData, startIndex, xDataKey }),
+  ) satisfies number
 }
 
-/** @internal */
-const buildHorizontalTangentBezierPath = (
+const buildHorizontalTangentBezierPath: (
   x0: number,
   y0: number,
   x1: number,
   y1: number,
-  tension = 0.45,
-): string => {
+  tension?: number,
+) => string = (x0: number, y0: number, x1: number, y1: number, tension = 0.45) => {
   const dx = x1 - x0
 
   if (Math.abs(dx) < DEGENERATE_DX_THRESHOLD) {
-    return `M ${x0},${y0} L ${x1},${y1}`
+    return `M ${x0},${y0} L ${x1},${y1}` satisfies string
   }
 
   const clampedTension = Math.min(MAX_BEZIER_TENSION, Math.max(MIN_BEZIER_TENSION, tension))
   const c1x = x0 + dx * clampedTension
   const c2x = x1 - dx * clampedTension
 
-  return `M ${x0},${y0} C ${c1x},${y0} ${c2x},${y1} ${x1},${y1}`
+  return `M ${x0},${y0} C ${c1x},${y0} ${c2x},${y1} ${x1},${y1}` satisfies string
 }
 
-const buildTargetPath = (options: {
+const buildTargetPath: (options: {
   readonly anchorTime: number
   readonly anchorValue: number
   readonly endValue: number
   readonly horizonPoints: number
   readonly intervalMs: number
-}): Array<ProjectionPoint> => {
+}) => Array<ProjectionPoint> = (options: {
+  readonly anchorTime: number
+  readonly anchorValue: number
+  readonly endValue: number
+  readonly horizonPoints: number
+  readonly intervalMs: number
+}) => {
   const { anchorTime, anchorValue, endValue, horizonPoints, intervalMs } = options
   const endTime = anchorTime + intervalMs * horizonPoints
 
@@ -245,11 +269,15 @@ interface ResolveProjectionAnchorOptions {
   readonly startIndexProp: number | undefined
 }
 
-const readAnchorPoint = (
+const readAnchorPoint: (
   anchorRow: Readonly<ChartDatum>,
   seriesKey: string,
   xDataKey: string,
-): { readonly anchorTime: number; readonly anchorValue: number } | undefined => {
+) => { readonly anchorTime: number; readonly anchorValue: number } | undefined = (
+  anchorRow: Readonly<ChartDatum>,
+  seriesKey: string,
+  xDataKey: string,
+) => {
   const anchorDate = readDate(anchorRow, xDataKey)
   const anchorValue = readValue(anchorRow, seriesKey)
 
@@ -260,9 +288,9 @@ const readAnchorPoint = (
   return { anchorTime: anchorDate.getTime(), anchorValue }
 }
 
-const resolveProjectionAnchor = (
+const resolveProjectionAnchor: (
   options: Readonly<ResolveProjectionAnchorOptions>,
-): ProjectionAnchor | undefined => {
+) => ProjectionAnchor | undefined = (options: Readonly<ResolveProjectionAnchorOptions>) => {
   const { sourceData, seriesKey, xDataKey, startIndexProp } = options
   const startIndex = resolveStartIndex(sourceData, startIndexProp)
   const anchorRow = sourceData.at(startIndex)
@@ -279,10 +307,9 @@ const resolveProjectionAnchor = (
   return { anchorTime: anchor.anchorTime, anchorValue: anchor.anchorValue, intervalMs, startIndex }
 }
 
-/** @internal */
-const buildProjectionPath = (
+const buildProjectionPath: (
   options: Readonly<BuildProjectionPathOptions>,
-): Array<ProjectionPoint> => {
+) => Array<ProjectionPoint> = (options: Readonly<BuildProjectionPathOptions>) => {
   const {
     sourceData,
     seriesKey,

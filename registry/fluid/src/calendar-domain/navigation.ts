@@ -1,36 +1,17 @@
 import { weekStart, weekEnd } from './week-bounds.js'
-// Adapted from react-day-picker 10.0.2, MIT © 2014-2026 Giampaolo Bellavite and contributors.
-// Full license: NOTICE
+/* @license Adapted from react-day-picker 10.0.2, MIT © 2014-2026 Giampaolo Bellavite and contributors. */
+/* @license Full license: NOTICE */
 import type { DateLib } from './date-library.js'
 import type { Matcher } from './matcher-types.js'
 import { dateMatchModifiers } from './matchers.js'
 
-export interface NavigationOptions {
-  readonly month?: Date
-  readonly defaultMonth?: Date
-  readonly today?: Date
-  readonly startMonth?: Date
-  readonly endMonth?: Date
-  readonly numberOfMonths?: 1 | 2
-  readonly captionLayout?: 'label' | 'dropdown' | 'dropdown-months' | 'dropdown-years'
-  readonly pagedNavigation?: boolean
-  readonly disableNavigation?: boolean
-  readonly ISOWeek?: boolean
-  readonly broadcastCalendar?: boolean
-  readonly fixedWeeks?: boolean
-  readonly reverseMonths?: boolean
-  readonly disabled?: Matcher | Array<Matcher>
-  readonly hidden?: Matcher | Array<Matcher>
-}
-
-export type FocusUnit = 'day' | 'week' | 'month' | 'year' | 'startOfWeek' | 'endOfWeek'
-
-export type FocusDirection = 'before' | 'after'
-
-export function getNavMonths(
+export const getNavMonths: (
   props: NavigationOptions,
   dateLib: DateLib,
-): [Date | undefined, Date | undefined] {
+) => [Date | undefined, Date | undefined] = function getNavMonths(
+  props: NavigationOptions,
+  dateLib: DateLib,
+) {
   let { startMonth, endMonth } = props
 
   const { startOfYear, startOfDay, startOfMonth, endOfMonth, addYears, endOfYear, today } = dateLib
@@ -56,12 +37,17 @@ export function getNavMonths(
   ]
 }
 
-export function getInitialMonth(
+export const getInitialMonth: (
   props: NavigationOptions,
   navStart: Date | undefined,
   navEnd: Date | undefined,
   dateLib: DateLib,
-): Date {
+) => Date = function getInitialMonth(
+  props: NavigationOptions,
+  navStart: Date | undefined,
+  navEnd: Date | undefined,
+  dateLib: DateLib,
+) {
   const { month, defaultMonth, today = dateLib.today(), numberOfMonths = 1 } = props
 
   let initialMonth = month ?? defaultMonth ?? today
@@ -83,12 +69,17 @@ export function getInitialMonth(
   return startOfMonth(initialMonth)
 }
 
-export function getDisplayMonths(
+export const getDisplayMonths: (
   firstDisplayedMonth: Date,
   calendarEndMonth: Date | undefined,
   props: NavigationOptions,
   dateLib: DateLib,
-): Array<Date> {
+) => Array<Date> = function getDisplayMonths(
+  firstDisplayedMonth: Date,
+  calendarEndMonth: Date | undefined,
+  props: NavigationOptions,
+  dateLib: DateLib,
+) {
   const { numberOfMonths = 1 } = props
 
   const months = []
@@ -106,12 +97,17 @@ export function getDisplayMonths(
   return months
 }
 
-export function getNextMonth(
+export const getNextMonth: (
   firstDisplayedMonth: Date,
   calendarEndMonth: Date | undefined,
   options: NavigationOptions,
   dateLib: DateLib,
-): Date | undefined {
+) => Date | undefined = function getNextMonth(
+  firstDisplayedMonth: Date,
+  calendarEndMonth: Date | undefined,
+  options: NavigationOptions,
+  dateLib: DateLib,
+) {
   if (options.disableNavigation === true) {
     return undefined
   }
@@ -137,12 +133,17 @@ export function getNextMonth(
   return addMonths(month, offset)
 }
 
-export function getPreviousMonth(
+export const getPreviousMonth: (
   firstDisplayedMonth: Date,
   calendarStartMonth: Date | undefined,
   options: NavigationOptions,
   dateLib: DateLib,
-): Date | undefined {
+) => Date | undefined = function getPreviousMonth(
+  firstDisplayedMonth: Date,
+  calendarStartMonth: Date | undefined,
+  options: NavigationOptions,
+  dateLib: DateLib,
+) {
   if (options.disableNavigation === true) {
     return undefined
   }
@@ -168,7 +169,7 @@ export function getPreviousMonth(
   return addMonths(month, -offset)
 }
 
-export function getFocusableDate(
+export const getFocusableDate: (
   moveBy: FocusUnit,
   moveDir: FocusDirection,
   refDate: Date,
@@ -176,7 +177,15 @@ export function getFocusableDate(
   navEnd: Date | undefined,
   props: NavigationOptions,
   dateLib: DateLib,
-): Date {
+) => Date = function getFocusableDate(
+  moveBy: FocusUnit,
+  moveDir: FocusDirection,
+  refDate: Date,
+  navStart: Date | undefined,
+  navEnd: Date | undefined,
+  props: NavigationOptions,
+  dateLib: DateLib,
+) {
   const { ISOWeek, broadcastCalendar } = props
 
   const weekOptions = { ISOWeek: ISOWeek ?? false, broadcastCalendar: broadcastCalendar ?? false }
@@ -201,7 +210,7 @@ export function getFocusableDate(
   return focusableDate
 }
 
-export function nextFocus(
+export const nextFocus: (
   moveBy: FocusUnit,
   moveDir: FocusDirection,
   from: Date,
@@ -209,7 +218,15 @@ export function nextFocus(
   navEnd: Date | undefined,
   options: NavigationOptions,
   dateLib: DateLib,
-): Date | undefined {
+) => Date | undefined = function nextFocus(
+  moveBy: FocusUnit,
+  moveDir: FocusDirection,
+  from: Date,
+  navStart: Date | undefined,
+  navEnd: Date | undefined,
+  options: NavigationOptions,
+  dateLib: DateLib,
+) {
   let current = from
 
   for (let attempt = 0; attempt <= 365; attempt += 1) {
@@ -234,3 +251,25 @@ export function nextFocus(
 
   return undefined
 }
+
+export interface NavigationOptions {
+  readonly month?: Date
+  readonly defaultMonth?: Date
+  readonly today?: Date
+  readonly startMonth?: Date
+  readonly endMonth?: Date
+  readonly numberOfMonths?: 1 | 2
+  readonly captionLayout?: 'label' | 'dropdown' | 'dropdown-months' | 'dropdown-years'
+  readonly pagedNavigation?: boolean
+  readonly disableNavigation?: boolean
+  readonly ISOWeek?: boolean
+  readonly broadcastCalendar?: boolean
+  readonly fixedWeeks?: boolean
+  readonly reverseMonths?: boolean
+  readonly disabled?: Matcher | Array<Matcher>
+  readonly hidden?: Matcher | Array<Matcher>
+}
+
+export type FocusUnit = 'day' | 'week' | 'month' | 'year' | 'startOfWeek' | 'endOfWeek'
+
+export type FocusDirection = 'before' | 'after'

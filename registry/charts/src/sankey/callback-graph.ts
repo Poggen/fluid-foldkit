@@ -36,15 +36,18 @@ export function callbackGraph(
     targetLinks: [],
   }))
   const nodeByIndex = new Map(nodes.map((node) => [node.index, node]))
-  const placed = links.map((row, index): SankeyPropLink => ({
-    ...row.data,
-    index: row.sourceIndex ?? index,
-    source: nodeByIndex.get(row.sourceKey) ?? row.sourceKey,
-    target: nodeByIndex.get(row.targetKey) ?? row.targetKey,
-    y0: row.y1 - origin.y,
-    y1: row.y2 - origin.y,
-    width: row.width,
-  }))
+  const placed = links.map(
+    (row, index) =>
+      ({
+        ...row.data,
+        index: row.sourceIndex ?? index,
+        source: nodeByIndex.get(row.sourceKey) ?? row.sourceKey,
+        target: nodeByIndex.get(row.targetKey) ?? row.targetKey,
+        y0: row.y1 - origin.y,
+        y1: row.y2 - origin.y,
+        width: row.width,
+      }) satisfies SankeyPropLink,
+  )
   const linkByIndex = new Map(placed.map((link) => [link.index, link]))
   for (const row of rows) {
     const node = nodeByIndex.get(row.key)

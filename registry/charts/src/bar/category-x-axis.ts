@@ -10,7 +10,7 @@ const labelClasses =
 const rootClasses = 'pointer-events-none absolute inset-0'
 type CategorySnapshot = Pick<BarSnapshot<never>, 'categories' | 'bandWidth' | 'labelXs' | 'focusXs'>
 
-const visualProps = (opacity: number): MotionNodeOptions => ({
+const visualProps: (opacity: number) => MotionNodeOptions = (opacity: number) => ({
   initial: { opacity: 1 },
   animate: { opacity },
   transition: { duration: 0.4, ease: 'easeInOut' },

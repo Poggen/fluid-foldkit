@@ -14,7 +14,7 @@ export function LiveLineChart({ name }: { readonly name: string }) {
   return {
     ...recipe,
     configuration: (props: LiveLineChartProps) => new LiveConfiguration(props),
-    inputs: (id: string, props: LiveLineChartProps): LiveInputs<LiveLinePoint> => {
+    inputs: (id: string, props: LiveLineChartProps) => {
       const inputs: LiveInputs<LiveLinePoint> = {
         layout: 'contents',
         mount: (
@@ -68,7 +68,9 @@ export function LiveLineChart({ name }: { readonly name: string }) {
           ]),
       }
 
-      return props.style === undefined ? inputs : { ...inputs, surfaceStyle: props.style }
+      return (
+        props.style === undefined ? inputs : { ...inputs, surfaceStyle: props.style }
+      ) satisfies LiveInputs<LiveLinePoint>
     },
   }
 }

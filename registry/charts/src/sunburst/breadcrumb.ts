@@ -14,7 +14,9 @@ export interface SunburstBreadcrumbProps {
   children: NativeContent | ((context: SunburstStableContextValue) => NativeContent)
 }
 
-export const SunburstBreadcrumb = (props: SunburstBreadcrumbProps): SunburstCarrier => ({
+export const SunburstBreadcrumb: (props: SunburstBreadcrumbProps) => SunburstCarrier = (
+  props: SunburstBreadcrumbProps,
+) => ({
   role: 'breadcrumb',
   props,
 })
@@ -29,11 +31,14 @@ export function useSunburstBreadcrumbItems<Action>(context: SunburstStableContex
   }
 
   return {
-    items: crumbs.map((crumb, index): SunburstBreadcrumbItem => ({
-      id: crumb.id,
-      isCurrent: index === crumbs.length - 1,
-      label: crumb.id === context.rootId ? context.data.name : crumb.name,
-    })),
+    items: crumbs.map<SunburstBreadcrumbItem>(
+      (crumb, index) =>
+        ({
+          id: crumb.id,
+          isCurrent: index === crumbs.length - 1,
+          label: crumb.id === context.rootId ? context.data.name : crumb.name,
+        }) satisfies SunburstBreadcrumbItem,
+    ),
     zoomTo: context.zoomTo,
   }
 }

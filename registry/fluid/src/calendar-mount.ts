@@ -1,19 +1,12 @@
-const navigationKeys = new Set([
-  'ArrowLeft',
-  'ArrowRight',
-  'ArrowUp',
-  'ArrowDown',
-  'PageUp',
-  'PageDown',
-  'Home',
-  'End',
-])
-
-export function listenCalendarKeyboard(
+export const listenCalendarKeyboard: (
   element: HTMLElement,
   autoFocus: boolean,
   emit: () => void,
-): () => void {
+) => () => void = function listenCalendarKeyboard(
+  element: HTMLElement,
+  autoFocus: boolean,
+  emit: () => void,
+) {
   const window = element.ownerDocument.defaultView
 
   const keydown = (event: Event) => {
@@ -29,8 +22,6 @@ export function listenCalendarKeyboard(
     ) {
       event.preventDefault()
     }
-    // This listener runs at the root after the target day handler,
-    // matching DayPicker's day fact followed by Fluid's Escape undo.
 
     if (
       event.key === 'Escape' &&
@@ -52,3 +43,14 @@ export function listenCalendarKeyboard(
     element.removeEventListener('keydown', keydown)
   }
 }
+
+const navigationKeys = new Set([
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'ArrowDown',
+  'PageUp',
+  'PageDown',
+  'Home',
+  'End',
+])

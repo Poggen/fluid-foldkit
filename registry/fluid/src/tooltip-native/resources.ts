@@ -75,7 +75,7 @@ export const makeTooltipDomLayer = (document: Document, window: Window) =>
                           const containerId = input.element.getAttribute('data-tooltip-container')
                           if (containerId === null)
                             throw new Error('Tooltip portal has no committed container')
-                          // Document tooltip placeholders can live outside their trigger's native dialog.
+
                           const triggerId = input.element.getAttribute('data-tooltip-popup')
                           const trigger =
                             triggerId === null ? null : tooltipTrigger(document, triggerId)
@@ -234,7 +234,7 @@ export const makeTooltipDomLayer = (document: Document, window: Window) =>
                           input.id,
                           send,
                         )
-                        // Document bubbling lets the original control admit its pointerdown first.
+
                         const press = (event: PointerEvent) => {
                           if (within(event.target) && eligible(event)) send(Observation.Pressed())
                         }

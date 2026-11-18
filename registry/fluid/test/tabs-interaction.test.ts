@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { it } from '@effect/vitest'
 import { Effect, Layer, Option, Schema } from 'effect'
@@ -270,12 +271,15 @@ it.live(
     Effect.gen(function* selectedPillLifecycle() {
       yield* withoutEmulatedWaapi
       expect(Object.hasOwn(Element.prototype, 'animate')).toBe(false)
+      // oxlint-disable-next-line landmines-testing/no-test-doubles -- Finite tab metrics control reversal and physical lease races; real geometry keeper: host-geometry-contracts.e2e.ts.
       const width = vi
         .spyOn(HTMLElement.prototype, 'offsetWidth', 'get')
         .mockImplementation(function width(this: HTMLElement) {
           return Object.hasOwn(this.dataset, 'fluidHoverIndex') ? 100 : 300
         })
+      // oxlint-disable-next-line landmines-testing/no-test-doubles -- Finite tab metrics control reversal and physical lease races; real geometry keeper: host-geometry-contracts.e2e.ts.
       const height = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(36)
+      // oxlint-disable-next-line landmines-testing/no-test-doubles -- Finite tab metrics control reversal and physical lease races; real geometry keeper: host-geometry-contracts.e2e.ts.
       const left = vi
         .spyOn(HTMLElement.prototype, 'offsetLeft', 'get')
         .mockImplementation(function left(this: HTMLElement) {

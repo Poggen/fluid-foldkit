@@ -21,7 +21,6 @@ export class SiteEnvironment extends Context.Service<
   }
 >()('SiteEnvironment') {}
 
-// Root publication keeps body-level portals in the same source typography scope.
 export const publishRootPresentation = (
   root: HTMLElement,
   settings: Settings,
@@ -48,7 +47,6 @@ export const publishRootPresentation = (
   }
 }
 
-// DOM guard leases belong to Command lifetimes; selections and revisions stay in the Model.
 export const presentationEffects = (document: Document, window: Window) => {
   const shapeGuards = new Set<symbol>()
   const themeGuards = new Set<HTMLStyleElement>()
@@ -87,7 +85,7 @@ export const presentationEffects = (document: Document, window: Window) => {
       () =>
         Effect.gen(function* () {
           yield* Render.afterCommit
-          // Apply's afterCommit continuation publishes the root theme in this microtask batch.
+
           yield* Effect.yieldNow
           const transition = document.activeViewTransition
           if (transition != null) {

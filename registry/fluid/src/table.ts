@@ -1,5 +1,5 @@
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import { Effect, Layer, Option, Queue, Schema, Stream } from 'effect'
 import { Block, Update } from 'foldkit'
 import type { ChildAttribute, Html } from 'foldkit/html'
@@ -121,9 +121,10 @@ const Hover = TableBlock.makeRequiredFieldBinding(HoverBlock, {
 const HeadHover = TableBlock.makeRequiredFieldBinding(HoverBlock, {
   field: 'headHover',
   init: {
-    contextToArgs: (config: TableConfig): [HoverConfig] => [
-      { id: `${config.id}-head-hover`, mode: config.hoverMode ?? 'fluid', axis: 'x' },
-    ],
+    contextToArgs: (config: TableConfig) =>
+      [{ id: `${config.id}-head-hover`, mode: config.hoverMode ?? 'fluid', axis: 'x' }] satisfies [
+        HoverConfig,
+      ],
   },
 }).withOutMessagePolicy({
   fold: TableBlock.makeOutMessageFold(HoverBlock, { Changed: () => syncHead }),

@@ -31,8 +31,9 @@ const data: Array<HeatmapColumn> = [0, 1].map((column) => ({
   })),
 }))
 
-const flat = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<SceneNode> =>
-  nodes.flatMap((node) => (node.kind === 'group' ? flat(node.children) : [node]))
+const flat: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<SceneNode> = (
+  nodes: ReadonlyArray<SceneNode>,
+) => nodes.flatMap((node) => (node.kind === 'group' ? flat(node.children) : [node]))
 
 it('renders weekday cells, month labels and configured separator geometry using the real engine', () => {
   const runtime = createChartRuntime<Readonly<CellDatum>, number | string, string>()

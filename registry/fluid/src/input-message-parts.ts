@@ -1,6 +1,6 @@
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
 import { fontWeights } from './lib/font-weight.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { childAttributes } from 'foldkit/html'
 import type { Attribute, ChildAttribute, Html, HtmlBuilder, TaggedAttribute } from 'foldkit/html'
 import { cn } from './lib/utils.js'
@@ -10,33 +10,9 @@ import type { LayoutMotionOptions } from './motion-layout.js'
 import { resolvePresentation } from './presentation.js'
 import type { Presentation } from './presentation.js'
 import type { MessageFile, QueuedMessage } from './input-message-domain.js'
-
-interface AnimatedPresentation extends Presentation {
-  readonly animate: (node: Html, options: LayoutMotionOptions) => Html
-}
-
-interface RemoveTooltip {
-  readonly tooltip: (
-    context: {
-      readonly trigger: (context: {
-        readonly button: (
-          attributes: ReadonlyArray<ChildAttribute>,
-          children: ReadonlyArray<Html | string>,
-          key?: string,
-        ) => Html
-      }) => Html
-    },
-    options: {
-      readonly key: string
-      readonly shapeClass: string
-      readonly content: string
-      readonly side: 'top'
-    },
-  ) => Html
-}
 /** Retained FileThumbnail occurrence and removal lifetime are supplied by the native parent Binding. */
 
-export function InputMessageFileTile<M>(
+export const InputMessageFileTile: <M>(
   props: AnimatedPresentation &
     RemoveTooltip & {
       readonly tooltipKey: string
@@ -50,7 +26,21 @@ export function InputMessageFileTile<M>(
       readonly thumbnail: (file: MessageFile, size: number, radius: number) => Html
     },
   h: HtmlBuilder<M>,
-): Html {
+) => Html = function InputMessageFileTile<M>(
+  props: AnimatedPresentation &
+    RemoveTooltip & {
+      readonly tooltipKey: string
+      readonly file: MessageFile
+      readonly filePreviewSize: number
+      readonly isTouch?: boolean
+      readonly present: boolean
+      readonly initial: boolean
+      readonly completion: Attribute<M>
+      readonly remove: TaggedAttribute<M>
+      readonly thumbnail: (file: MessageFile, size: number, radius: number) => Html
+    },
+  h: HtmlBuilder<M>,
+) {
   const p = resolvePresentation(props)
   const remove = childAttributes([props.remove])
 
@@ -100,16 +90,10 @@ export function InputMessageFileTile<M>(
       transition: spring.fast,
       present: props.present,
     },
-  )
-}
-/** Reorder driver supplies the actual Source-equivalent pan/layout attributes. */
-
-export const inputMessageQueueLabel = (item: QueuedMessage) => {
-  const count = item.files.length
-  return item.text || `${count} attachment${count === 1 ? '' : 's'}`
+  ) satisfies Html
 }
 
-export function InputMessageQueueRow<M>(
+export const InputMessageQueueRow: <M>(
   props: AnimatedPresentation &
     RemoveTooltip & {
       readonly tooltipKey: string
@@ -125,7 +109,23 @@ export function InputMessageQueueRow<M>(
       readonly labelNode: Html
     },
   h: HtmlBuilder<M>,
-): Html {
+) => Html = function InputMessageQueueRow<M>(
+  props: AnimatedPresentation &
+    RemoveTooltip & {
+      readonly tooltipKey: string
+      readonly item: QueuedMessage
+      readonly index: number
+      readonly total: number
+      readonly present: boolean
+      readonly initial: boolean
+      readonly reduceMotion: boolean
+      readonly isTouch: boolean
+      readonly attributes: ReadonlyArray<Attribute<M> | ChildAttribute>
+      readonly removeAttributes: ReadonlyArray<ChildAttribute>
+      readonly labelNode: Html
+    },
+  h: HtmlBuilder<M>,
+) {
   const p = resolvePresentation(props)
   const count = props.item.files.length
   const label = inputMessageQueueLabel(props.item)
@@ -206,10 +206,10 @@ export function InputMessageQueueRow<M>(
       transition: spring.fast,
       present: props.present,
     },
-  )
+  ) satisfies Html
 }
 
-export function InputMessageSuggestionRow<M>(
+export const InputMessageSuggestionRow: <M>(
   props: Presentation & {
     readonly text: string
     readonly active: boolean
@@ -218,7 +218,16 @@ export function InputMessageSuggestionRow<M>(
     readonly attributes: ReadonlyArray<Attribute<M> | ChildAttribute>
   },
   h: HtmlBuilder<M>,
-): Html {
+) => Html = function InputMessageSuggestionRow<M>(
+  props: Presentation & {
+    readonly text: string
+    readonly active: boolean
+    readonly keyHint: boolean
+    readonly optionId: string
+    readonly attributes: ReadonlyArray<Attribute<M> | ChildAttribute>
+  },
+  h: HtmlBuilder<M>,
+) {
   const p = resolvePresentation(props)
 
   return h.div(
@@ -262,5 +271,35 @@ export function InputMessageSuggestionRow<M>(
             h,
           ),
     ],
-  )
+  ) satisfies Html
+}
+
+interface AnimatedPresentation extends Presentation {
+  readonly animate: (node: Html, options: LayoutMotionOptions) => Html
+}
+
+interface RemoveTooltip {
+  readonly tooltip: (
+    context: {
+      readonly trigger: (context: {
+        readonly button: (
+          attributes: ReadonlyArray<ChildAttribute>,
+          children: ReadonlyArray<Html | string>,
+          key?: string,
+        ) => Html
+      }) => Html
+    },
+    options: {
+      readonly key: string
+      readonly shapeClass: string
+      readonly content: string
+      readonly side: 'top'
+    },
+  ) => Html
+}
+/** Reorder driver supplies the actual Source-equivalent pan/layout attributes. */
+
+export const inputMessageQueueLabel = (item: QueuedMessage) => {
+  const count = item.files.length
+  return item.text || `${count} attachment${count === 1 ? '' : 's'}`
 }

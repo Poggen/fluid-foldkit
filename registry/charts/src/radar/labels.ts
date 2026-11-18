@@ -21,8 +21,9 @@ export interface RadarLabelsProps {
   readonly className?: string
 }
 
-// Role marker: a declarative config carrier, read once by RadarChart and never rendered.
 /**
  * Prints each metric's `label` around the outside of the chart. Include it as a child of `RadarChart`; it renders nothing by itself.
  */
-export const RadarLabels = (props: RadarLabelsProps = {}): RadarChild => ({ kind: 'labels', props })
+export const RadarLabels: (props?: RadarLabelsProps) => RadarChild = (
+  props: RadarLabelsProps = {},
+) => ({ kind: 'labels', props }) satisfies RadarChild

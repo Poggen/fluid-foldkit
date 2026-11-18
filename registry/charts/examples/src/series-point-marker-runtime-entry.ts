@@ -1,5 +1,5 @@
 import { Program, Runtime } from 'foldkit'
-import { Fixture } from './series-point-marker-runtime-fixture'
+import { Fixture } from './series-point-marker-runtime.fixture'
 import '@foldkit-visuals/charts/styles.css'
 import './style.css'
 

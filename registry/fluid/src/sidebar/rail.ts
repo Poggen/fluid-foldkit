@@ -1,10 +1,12 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { Option } from 'effect'
 import { SidebarBlock } from './definition.js'
 import type { Model } from './definition.js'
 import { RailTooltips } from './composition.js'
 
-export const sidebarRailPresent = (model: typeof Model.Type): boolean =>
+export const sidebarRailPresent: (model: typeof Model.Type) => boolean = (
+  model: typeof Model.Type,
+) =>
   model.options.collapsible !== 'none' &&
   model.options.rail &&
   !(model.options.peek !== 'none' && !model.open && !model.resizing)
@@ -20,7 +22,6 @@ const railOptions = (model: typeof Model.Type) => {
   }
 }
 
-// Configuration is independent of DOM admission. An absent rail also omits its popup entry.
 export const reconcileRailTooltips = (before: typeof Model.Type) =>
   SidebarBlock.makeStep((model) => {
     const previous = railOptions(before)

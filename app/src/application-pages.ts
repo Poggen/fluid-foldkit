@@ -39,8 +39,6 @@ export const informPageViewport = (columns: 1 | 2 | 3) =>
     ]),
   )
 
-// Accepted route identity owns page Models, even when A→B→A rendering batches away B.
-// Physical Mount resources remain scoped to their rendered elements.
 export const reconcilePageVisit = (options: PreviewOptions, initial?: GalleryFlags) =>
   ApplicationBlock.makeStep((model) => {
     const { path, isEmbed } = model

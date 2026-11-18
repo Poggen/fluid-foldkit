@@ -43,8 +43,9 @@ const scatterProps = {
 
 const inputs = chart.inputs('pattern-owner', scatterProps)
 
-const flatten = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<SceneNode> =>
-  nodes.flatMap((node) => (node.kind === 'group' ? flatten(node.children) : [node]))
+const flatten: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<SceneNode> = (
+  nodes: ReadonlyArray<SceneNode>,
+) => nodes.flatMap((node) => (node.kind === 'group' ? flatten(node.children) : [node]))
 
 const paintedFills = () =>
   Story.withBlock(subject, (owner) => {
@@ -182,34 +183,39 @@ const rightBinding = SquareParent.makeRequiredFieldBinding(SquareBlock, {
 
 const SquareComposition = SquareParent.makeComposition({ bindings: [leftBinding, rightBinding] })
 
-const paintProps = (
+const paintProps: (
+  preset?: PatternPresetId,
+  gradient?: boolean,
+  stops?: { offset: number; color: string }[],
+) => BarChartProps<typeof SquareRow.Type> = (
   preset?: PatternPresetId,
   gradient = true,
   stops = [
     { offset: 0, color: 'red' },
     { offset: 100, color: 'blue' },
   ],
-): BarChartProps<typeof SquareRow.Type> => ({
-  width: 400,
-  height: 400,
-  animationDuration: 0,
-  barGap: 0,
-  margin: { top: 0, right: 0, bottom: 0, left: 0 },
-  children: [
-    PatternCircles({ id: 'original', width: 8, height: 8, fill: 'green' }),
-    BarSquares({
-      dataKey: 'a',
-      fill: 'url(#original)',
-      useGradient: gradient,
-      gradientStops: stops,
-      patternPreset: preset ?? 'none',
-      animate: false,
-      groupGap: 0,
-      squareGap: 0,
-    }),
-    BarSquares({ dataKey: 'b', fill: 'green', animate: false, groupGap: 0, squareGap: 0 }),
-  ],
-})
+) =>
+  ({
+    width: 400,
+    height: 400,
+    animationDuration: 0,
+    barGap: 0,
+    margin: { top: 0, right: 0, bottom: 0, left: 0 },
+    children: [
+      PatternCircles({ id: 'original', width: 8, height: 8, fill: 'green' }),
+      BarSquares({
+        dataKey: 'a',
+        fill: 'url(#original)',
+        useGradient: gradient,
+        gradientStops: stops,
+        patternPreset: preset ?? 'none',
+        animate: false,
+        groupGap: 0,
+        squareGap: 0,
+      }),
+      BarSquares({ dataKey: 'b', fill: 'green', animate: false, groupGap: 0, squareGap: 0 }),
+    ],
+  }) satisfies BarChartProps<typeof SquareRow.Type>
 
 const renderSquarePaints = (props: BarChartProps<typeof SquareRow.Type>, width = 400) =>
   Story.withBlock(squareSubject, (owner) => {

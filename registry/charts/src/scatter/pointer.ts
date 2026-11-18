@@ -6,7 +6,7 @@ export interface ScatterPointerPosition {
   readonly y: number
 }
 
-export const emptyScatterPointer = (): null => null
+export const emptyScatterPointer: () => null = () => null
 
 export function scatterPointer(
   times: ReadonlyArray<number>,
@@ -19,20 +19,20 @@ export function scatterPointer(
     project: (context: MarkRenderContext) => {
       invertX = context.scales.x?.invert
     },
-    resolve: (point: ScatterPointerPosition): number | null => {
+    resolve: (point: ScatterPointerPosition) => {
       if (
         point.x < margin.left ||
         point.x > margin.left + size.innerWidth ||
         point.y < margin.top ||
         point.y > margin.top + size.innerHeight
       ) {
-        return null
+        return null satisfies number | null
       }
 
       const value = invertX?.(point.x)
 
       if (!(value instanceof Date) || times.length === 0) {
-        return null
+        return null satisfies number | null
       }
 
       const time = value.getTime()
@@ -46,10 +46,12 @@ export function scatterPointer(
       const right = times[upper]
 
       if (left === undefined) {
-        return null
+        return null satisfies number | null
       }
 
-      return right !== undefined && time - left > right - time ? upper : upper - 1
+      return (right !== undefined && time - left > right - time ? upper : upper - 1) satisfies
+        | number
+        | null
     },
   }
 }

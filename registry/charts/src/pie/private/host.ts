@@ -11,39 +11,7 @@ import type { PolarHost } from './block'
 import { createPolarCenter } from './center'
 import type { CenterOptions } from './center'
 
-export interface PolarFrame<Row, Mark> {
-  readonly family: 'pie' | 'ring'
-  readonly size?: number
-  readonly className?: string
-  readonly style?: Readonly<Record<string, string | number>>
-  readonly scrubbing: boolean
-  readonly onHoverChange?: (index: number | null) => void
-  readonly indexOf: (mark: Mark) => number
-  readonly definition: (
-    data: ReadonlyArray<Row>,
-    size: number,
-  ) => Omit<ChartRendererHostOptions<Mark, number, number>, 'width' | 'height'>
-  readonly geometry: (root: HTMLElement, data: ReadonlyArray<Row>, size: number) => void
-  readonly hover: (root: HTMLElement, previous: number | null, next: number | null) => void
-  readonly centers: (
-    data: ReadonlyArray<Row>,
-    size: number,
-    index: number | null,
-  ) => ReadonlyArray<{
-    readonly options: CenterOptions
-    readonly radius: number
-    readonly value: number
-    readonly label: string
-    readonly custom: boolean
-  }>
-  readonly cleanup: () => void
-}
-
-export interface ConfigurablePolarHost<Row, Mark> extends PolarHost<Row> {
-  configure(frame: PolarFrame<Row, Mark>): void
-}
-
-export function mountPolar<Row, Mark>(
+export const mountPolar: <Row, Mark>(
   element: HTMLElement,
   initialData: ReadonlyArray<Row>,
   initialFocus: number | null,
@@ -51,7 +19,15 @@ export function mountPolar<Row, Mark>(
   clock: () => number,
   initial: PolarFrame<Row, Mark>,
   observeSize: (size: number) => void,
-): ConfigurablePolarHost<Row, Mark> {
+) => ConfigurablePolarHost<Row, Mark> = function mountPolar<Row, Mark>(
+  element: HTMLElement,
+  initialData: ReadonlyArray<Row>,
+  initialFocus: number | null,
+  observe: (index: number | null) => void,
+  clock: () => number,
+  initial: PolarFrame<Row, Mark>,
+  observeSize: (size: number) => void,
+) {
   const root = document.createElement('div'),
     surface = document.createElement('div'),
     overlay = document.createElement('div')
@@ -244,5 +220,37 @@ export function mountPolar<Row, Mark>(
       frame.cleanup()
       root.remove()
     },
-  }
+  } satisfies ConfigurablePolarHost<Row, Mark>
+}
+
+export interface PolarFrame<Row, Mark> {
+  readonly family: 'pie' | 'ring'
+  readonly size?: number
+  readonly className?: string
+  readonly style?: Readonly<Record<string, string | number>>
+  readonly scrubbing: boolean
+  readonly onHoverChange?: (index: number | null) => void
+  readonly indexOf: (mark: Mark) => number
+  readonly definition: (
+    data: ReadonlyArray<Row>,
+    size: number,
+  ) => Omit<ChartRendererHostOptions<Mark, number, number>, 'width' | 'height'>
+  readonly geometry: (root: HTMLElement, data: ReadonlyArray<Row>, size: number) => void
+  readonly hover: (root: HTMLElement, previous: number | null, next: number | null) => void
+  readonly centers: (
+    data: ReadonlyArray<Row>,
+    size: number,
+    index: number | null,
+  ) => ReadonlyArray<{
+    readonly options: CenterOptions
+    readonly radius: number
+    readonly value: number
+    readonly label: string
+    readonly custom: boolean
+  }>
+  readonly cleanup: () => void
+}
+
+export interface ConfigurablePolarHost<Row, Mark> extends PolarHost<Row> {
+  configure(frame: PolarFrame<Row, Mark>): void
 }

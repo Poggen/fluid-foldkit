@@ -52,7 +52,7 @@ export interface HeatmapInputs<Row> {
   readonly customContent: (data: ReadonlyArray<Row>, focused: number | null, size: number) => Html
 }
 
-const initialControl = (): HeatmapControl => ({ controlled: false, index: Option.none() })
+const initialControl: () => HeatmapControl = () => ({ controlled: false, index: Option.none() })
 
 export function defineHeatmapRecipe(name: string) {
   if (!/^[a-z][a-z0-9-]*$/u.test(name)) {
@@ -307,7 +307,6 @@ export function defineHeatmapRecipe(name: string) {
           Layer.effect(
             HeatmapRegistration,
             Effect.sync(() => {
-              // Restored Models can render a mounted drawing before any Prepare Mount runs.
               register()
               return register
             }),

@@ -6,7 +6,7 @@ import { memoizeVariant } from '../view-inputs'
 import { AuthoredChartVariantsBlock, layer as VariantLayer } from './authored-chart-variants'
 import { HeatmapLegend, HeatmapInteractionBoundary } from '@foldkit-visuals/charts/heatmap'
 import { Option } from 'effect'
-// Authored examples transposed from bklit-tanstack-charts-migration's chart-docs and demos. MIT.
+/* @license Authored examples transposed from bklit-tanstack-charts-migration's chart-docs and demos. MIT. */
 import { Effect, Layer, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { initAndInsert } from 'foldkit/binding'

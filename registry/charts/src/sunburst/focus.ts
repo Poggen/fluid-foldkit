@@ -1,5 +1,3 @@
-// Keyboard order for the sunburst: native pointer resolution is kept and only the navigation order is supplied, centre disc (when drilled in)
-// then arcs in tree order (depth-first, siblings clockwise), which is bklit's arc index order.
 import { findNearestPoint } from '@tanstack/charts'
 import type { ChartFocusStrategy, ChartPoint, ChartScene } from '@tanstack/charts'
 
@@ -16,11 +14,11 @@ interface SunburstFocusOptions<TDatum> {
   readonly heldAt: (x: number, y: number) => ChartPoint<TDatum, number, number> | null | undefined
 }
 
-const createSunburstFocus = <TDatum>(
+const createSunburstFocus: <TDatum>(
   options: Readonly<SunburstFocusOptions<TDatum>>,
-): ChartFocusStrategy<TDatum, number, number> => {
-  // Hit-testable points per scene: the sectors drawn in this view, and the hub only when it is drawn (drilled in). At the root the hub
-  // is a hair-thin disc at the centre whose point would win the nearest-point race over the ring-1 sector the centre belongs to (bklit has no disc there).
+) => ChartFocusStrategy<TDatum, number, number> = <TDatum>(
+  options: Readonly<SunburstFocusOptions<TDatum>>,
+) => {
   const hittable = new WeakMap<object, ReadonlyArray<ChartPoint<TDatum, number, number>>>()
 
   return {
@@ -34,8 +32,7 @@ const createSunburstFocus = <TDatum>(
         })
         .toSorted((left, right) => left.rank - right.rank)
         .map(({ point }) => point),
-    // Hit-tests the latest scene without the presented `points`: findNearestPoint's `allowed` set would reject the tween-time points, so the
-    // renderer's own re-resolve after each render/publish (and its clear on leave) works natively through a zoom.
+
     resolve: (_points, { x, y, maxDistance }) => {
       const scene = options.scene()
 
@@ -60,7 +57,7 @@ const createSunburstFocus = <TDatum>(
 
       return point === null || !options.swept(point.datum, x, y) ? [] : [point]
     },
-  }
+  } satisfies ChartFocusStrategy<TDatum, number, number>
 }
 
 export { createSunburstFocus }

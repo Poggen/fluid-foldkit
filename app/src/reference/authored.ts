@@ -51,7 +51,7 @@ import { layer as MenusLayer } from './authored-menus'
 import { layer as ChartsLayer } from './authored-charts'
 import { layer as ControlsLayer } from './authored-controls'
 import { layer as FormsLayer } from './authored-forms'
-// Derived from Fluid Functionalism cc276ca0 docs. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0 docs. MIT, copyright 2026 Micka Touillaud. */
 import { AccordionLayer, AccordionGroupLayer } from '@foldkit-visuals/fluid/accordion'
 import { layer as PreviewControlsLayer } from '../../../components/docs/preview-controls'
 import { previewCodeTabId } from '../../../components/docs/preview-code-tabs'

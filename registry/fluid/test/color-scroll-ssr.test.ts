@@ -76,14 +76,15 @@ const NumberSsrBlock = Block.make('NumberSsr', {
 const NumberPicker = NumberSsrBlock.makeRequiredFieldBinding(ColorPickerBlock, {
   field: 'picker',
   init: {
-    contextToArgs: (numberDisplay: typeof NumberDisplay.Type): [ColorPickerConfig] => [
-      {
-        id: 'locale-picker',
-        defaultFormat: 'oklch',
-        defaultValue: 'oklch(50% 0.12 120)',
-        numberDisplay,
-      },
-    ],
+    contextToArgs: (numberDisplay: typeof NumberDisplay.Type) =>
+      [
+        {
+          id: 'locale-picker',
+          defaultFormat: 'oklch',
+          defaultValue: 'oklch(50% 0.12 120)',
+          numberDisplay,
+        },
+      ] satisfies [ColorPickerConfig],
   },
 }).withOutMessagePolicy({
   fold: NumberSsrBlock.makeOutMessageFold(ColorPickerBlock, {

@@ -19,7 +19,7 @@ const date = new UTCDate(timestamp)
 
 const localeOptions = { timeZone: undefined }
 
-const checkCallbackDate = (value: Date): void => {
+const checkCallbackDate: (value: Date) => void = (value: Date) => {
   expect(value).toBeInstanceOf(TZDate)
   expect(value.getTime()).toBe(timestamp)
   expect(value.toLocaleString('en-US', localeOptions)).toBe(
@@ -35,26 +35,26 @@ const checkCallbackDate = (value: Date): void => {
   expect(Object.is(value.getTimezoneOffset(), oracle.getTimezoneOffset())).toBe(true)
 }
 
-const matcher = (value: Date): boolean => {
+const matcher: (value: Date) => boolean = (value: Date) => {
   checkCallbackDate(value)
 
   return value.toLocaleDateString('en-US', localeOptions) === '11/10/2026'
 }
 
-const unaryNumber = (value: Date): number => {
+const unaryNumber: (value: Date) => number = (value: Date) => {
   checkCallbackDate(value)
 
   return 1
 }
 
-const binaryNumber = (left: Date, right: Date): number => {
+const binaryNumber: (left: Date, right: Date) => number = (left: Date, right: Date) => {
   checkCallbackDate(left)
   checkCallbackDate(right)
 
   return 0
 }
 
-const binaryBoolean = (left: Date, right: Date): boolean => {
+const binaryBoolean: (left: Date, right: Date) => boolean = (left: Date, right: Date) => {
   checkCallbackDate(left)
   checkCallbackDate(right)
 
@@ -62,7 +62,7 @@ const binaryBoolean = (left: Date, right: Date): boolean => {
 }
 
 it('custom date formatters and labels retain TZDate UTC locale defaults', () => {
-  const formatDate = (value: Date): string => {
+  const formatDate: (value: Date) => string = (value: Date) => {
     checkCallbackDate(value)
 
     return value.toLocaleDateString('en-US', localeOptions)
@@ -86,7 +86,7 @@ it('custom date formatters and labels retain TZDate UTC locale defaults', () => 
 
   const absentMonth: Date | undefined = undefined
 
-  const navigation = (value: Date | undefined): string =>
+  const navigation: (value: Date | undefined) => string = (value: Date | undefined) =>
     value === undefined ? 'none' : formatDate(value)
 
   const custom = {
@@ -122,7 +122,7 @@ it('single-date and range function matchers receive compatible UTC dates', () =>
 })
 
 it('DateLib adapts Date, interval and array arguments only for custom operations', () => {
-  const unaryDate = (value: Date): Date => {
+  const unaryDate: (value: Date) => Date = (value: Date) => {
     checkCallbackDate(value)
 
     return oracle
@@ -140,7 +140,7 @@ it('DateLib adapts Date, interval and array arguments only for custom operations
     return [oracle]
   }
 
-  const arrayDate = (values: Array<Date>): Date => {
+  const arrayDate: (values: Array<Date>) => Date = (values: Array<Date>) => {
     for (const value of values) {
       checkCallbackDate(value)
     }

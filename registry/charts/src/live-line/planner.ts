@@ -1,6 +1,3 @@
-// The per-tick frame of the live chart: bklit's wall-clock x domain, eased y domain, display lerp and the roll's start transform,
-// computed once per new sample (the keyed rolling path, live-tail.ts and live-css.ts all read the one Frame).
-
 import type { LiveRow } from './definition'
 import { FRAME_MS } from './head-ease'
 
@@ -8,79 +5,44 @@ import { niceDomain, pickStep, rollEase } from './live-frame'
 import type { Frame, FrameState, LiveSample, RollClock, RollY, StepPick } from './live-frame'
 import { detectMomentum } from './momentum'
 
-const OVERSCAN_ROWS = 4
+const sampleValue: (sample: LiveSample & Record<string, unknown>, key: string) => number =
+  function sampleValue(sample: LiveSample & Record<string, unknown>, key: string) {
+    const raw = sample[key]
 
-/** The sample's value for the chart's dataKey (a sample may carry extra fields beyond time and value). */
-function sampleValue(sample: LiveSample & Record<string, unknown>, key: string): number {
-  const raw = sample[key]
-
-  return typeof raw === 'number' ? raw : sample.value
-}
-
-/** A drawn-domain change this many px beyond what the continuous ease explains is a jump (liveline.css). */
-const JUMP_PX = 2
-
-const MIN_ROLL_MS = 120
-
-const MAX_ROLL_MS = 2000
-
-type Domain = [number, number]
-
-/** bklit's target range: raw extent padded by 15% (3% when exaggerated). */
-function targetRange(values: ReadonlyArray<number>, exaggerate: boolean): Domain {
-  if (values.length === 0) {
-    return [0, 100]
+    return typeof raw === 'number' ? raw : sample.value
   }
 
-  let min = Number.POSITIVE_INFINITY
-  let max = Number.NEGATIVE_INFINITY
+const targetRange: (values: ReadonlyArray<number>, exaggerate: boolean) => Domain =
+  function targetRange(values: ReadonlyArray<number>, exaggerate: boolean) {
+    if (values.length === 0) {
+      return [0, 100]
+    }
 
-  for (const v of values) {
-    min = Math.min(min, v)
-    max = Math.max(max, v)
+    let min = Number.POSITIVE_INFINITY
+    let max = Number.NEGATIVE_INFINITY
+
+    for (const v of values) {
+      min = Math.min(min, v)
+      max = Math.max(max, v)
+    }
+
+    const raw = max - min
+    const pad = raw * (exaggerate ? 0.03 : 0.15) || (exaggerate ? 0.04 : 10)
+
+    return [min - pad, max + pad]
   }
 
-  const raw = max - min
-  const pad = raw * (exaggerate ? 0.03 : 0.15) || (exaggerate ? 0.04 : 10)
-
-  return [min - pad, max + pad]
-}
-
-export interface LiveFrameArgs {
-  readonly dataIdentity: string
-  readonly width: number
-  readonly data: ReadonlyArray<LiveSample & Readonly<Record<string, unknown>>>
-  readonly value: number
-  readonly dataKey: string
-  readonly top: number
-  readonly windowSecs: number
-  readonly exaggerate: boolean
-  readonly lerpSpeed: number
-  readonly paused: boolean
-  readonly pxPerMs: number
-  readonly plotWidth: number
-  readonly stepSecs: number
-  readonly innerHeight: number
-  readonly minGap: number
-  readonly plotRight: number
-  readonly rollEdge: number
-}
-
-interface TickArgs extends LiveFrameArgs {
-  readonly now: number
-  readonly wallNow: number
-  readonly timelineNow: number
-  readonly displayFrameMs: number
-  readonly introRun: boolean
-}
-
-/** The window's rows: the real samples right-aligned in a constant slot count, left-padded with the first value. */
-function buildRows(
+const buildRows: (
   real: ReadonlyArray<LiveSample>,
   key: string,
   slots: number,
   interval: number,
-): Array<LiveRow> {
+) => Array<LiveRow> = function buildRows(
+  real: ReadonlyArray<LiveSample>,
+  key: string,
+  slots: number,
+  interval: number,
+) {
   const rows: Array<LiveRow> = []
   const head = real.at(0)
   const first = head?.time ?? 0
@@ -91,7 +53,6 @@ function buildRows(
     rows.push({ key: `p${k}`, t: (first - k * interval) * 1000, v: firstValue, pad: true })
   }
 
-  // A sample that is not a finite number (bklit's path then breaks) holds the previous value, so the line never carries NaN.
   let carried = firstValue
 
   for (const p of real) {
@@ -103,14 +64,19 @@ function buildRows(
   return rows
 }
 
-/** The dot's time at rest: now for the seed, otherwise the end of this roll, moved only when a new row arrives. */
-function stampTip(
+const stampTip: (
   st: FrameState,
   seed: boolean,
   newestKey: string,
   rollMs: number,
   wallNow: number,
-): number {
+) => number = function stampTip(
+  st: FrameState,
+  seed: boolean,
+  newestKey: string,
+  rollMs: number,
+  wallNow: number,
+) {
   if (seed || st.tipAt === null || newestKey !== st.newest) {
     st.tipAt = wallNow + (seed ? 0 : rollMs)
   }
@@ -118,15 +84,19 @@ function stampTip(
   return st.tipAt
 }
 
-/** bklit's display value in closed form: target + (shown - target) * (1 - lerp) ** frames, re-anchored when the target or newest sample changes;
- * the value at a sample's arrival is where the tail's dot end starts (live-tail.ts). */
-function advanceDisplay(
+const advanceDisplay: (
   st: FrameState,
   newestKey: string,
   value: number,
   lerpSpeed: number,
   now: number,
-): void {
+) => void = function advanceDisplay(
+  st: FrameState,
+  newestKey: string,
+  value: number,
+  lerpSpeed: number,
+  now: number,
+) {
   const first = st.newest === null
 
   if (first) {
@@ -150,39 +120,39 @@ function advanceDisplay(
   st.dispStamp = now
 }
 
-interface YStep {
-  readonly prev: Domain | null
-  readonly eased: Domain
-  readonly y: Domain
-}
+const easedDomain: (seeding: boolean, prev: Domain | null, target: Domain, f: number) => Domain =
+  function easedDomain(seeding: boolean, prev: Domain | null, target: Domain, f: number) {
+    const [tLo, tHi] = target
 
-/** The raw y state moved a step `f` toward the target: an edge leaving the domain jumps, one entering it closes `f` of the gap. */
-function easedDomain(seeding: boolean, prev: Domain | null, target: Domain, f: number): Domain {
-  const [tLo, tHi] = target
+    if (seeding) {
+      return [Math.min(0, tLo), Math.max(100, tHi)]
+    }
 
-  if (seeding) {
-    return [Math.min(0, tLo), Math.max(100, tHi)]
+    if (!prev) {
+      return [tLo, tHi]
+    }
+
+    return [
+      tLo < prev[0] ? tLo : prev[0] + (tLo - prev[0]) * f,
+      tHi > prev[1] ? tHi : prev[1] + (tHi - prev[1]) * f,
+    ]
   }
 
-  if (!prev) {
-    return [tLo, tHi]
-  }
-
-  return [
-    tLo < prev[0] ? tLo : prev[0] + (tLo - prev[0]) * f,
-    tHi > prev[1] ? tHi : prev[1] + (tHi - prev[1]) * f,
-  ]
-}
-
-/** Eases the raw y state onto the target (the seed frame holds 0..100) and returns the drawn nice domain. */
-function easeY(
+const easeY: (
   st: FrameState,
   seeding: boolean,
   target: Domain,
   lerpSpeed: number,
   now: number,
   displayFrameMs: number,
-): YStep {
+) => YStep = function easeY(
+  st: FrameState,
+  seeding: boolean,
+  target: Domain,
+  lerpSpeed: number,
+  now: number,
+  displayFrameMs: number,
+) {
   const f = 1 - (1 - lerpSpeed) ** (Math.min(now - st.stamp, 2000) / displayFrameMs)
   const prev = st.y
   const eased = easedDomain(seeding, prev, target, f)
@@ -192,37 +162,39 @@ function easeY(
     st.y = eased
   }
 
-  // bklit's y scale is `nice: true`: the drawn domain snaps outward to round values while the eased state stays raw.
   return { prev, eased, y: niceDomain(eased) }
 }
 
-/** Whether the drawn domain jumped this tick: bklit moves an expanding edge and every nice() step at once; the renderer keeps the rolling transform even under y "fixed"
- * (charts-core motion-path.ts:129-135) and the jump's CSS slide (liveline.css bkm-slide) would add to it. */
-function drawnJumped(st: FrameState, step: YStep, target: Domain, ppu: number): boolean {
-  const { prev, eased, y } = step
-  const { drawn } = st
+const drawnJumped: (st: FrameState, step: YStep, target: Domain, ppu: number) => boolean =
+  function drawnJumped(st: FrameState, step: YStep, target: Domain, ppu: number) {
+    const { prev, eased, y } = step
+    const { drawn } = st
 
-  if (prev === null || drawn === null) {
-    return false
+    if (prev === null || drawn === null) {
+      return false
+    }
+
+    return ([0, 1] satisfies readonly [0, 1]).some((i) => {
+      const edge = i === 0 ? target[0] < prev[0] : target[1] > prev[1]
+      const moved = y[i] - drawn[i]
+
+      return moved !== 0 && Math.abs(edge ? moved : moved - (eased[i] - prev[i])) * ppu > JUMP_PX
+    })
   }
 
-  return ([0, 1] satisfies readonly [0, 1]).some((i) => {
-    const edge = i === 0 ? target[0] < prev[0] : target[1] > prev[1]
-    const moved = y[i] - drawn[i]
-
-    return moved !== 0 && Math.abs(edge ? moved : moved - (eased[i] - prev[i])) * ppu > JUMP_PX
-  })
-}
-
-/** The path's rolling transform maps this tick's y to the previous tick's (linear in s and t over the roll); the same affine as introStart from the previous drawn domain.
- * A jump snaps the path instead, and the intro roll has its own start. */
-function rollingRy(
+const rollingRy: (
   st: FrameState,
   y: Domain,
   intro: boolean,
   top: number,
   innerHeight: number,
-): RollY {
+) => RollY = function rollingRy(
+  st: FrameState,
+  y: Domain,
+  intro: boolean,
+  top: number,
+  innerHeight: number,
+) {
   const a = st.drawn
 
   if (!a || st.jump || intro) {
@@ -235,8 +207,10 @@ function rollingRy(
   return { s, t: top * (1 - s) + (innerHeight * (a[1] - y[1])) / span }
 }
 
-/** Area floor stays constant between updates (rolling contract); only moves when the domain leaves it. */
-function settleFloor(st: FrameState, floorRef: Domain): number {
+const settleFloor: (st: FrameState, floorRef: Domain) => number = function settleFloor(
+  st: FrameState,
+  floorRef: Domain,
+) {
   const floorSpan = floorRef[1] - floorRef[0]
 
   if (st.floor === null || floorRef[0] < st.floor || floorRef[0] - st.floor > 2 * floorSpan) {
@@ -246,42 +220,36 @@ function settleFloor(st: FrameState, floorRef: Domain): number {
   return st.floor
 }
 
-/** Height of the block under the tail's sloped end at rest over its height at the start of the tick (live-tail.ts). */
-function tailRatio(
+const tailRatio: (
   dyPx: number,
   value: number,
   floor: number,
   y: Domain,
   innerHeight: number,
-): number {
+) => number = function tailRatio(
+  dyPx: number,
+  value: number,
+  floor: number,
+  y: Domain,
+  innerHeight: number,
+) {
   const rest = ((value - floor) * innerHeight) / (y[1] - y[0] || 1)
 
   return dyPx > 0 && rest - dyPx > 1 ? rest / (rest - dyPx) : 1
 }
 
-/** The path's intro start transform: the final scene seen through the seed's y scale (motion-path.ts fitAffine of the retained points),
- * so the tail can start from the same place and ride the same easing. */
-function introStart(st: FrameState, y: Domain, top: number, innerHeight: number): RollY {
-  const seedY = st.seedY ?? y
-  const s = (y[1] - y[0]) / (seedY[1] - seedY[0] || 1)
+const introStart: (st: FrameState, y: Domain, top: number, innerHeight: number) => RollY =
+  function introStart(st: FrameState, y: Domain, top: number, innerHeight: number) {
+    const seedY = st.seedY ?? y
+    const s = (y[1] - y[0]) / (seedY[1] - seedY[0] || 1)
 
-  return { s, t: top * (1 - s) + (innerHeight * (seedY[1] - y[1])) / (seedY[1] - seedY[0] || 1) }
-}
+    return { s, t: top * (1 - s) + (innerHeight * (seedY[1] - y[1])) / (seedY[1] - seedY[0] || 1) }
+  }
 
-interface RollPlan {
-  readonly xDomain: Domain
-  readonly pxPerMs: number
-  readonly now: number
-  readonly timelineNow: number
-  readonly intro: boolean
-  readonly introY: RollY
-  readonly lerpSpeed: number
-  readonly rollMs: number
-}
-
-/** The path's start transform for this roll (Frame.roll): the renderer composes it with the new plan, sampling the remainder at the latest frame time on the previous roll's clock and easing.
- * A jump snaps the path (fallback "snap"). */
-function nextRoll(st: FrameState, p: RollPlan): RollClock {
+const nextRoll: (st: FrameState, p: RollPlan) => RollClock = function nextRoll(
+  st: FrameState,
+  p: RollPlan,
+) {
   const shift = st.x0 === null ? 0 : (p.xDomain[0] - st.x0) * p.pxPerMs
   const at = p.timelineNow
   const r = st.roll
@@ -308,20 +276,19 @@ function nextRoll(st: FrameState, p: RollPlan): RollClock {
   }
 }
 
-interface TailSplit {
-  readonly ak: number
-  readonly b0: number
-}
-
-/** A spans N-1 (xa) to N, B spans N to the dot. bklit draws a sample `now - time` left of the dot, capped at it (live-line-chart.tsx:475-490): an on-time sample enters at the dot;
- * an older one (the seed's newest) starts on its clock position, A rigid and B part grown (b0). */
-function tailSplit(
+const tailSplit: (
   newestT: number,
   prevT: number,
   tipT: number,
   pxPerMs: number,
   rollX: number,
-): TailSplit {
+) => TailSplit = function tailSplit(
+  newestT: number,
+  prevT: number,
+  tipT: number,
+  pxPerMs: number,
+  rollX: number,
+) {
   const aw = (newestT - prevT) * pxPerMs
   const bw = (tipT - newestT) * pxPerMs
   const b0 = bw > 0.5 ? Math.min(1, Math.max(0, (bw - rollX) / bw)) : 0
@@ -330,8 +297,11 @@ function tailSplit(
   return { ak, b0 }
 }
 
-/** One tick's frame, advancing the rolling state in the order bklit's loop does. */
-function buildFrame(a: TickArgs, st: FrameState, yPick: StepPick): Frame {
+const buildFrame: (a: TickArgs, st: FrameState, yPick: StepPick) => Frame = function buildFrame(
+  a: TickArgs,
+  st: FrameState,
+  yPick: StepPick,
+) {
   const {
     data,
     value,
@@ -345,7 +315,6 @@ function buildFrame(a: TickArgs, st: FrameState, yPick: StepPick): Frame {
     introRun,
   } = a
 
-  // Slot count and pad spacing are fixed per window size: the keyed row count must not drift.
   if (st.slots === 0 || st.windowSecs !== a.windowSecs) {
     st.interval = a.stepSecs
     st.slots = Math.ceil(a.windowSecs / st.interval) + OVERSCAN_ROWS
@@ -353,23 +322,21 @@ function buildFrame(a: TickArgs, st: FrameState, yPick: StepPick): Frame {
   }
 
   const { interval } = st
-  // The seed frame omits the newest row: the first update then appends it, a keyed roll the native planner can run.
+
   const seed = !introRun && st.y === null
   const real = (seed ? data.slice(0, -1) : data).slice(-st.slots)
   const rows = buildRows(real, key, st.slots, interval)
-  // bklit's x domain ends at the wall clock: a sample sits `now - time` left of the dot (live-line-chart.tsx:126, :475-490). A frame is that view at
-  // the end of its roll (`wallNow + rollMs`), keyed on sample times so a late sample cannot collapse the tail's N -> dot stretch (getLiveLineSeed).
+
   const newestT = (real.at(-1)?.time ?? 0) * 1000
   const rollMs = Math.min(MAX_ROLL_MS, Math.max(MIN_ROLL_MS, interval * 1000))
   const newestKey = rows.at(-1)?.key ?? ''
   const tipT = stampTip(st, seed, newestKey, rollMs, a.wallNow)
   const xEnd = tipT - 2 * interval * 1000
   const xDomain: Domain = [xEnd - a.plotWidth / pxPerMs, xEnd - (plotRight - rollEdge) / pxPerMs]
-  // N-1 later than the slack leaves the path short of the renderer's edge, which snaps it: carry x by the jump's CSS slide.
+
   const prevT = (real.at(-2)?.time ?? real.at(-1)?.time ?? 0) * 1000
   const xa = plotRight - (xEnd - prevT) * pxPerMs
 
-  // bklit ranges over every sample it is given (its buffer holds twice the window), not just the rows drawn here.
   const target = targetRange(
     [...data.map((p) => sampleValue(p, key)), value].filter(Number.isFinite),
     a.exaggerate,
@@ -427,8 +394,7 @@ function buildFrame(a: TickArgs, st: FrameState, yPick: StepPick): Frame {
     yDomain: y,
     areaFloor: floor,
     tip: { t: tipT, v: value },
-    // bklit detects on its context data: the window's samples plus two virtual points at the lerped display value (live-line-chart.tsx:
-    // 469-490, live-line.tsx:144-146). The display value settles on `value`; the switch lands at tick start, not mid-lerp.
+
     momentum: detectMomentum([...real, { [key]: value }, { [key]: value }], key),
     rollMs,
     seed,
@@ -440,7 +406,7 @@ function buildFrame(a: TickArgs, st: FrameState, yPick: StepPick): Frame {
     dy: dyPx,
     k: kRatio,
     yTarget: target,
-    // bklit's first render picks over its 0..100 domain (live-line-chart.tsx:349-355, live-y-axis.tsx:117-132); later picks are LiveYLabels'.
+
     interval:
       yPick.raw === null ? pickStep(yPick, [0, 100], innerHeight, a.minGap) : yPick.interval,
   }
@@ -450,7 +416,7 @@ function buildFrame(a: TickArgs, st: FrameState, yPick: StepPick): Frame {
   return out
 }
 
-export function initialLiveState(): FrameState {
+export const initialLiveState: () => FrameState = function initialLiveState() {
   return {
     slots: 0,
     interval: 1,
@@ -474,6 +440,66 @@ export function initialLiveState(): FrameState {
     parity: 0,
     tipAt: null,
   }
+}
+
+const OVERSCAN_ROWS = 4
+
+const JUMP_PX = 2
+
+const MIN_ROLL_MS = 120
+
+const MAX_ROLL_MS = 2000
+
+type Domain = [number, number]
+
+export interface LiveFrameArgs {
+  readonly dataIdentity: string
+  readonly width: number
+  readonly data: ReadonlyArray<LiveSample & Readonly<Record<string, unknown>>>
+  readonly value: number
+  readonly dataKey: string
+  readonly top: number
+  readonly windowSecs: number
+  readonly exaggerate: boolean
+  readonly lerpSpeed: number
+  readonly paused: boolean
+  readonly pxPerMs: number
+  readonly plotWidth: number
+  readonly stepSecs: number
+  readonly innerHeight: number
+  readonly minGap: number
+  readonly plotRight: number
+  readonly rollEdge: number
+}
+
+interface TickArgs extends LiveFrameArgs {
+  readonly now: number
+  readonly wallNow: number
+  readonly timelineNow: number
+  readonly displayFrameMs: number
+  readonly introRun: boolean
+}
+
+interface YStep {
+  readonly prev: Domain | null
+  readonly eased: Domain
+  readonly y: Domain
+}
+
+interface RollPlan {
+  readonly xDomain: Domain
+  readonly pxPerMs: number
+  readonly now: number
+  readonly timelineNow: number
+  readonly intro: boolean
+  readonly introY: RollY
+  readonly lerpSpeed: number
+  readonly rollMs: number
+}
+
+interface TailSplit {
+  readonly ak: number
+  readonly b0: number
 }
 
 export function planLiveFrame(args: TickArgs, previous: FrameState, previousPick: StepPick) {

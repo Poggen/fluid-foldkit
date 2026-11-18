@@ -13,25 +13,11 @@ import { renderPatternPreset } from '../kit/pattern/presets'
 import { scopedPatternId } from '../kit/pattern/resources'
 import type { PatternResource } from '../kit/pattern/types'
 
-export const referencePatternId = (index: number): string => `refarea-pattern-${index}`
-
-const usesPattern = (props: ReferenceAreaProps): boolean =>
-  props.pattern !== undefined && props.pattern !== 'none'
-
-function contextBound(value: number | undefined): number | null {
-  if (value === undefined || !Number.isFinite(value)) {
-    return null
-  }
-
-  return value === 0 ? 0 : value
-}
-
-const contextAxis = (value: string | number | undefined): string =>
-  Predicate.isNumber(value) && !Number.isFinite(value) ? 'left' : String(value ?? 'left')
-
-export function referenceAreaConfigs<Row>(
+export const referenceAreaConfigs: <Row>(
   children: ReadonlyArray<CartesianLayer<Row>>,
-): ReadonlyArray<ReferenceAreaConfig> {
+) => ReadonlyArray<ReferenceAreaConfig> = function referenceAreaConfigs<Row>(
+  children: ReadonlyArray<CartesianLayer<Row>>,
+) {
   return children.flatMap((child) => {
     if (child.kind !== 'referenceArea') {
       return []
@@ -47,58 +33,16 @@ export function referenceAreaConfigs<Row>(
         axisLabelColor: props.axisLabelColor ?? null,
       },
     ]
-  })
+  }) satisfies ReadonlyArray<ReferenceAreaConfig>
 }
 
-function referencePatternOptions(props: ReferenceAreaProps): PatternPresetOptions {
-  let options: PatternPresetOptions = {
-    color: props.patternColor ?? 'var(--chart-foreground-muted)',
-    scale: props.patternScale ?? 1,
-  }
-
-  const strokeWidth = props.patternStrokeWidth
-
-  if (strokeWidth !== undefined) {
-    options = { ...options, strokeWidth }
-  }
-
-  const radius = props.patternRadius
-
-  if (radius !== undefined) {
-    options = { ...options, radius }
-  }
-
-  const complement = props.patternComplement
-
-  if (complement !== undefined) {
-    options = { ...options, complement }
-  }
-
-  const fill = props.patternFill
-
-  if (fill !== undefined) {
-    options = { ...options, fill }
-  }
-
-  const dotFill = props.patternDotFill
-
-  if (dotFill !== undefined) {
-    options = { ...options, dotFill }
-  }
-
-  const tileBackground = props.patternTileBackground
-
-  if (tileBackground !== undefined) {
-    options = { ...options, tileBackground }
-  }
-
-  return options
-}
-
-export function referenceAreaResources<Row>(
+export const referenceAreaResources: <Row>(
   children: ReadonlyArray<CartesianLayer<Row>>,
   margin: Margin,
-): ReadonlyArray<PatternResource> {
+) => ReadonlyArray<PatternResource> = function referenceAreaResources<Row>(
+  children: ReadonlyArray<CartesianLayer<Row>>,
+  margin: Margin,
+) {
   return children
     .filter((child) => child.kind === 'referenceArea')
     .flatMap(({ props }, index) => {
@@ -122,8 +66,74 @@ export function referenceAreaResources<Row>(
           translate: [margin.left, margin.top] satisfies readonly [number, number],
         },
       ]
-    })
+    }) satisfies ReadonlyArray<PatternResource>
 }
+
+const contextBound: (value: number | undefined) => number | null = function contextBound(
+  value: number | undefined,
+) {
+  if (value === undefined || !Number.isFinite(value)) {
+    return null
+  }
+
+  return value === 0 ? 0 : value
+}
+
+const referencePatternOptions: (props: ReferenceAreaProps) => PatternPresetOptions =
+  function referencePatternOptions(props: ReferenceAreaProps) {
+    let options: PatternPresetOptions = {
+      color: props.patternColor ?? 'var(--chart-foreground-muted)',
+      scale: props.patternScale ?? 1,
+    }
+
+    const strokeWidth = props.patternStrokeWidth
+
+    if (strokeWidth !== undefined) {
+      options = { ...options, strokeWidth }
+    }
+
+    const radius = props.patternRadius
+
+    if (radius !== undefined) {
+      options = { ...options, radius }
+    }
+
+    const complement = props.patternComplement
+
+    if (complement !== undefined) {
+      options = { ...options, complement }
+    }
+
+    const fill = props.patternFill
+
+    if (fill !== undefined) {
+      options = { ...options, fill }
+    }
+
+    const dotFill = props.patternDotFill
+
+    if (dotFill !== undefined) {
+      options = { ...options, dotFill }
+    }
+
+    const tileBackground = props.patternTileBackground
+
+    if (tileBackground !== undefined) {
+      options = { ...options, tileBackground }
+    }
+
+    return options
+  }
+
+export const referencePatternId: (index: number) => string = (index: number) =>
+  `refarea-pattern-${index}`
+
+const usesPattern: (props: ReferenceAreaProps) => boolean = (props: ReferenceAreaProps) =>
+  props.pattern !== undefined && props.pattern !== 'none'
+
+const contextAxis: (value: string | number | undefined) => string = (
+  value: string | number | undefined,
+) => (Predicate.isNumber(value) && !Number.isFinite(value) ? 'left' : String(value ?? 'left'))
 
 interface ReferenceAreaContext {
   readonly index: number
@@ -143,7 +153,12 @@ interface ReferenceMarkerGeometry {
 }
 
 function referenceMarkers({ id, mid, size, fill, yScaleId, top, bottom }: ReferenceMarkerGeometry) {
-  const triangle = (x: number, key: string, y: number, direction: 1 | -1): SceneNode => ({
+  const triangle: (x: number, key: string, y: number, direction: 1 | -1) => SceneNode = (
+    x: number,
+    key: string,
+    y: number,
+    direction: 1 | -1,
+  ) => ({
     kind: 'area',
     key: `${id}:${key}`,
     points: [

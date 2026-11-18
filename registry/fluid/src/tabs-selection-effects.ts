@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Effect, Option, Schema } from 'effect'
 import * as Render from 'foldkit/render'
 import { TabsBlock, Message } from './tabs-definition.js'

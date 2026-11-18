@@ -1,6 +1,6 @@
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
 import { fontWeights } from './lib/font-weight.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { Attribute, ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
 import { Button } from './button.js'
 import type { ButtonProps } from './button.js'

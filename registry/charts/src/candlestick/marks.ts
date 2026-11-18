@@ -4,33 +4,9 @@ import { toDate } from '../cartesian/series'
 import { candleBody, candleGeometryClass, candleGeometryCss } from './body'
 import type { CandleGeometry, CandleProjection } from './body'
 
-const CANDLE_MARK_ID = 'candles'
-
-export interface OHLCValues extends Readonly<Record<string, unknown>> {
-  readonly open: number
-  readonly high: number
-  readonly low: number
-  readonly close: number
-}
-
-interface CandleMarkInput<Row extends OHLCValues> {
-  readonly id: string
-  readonly onProjected: (projection: CandleProjection) => void
-  readonly rows: ReadonlyArray<Row>
-  readonly xKey: string
-  readonly positiveFill: string
-  readonly negativeFill: string
-  readonly candleWidth: number
-  readonly entrance: boolean
-  readonly generation: number
-  readonly bodyPatternPositive: string | undefined
-  readonly bodyPatternNegative: string | undefined
-  readonly insideStrokeWidth: number
-  readonly solidPositiveFill: string
-  readonly solidNegativeFill: string
-}
-
-export function candleMarks<Row extends OHLCValues>({
+export const candleMarks: <Row extends OHLCValues>(
+  argument0: CandleMarkInput<Row>,
+) => Array<ChartMark<Row, Date, number>> = function candleMarks<Row extends OHLCValues>({
   id,
   onProjected,
   rows,
@@ -45,7 +21,7 @@ export function candleMarks<Row extends OHLCValues>({
   insideStrokeWidth,
   solidPositiveFill,
   solidNegativeFill,
-}: CandleMarkInput<Row>): Array<ChartMark<Row, Date, number>> {
+}: CandleMarkInput<Row>) {
   return [
     createMark<Row, Date, number>(
       () => ({
@@ -172,5 +148,31 @@ export function candleMarks<Row extends OHLCValues>({
       }),
       false,
     ),
-  ]
+  ] satisfies Array<ChartMark<Row, Date, number>>
+}
+
+const CANDLE_MARK_ID = 'candles'
+
+export interface OHLCValues extends Readonly<Record<string, unknown>> {
+  readonly open: number
+  readonly high: number
+  readonly low: number
+  readonly close: number
+}
+
+interface CandleMarkInput<Row extends OHLCValues> {
+  readonly id: string
+  readonly onProjected: (projection: CandleProjection) => void
+  readonly rows: ReadonlyArray<Row>
+  readonly xKey: string
+  readonly positiveFill: string
+  readonly negativeFill: string
+  readonly candleWidth: number
+  readonly entrance: boolean
+  readonly generation: number
+  readonly bodyPatternPositive: string | undefined
+  readonly bodyPatternNegative: string | undefined
+  readonly insideStrokeWidth: number
+  readonly solidPositiveFill: string
+  readonly solidNegativeFill: string
 }

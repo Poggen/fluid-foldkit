@@ -122,7 +122,7 @@ export function createTablePresentation() {
       }),
     ),
   )
-  const node = (html: Html, inputs: Presentation): Html => {
+  const node: (html: Html, inputs: Presentation) => Html = (html: Html, inputs: Presentation) => {
     if (html === null) return null
     const previous = html.data?.hook
     return {

@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { InputMessageRegionBlock, Payload } from './input-message-region.js'
 import {
   makeRequiredFieldBinding,
@@ -14,48 +14,51 @@ import { HoverHighlightBlock } from './hover-highlight.js'
 export const FilesRegionBinding = makeRequiredFieldBinding(InputMessageRegionBlock, {
   field: 'filesRegion',
   init: {
-    contextToArgs: (config: InputMessageConfig): [InputMessageRegionConfig] => [
-      {
-        id: `${config.id}-files-region`,
-        payload: Payload.cases.Files.make({ items: config.files ?? [] }),
-        open: (config.files?.length ?? 0) > 0,
-      },
-    ],
+    contextToArgs: (config: InputMessageConfig) =>
+      [
+        {
+          id: `${config.id}-files-region`,
+          payload: Payload.cases.Files.make({ items: config.files ?? [] }),
+          open: (config.files?.length ?? 0) > 0,
+        },
+      ] satisfies [InputMessageRegionConfig],
   },
 })
 
 export const QueueRegionBinding = makeRequiredFieldBinding(InputMessageRegionBlock, {
   field: 'queueRegion',
   init: {
-    contextToArgs: (config: InputMessageConfig): [InputMessageRegionConfig] => [
-      {
-        id: `${config.id}-queue-region`,
-        payload: Payload.cases.Queue.make({ items: config.queue ?? [] }),
-        mounted:
-          config.status !== undefined &&
-          (config.supportsQueue ?? false) &&
-          config.showQueue !== false,
-        open:
-          (config.queue?.length ?? 0) > 0 &&
-          config.status !== undefined &&
-          (config.supportsQueue ?? false) &&
-          config.showQueue !== false,
-      },
-    ],
+    contextToArgs: (config: InputMessageConfig) =>
+      [
+        {
+          id: `${config.id}-queue-region`,
+          payload: Payload.cases.Queue.make({ items: config.queue ?? [] }),
+          mounted:
+            config.status !== undefined &&
+            (config.supportsQueue ?? false) &&
+            config.showQueue !== false,
+          open:
+            (config.queue?.length ?? 0) > 0 &&
+            config.status !== undefined &&
+            (config.supportsQueue ?? false) &&
+            config.showQueue !== false,
+        },
+      ] satisfies [InputMessageRegionConfig],
   },
 })
 
 export const SuggestionsRegion = makeRequiredFieldBinding(InputMessageRegionBlock, {
   field: 'suggestionsRegion',
   init: {
-    contextToArgs: (config: InputMessageConfig): [InputMessageRegionConfig] => [
-      {
-        id: `${config.id}-suggestions-region`,
-        payload: Payload.cases.Suggestions.make({ items: config.suggestions ?? [] }),
-        mounted: (config.suggestions?.length ?? 0) > 0,
-        open: (config.suggestions?.length ?? 0) > 0 && config.value === '',
-      },
-    ],
+    contextToArgs: (config: InputMessageConfig) =>
+      [
+        {
+          id: `${config.id}-suggestions-region`,
+          payload: Payload.cases.Suggestions.make({ items: config.suggestions ?? [] }),
+          mounted: (config.suggestions?.length ?? 0) > 0,
+          open: (config.suggestions?.length ?? 0) > 0 && config.value === '',
+        },
+      ] satisfies [InputMessageRegionConfig],
   },
 }).withOutMessagePolicy({
   fold: makeOutMessageFold(InputMessageRegionBlock, {

@@ -13,12 +13,18 @@ export interface SunburstHintProps {
   children?: NativeContent | ((context: SunburstHintContext) => NativeContent)
 }
 
-export const SunburstHint = (props: SunburstHintProps = {}): SunburstCarrier => ({
-  role: 'hint',
-  props,
-})
+export const SunburstHint: (props?: SunburstHintProps) => SunburstCarrier = (
+  props: SunburstHintProps = {},
+) =>
+  ({
+    role: 'hint',
+    props,
+  }) satisfies SunburstCarrier
 
-export const hintTextFor = (arc: ArcDatum | null, focus: Focus): string =>
+export const hintTextFor: (arc: ArcDatum | null, focus: Focus) => string = (
+  arc: ArcDatum | null,
+  focus: Focus,
+) =>
   arc === null
     ? focus.depth === 0
       ? 'Click a segment to zoom in · hover to inspect'

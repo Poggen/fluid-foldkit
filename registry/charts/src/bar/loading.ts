@@ -4,17 +4,20 @@ import type { NativeObservation } from '../cartesian/native-resource'
 
 const NS = 'http://www.w3.org/2000/svg'
 
-const node = <Tag extends keyof SVGElementTagNameMap>(
+const node: <Tag extends keyof SVGElementTagNameMap>(
+  tag: Tag,
+  attrs?: Readonly<Record<string, string | number>>,
+) => SVGElementTagNameMap[Tag] = <Tag extends keyof SVGElementTagNameMap>(
   tag: Tag,
   attrs: Readonly<Record<string, string | number>> = {},
-): SVGElementTagNameMap[Tag] => {
+) => {
   const element = document.createElementNS(NS, tag)
 
   for (const [key, value] of Object.entries(attrs)) {
     element.setAttribute(key, String(value))
   }
 
-  return element
+  return element satisfies SVGElementTagNameMap[Tag]
 }
 
 export function barLoading<Row>(element: HTMLElement, id: string, observe: NativeObservation) {

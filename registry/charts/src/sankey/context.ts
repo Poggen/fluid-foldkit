@@ -8,6 +8,100 @@ import type { State } from './block'
 import { bumpPath } from './bump'
 import { sankeyPlan } from './build'
 
+export const sankeyContext: <Action>(
+  props: SankeyChartProps,
+  state: State,
+  actions: SankeyActions<Action>,
+  container: HTMLDivElement | null,
+) => SankeyContextValue<Action> = function sankeyContext<Action>(
+  props: SankeyChartProps,
+  state: State,
+  actions: SankeyActions<Action>,
+  container: HTMLDivElement | null,
+) {
+  const { data, margin } = sankeyPlan(props),
+    innerWidth = state.width - margin.left - margin.right,
+    innerHeight = state.height - margin.top - margin.bottom
+
+  const graph =
+    data.links.length === 0
+      ? { nodes: [], links: [] }
+      : sankey<SankeyNodeDatum, SankeyLayoutLinkDatum>()
+          .nodeWidth(props.nodeWidth ?? 16)
+          .nodePadding(props.nodePadding ?? 24)
+          .nodeAlign(sankeyCenter)
+          .extent([
+            [0, 0],
+            [innerWidth, innerHeight],
+          ])({
+          nodes: data.nodes.map((node) => ({ ...node })),
+          links: data.links.map((link) => ({ ...link })),
+        })
+
+  let tooltipData: SankeyTooltipData | null = null
+
+  if (state.tooltipIndex !== null) {
+    if (state.tooltipKind === 'node') {
+      const node = graph.nodes.at(state.tooltipIndex)
+
+      if (node !== undefined)
+        tooltipData = {
+          type: 'node',
+          nodeIndex: state.tooltipIndex,
+          x: state.tooltipAnchor?.x ?? 0,
+          y: state.tooltipAnchor?.y ?? 0,
+          data: node,
+        }
+    } else if (state.tooltipKind === 'link') {
+      const link = graph.links.at(state.tooltipIndex)
+
+      if (link !== undefined && typeof link.source === 'object' && typeof link.target === 'object')
+        tooltipData = {
+          type: 'link',
+          linkIndex: state.tooltipIndex,
+          x: state.tooltipAnchor?.x ?? 0,
+          y: state.tooltipAnchor?.y ?? 0,
+          data: link,
+        }
+    }
+  }
+
+  return {
+    graph,
+    nodes: graph.nodes,
+    links: graph.links,
+    width: state.width,
+    height: state.height,
+    innerWidth,
+    innerHeight,
+    margin,
+    hoveredNodeIndex:
+      props.hoveredNodeIndex === undefined ? state.hoveredNodeIndex : props.hoveredNodeIndex,
+    hoveredLinkIndex: state.hoveredLinkIndex,
+    setHoveredNodeIndex: actions.focusNode,
+    setHoveredLinkIndex: actions.focusLink,
+    tooltipData,
+    requestTooltip: (request) => actions.tooltip?.(request),
+    containerRef: { current: container },
+    isLoaded: state.entered,
+    animationDuration: props.animationDuration ?? 1100,
+    ...(props.enterTransition === undefined ? {} : { enterTransition: props.enterTransition }),
+    revealEpoch: state.epoch,
+    mousePos: null,
+    createPath: (link) => {
+      const source = link.source,
+        target = link.target
+
+      return typeof source === 'object' && typeof target === 'object'
+        ? bumpPath([
+            [source.x1 ?? 0, link.y0 ?? 0],
+            [target.x0 ?? 0, link.y1 ?? 0],
+          ])
+        : ''
+    },
+  } satisfies SankeyContextValue<Action>
+}
+
 interface SankeyLayoutLinkDatum {
   readonly value: number
   readonly [key: string]: unknown
@@ -89,102 +183,18 @@ export interface SankeyActions<Action = void> {
   readonly tooltip?: (request: SankeyTooltipRequest) => Action
 }
 
-export function sankeyContext<Action>(
-  props: SankeyChartProps,
-  state: State,
-  actions: SankeyActions<Action>,
-  container: HTMLDivElement | null,
-): SankeyContextValue<Action> {
-  const { data, margin } = sankeyPlan(props),
-    innerWidth = state.width - margin.left - margin.right,
-    innerHeight = state.height - margin.top - margin.bottom
+export const useSankey: <Action>(
+  value: SankeyContextValue<Action>,
+) => SankeyContextValue<Action> = <Action>(value: SankeyContextValue<Action>) =>
+  value satisfies SankeyContextValue<Action>
 
-  const graph =
-    data.links.length === 0
-      ? { nodes: [], links: [] }
-      : sankey<SankeyNodeDatum, SankeyLayoutLinkDatum>()
-          .nodeWidth(props.nodeWidth ?? 16)
-          .nodePadding(props.nodePadding ?? 24)
-          .nodeAlign(sankeyCenter)
-          .extent([
-            [0, 0],
-            [innerWidth, innerHeight],
-          ])({
-          nodes: data.nodes.map((node) => ({ ...node })),
-          links: data.links.map((link) => ({ ...link })),
-        })
-
-  let tooltipData: SankeyTooltipData | null = null
-
-  if (state.tooltipIndex !== null) {
-    if (state.tooltipKind === 'node') {
-      const node = graph.nodes.at(state.tooltipIndex)
-
-      if (node !== undefined)
-        tooltipData = {
-          type: 'node',
-          nodeIndex: state.tooltipIndex,
-          x: state.tooltipAnchor?.x ?? 0,
-          y: state.tooltipAnchor?.y ?? 0,
-          data: node,
-        }
-    } else if (state.tooltipKind === 'link') {
-      const link = graph.links.at(state.tooltipIndex)
-
-      if (link !== undefined && typeof link.source === 'object' && typeof link.target === 'object')
-        tooltipData = {
-          type: 'link',
-          linkIndex: state.tooltipIndex,
-          x: state.tooltipAnchor?.x ?? 0,
-          y: state.tooltipAnchor?.y ?? 0,
-          data: link,
-        }
-    }
-  }
-
-  return {
-    graph,
-    nodes: graph.nodes,
-    links: graph.links,
-    width: state.width,
-    height: state.height,
-    innerWidth,
-    innerHeight,
-    margin,
-    hoveredNodeIndex:
-      props.hoveredNodeIndex === undefined ? state.hoveredNodeIndex : props.hoveredNodeIndex,
-    hoveredLinkIndex: state.hoveredLinkIndex,
-    setHoveredNodeIndex: actions.focusNode,
-    setHoveredLinkIndex: actions.focusLink,
-    tooltipData,
-    requestTooltip: (request) => actions.tooltip?.(request),
-    containerRef: { current: container },
-    isLoaded: state.entered,
-    animationDuration: props.animationDuration ?? 1100,
-    ...(props.enterTransition === undefined ? {} : { enterTransition: props.enterTransition }),
-    revealEpoch: state.epoch,
-    mousePos: null,
-    createPath: (link) => {
-      const source = link.source,
-        target = link.target
-
-      return typeof source === 'object' && typeof target === 'object'
-        ? bumpPath([
-            [source.x1 ?? 0, link.y0 ?? 0],
-            [target.x0 ?? 0, link.y1 ?? 0],
-          ])
-        : ''
-    },
-  }
-}
-
-export const useSankey = <Action>(value: SankeyContextValue<Action>): SankeyContextValue<Action> =>
-  value
-
-export const SankeyProvider = <Action>({
+export const SankeyProvider: <Action>(argument0: {
+  readonly value: SankeyContextValue<Action>
+  readonly children: (value: SankeyContextValue<Action>) => Html
+}) => Html = <Action>({
   value,
   children,
 }: {
   readonly value: SankeyContextValue<Action>
   readonly children: (value: SankeyContextValue<Action>) => Html
-}): Html => children(value)
+}) => children(value) satisfies Html

@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { expect, it, vi } from 'vitest'
 import { it as effectTest } from '@effect/vitest'
@@ -23,7 +24,9 @@ const data = [
   { label: 'C', value: 1, maxValue: 2, color: 'blue' },
 ]
 
-const areas = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<SceneNode> =>
+const areas: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<SceneNode> = (
+  nodes: ReadonlyArray<SceneNode>,
+) =>
   nodes.flatMap((node) =>
     node.kind === 'group' ? areas(node.children) : node.kind === 'area' ? [node] : [],
   )
@@ -182,7 +185,7 @@ effectTest.effect(
       if (descriptor === undefined || !Reflect.deleteProperty(Element.prototype, 'animate')) {
         throw new Error('Ring lifecycle test requires scoped WAAPI capability removal')
       }
-      // HappyDOM cancellation rejects; exercise the supported JS fallback in this test only.
+
       try {
         const host = document.createElement('div')
         document.body.append(host)

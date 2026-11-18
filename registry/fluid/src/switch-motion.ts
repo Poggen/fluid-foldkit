@@ -97,6 +97,53 @@ export function createSwitchMotionScope(id: string) {
       nodes.set(node.elm, mount(node.elm, animation))
     }
   }
+  const node: (vnode: Html, animation: SwitchAnimation) => Html = (
+    vnode: Html,
+    animation: SwitchAnimation,
+  ) => {
+    if (!active) {
+      throw new Error(`Switch motion ${id} requires its owning Layer`)
+    }
+
+    if (vnode === null) {
+      return null satisfies Html
+    }
+
+    const previous = vnode.data?.hook
+
+    return {
+      ...vnode,
+      data: {
+        ...vnode.data,
+        hook: {
+          ...previous,
+          insert(node) {
+            previous?.insert?.(node)
+            synchronize(node, animation)
+          },
+          prepatch(oldNode, node) {
+            previous?.prepatch?.(oldNode, node)
+
+            if (oldNode.data?.style !== undefined) {
+              node.data = { ...node.data, style: oldNode.data.style }
+            }
+          },
+          postpatch(oldNode, node) {
+            previous?.postpatch?.(oldNode, node)
+            synchronize(node, animation)
+          },
+          destroy(node) {
+            if (node.elm instanceof HTMLElement) {
+              nodes.get(node.elm)?.dispose()
+              nodes.delete(node.elm)
+            }
+
+            previous?.destroy?.(node)
+          },
+        },
+      },
+    } satisfies Html
+  }
 
   return {
     layer: Layer.effectDiscard(
@@ -119,50 +166,6 @@ export function createSwitchMotionScope(id: string) {
           }),
       ),
     ),
-    node: (vnode: Html, animation: SwitchAnimation): Html => {
-      if (!active) {
-        throw new Error(`Switch motion ${id} requires its owning Layer`)
-      }
-
-      if (vnode === null) {
-        return null
-      }
-
-      const previous = vnode.data?.hook
-
-      return {
-        ...vnode,
-        data: {
-          ...vnode.data,
-          hook: {
-            ...previous,
-            insert(node) {
-              previous?.insert?.(node)
-              synchronize(node, animation)
-            },
-            prepatch(oldNode, node) {
-              previous?.prepatch?.(oldNode, node)
-
-              // The engine must retarget from its current value, not a patched target style.
-              if (oldNode.data?.style !== undefined) {
-                node.data = { ...node.data, style: oldNode.data.style }
-              }
-            },
-            postpatch(oldNode, node) {
-              previous?.postpatch?.(oldNode, node)
-              synchronize(node, animation)
-            },
-            destroy(node) {
-              if (node.elm instanceof HTMLElement) {
-                nodes.get(node.elm)?.dispose()
-                nodes.delete(node.elm)
-              }
-
-              previous?.destroy?.(node)
-            },
-          },
-        },
-      }
-    },
+    node,
   }
 }

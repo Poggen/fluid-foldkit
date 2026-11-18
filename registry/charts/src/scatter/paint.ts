@@ -5,118 +5,7 @@ import type { SeriesMark } from '../cartesian/build-state'
 import type { ScatterSeries } from './series'
 import type { Margin } from '../cartesian/context-types'
 
-export type ScatterRole = 'disc' | 'ring' | 'outline'
-
-export type ScatterMarkRole = ScatterRole | 'paired'
-
-export interface ScatterGradient {
-  readonly id: string
-  readonly from: string
-  readonly to: string
-  readonly y1: number
-}
-
-export interface ScatterPaintProjection {
-  readonly rowIndices: ReadonlyArray<number>
-  readonly css: string
-  readonly entrance: ReadonlyArray<ScatterPointEntrance>
-  readonly gradients: ReadonlyArray<ScatterGradient>
-}
-
-const safe = (value: string): string =>
-  Array.from(value, (unit) => unit.codePointAt(0)?.toString(16)).join('-')
-
-export interface ScatterPointEntrance {
-  readonly className: string
-  readonly delay: number
-  readonly blur: number
-}
-
-export const scatterSeriesClass = (scope: string, index: number): string =>
-  `bkm-scatter-series-${safe(scope)}-${index}`
-
-export const scatterPointClass = (scope: string, series: number, row: number): string =>
-  `bkm-scatter-frame-${safe(scope)}-${series}-${row}`
-
-const gradientId = (id: string, series: number, role: ScatterRole): string =>
-  `bkm-scatter-${safe(id)}-${series}-${role}-gradient`
-
-const roleRadius = (series: ScatterSeries, role: ScatterRole): number =>
-  Match.value(role).pipe(
-    Match.when('disc', () => series.radius),
-    Match.when('ring', () => series.radius + series.ringGap + series.ringWidth / 2),
-    Match.when(
-      'outline',
-      () =>
-        (series.ringWidth > 0 ? series.radius + series.ringGap + series.ringWidth : series.radius) +
-        series.outlineWidth / 2,
-    ),
-    Match.exhaustive,
-  )
-
-export function scatterRolePaint(
-  series: ScatterSeries,
-  id: string,
-  index: number,
-  role: ScatterRole,
-): string {
-  const fallback = Match.value(role).pipe(
-    Match.when('disc', () => series.fill),
-    Match.when('ring', () => series.stroke),
-    Match.when('outline', () => series.outlineColor),
-    Match.exhaustive,
-  )
-
-  const gradient =
-    series.yPaint.kind === 'gradient' &&
-    (role === 'disc' || (role === 'ring' ? series.yPaint.stroke : series.yPaint.outline))
-
-  return gradient && roleRadius(series, role) > 0 && Number.isFinite(roleRadius(series, role))
-    ? `url(#${gradientId(id, index, role)})`
-    : fallback
-}
-
-function roleGradients(
-  series: ScatterSeries,
-  id: string,
-  index: number,
-  height: number,
-  role: ScatterMarkRole,
-): ReadonlyArray<ScatterGradient> {
-  const paint = series.yPaint
-
-  if (paint.kind === 'solid') {
-    return []
-  }
-
-  const roles: ReadonlyArray<ScatterRole> = role === 'paired' ? ['disc', 'ring'] : [role]
-
-  return roles.flatMap((value) => {
-    const radius = roleRadius(series, value)
-
-    if (
-      !(radius > 0) ||
-      !Number.isFinite(radius) ||
-      (value === 'ring' && !paint.stroke) ||
-      (value === 'outline' && !paint.outline)
-    ) {
-      return []
-    }
-
-    // Source local y = -r + 2r*u: y1=innerHeight/y2=0 becomes this unbounded
-    // object-bbox vector, also scaling with an active copy's radius naturally.
-    return [
-      {
-        id: gradientId(id, index, value),
-        from: paint.from,
-        to: paint.to,
-        y1: 0.5 + height / (2 * radius),
-      },
-    ]
-  })
-}
-
-export function scatterPaintMark<Row>(
+export const scatterPaintMark: <Row>(
   mark: SeriesMark<Row>,
   series: ScatterSeries,
   id: string,
@@ -128,7 +17,19 @@ export function scatterPaintMark<Row>(
   revealDuration: number,
   occurrences: WeakMap<ChartPoint, number>,
   project: (context: MarkRenderContext) => void,
-): SeriesMark<Row> {
+) => SeriesMark<Row> = function scatterPaintMark<Row>(
+  mark: SeriesMark<Row>,
+  series: ScatterSeries,
+  id: string,
+  index: number,
+  role: ScatterMarkRole,
+  projected: (projection: ScatterPaintProjection) => void,
+  indices: ReadonlyArray<number>,
+  margin: Margin,
+  revealDuration: number,
+  occurrences: WeakMap<ChartPoint, number>,
+  project: (context: MarkRenderContext) => void,
+) {
   return {
     ...mark,
     initialize: (context) => {
@@ -147,7 +48,7 @@ export function scatterPaintMark<Row>(
             `.${seriesClass}{--bkm-scatter-inactive:${series.inactiveOpacity};--bkm-scatter-blur:${series.inactiveBlur}px}`,
           )
 
-          const visit = (node: SceneNode): SceneNode => {
+          const visit: (node: SceneNode) => SceneNode = (node: SceneNode) => {
             if (node.kind === 'group') {
               return { ...node, children: node.children.map(visit) }
             }
@@ -237,8 +138,139 @@ export function scatterPaintMark<Row>(
         },
       }
     },
-  }
+  } satisfies SeriesMark<Row>
 }
+
+export const scatterRolePaint: (
+  series: ScatterSeries,
+  id: string,
+  index: number,
+  role: ScatterRole,
+) => string = function scatterRolePaint(
+  series: ScatterSeries,
+  id: string,
+  index: number,
+  role: ScatterRole,
+) {
+  const fallback = Match.value(role).pipe(
+    Match.when('disc', () => series.fill),
+    Match.when('ring', () => series.stroke),
+    Match.when('outline', () => series.outlineColor),
+    Match.exhaustive,
+  )
+
+  const gradient =
+    series.yPaint.kind === 'gradient' &&
+    (role === 'disc' || (role === 'ring' ? series.yPaint.stroke : series.yPaint.outline))
+
+  return gradient && roleRadius(series, role) > 0 && Number.isFinite(roleRadius(series, role))
+    ? `url(#${gradientId(id, index, role)})`
+    : fallback
+}
+
+const roleGradients: (
+  series: ScatterSeries,
+  id: string,
+  index: number,
+  height: number,
+  role: ScatterMarkRole,
+) => ReadonlyArray<ScatterGradient> = function roleGradients(
+  series: ScatterSeries,
+  id: string,
+  index: number,
+  height: number,
+  role: ScatterMarkRole,
+) {
+  const paint = series.yPaint
+
+  if (paint.kind === 'solid') {
+    return []
+  }
+
+  const roles: ReadonlyArray<ScatterRole> = role === 'paired' ? ['disc', 'ring'] : [role]
+
+  return roles.flatMap((value) => {
+    const radius = roleRadius(series, value)
+
+    if (
+      !(radius > 0) ||
+      !Number.isFinite(radius) ||
+      (value === 'ring' && !paint.stroke) ||
+      (value === 'outline' && !paint.outline)
+    ) {
+      return []
+    }
+
+    return [
+      {
+        id: gradientId(id, index, value),
+        from: paint.from,
+        to: paint.to,
+        y1: 0.5 + height / (2 * radius),
+      },
+    ]
+  })
+}
+
+export type ScatterRole = 'disc' | 'ring' | 'outline'
+
+export type ScatterMarkRole = ScatterRole | 'paired'
+
+export interface ScatterGradient {
+  readonly id: string
+  readonly from: string
+  readonly to: string
+  readonly y1: number
+}
+
+export interface ScatterPaintProjection {
+  readonly rowIndices: ReadonlyArray<number>
+  readonly css: string
+  readonly entrance: ReadonlyArray<ScatterPointEntrance>
+  readonly gradients: ReadonlyArray<ScatterGradient>
+}
+
+const safe: (value: string) => string = (value: string) =>
+  Array.from(value, (unit) => unit.codePointAt(0)?.toString(16)).join('-')
+
+export interface ScatterPointEntrance {
+  readonly className: string
+  readonly delay: number
+  readonly blur: number
+}
+
+export const scatterSeriesClass: (scope: string, index: number) => string = (
+  scope: string,
+  index: number,
+) => `bkm-scatter-series-${safe(scope)}-${index}`
+
+export const scatterPointClass: (scope: string, series: number, row: number) => string = (
+  scope: string,
+  series: number,
+  row: number,
+) => `bkm-scatter-frame-${safe(scope)}-${series}-${row}`
+
+const gradientId: (id: string, series: number, role: ScatterRole) => string = (
+  id: string,
+  series: number,
+  role: ScatterRole,
+) => `bkm-scatter-${safe(id)}-${series}-${role}-gradient`
+
+const roleRadius: (series: ScatterSeries, role: ScatterRole) => number = (
+  series: ScatterSeries,
+  role: ScatterRole,
+) =>
+  Match.value(role).pipe(
+    Match.when('disc', () => series.radius),
+    Match.when('ring', () => series.radius + series.ringGap + series.ringWidth / 2),
+    Match.when(
+      'outline',
+      () =>
+        (series.ringWidth > 0 ? series.radius + series.ringGap + series.ringWidth : series.radius) +
+        series.outlineWidth / 2,
+    ),
+    Match.exhaustive,
+  )
 
 const attributes = (gradient: ScatterGradient) => ({
   id: gradient.id,

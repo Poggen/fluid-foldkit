@@ -8,6 +8,27 @@ import { keyAttr } from './build-state'
 import { keyStarts } from '../kit/renderer-dom'
 import { revealTransition } from './reveal-transition'
 
+const contentVisibility: <Row>(
+  scope: string,
+  snapshot: CartesianSnapshot<Row>,
+  state: Interaction,
+) => string = function contentVisibility<Row>(
+  scope: string,
+  snapshot: CartesianSnapshot<Row>,
+  state: Interaction,
+) {
+  if (state.phase !== 'swap' && state.phase !== 'tween' && state.phase !== 'tweenLoading') {
+    return '' satisfies string
+  }
+
+  const lineMarkers = snapshot.series
+    .filter((series) => series.kind === 'line')
+    .map((series) => `${scope} .bkm-wipe-o:has(g${keyStarts(`${keyAttr(series.id)}:marker`)})`)
+    .join(',')
+
+  return `${scope} .bkm-wipe-o{--bkm-reveal-visibility:hidden}${lineMarkers.length > 0 ? `${lineMarkers}{--bkm-reveal-visibility:visible}` : ''}` satisfies string
+}
+
 const NS = 'http://www.w3.org/2000/svg'
 
 function revealMode(state: Interaction, eligible: boolean) {
@@ -16,23 +37,6 @@ function revealMode(state: Interaction, eligible: boolean) {
   }
 
   return eligible && state.phase === 'ready' && !state.revealReady ? 'reveal' : 'static'
-}
-
-function contentVisibility<Row>(
-  scope: string,
-  snapshot: CartesianSnapshot<Row>,
-  state: Interaction,
-): string {
-  if (state.phase !== 'swap' && state.phase !== 'tween' && state.phase !== 'tweenLoading') {
-    return ''
-  }
-
-  const lineMarkers = snapshot.series
-    .filter((series) => series.kind === 'line')
-    .map((series) => `${scope} .bkm-wipe-o:has(g${keyStarts(`${keyAttr(series.id)}:marker`)})`)
-    .join(',')
-
-  return `${scope} .bkm-wipe-o{--bkm-reveal-visibility:hidden}${lineMarkers.length > 0 ? `${lineMarkers}{--bkm-reveal-visibility:visible}` : ''}`
 }
 
 /** One Source-shaped clip owns every series' reveal epoch; markers retain their separate fade/stagger. */

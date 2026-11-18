@@ -1,5 +1,5 @@
-// Adapted from react-day-picker 10.0.2, MIT © 2014-2026 Giampaolo Bellavite and contributors.
-// Full license: NOTICE
+/* @license Adapted from react-day-picker 10.0.2, MIT © 2014-2026 Giampaolo Bellavite and contributors. */
+/* @license Full license: NOTICE */
 import type { DateLib } from './date-library.js'
 import type { CalendarDay } from './grid.js'
 import { sameCalendarDay } from './grid.js'
@@ -7,27 +7,21 @@ import { dateMatchModifiers } from './matchers.js'
 import type { Matcher } from './matcher-types.js'
 import type { NavigationOptions } from './navigation.js'
 
-export type Modifiers = Record<string, boolean>
-
-export interface ModifierOptions extends NavigationOptions {
-  readonly modifiers?: Record<string, Matcher | Array<Matcher> | undefined>
-  readonly showOutsideDays?: boolean
-}
-
-function hasMatcher(
-  matcher: Matcher | Array<Matcher> | undefined,
-): matcher is Matcher | Array<Matcher> {
-  return matcher !== undefined && matcher !== false
-}
-
-function internalModifiers(
+const internalModifiers: (
   day: CalendarDay,
   options: ModifierOptions,
   today: Date,
   start: Date | undefined,
   end: Date | undefined,
   dateLib: DateLib,
-): Modifiers {
+) => Modifiers = function internalModifiers(
+  day: CalendarDay,
+  options: ModifierOptions,
+  today: Date,
+  start: Date | undefined,
+  end: Date | undefined,
+  dateLib: DateLib,
+) {
   const outside = !dateLib.isSameMonth(day.date, day.displayMonth)
 
   return {
@@ -45,13 +39,19 @@ function internalModifiers(
   }
 }
 
-export function createModifiers(
+export const createModifiers: (
   days: Array<CalendarDay>,
   options: ModifierOptions,
   navStart: Date | undefined,
   navEnd: Date | undefined,
   dateLib: DateLib,
-): Map<CalendarDay, Modifiers> {
+) => Map<CalendarDay, Modifiers> = function createModifiers(
+  days: Array<CalendarDay>,
+  options: ModifierOptions,
+  navStart: Date | undefined,
+  navEnd: Date | undefined,
+  dateLib: DateLib,
+) {
   const today = options.today ?? dateLib.today()
 
   const start = navStart === undefined ? undefined : dateLib.startOfMonth(navStart)
@@ -80,7 +80,6 @@ export function createModifiers(
     }
   }
 
-  // Custom keys exist only after matching a displayed day; false values then override built-ins.
   for (const [day, flags] of internal) {
     for (const [name, matching] of custom) {
       flags[name] = matching.has(day)
@@ -90,13 +89,19 @@ export function createModifiers(
   return internal
 }
 
-function focusPriority(
+const focusPriority: (
   day: CalendarDay,
   flags: Modifiers,
   lastFocused: CalendarDay | undefined,
   isSelected: (date: Date) => boolean,
   dateLib: DateLib,
-): number {
+) => number = function focusPriority(
+  day: CalendarDay,
+  flags: Modifiers,
+  lastFocused: CalendarDay | undefined,
+  isSelected: (date: Date) => boolean,
+  dateLib: DateLib,
+) {
   if (flags.focused === true) {
     return 3
   }
@@ -112,13 +117,19 @@ function focusPriority(
   return flags.today === true ? 0 : -1
 }
 
-export function focusTarget(
+export const focusTarget: (
   days: Array<CalendarDay>,
   modifiers: Map<CalendarDay, Modifiers>,
   isSelected: (date: Date) => boolean,
   lastFocused: CalendarDay | undefined,
   dateLib: DateLib,
-): CalendarDay | undefined {
+) => CalendarDay | undefined = function focusTarget(
+  days: Array<CalendarDay>,
+  modifiers: Map<CalendarDay, Modifiers>,
+  isSelected: (date: Date) => boolean,
+  lastFocused: CalendarDay | undefined,
+  dateLib: DateLib,
+) {
   let target: CalendarDay | undefined
 
   let priority = -1
@@ -147,4 +158,17 @@ export function focusTarget(
   }
 
   return target ?? first
+}
+
+export type Modifiers = Record<string, boolean>
+
+export interface ModifierOptions extends NavigationOptions {
+  readonly modifiers?: Record<string, Matcher | Array<Matcher> | undefined>
+  readonly showOutsideDays?: boolean
+}
+
+function hasMatcher(
+  matcher: Matcher | Array<Matcher> | undefined,
+): matcher is Matcher | Array<Matcher> {
+  return matcher !== undefined && matcher !== false
 }

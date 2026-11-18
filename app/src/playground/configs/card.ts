@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { Schema } from 'effect'
 import type { Control } from '../control-definition'
 import { Appearance } from './presentation'
@@ -109,7 +109,9 @@ export const controls = [
 export const columnsOf = (config: Configuration) =>
   config.cardOrientation === 'inline' ? 1 : config.columns
 export const separatedOf = (config: Configuration) => config.media === 'image' || config.separated
-export const controlsFor = (config: Configuration): ReadonlyArray<Control> =>
+export const controlsFor: (config: Configuration) => ReadonlyArray<Control> = (
+  config: Configuration,
+) =>
   controls.map((control) => ({
     ...control,
     enabled:

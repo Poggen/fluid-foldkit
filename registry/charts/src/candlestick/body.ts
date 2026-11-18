@@ -1,45 +1,16 @@
 import type { ChartPoint, SceneRect } from '@tanstack/charts'
 
-export interface CandleGeometry {
-  readonly key: string
-  readonly className: string
-  readonly center: number
-  readonly bodyTop: number
-  readonly bodyHeight: number
-  readonly candleWidth: number
-  readonly wickTop: number
-  readonly wickHeight: number
-  readonly fill: string
-  readonly pattern: string | undefined
-  readonly insideStrokeWidth: number
-}
-
-export interface CandleProjection {
-  readonly centers: ReadonlyArray<number>
-  readonly css: string
-}
-
-type CandleRect = SceneRect & { readonly className: string }
-
-export const candleGeometryClass = (id: string, index: number): string =>
-  `bkm-candle-geometry-${Array.from(id, (unit) => unit.codePointAt(0)?.toString(16)).join(
-    '-',
-  )}-${index}`
-
-export const candleGeometryCss = (rectangles: ReadonlyArray<CandleRect>): string =>
-  rectangles
-    .map(
-      (rect) =>
-        `.${rect.className}{--bkm-candle-x:${rect.x}px;--bkm-candle-y:${rect.y}px;--bkm-candle-width:${rect.width}px;--bkm-candle-height:${rect.height}px}`,
-    )
-    .join('')
-
-export function candleBody<Row>(
+export const candleBody: <Row>(
+  geometry: CandleGeometry,
+  staticBody: boolean,
+  point?: ChartPoint<Row, Date, number>,
+  key?: string,
+) => ReadonlyArray<CandleRect> = function <Row>(
   geometry: CandleGeometry,
   staticBody: boolean,
   point?: ChartPoint<Row, Date, number>,
   key = geometry.key,
-): ReadonlyArray<CandleRect> {
+) {
   const {
     center,
     bodyTop,
@@ -108,5 +79,44 @@ export function candleBody<Row>(
     })
   }
 
-  return rectangles
+  return rectangles satisfies ReadonlyArray<CandleRect>
 }
+
+export interface CandleGeometry {
+  readonly key: string
+  readonly className: string
+  readonly center: number
+  readonly bodyTop: number
+  readonly bodyHeight: number
+  readonly candleWidth: number
+  readonly wickTop: number
+  readonly wickHeight: number
+  readonly fill: string
+  readonly pattern: string | undefined
+  readonly insideStrokeWidth: number
+}
+
+export interface CandleProjection {
+  readonly centers: ReadonlyArray<number>
+  readonly css: string
+}
+
+type CandleRect = SceneRect & { readonly className: string }
+
+export const candleGeometryClass: (id: string, index: number) => string = (
+  id: string,
+  index: number,
+) =>
+  `bkm-candle-geometry-${Array.from(id, (unit) => unit.codePointAt(0)?.toString(16)).join(
+    '-',
+  )}-${index}`
+
+export const candleGeometryCss: (rectangles: ReadonlyArray<CandleRect>) => string = (
+  rectangles: ReadonlyArray<CandleRect>,
+) =>
+  rectangles
+    .map(
+      (rect) =>
+        `.${rect.className}{--bkm-candle-x:${rect.x}px;--bkm-candle-y:${rect.y}px;--bkm-candle-width:${rect.width}px;--bkm-candle-height:${rect.height}px}`,
+    )
+    .join('')

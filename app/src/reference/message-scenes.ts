@@ -1,4 +1,4 @@
-// Fluid Functionalism cc276ca0 InputMessage examples. MIT.
+/* @license Fluid Functionalism cc276ca0 InputMessage examples. MIT. */
 export const suggestions = [
   'What is Fluid Functionalism about?',
   'How does Micka tune the springs behind these animations?',

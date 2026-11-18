@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom -- Native Cartesian resources own DOM classes and stylesheets.
 import { it } from '@effect/vitest'
 import { Schema } from 'effect'

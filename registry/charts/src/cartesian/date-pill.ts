@@ -1,28 +1,12 @@
-export const PILL_LIVE_X = '--bkm-pill-x'
-
-/** Fixed pill layout measured once per definition (bklit's stacked date ticker): box width and the text centre offsets from the pill centre. */
-export interface PillLayout {
-  readonly width: number
-  /** Month text centre minus pill centre (px): the month is centred in a column as wide as the widest month. */
-  readonly month?: number
-  /** Day text centre minus pill centre (px): the day is centred in a column as wide as the widest day. */
-  readonly day?: number
-  /** One entry per run of consecutive equal month words (bklit's `monthSegments`): the rows of the month stack. */
-  readonly months: ReadonlyArray<string>
-  /** Per label: the index of its month run (the month stack only moves when the run changes). */
-  readonly monthOf: ReadonlyArray<number>
-  /** Per label: the day word (the rows of the day stack). */
-  readonly days: ReadonlyArray<string>
-}
-
-const round2 = (v: number): number => Math.round(v * 100) / 100
-
 /** bklit's date ticker: 16px padding, a month column (widest month), a 4px gap, a day column (widest day), each text centred in its column.
  * Above 60 labels bklit uses a compact text-sized pill (null: one native label). The native box is widened to `width` by pillTickStaticCss. */
-export function pillLayout(
+export const pillLayout: (
   labels: ReadonlyArray<string>,
   measurePill: (text: string) => number | null,
-): PillLayout | null {
+) => PillLayout | null = function pillLayout(
+  labels: ReadonlyArray<string>,
+  measurePill: (text: string) => number | null,
+) {
   if (labels.length === 0 || labels.length > 60) {
     return null
   }
@@ -62,3 +46,22 @@ export function pillLayout(
     days,
   }
 }
+
+export const PILL_LIVE_X = '--bkm-pill-x'
+
+/** Fixed pill layout measured once per definition (bklit's stacked date ticker): box width and the text centre offsets from the pill centre. */
+export interface PillLayout {
+  readonly width: number
+  /** Month text centre minus pill centre (px): the month is centred in a column as wide as the widest month. */
+  readonly month?: number
+  /** Day text centre minus pill centre (px): the day is centred in a column as wide as the widest day. */
+  readonly day?: number
+  /** One entry per run of consecutive equal month words (bklit's `monthSegments`): the rows of the month stack. */
+  readonly months: ReadonlyArray<string>
+  /** Per label: the index of its month run (the month stack only moves when the run changes). */
+  readonly monthOf: ReadonlyArray<number>
+  /** Per label: the day word (the rows of the day stack). */
+  readonly days: ReadonlyArray<string>
+}
+
+const round2: (v: number) => number = (v: number) => Math.round(v * 100) / 100

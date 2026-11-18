@@ -1,5 +1,47 @@
-// Derived from Fluid Functionalism 200b4534 and its pinned Base UI primitive. MIT.
+/* @license Derived from Fluid Functionalism 200b4534 and its pinned Base UI primitive. MIT. */
 import { Option, Schema } from 'effect'
+
+export const scrollSettings: (config: ScrollAreaConfig) => typeof ScrollSettings.Type =
+  function scrollSettings(config: ScrollAreaConfig) {
+    return {
+      orientation: config.orientation ?? 'vertical',
+      direction: config.direction ?? 'ltr',
+    }
+  }
+
+export const scrollAreaInitial: (config: ScrollAreaConfig) => ScrollAreaModel =
+  function scrollAreaInitial(config: ScrollAreaConfig) {
+    return {
+      id: config.id,
+      settings: scrollSettings(config),
+      geometry: emptyScrollGeometry,
+      touch: false,
+      ready: false,
+      hovered: false,
+      scrollingX: false,
+      scrollingY: false,
+      generationX: 0,
+      generationY: 0,
+      drag: Option.none(),
+    }
+  }
+
+export const scrollPointerPosition: (model: ScrollAreaModel, coordinate: number) => number =
+  function scrollPointerPosition(model: ScrollAreaModel, coordinate: number) {
+    if (Option.isNone(model.drag)) return 0
+    const drag = model.drag.value
+    const metric = scrollAxisMetrics(model, drag.axis)
+
+    if (metric.travel <= 0) return 0
+
+    const delta = coordinate - drag.start
+    const next = drag.position + (delta / metric.travel) * metric.maximum
+
+    return Math.max(
+      metric.rtl ? -metric.maximum : 0,
+      Math.min(metric.rtl ? 0 : metric.maximum, next),
+    )
+  }
 
 export const ScrollOrientation = Schema.Literals(['vertical', 'horizontal', 'both'])
 
@@ -71,29 +113,6 @@ export const emptyScrollGeometry: typeof ScrollMeasurement.Type = {
   marginY: 8,
 }
 
-export function scrollSettings(config: ScrollAreaConfig): typeof ScrollSettings.Type {
-  return {
-    orientation: config.orientation ?? 'vertical',
-    direction: config.direction ?? 'ltr',
-  }
-}
-
-export function scrollAreaInitial(config: ScrollAreaConfig): ScrollAreaModel {
-  return {
-    id: config.id,
-    settings: scrollSettings(config),
-    geometry: emptyScrollGeometry,
-    touch: false,
-    ready: false,
-    hovered: false,
-    scrollingX: false,
-    scrollingY: false,
-    generationX: 0,
-    generationY: 0,
-    drag: Option.none(),
-  }
-}
-
 export function scrollAxisMetrics(model: ScrollAreaModel, axis: typeof ScrollAxis.Type) {
   const g = model.geometry
   const viewport = axis === 'x' ? g.width : g.height
@@ -135,19 +154,6 @@ export function scrollAxisMetrics(model: ScrollAreaModel, axis: typeof ScrollAxi
     rtl,
     restingSize,
   }
-}
-
-export function scrollPointerPosition(model: ScrollAreaModel, coordinate: number): number {
-  if (Option.isNone(model.drag)) return 0
-  const drag = model.drag.value
-  const metric = scrollAxisMetrics(model, drag.axis)
-
-  if (metric.travel <= 0) return 0
-
-  const delta = coordinate - drag.start
-  const next = drag.position + (delta / metric.travel) * metric.maximum
-
-  return Math.max(metric.rtl ? -metric.maximum : 0, Math.min(metric.rtl ? 0 : metric.maximum, next))
 }
 
 export function scrollBarPolicy(

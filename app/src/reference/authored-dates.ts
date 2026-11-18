@@ -11,7 +11,7 @@ import {
   previewCodeTabId,
   previewCodeTabsViewInputs,
 } from '../../../components/docs/preview-code-tabs'
-// Derived from Fluid Functionalism cc276ca0 DatePicker docs. MIT.
+/* @license Derived from Fluid Functionalism cc276ca0 DatePicker docs. MIT. */
 import { DateTime, Effect, Layer, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { initAndInsert } from 'foldkit/binding'

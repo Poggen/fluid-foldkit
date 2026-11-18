@@ -31,32 +31,15 @@ import { bklitSurfaceStyle, parseAspectRatio } from './style'
 import { tooltipView } from './tooltip-view'
 import { seriesValueOf } from './domains'
 
-const defaultAriaLabels = {
-  line: 'Line chart',
-  area: 'Area chart',
-  candlestick: 'Candlestick chart',
-  scatter: 'Scatter chart',
-}
-
-function initialMotion(
-  family: keyof typeof defaultAriaLabels,
-): Pick<CartesianViewInputs<never>, 'motion'> {
-  if (family === 'candlestick') {
-    return { motion: { initial: 'always', duration: 'configuration' } }
-  }
-
-  if (family === 'scatter') {
-    return { motion: { initial: 'always', duration: 500 } }
-  }
-
-  return {}
-}
-
-function baseCompilationOptions<Row>(
+const baseCompilationOptions: <Row>(
   props: TimeSeriesProps<Row>,
   id: string,
   x: (row: Row) => Date,
-): CartesianCompilationOptions<Row> {
+) => CartesianCompilationOptions<Row> = function baseCompilationOptions<Row>(
+  props: TimeSeriesProps<Row>,
+  id: string,
+  x: (row: Row) => Date,
+) {
   let options: CartesianCompilationOptions<Row> = {
     id,
     x,
@@ -72,14 +55,18 @@ function baseCompilationOptions<Row>(
     options = { ...options, yDomain: props.yDomain }
   }
 
-  return options
+  return options satisfies CartesianCompilationOptions<Row>
 }
 
-function interactionCompilationOptions<Row>(
+const interactionCompilationOptions: <Row>(
   options: CartesianCompilationOptions<Row>,
   props: TimeSeriesProps<Row>,
   state: Interaction,
-): CartesianCompilationOptions<Row> {
+) => CartesianCompilationOptions<Row> = function interactionCompilationOptions<Row>(
+  options: CartesianCompilationOptions<Row>,
+  props: TimeSeriesProps<Row>,
+  state: Interaction,
+) {
   let compilation = options
 
   if (Option.isSome(state.brush)) {
@@ -102,32 +89,37 @@ function interactionCompilationOptions<Row>(
     compilation = { ...compilation, yDomainFrom: state.yDomainFrom }
   }
 
-  return compilation
+  return compilation satisfies CartesianCompilationOptions<Row>
 }
 
-export function timeSeriesConfiguration<Row>(props: TimeSeriesProps<Row>): Configuration {
-  return {
-    status: props.status ?? 'ready',
-    animationDuration: useStaticChartPreview(props.environment)
-      ? 0
-      : (props.animationDuration ?? 1100),
-    yDomainTween: props.yDomainTween !== false,
-    yDomainTweenDuration: props.yDomainTweenDuration ?? 500,
-    revealSignature: props.revealSignature ?? '',
+export const timeSeriesConfiguration: <Row>(props: TimeSeriesProps<Row>) => Configuration =
+  function timeSeriesConfiguration<Row>(props: TimeSeriesProps<Row>) {
+    return {
+      status: props.status ?? 'ready',
+      animationDuration: useStaticChartPreview(props.environment)
+        ? 0
+        : (props.animationDuration ?? 1100),
+      yDomainTween: props.yDomainTween !== false,
+      yDomainTweenDuration: props.yDomainTweenDuration ?? 500,
+      revealSignature: props.revealSignature ?? '',
+    } satisfies Configuration
   }
-}
 
-export type TimeSeriesViewInputs<Row> = CartesianViewInputs<Row> & {
-  readonly withRenderContext: (renderer: ChartContextRenderer<Row>) => CartesianViewInputs<Row>
-}
-
-export function cartesianInputs<Row extends Readonly<Record<string, unknown>>>(
+export const cartesianInputs: <Row extends Readonly<Record<string, unknown>>>(
+  family: 'line' | 'area' | 'scatter' | CandlestickContext<Row>,
+  id: string,
+  publicProps: TimeSeriesProps<Row>,
+  customCompile?: TimeSeriesCompiler<Row>,
+  rootOwner?: 'family' | 'drawing',
+) => TimeSeriesViewInputs<Row> = function cartesianInputs<
+  Row extends Readonly<Record<string, unknown>>,
+>(
   family: 'line' | 'area' | 'scatter' | CandlestickContext<Row>,
   id: string,
   publicProps: TimeSeriesProps<Row>,
   customCompile?: TimeSeriesCompiler<Row>,
   rootOwner: 'family' | 'drawing' = 'family',
-): TimeSeriesViewInputs<Row> {
+) {
   const familyKind = Predicate.isString(family) ? family : family.kind
 
   const patterns = [
@@ -222,9 +214,9 @@ export function cartesianInputs<Row extends Readonly<Record<string, unknown>>>(
     tooltipExtension,
   ) => compile(data, state, draw, clock, undefined, undefined, tooltipExtension)
 
-  const makeInputs = (
+  const makeInputs: (
     renderer: TimeSeriesProps<Row>['renderContext'],
-  ): CartesianViewInputs<Row> => {
+  ) => CartesianViewInputs<Row> = (renderer: TimeSeriesProps<Row>['renderContext']) => {
     const effectiveProps = renderer === undefined ? props : { ...props, renderContext: renderer }
     const containerRef: ChartContainerRef = { current: null }
     const context = projectTimeSeriesViewContext(effectiveProps, x, containerRef, family)
@@ -400,10 +392,36 @@ export function cartesianInputs<Row extends Readonly<Record<string, unknown>>>(
   return {
     ...makeInputs(props.renderContext),
     withRenderContext: (renderer) => makeInputs(renderer),
-  }
+  } satisfies TimeSeriesViewInputs<Row>
 }
 
-/** A native root descriptor keeps caller Row schemas on the actual checked Block and its Binding operations. */
+const initialMotion: (
+  family: keyof typeof defaultAriaLabels,
+) => Pick<CartesianViewInputs<never>, 'motion'> = function initialMotion(
+  family: keyof typeof defaultAriaLabels,
+) {
+  if (family === 'candlestick') {
+    return { motion: { initial: 'always', duration: 'configuration' } }
+  }
+
+  if (family === 'scatter') {
+    return { motion: { initial: 'always', duration: 500 } }
+  }
+
+  return {}
+}
+
+const defaultAriaLabels = {
+  line: 'Line chart',
+  area: 'Area chart',
+  candlestick: 'Candlestick chart',
+  scatter: 'Scatter chart',
+}
+
+export type TimeSeriesViewInputs<Row> = CartesianViewInputs<Row> & {
+  readonly withRenderContext: (renderer: ChartContextRenderer<Row>) => CartesianViewInputs<Row>
+}
+
 function makeRoot<
   RowSchema extends ChartRowSchema & { readonly Type: Readonly<Record<string, unknown>> },
 >(family: 'line' | 'area', options: { readonly name: string; readonly Row: RowSchema }) {

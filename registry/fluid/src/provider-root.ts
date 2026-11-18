@@ -55,7 +55,6 @@ export const ProviderRootsLayer = Layer.effect(
                 active.delete(id)
                 detached = true
 
-                // The source's guard expires even after its provider disappears.
                 if (timer === undefined) resources.delete(owner)
               },
               dispose() {

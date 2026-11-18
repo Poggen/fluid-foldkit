@@ -1,4 +1,4 @@
-// Date contracts from react-day-picker 10.0.2, MIT © 2014-2026 Giampaolo Bellavite and contributors.
+/* @license Date contracts from react-day-picker 10.0.2, MIT © 2014-2026 Giampaolo Bellavite and contributors. */
 export interface DateRange {
   readonly from: Date | undefined
   readonly to?: Date | undefined

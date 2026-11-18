@@ -12,7 +12,8 @@ import { resolveScatterSeries, scatterYDomain } from './series'
 
 const isCoordinate = Schema.is(Schema.Finite)
 
-const date = (value: number): Date => DateTime.toDateUtc(DateTime.makeUnsafe(Math.trunc(value)))
+const date: (value: number) => Date = (value: number) =>
+  DateTime.toDateUtc(DateTime.makeUnsafe(Math.trunc(value)))
 
 interface ScatterDomainResolution {
   readonly min: number

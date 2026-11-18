@@ -2,7 +2,9 @@ export type DialogLifecycleEvent<Original extends Event | null = Event | null> =
   readonly originalEvent: Original
 }>
 
-export const dialogFocusable = (host: HTMLElement): ReadonlyArray<HTMLElement> =>
+export const dialogFocusable: (host: HTMLElement) => ReadonlyArray<HTMLElement> = (
+  host: HTMLElement,
+) =>
   [...host.querySelectorAll<HTMLElement>('a[href],button,input,select,textarea,[tabindex]')].filter(
     (element) =>
       element.tabIndex >= 0 &&

@@ -68,7 +68,6 @@ export function createDialogPointerStyles() {
     lease: (input: DialogPointerBarrier) =>
       Effect.acquireRelease(
         Effect.sync(() => {
-          // Each acquisition has an identity even if a caller reuses its descriptor.
           const lease: DialogPointerBarrier = { ...input }
           const previous = scopes.get(lease.scopeElement)
 

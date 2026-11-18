@@ -1,14 +1,20 @@
 import { virtualClick } from './date-picker-popup-events.js'
 
-// The frozen nonmodal popup requires intentional mouse clicks but tolerates touch drift.
-export function installPopupDismissal(options: {
+export const installPopupDismissal: (options: {
   readonly document: Document
 
   readonly live: () => boolean
   readonly inside: (target: EventTarget | null) => boolean
   readonly now: () => number
   readonly dismiss: (event: MouseEvent | TouchEvent) => void
-}): () => void {
+}) => () => void = function installPopupDismissal(options: {
+  readonly document: Document
+
+  readonly live: () => boolean
+  readonly inside: (target: EventTarget | null) => boolean
+  readonly now: () => number
+  readonly dismiss: (event: MouseEvent | TouchEvent) => void
+}) {
   const { document, live, inside, now, dismiss } = options
   const window = document.defaultView
 

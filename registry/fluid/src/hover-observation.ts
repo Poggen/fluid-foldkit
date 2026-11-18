@@ -27,7 +27,9 @@ export interface HoverOptions {
   readonly maxDistance: number
 }
 
-export const toModelOptions = (options: HoverOptions): typeof Options.Type =>
+export const toModelOptions: (options: HoverOptions) => typeof Options.Type = (
+  options: HoverOptions,
+) =>
   Options.make({
     ...options,
     maxDistance: options.maxDistance === Infinity ? null : options.maxDistance,

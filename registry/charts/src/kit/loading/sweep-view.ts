@@ -3,12 +3,15 @@ import type { BarLoadingSkeletonProps, LineLoadingSweepProps } from './sweep-opt
 import { barSkeletonRects, lineSweepPaths } from './sweep-geometry'
 import { sweepMask } from './sweep-mask'
 
-interface LineSweepPaintProps<Message> extends LineLoadingSweepProps {
-  readonly onTransitionComplete?: Message | undefined
-}
-
 /** Internal paint only. The owner supplies its accepted tick/preference and genuine observation Message. */
-export function lineSweepView<Message, Mounts>(
+export const lineSweepView: <Message, Mounts>(
+  h: HtmlBuilder<Message, Mounts>,
+  id: string,
+  tick: number,
+  reducedMotion: boolean,
+  onSweepObserved: Message,
+  argument5: LineSweepPaintProps<Message>,
+) => ReadonlyArray<Html> = function lineSweepView<Message, Mounts>(
   h: HtmlBuilder<Message, Mounts>,
   id: string,
   tick: number,
@@ -27,11 +30,11 @@ export function lineSweepView<Message, Mounts>(
     innerWidth = 0,
     innerHeight = 0,
   }: LineSweepPaintProps<Message>,
-): ReadonlyArray<Html> {
+) {
   const paths = lineSweepPaths(curve, innerWidth, innerHeight, pointCount, tick)
 
   if (paths === null) {
-    return []
+    return [] satisfies ReadonlyArray<Html>
   }
 
   const area = withArea
@@ -65,7 +68,10 @@ export function lineSweepView<Message, Mounts>(
   ]
 
   if (reducedMotion) {
-    return [...(area.length === 0 ? [] : [h.defs([], area)]), ...silhouette]
+    return [
+      ...(area.length === 0 ? [] : [h.defs([], area)]),
+      ...silhouette,
+    ] satisfies ReadonlyArray<Html>
   }
 
   return [
@@ -91,22 +97,29 @@ export function lineSweepView<Message, Mounts>(
       ],
       silhouette,
     ),
-  ]
+  ] satisfies ReadonlyArray<Html>
 }
 
 /** Internal paint only. No resource or presentation callback retains a second seed. */
-export function barSkeletonView<Message, Mounts>(
+export const barSkeletonView: <Message, Mounts>(
   h: HtmlBuilder<Message, Mounts>,
   id: string,
   tick: number,
   reducedMotion: boolean,
   onSweepObserved: Message,
   props: BarLoadingSkeletonProps,
-): ReadonlyArray<Html> {
+) => ReadonlyArray<Html> = function barSkeletonView<Message, Mounts>(
+  h: HtmlBuilder<Message, Mounts>,
+  id: string,
+  tick: number,
+  reducedMotion: boolean,
+  onSweepObserved: Message,
+  props: BarLoadingSkeletonProps,
+) {
   const rects = barSkeletonRects(props, tick)
 
   if (rects === null) {
-    return []
+    return [] satisfies ReadonlyArray<Html>
   }
 
   const bars = rects.map(({ key, width, height, x, y }) =>
@@ -122,7 +135,7 @@ export function barSkeletonView<Message, Mounts>(
   )
 
   if (reducedMotion) {
-    return [h.g([], bars)]
+    return [h.g([], bars)] satisfies ReadonlyArray<Html>
   }
 
   return [
@@ -138,5 +151,9 @@ export function barSkeletonView<Message, Mounts>(
       ),
     ),
     h.g([h.Attribute('mask', `url(#${id}-mask)`)], bars),
-  ]
+  ] satisfies ReadonlyArray<Html>
+}
+
+interface LineSweepPaintProps<Message> extends LineLoadingSweepProps {
+  readonly onTransitionComplete?: Message | undefined
 }

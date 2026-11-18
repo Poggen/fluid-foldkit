@@ -1,7 +1,7 @@
 import { dirname, resolve } from 'node:path'
 import ts from 'typescript-api'
 
-export const descendants = (root: ts.Node): ts.Node[] => {
+export const descendants: (root: ts.Node) => ts.Node[] = (root: ts.Node) => {
   const nodes: ts.Node[] = []
   const visit = (node: ts.Node) => {
     nodes.push(node)
@@ -25,7 +25,7 @@ export const moduleConstant = (node: ts.Node | undefined): node is ts.VariableDe
   constant(node) &&
   ts.isVariableStatement(node.parent.parent) &&
   ts.isSourceFile(node.parent.parent.parent)
-export const owner = (node: ts.Node): ts.SignatureDeclaration | undefined => {
+export const owner: (node: ts.Node) => ts.SignatureDeclaration | undefined = (node: ts.Node) => {
   let current: ts.Node | undefined = node.parent
   while (current !== undefined) {
     if (ts.isFunctionLike(current)) return current
@@ -63,8 +63,6 @@ type ResolvedDeclaration =
   | ts.ImportSpecifier
   | ts.ParameterDeclaration
 
-// Only transparent relative modules and explicit named exports preserve identity.
-// No star exports, default exports, package lookups, or executable alias wrappers.
 export const sourceResolver = (load: (file: string) => ts.SourceFile | undefined) => {
   const moduleSource = (from: ts.SourceFile, specifier: string) => {
     if (!specifier.startsWith('.')) return undefined
@@ -75,7 +73,10 @@ export const sourceResolver = (load: (file: string) => ts.SourceFile | undefined
       if (source !== undefined) return source
     }
   }
-  const local = (source: ts.SourceFile, name: string): ResolvedDeclaration | undefined => {
+  const local: (source: ts.SourceFile, name: string) => ResolvedDeclaration | undefined = (
+    source: ts.SourceFile,
+    name: string,
+  ) => {
     for (const statement of source.statements) {
       if (ts.isVariableStatement(statement)) {
         const declaration = statement.declarationList.declarations.find(
@@ -103,13 +104,17 @@ export const sourceResolver = (load: (file: string) => ts.SourceFile | undefined
         ts.isInterfaceDeclaration(statement) ||
         ts.isEmptyStatement(statement),
     )
-  const exported = (
+  const exported: (
+    source: ts.SourceFile,
+    name: string,
+    seen?: Set<string>,
+  ) => ResolvedDeclaration | undefined = (
     source: ts.SourceFile,
     name: string,
     seen = new Set<string>(),
-  ): ResolvedDeclaration | undefined => {
+  ) => {
     const key = `${source.fileName}:${name}`
-    if (seen.has(key)) return undefined
+    if (seen.has(key)) return undefined satisfies ResolvedDeclaration | undefined
     seen.add(key)
     for (const statement of source.statements) {
       if (
@@ -118,7 +123,7 @@ export const sourceResolver = (load: (file: string) => ts.SourceFile | undefined
       ) {
         const declaration = local(source, name)
         if (declaration === statement || declaration?.parent.parent === statement)
-          return declaration
+          return declaration satisfies ResolvedDeclaration | undefined
       }
       if (
         !ts.isExportDeclaration(statement) ||
@@ -131,25 +136,36 @@ export const sourceResolver = (load: (file: string) => ts.SourceFile | undefined
         (item) => !item.isTypeOnly && item.name.text === name,
       )
       if (item === undefined) continue
-      if (!transparent(source)) return undefined
+      if (!transparent(source)) return undefined satisfies ResolvedDeclaration | undefined
       const original = item.propertyName?.text ?? item.name.text
-      if (statement.moduleSpecifier === undefined) return resolveLocal(source, original, seen)
-      if (!ts.isStringLiteral(statement.moduleSpecifier)) return undefined
+      if (statement.moduleSpecifier === undefined)
+        return resolveLocal(source, original, seen) satisfies ResolvedDeclaration | undefined
+      if (!ts.isStringLiteral(statement.moduleSpecifier))
+        return undefined satisfies ResolvedDeclaration | undefined
       const target = moduleSource(source, statement.moduleSpecifier.text)
-      return target === undefined ? undefined : exported(target, original, seen)
+      return (target === undefined ? undefined : exported(target, original, seen)) satisfies
+        | ResolvedDeclaration
+        | undefined
     }
   }
-  const resolveLocal = (
+  const resolveLocal: (
+    source: ts.SourceFile,
+    name: string,
+    seen?: Set<string>,
+  ) => ResolvedDeclaration | undefined = (
     source: ts.SourceFile,
     name: string,
     seen = new Set<string>(),
-  ): ResolvedDeclaration | undefined => {
+  ) => {
     const declaration = local(source, name)
-    if (declaration === undefined || !ts.isImportSpecifier(declaration)) return declaration
+    if (declaration === undefined || !ts.isImportSpecifier(declaration))
+      return declaration satisfies ResolvedDeclaration | undefined
     const imported = imports(source).get(name)
-    if (imported === undefined) return undefined
+    if (imported === undefined) return undefined satisfies ResolvedDeclaration | undefined
     const target = moduleSource(source, imported.module)
-    return target === undefined ? declaration : exported(target, imported.name, seen)
+    return (target === undefined ? declaration : exported(target, imported.name, seen)) satisfies
+      | ResolvedDeclaration
+      | undefined
   }
   const imported = (source: ts.SourceFile, name: string) => {
     const declaration = resolveLocal(source, name)
@@ -157,7 +173,9 @@ export const sourceResolver = (load: (file: string) => ts.SourceFile | undefined
       ? undefined
       : { source: declaration.getSourceFile(), name: declaration.name?.getText() }
   }
-  const binding = (identifier: ts.Identifier): ResolvedDeclaration | undefined => {
+  const binding: (identifier: ts.Identifier) => ResolvedDeclaration | undefined = (
+    identifier: ts.Identifier,
+  ) => {
     for (
       let scope: ts.Node | undefined = identifier.parent;
       scope !== undefined;
@@ -242,8 +260,6 @@ export const sourceResolver = (load: (file: string) => ts.SourceFile | undefined
 
 export type SourceResolver = ReturnType<typeof sourceResolver>
 
-// Record completion delegates exact child acquisition to the checked public SDK.
-// Resolve spreads so neither an unchecked children field nor a replaced view can hide.
 export const suspendedView = (node: ts.Node, resolver: SourceResolver) => {
   if (!resolver.sdkMember(node, 'suspend', 'Layer', 'effect') || node.arguments.length !== 1)
     return undefined
@@ -289,22 +305,29 @@ export const suspendedView = (node: ts.Node, resolver: SourceResolver) => {
     returned.arguments.length !== 1
   )
     return undefined
-  const fields = (
+  const fields: (
+    expression: ts.Expression | undefined,
+    seen?: Set<ts.Node>,
+  ) => Map<string, ts.Expression> | undefined = (
     expression: ts.Expression | undefined,
     seen = new Set<ts.Node>(),
-  ): Map<string, ts.Expression> | undefined => {
-    if (expression === undefined || seen.has(expression)) return undefined
+  ) => {
+    if (expression === undefined || seen.has(expression))
+      return undefined satisfies Map<string, ts.Expression> | undefined
     seen.add(expression)
     if (ts.isIdentifier(expression)) {
       const declaration = resolver.binding(expression)
-      return moduleConstant(declaration) ? fields(declaration.initializer, seen) : undefined
+      return (
+        moduleConstant(declaration) ? fields(declaration.initializer, seen) : undefined
+      ) satisfies Map<string, ts.Expression> | undefined
     }
-    if (!ts.isObjectLiteralExpression(expression)) return undefined
+    if (!ts.isObjectLiteralExpression(expression))
+      return undefined satisfies Map<string, ts.Expression> | undefined
     const result = new Map<string, ts.Expression>()
     for (const property of expression.properties) {
       if (ts.isSpreadAssignment(property)) {
         const spread = fields(property.expression, new Set(seen))
-        if (spread === undefined) return undefined
+        if (spread === undefined) return undefined satisfies Map<string, ts.Expression> | undefined
         for (const [name, value] of spread) result.set(name, value)
       } else if (
         ts.isPropertyAssignment(property) &&
@@ -313,9 +336,9 @@ export const suspendedView = (node: ts.Node, resolver: SourceResolver) => {
         result.set(property.name.text, property.initializer)
       } else if (ts.isShorthandPropertyAssignment(property)) {
         result.set(property.name.text, property.name)
-      } else return undefined
+      } else return undefined satisfies Map<string, ts.Expression> | undefined
     }
-    return result
+    return result satisfies Map<string, ts.Expression> | undefined
   }
   const record = fields(returned.arguments[0])
   if (

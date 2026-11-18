@@ -63,8 +63,9 @@ const rows = [1, 2, null, 0, -1, undefined, 4, 5].map((value, index) => {
   return Row.make(value === undefined ? row : { ...row, value })
 })
 
-const flatten = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<SceneNode> =>
-  nodes.flatMap((node) => (node.kind === 'group' ? flatten(node.children) : [node]))
+const flatten: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<SceneNode> = (
+  nodes: ReadonlyArray<SceneNode>,
+) => nodes.flatMap((node) => (node.kind === 'group' ? flatten(node.children) : [node]))
 
 effectIt.effect(
   'Line base geometry gaps omitted optional values; null retains upstream zero coercion',

@@ -67,6 +67,8 @@ export function propsFor<Row>(
 export function propsFor<Row>(
   children: ReadonlyArray<CartesianLayer<Row>>,
   kind: CartesianLayer<Row>['kind'],
-): Array<CartesianLayer<Row>['props']> {
-  return children.filter((child) => child.kind === kind).map((child) => child.props)
+) {
+  return children
+    .filter((child) => child.kind === kind)
+    .map((child) => child.props) satisfies Array<CartesianLayer<Row>['props']>
 }

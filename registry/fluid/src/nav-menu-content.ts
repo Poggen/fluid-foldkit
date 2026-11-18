@@ -1,5 +1,5 @@
 import { cn } from './lib/utils.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Option, Predicate } from 'effect'
 import type { Html, HtmlBuilder } from 'foldkit/html'
 import type { ItemInfo } from '@foldkit/ui/nav'
@@ -83,7 +83,7 @@ const navRowAttributes = <Message>(
   ]
 }
 
-const navRow = <Message>(
+const navRow: <Message>(
   props: {
     readonly config: NavItemConfig
     readonly authored: boolean
@@ -97,7 +97,21 @@ const navRow = <Message>(
     readonly children: ReadonlyArray<Html>
   },
   h: HtmlBuilder<Message>,
-): Html => {
+) => Html = <Message>(
+  props: {
+    readonly config: NavItemConfig
+    readonly authored: boolean
+    readonly sidebar: boolean
+    readonly anchor: Html
+    readonly badges: ReadonlyArray<Html>
+    readonly actions: SidebarMenuActionRun
+    readonly actionContext: SidebarMenuActionContext
+    readonly rowHeight: number
+    readonly size: 'default' | 'compact'
+    readonly children: ReadonlyArray<Html>
+  },
+  h: HtmlBuilder<Message>,
+) => {
   const wrapper = props.authored ? h.keyed('li') : h.keyed('div')
   const rowContent = [
     props.anchor,
@@ -151,10 +165,10 @@ const navRow = <Message>(
       ...(props.authored ? [h.div([h.Class('relative')], rowContent)] : rowContent),
       ...props.children,
     ],
-  )
+  ) satisfies Html
 }
 
-export const navMenuRows = <Message>(
+export const navMenuRows: <Message>(
   props: {
     readonly items: ReadonlyArray<NavItemConfig>
     readonly nativeItems: ReadonlyArray<ItemInfo>
@@ -164,7 +178,17 @@ export const navMenuRows = <Message>(
     readonly selected: (item: NavItemConfig) => Message
   },
   h: HtmlBuilder<Message>,
-): ReadonlyArray<Html> => {
+) => ReadonlyArray<Html> = <Message>(
+  props: {
+    readonly items: ReadonlyArray<NavItemConfig>
+    readonly nativeItems: ReadonlyArray<ItemInfo>
+    readonly inputs: NavMenuViewInputs
+    readonly snapshot: HoverSnapshot
+    readonly layout: Option.Option<HoverRowLayout>
+    readonly selected: (item: NavItemConfig) => Message
+  },
+  h: HtmlBuilder<Message>,
+) => {
   const { inputs, snapshot } = props
 
   const presentation = { context: createPresentationContext(inputs) }
@@ -216,7 +240,6 @@ export const navMenuRows = <Message>(
       const disclosure = inputs.rowDisclosure?.(config)
       const authored = inputs.content !== undefined
 
-      // Approved Source exception: a collapsed Sub keeps selection, but leaves Tab order.
       const tabbable = authored
         ? visible.includes(item.index) &&
           (item.isCurrent || (!visibleCurrent && item.index === visible[0]))
@@ -273,12 +296,14 @@ export const navMenuRows = <Message>(
     },
   }
 
-  return inputs.content === undefined
-    ? props.items.map((item) => context.row(item.value))
-    : [
-        h.ul(
-          [h.Class('relative flex w-full min-w-0 flex-col select-none')],
-          inputs.content(context),
-        ),
-      ]
+  return (
+    inputs.content === undefined
+      ? props.items.map((item) => context.row(item.value))
+      : [
+          h.ul(
+            [h.Class('relative flex w-full min-w-0 flex-col select-none')],
+            inputs.content(context),
+          ),
+        ]
+  ) satisfies ReadonlyArray<Html>
 }

@@ -18,13 +18,26 @@ import type { BarDatum } from './model'
 import type { BarSnapshot, BarValue } from './definition'
 import { hasSquarePaints } from './square-paints'
 
-export function mountBarResource<Row extends Readonly<Record<string, unknown>>>(
+export const mountBarResource: <Row extends Readonly<Record<string, unknown>>>(
   element: HTMLElement,
   observe: NativeObservation,
   initialProps: BarChartProps<Row>,
   id: string,
   clock: () => number,
-): CartesianResource<Row, BarDatum<Row>, BarValue, BarValue, BarSnapshot<Row>, BarChartProps<Row>> {
+) => CartesianResource<
+  Row,
+  BarDatum<Row>,
+  BarValue,
+  BarValue,
+  BarSnapshot<Row>,
+  BarChartProps<Row>
+> = function mountBarResource<Row extends Readonly<Record<string, unknown>>>(
+  element: HTMLElement,
+  observe: NativeObservation,
+  initialProps: BarChartProps<Row>,
+  id: string,
+  clock: () => number,
+) {
   const releaseCssScope = mountCartesianCssScope(element, id)
   let props = initialProps
   const entrance = barEntranceResource(element, () => props)
@@ -246,5 +259,12 @@ export function mountBarResource<Row extends Readonly<Record<string, unknown>>>(
         element.setAttribute('style', previousStyle)
       }
     },
-  }
+  } satisfies CartesianResource<
+    Row,
+    BarDatum<Row>,
+    BarValue,
+    BarValue,
+    BarSnapshot<Row>,
+    BarChartProps<Row>
+  >
 }

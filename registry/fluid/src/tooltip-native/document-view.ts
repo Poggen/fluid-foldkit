@@ -9,11 +9,15 @@ type RenderInteraction = (
   inputs: InteractionViewInputs,
 ) => Html
 
-export const renderDocumentTooltip = (
+export const renderDocumentTooltip: (
   model: Model,
   inputs: DocumentTooltipRenderInputs,
   renderInteraction: RenderInteraction,
-): Html => {
+) => Html = (
+  model: Model,
+  inputs: DocumentTooltipRenderInputs,
+  renderInteraction: RenderInteraction,
+) => {
   const seen = new Set<string>()
   const registered = (key: string) => {
     const row = model.rows[key]

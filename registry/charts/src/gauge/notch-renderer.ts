@@ -15,7 +15,9 @@ type Scene = ChartScene<GaugeNotchRow, number, number>
 
 type NotchNode = Extract<SceneNode, { readonly kind: 'area' | 'rect' }>
 
-const notchNodes = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<NotchNode> =>
+const notchNodes: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<NotchNode> = (
+  nodes: ReadonlyArray<SceneNode>,
+) =>
   nodes.flatMap((node) => {
     if (node.kind === 'group') {
       return notchNodes(node.children)

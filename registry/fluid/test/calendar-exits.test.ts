@@ -1,5 +1,6 @@
 // oxlint-disable no-comments/no-comments -- Vitest requires this DOM environment metadata, not application prose.
 
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 
 // oxlint-enable no-comments/no-comments -- Resume comment policy after the required test metadata.

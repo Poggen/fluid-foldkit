@@ -1,10 +1,13 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
-// ---------------------------------------------------------------------------
-// Shared popup chrome for the dropdown, select, and combobox popups: the
-// enter/exit choreography classes and the ScrollArea sizing the list scrolls
-// inside. One definition, so the three popups never drift apart.
-// ---------------------------------------------------------------------------
+/**
+ * Rows the fluid hover must skip: a disabled row is neither a target
+ * nor a hover stop, whichever attribute the primitive marks it with.
+ */
+export const isDisabledRow: (el: HTMLElement) => boolean = function isDisabledRow(el: HTMLElement) {
+  return el.getAttribute('aria-disabled') === 'true' || el.hasAttribute('data-disabled')
+}
+
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 
 /**
  * Enter/exit choreography follows the RESOLVED side — the one the positioner
@@ -51,11 +54,3 @@ export const POPUP_NAV_KEYS = [
   'PageDown',
   'Tab',
 ]
-
-/**
- * Rows the fluid hover must skip: a disabled row is neither a target
- * nor a hover stop, whichever attribute the primitive marks it with.
- */
-export function isDisabledRow(el: HTMLElement): boolean {
-  return el.getAttribute('aria-disabled') === 'true' || el.hasAttribute('data-disabled')
-}

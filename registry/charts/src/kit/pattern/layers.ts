@@ -4,19 +4,27 @@ import type { BarLayer } from '../../bar/options'
 import type { PatternResource } from './types'
 import { scopePatternPaint } from './resources'
 
-export function patternResources<Row>(
+export const patternResources: <Row>(
   children: ReadonlyArray<BarLayer<Row>>,
-): ReadonlyArray<PatternResource> {
-  return children.flatMap((child) => (child.kind === 'pattern' ? [child.props] : []))
+) => ReadonlyArray<PatternResource> = function patternResources<Row>(
+  children: ReadonlyArray<BarLayer<Row>>,
+) {
+  return children.flatMap((child) =>
+    child.kind === 'pattern' ? [child.props] : [],
+  ) satisfies ReadonlyArray<PatternResource>
 }
 
-export function scopeCartesianPatternLayer<Row>(
+export const scopeCartesianPatternLayer: <Row>(
   child: CartesianLayer<Row>,
   prefix: string,
   resources: ReadonlyArray<PatternResource>,
-): CartesianLayer<Row> {
+) => CartesianLayer<Row> = function scopeCartesianPatternLayer<Row>(
+  child: CartesianLayer<Row>,
+  prefix: string,
+  resources: ReadonlyArray<PatternResource>,
+) {
   if (resources.length === 0) {
-    return child
+    return child satisfies CartesianLayer<Row>
   }
 
   const paint = (value: string) => scopePatternPaint(value, prefix, resources)
@@ -105,26 +113,36 @@ export function scopeCartesianPatternLayer<Row>(
       return scoped
     }),
     Match.orElse((unpainted) => unpainted),
-  )
+  ) satisfies CartesianLayer<Row>
 }
 
-export function scopeCartesianPatternLayers<Row>(
+export const scopeCartesianPatternLayers: <Row>(
   children: ReadonlyArray<CartesianLayer<Row>>,
   prefix: string,
   resources: ReadonlyArray<PatternResource>,
-): ReadonlyArray<CartesianLayer<Row>> {
-  return resources.length === 0
-    ? children
-    : children.map((child) => scopeCartesianPatternLayer(child, prefix, resources))
+) => ReadonlyArray<CartesianLayer<Row>> = function scopeCartesianPatternLayers<Row>(
+  children: ReadonlyArray<CartesianLayer<Row>>,
+  prefix: string,
+  resources: ReadonlyArray<PatternResource>,
+) {
+  return (
+    resources.length === 0
+      ? children
+      : children.map((child) => scopeCartesianPatternLayer(child, prefix, resources))
+  ) satisfies ReadonlyArray<CartesianLayer<Row>>
 }
 
-export function scopeBarPatternLayers<Row>(
+export const scopeBarPatternLayers: <Row>(
   children: ReadonlyArray<BarLayer<Row>>,
   prefix: string,
   resources: ReadonlyArray<PatternResource>,
-): ReadonlyArray<BarLayer<Row>> {
+) => ReadonlyArray<BarLayer<Row>> = function scopeBarPatternLayers<Row>(
+  children: ReadonlyArray<BarLayer<Row>>,
+  prefix: string,
+  resources: ReadonlyArray<PatternResource>,
+) {
   if (resources.length === 0) {
-    return children
+    return children satisfies ReadonlyArray<BarLayer<Row>>
   }
 
   const paint = (value: string) => scopePatternPaint(value, prefix, resources)
@@ -174,5 +192,5 @@ export function scopeBarPatternLayers<Row>(
       Match.discriminator('kind')('barYAxis', (unpainted) => unpainted),
       Match.orElse((cartesian) => scopeCartesianPatternLayer(cartesian, prefix, resources)),
     ),
-  )
+  ) satisfies ReadonlyArray<BarLayer<Row>>
 }

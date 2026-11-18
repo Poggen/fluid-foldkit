@@ -1,6 +1,6 @@
 import { fontWeights } from './lib/font-weight.js'
 import { Array } from 'effect'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { DocumentTooltipOccurrenceViewInputs } from './tooltip-native-public.js'
 import { childAttributes } from 'foldkit/html'
 import type { ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
@@ -46,13 +46,11 @@ export type QueuedStackViewInputs = QueuedStackPresentationInputs &
       }
   )
 
-export const queuedStackTooltipDescriptors = (
-  model: StackState,
-): ReadonlyArray<{
+export const queuedStackTooltipDescriptors: (model: StackState) => ReadonlyArray<{
   readonly key: string
   readonly content: string
   readonly side: 'left' | 'top'
-}> => {
+}> = (model: StackState) => {
   if (!model.rootVisible) {
     return []
   }
@@ -106,7 +104,6 @@ export function queuedStackPaint<Message>(
   const { shape, size, surface, icons, reducedMotion, prefersReducedMotion } =
     resolvePresentation(inputs)
 
-  // AnimatePresence retains the last subtree while the entire stack fades out.
   const paint = model.exitSnapshot ? { ...model, ...model.exitSnapshot } : model
   const cardH = stackCardHeight(paint)
   const expanded = model.exitSnapshot?.expanded ?? stackExpanded(model)
@@ -188,11 +185,11 @@ export function queuedStackPaint<Message>(
     },
   )
 
-  const cardMotion = (
+  const cardMotion: (
     slot: typeof StackSlot.Type,
     item: QueuedMessage,
     position: number,
-  ): MotionOptions => {
+  ) => MotionOptions = (slot: typeof StackSlot.Type, item: QueuedMessage, position: number) => {
     const dragging = paint.draggingId === item.id
     const peek = Math.min(position, 2)
     const expandedY = dragging ? paint.dragY : -position * (cardH + 8)
@@ -234,8 +231,6 @@ export function queuedStackPaint<Message>(
         : undefined
 
     if (layoutId !== undefined) {
-      // A sibling Block render must not start a queue layout projection commit.
-      // Values, not a freshly allocated object, identify this owner's layout.
       const layoutDependency = JSON.stringify([
         model,
         shape.variant,

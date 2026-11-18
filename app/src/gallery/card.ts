@@ -1,5 +1,5 @@
-// Derived from Fluid Functionalism cc276ca0 app/components/bento-card.tsx.
-// MIT, copyright 2026 Micka Touillaud. See registry/fluid/NOTICE
+/* @license Derived from Fluid Functionalism cc276ca0 app/components/bento-card.tsx. */
+/* @license MIT, copyright 2026 Micka Touillaud. See registry/fluid/NOTICE */
 import { Badge } from '@foldkit-visuals/fluid/badge'
 import { Reveal } from '@foldkit-visuals/fluid/reveal'
 import { cn, spring } from '@foldkit-visuals/fluid/tokens'
@@ -63,7 +63,7 @@ export const previewCard = <M>(
   standalone = false,
 ) => {
   if (standalone) return preview
-  // Source TileStage admission changes its content without starting parent projection.
+
   const layoutDependency = settings.size
   const sharp = settings.shape === 'sharp'
   const footprint = page.family === 'fluid' ? fluidFootprints[page.slug] : undefined

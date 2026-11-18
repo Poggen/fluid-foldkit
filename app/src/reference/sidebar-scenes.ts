@@ -1,4 +1,4 @@
-// Fluid Functionalism cc276ca0 Sidebar examples. MIT.
+/* @license Fluid Functionalism cc276ca0 Sidebar examples. MIT. */
 export const sidebarScenes = [
   {
     key: 'sidebar',

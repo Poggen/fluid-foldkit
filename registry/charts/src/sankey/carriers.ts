@@ -91,11 +91,18 @@ export type SankeyCarrier =
   | { readonly role: 'link'; readonly props: SankeyLinkProps }
   | { readonly role: 'tooltip'; readonly props: SankeyTooltipProps }
 
-export const SankeyNode = (props: SankeyNodeProps = {}): SankeyCarrier => ({ role: 'node', props })
+export const SankeyNode: (props?: SankeyNodeProps) => SankeyCarrier = (
+  props: SankeyNodeProps = {},
+) => ({ role: 'node', props }) satisfies SankeyCarrier
 
-export const SankeyLink = (props: SankeyLinkProps = {}): SankeyCarrier => ({ role: 'link', props })
+export const SankeyLink: (props?: SankeyLinkProps) => SankeyCarrier = (
+  props: SankeyLinkProps = {},
+) => ({ role: 'link', props }) satisfies SankeyCarrier
 
-export const SankeyTooltip = (props: SankeyTooltipProps = {}): SankeyCarrier => ({
-  role: 'tooltip',
-  props,
-})
+export const SankeyTooltip: (props?: SankeyTooltipProps) => SankeyCarrier = (
+  props: SankeyTooltipProps = {},
+) =>
+  ({
+    role: 'tooltip',
+    props,
+  }) satisfies SankeyCarrier

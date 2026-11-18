@@ -1,6 +1,6 @@
 import { systemPages } from './system'
 export { systemPages } from './system'
-// Fluid descriptions derived from cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Fluid descriptions derived from cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 export interface ComponentPage {
   readonly slug: string
   readonly name: string
@@ -267,7 +267,7 @@ const fluidDefinitions: ReadonlyArray<ComponentPage> = [
     href: '/components/tooltip',
   },
 ]
-// cc276ca0 lib/changelog/load.ts: pending ahead of the latest pinned release, 2026-10.
+
 const pendingReleaseSlugs = new Set(['field', 'checkbox', 'input', 'textarea', 'breadcrumb'])
 
 export const fluidPages: ReadonlyArray<ComponentPage> = [

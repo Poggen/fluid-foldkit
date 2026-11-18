@@ -3,16 +3,13 @@ import type { ComputePositionReturn, Middleware, Strategy, Placement } from '@fl
 import { flip, limitShift, offset, shift, size, computePosition } from '@floating-ui/dom'
 import type { PopupConfig } from './date-picker-popup-definition.js'
 
-// Base popup positioning preserves its authored flip-before-shift order.
-interface PopupPositionPolicy {
-  readonly strategy: Strategy
-  readonly middleware: Array<Middleware>
-}
-
-export function popupPositionPolicy(
+export const popupPositionPolicy: (
   element: HTMLElement,
   active: () => boolean,
-): PopupPositionPolicy {
+) => PopupPositionPolicy = function popupPositionPolicy(
+  element: HTMLElement,
+  active: () => boolean,
+) {
   const collision = { padding: 8 }
 
   const sizing = size({
@@ -49,33 +46,42 @@ export function popupPositionPolicy(
   }
 }
 
-export function applyPopupPosition(element: HTMLElement, position: ComputePositionReturn): void {
-  const ratio = element.ownerDocument.defaultView?.devicePixelRatio ?? 1
-  const x = Math.round(position.x * ratio) / ratio
-  const y = Math.round(position.y * ratio) / ratio
-  element.style.setProperty('--popup-position', position.strategy)
-  element.style.setProperty('--popup-will-change', ratio >= 1.5 ? 'transform' : 'auto')
-  element.style.setProperty('--popup-transform', `translate(${x}px, ${y}px)`)
-  element.style.setProperty('--popup-opacity', '1')
-  element.dataset.side = position.placement.split('-')[0] ?? 'bottom'
-  element.dataset.align = position.placement.split('-')[1] ?? 'center'
-}
+export const applyPopupPosition: (element: HTMLElement, position: ComputePositionReturn) => void =
+  function applyPopupPosition(element: HTMLElement, position: ComputePositionReturn) {
+    const ratio = element.ownerDocument.defaultView?.devicePixelRatio ?? 1
+    const x = Math.round(position.x * ratio) / ratio
+    const y = Math.round(position.y * ratio) / ratio
+    element.style.setProperty('--popup-position', position.strategy)
+    element.style.setProperty('--popup-will-change', ratio >= 1.5 ? 'transform' : 'auto')
+    element.style.setProperty('--popup-transform', `translate(${x}px, ${y}px)`)
+    element.style.setProperty('--popup-opacity', '1')
+    element.dataset.side = position.placement.split('-')[0] ?? 'bottom'
+    element.dataset.align = position.placement.split('-')[1] ?? 'center'
+  }
 
-export function samePopupPositionConfig(current: PopupConfig, next: PopupConfig): boolean {
-  return (
-    next.id === current.id &&
-    next.anchorId === current.anchorId &&
-    next.align === current.align &&
-    next.kind === current.kind
-  )
-}
+export const samePopupPositionConfig: (current: PopupConfig, next: PopupConfig) => boolean =
+  function samePopupPositionConfig(current: PopupConfig, next: PopupConfig) {
+    return (
+      next.id === current.id &&
+      next.anchorId === current.anchorId &&
+      next.align === current.align &&
+      next.kind === current.kind
+    )
+  }
 
-export function popupPlacement(align: PopupConfig['align']): Placement {
+export const popupPlacement: (align: PopupConfig['align']) => Placement = function popupPlacement(
+  align: PopupConfig['align'],
+) {
   if (align === 'center') {
     return 'bottom'
   }
 
   return align === 'start' ? 'bottom-start' : 'bottom-end'
+}
+
+interface PopupPositionPolicy {
+  readonly strategy: Strategy
+  readonly middleware: Array<Middleware>
 }
 
 export function positionPopup(

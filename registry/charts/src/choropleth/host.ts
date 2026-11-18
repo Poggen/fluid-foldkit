@@ -25,6 +25,100 @@ import { mountTapFocus } from '../kit/interaction/tap-focus'
 import type { State, Observation, Inputs, Host } from './block'
 import { ratio } from '../sankey/host'
 
+const mountMouseFreeze: (
+  element: HTMLElement,
+  get: () => ChartInteractionController<ChoroplethFeature, number, number> | undefined,
+) => () => void = function mountMouseFreeze(
+  element: HTMLElement,
+  get: () => ChartInteractionController<ChoroplethFeature, number, number> | undefined,
+) {
+  let pressed = false
+
+  const down = (event: PointerEvent) => {
+    pressed = event.button === 0 && event.pointerType === 'mouse'
+  }
+
+  const move = (event: PointerEvent) => {
+    if (pressed && event.pointerType === 'mouse') event.stopPropagation()
+  }
+
+  const up = (event: PointerEvent) => {
+    if (!pressed) return
+    pressed = false
+    const interaction = get()
+
+    if (interaction && event.target instanceof Node && element.contains(event.target))
+      interaction.setControlledFocus(interaction.resolvePointer(event.clientX, event.clientY), {
+        source: 'pointer',
+      })
+  }
+
+  const cancel = () => {
+      pressed = false
+    },
+    view = element.ownerDocument.defaultView
+
+  element.addEventListener('pointerdown', down, true)
+  element.addEventListener('pointermove', move, true)
+  view?.addEventListener('pointerup', up, true)
+  view?.addEventListener('pointercancel', cancel, true)
+
+  return () => {
+    element.removeEventListener('pointerdown', down, true)
+    element.removeEventListener('pointermove', move, true)
+    view?.removeEventListener('pointerup', up, true)
+    view?.removeEventListener('pointercancel', cancel, true)
+  }
+}
+
+const sameChoroplethDrawing: (a: ChoroplethChartProps, b: ChoroplethChartProps) => boolean =
+  function sameChoroplethDrawing(a: ChoroplethChartProps, b: ChoroplethChartProps) {
+    const values = (p: ChoroplethChartProps) => {
+      const { feature, tooltip, graticule, margin } = choroplethPlan(p)
+
+      return [
+        p.data,
+        p.enterTransition,
+        p.aspectRatio,
+        p.scale,
+        p.center?.[0],
+        p.center?.[1],
+        p.translate?.[0],
+        p.translate?.[1],
+        margin.top,
+        margin.right,
+        margin.bottom,
+        margin.left,
+        feature?.fill,
+        feature?.stroke,
+        feature?.strokeWidth,
+        feature?.fadedOpacity,
+        feature?.getFeatureColor,
+        feature?.patterns,
+        feature?.getFeaturePattern,
+        graticule?.stroke,
+        graticule?.strokeWidth,
+        graticule?.step?.[0],
+        graticule?.step?.[1],
+        tooltip?.content,
+        tooltip?.formatValue,
+        tooltip?.getFeatureName,
+        tooltip?.getFeatureValue,
+        tooltip?.valueLabel,
+        tooltip?.className,
+        tooltip?.panelStyle,
+        tooltip?.backgroundColor,
+      ]
+    }
+
+    const left = values(a),
+      right = values(b)
+
+    return (
+      left.length === right.length && left.every((value, index) => Object.is(value, right[index]))
+    )
+  }
+
 const renderer = motion({ initial: 'always', respectReducedMotion: true })
 
 export function choroplethPlan(props: ChoroplethChartProps) {
@@ -332,94 +426,4 @@ export class ChoroplethHost implements Host {
     this.#release()
     this.root.remove()
   }
-}
-
-function mountMouseFreeze(
-  element: HTMLElement,
-  get: () => ChartInteractionController<ChoroplethFeature, number, number> | undefined,
-): () => void {
-  let pressed = false
-
-  const down = (event: PointerEvent) => {
-    pressed = event.button === 0 && event.pointerType === 'mouse'
-  }
-
-  const move = (event: PointerEvent) => {
-    if (pressed && event.pointerType === 'mouse') event.stopPropagation()
-  }
-
-  const up = (event: PointerEvent) => {
-    if (!pressed) return
-    pressed = false
-    const interaction = get()
-
-    if (interaction && event.target instanceof Node && element.contains(event.target))
-      interaction.setControlledFocus(interaction.resolvePointer(event.clientX, event.clientY), {
-        source: 'pointer',
-      })
-  }
-
-  const cancel = () => {
-      pressed = false
-    },
-    view = element.ownerDocument.defaultView
-
-  element.addEventListener('pointerdown', down, true)
-  element.addEventListener('pointermove', move, true)
-  view?.addEventListener('pointerup', up, true)
-  view?.addEventListener('pointercancel', cancel, true)
-
-  return () => {
-    element.removeEventListener('pointerdown', down, true)
-    element.removeEventListener('pointermove', move, true)
-    view?.removeEventListener('pointerup', up, true)
-    view?.removeEventListener('pointercancel', cancel, true)
-  }
-}
-
-function sameChoroplethDrawing(a: ChoroplethChartProps, b: ChoroplethChartProps): boolean {
-  const values = (p: ChoroplethChartProps) => {
-    const { feature, tooltip, graticule, margin } = choroplethPlan(p)
-
-    return [
-      p.data,
-      p.enterTransition,
-      p.aspectRatio,
-      p.scale,
-      p.center?.[0],
-      p.center?.[1],
-      p.translate?.[0],
-      p.translate?.[1],
-      margin.top,
-      margin.right,
-      margin.bottom,
-      margin.left,
-      feature?.fill,
-      feature?.stroke,
-      feature?.strokeWidth,
-      feature?.fadedOpacity,
-      feature?.getFeatureColor,
-      feature?.patterns,
-      feature?.getFeaturePattern,
-      graticule?.stroke,
-      graticule?.strokeWidth,
-      graticule?.step?.[0],
-      graticule?.step?.[1],
-      tooltip?.content,
-      tooltip?.formatValue,
-      tooltip?.getFeatureName,
-      tooltip?.getFeatureValue,
-      tooltip?.valueLabel,
-      tooltip?.className,
-      tooltip?.panelStyle,
-      tooltip?.backgroundColor,
-    ]
-  }
-
-  const left = values(a),
-    right = values(b)
-
-  return (
-    left.length === right.length && left.every((value, index) => Object.is(value, right[index]))
-  )
 }

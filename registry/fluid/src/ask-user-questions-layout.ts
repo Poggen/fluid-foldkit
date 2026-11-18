@@ -1,7 +1,10 @@
 import type { Html } from 'foldkit/html'
 
 /** Keeps an exiting footer button at its last layout box while siblings reflow. */
-export function askPopLayout(vnode: Html, present: boolean): Html {
+export const askPopLayout: (vnode: Html, present: boolean) => Html = function askPopLayout(
+  vnode: Html,
+  present: boolean,
+) {
   if (vnode === null) {
     return null
   }

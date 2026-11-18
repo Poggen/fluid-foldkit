@@ -1,5 +1,20 @@
 import type { PopupConfig } from './date-picker-popup-definition.js'
 
+export const findPopupAnchor: (document: Document, config: PopupConfig) => HTMLElement | null =
+  function findPopupAnchor(document: Document, config: PopupConfig) {
+    const window = document.defaultView
+
+    if (window === null) {
+      return null
+    }
+
+    return (
+      document.querySelector<HTMLElement>(
+        `[data-date-picker-anchor="${window.CSS.escape(config.anchorId)}"]`,
+      ) ?? document.querySelector<HTMLElement>(`#${window.CSS.escape(config.anchorId)}`)
+    )
+  }
+
 export function mountPopupPortal(
   element: HTMLElement,
   config: PopupConfig,
@@ -55,18 +70,4 @@ export function mountPopupPortal(
       portal.remove()
     },
   }
-}
-
-export function findPopupAnchor(document: Document, config: PopupConfig): HTMLElement | null {
-  const window = document.defaultView
-
-  if (window === null) {
-    return null
-  }
-
-  return (
-    document.querySelector<HTMLElement>(
-      `[data-date-picker-anchor="${window.CSS.escape(config.anchorId)}"]`,
-    ) ?? document.querySelector<HTMLElement>(`#${window.CSS.escape(config.anchorId)}`)
-  )
 }

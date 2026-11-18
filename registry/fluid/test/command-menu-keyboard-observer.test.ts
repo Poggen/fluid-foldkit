@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { expect, test, vi } from 'vitest'
 import { observeCommandMenu } from '../src/command-menu-dom.js'

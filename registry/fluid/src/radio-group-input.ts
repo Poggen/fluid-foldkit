@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Option } from 'effect'
 import type { Html, HtmlBuilder } from 'foldkit/html'
 import { preserveCheckboxReset } from './checkbox-group-input.js'
@@ -6,17 +6,17 @@ import { keepSwitchInputDefault } from './switch-input.js'
 import { selectionMarker } from './selection-group-style.js'
 import type { RadioValue } from './radio-group-state.js'
 
-interface RadioFormContext {
-  readonly hasForm: boolean
-  readonly initialChecked: ReadonlyArray<{ readonly index: number; readonly checked: boolean }>
-}
-
-export function radioGroupInput<Message, Requirements>(
+export const radioGroupInput: <Message, Requirements>(
   item: typeof RadioValue.Type | undefined,
   selected: boolean,
   context: RadioFormContext,
   h: HtmlBuilder<Message, Requirements>,
-): ReadonlyArray<Html> {
+) => ReadonlyArray<Html> = function radioGroupInput<Message, Requirements>(
+  item: typeof RadioValue.Type | undefined,
+  selected: boolean,
+  context: RadioFormContext,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   const primitive = h.span
   const marker = selectionMarker(selected)
 
@@ -51,5 +51,10 @@ export function radioGroupInput<Message, Requirements>(
           true,
         )
       : null,
-  ]
+  ] satisfies ReadonlyArray<Html>
+}
+
+interface RadioFormContext {
+  readonly hasForm: boolean
+  readonly initialChecked: ReadonlyArray<{ readonly index: number; readonly checked: boolean }>
 }

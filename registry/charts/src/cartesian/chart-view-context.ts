@@ -17,6 +17,53 @@ import { loadingFlags, timeSeriesChartPhase } from './state'
 import type { Interaction, Domains } from './state'
 import { resolveSeries } from './series'
 
+const contextExtras: <Row>(
+  family: TimeSeriesContextFamily<Row>,
+  columnWidth: number,
+  visibleDomain: readonly [Date, Date] | undefined,
+  requestedSlots: number | undefined,
+  rowCount: number,
+  innerWidth: number,
+) => ContextExtras<Row> = function contextExtras<Row>(
+  family: TimeSeriesContextFamily<Row>,
+  columnWidth: number,
+  visibleDomain: readonly [Date, Date] | undefined,
+  requestedSlots: number | undefined,
+  rowCount: number,
+  innerWidth: number,
+) {
+  const kind = Predicate.isString(family) ? family : family.kind
+  let extras: ContextExtras<Row> = {}
+
+  if (kind === 'line' || kind === 'area') {
+    extras = { ...extras, columnWidth }
+
+    if (visibleDomain !== undefined) {
+      extras = {
+        ...extras,
+        xDomain: [visibleDomain[0], visibleDomain[1]],
+        xDomainSlotCount: requestedSlots,
+      }
+    }
+  }
+
+  if (!Predicate.isString(family) && family.kind === 'composed') {
+    extras = { ...extras, ...family.extras }
+  }
+
+  if (!Predicate.isString(family) && family.kind === 'candlestick') {
+    const slots = requestedSlots ?? rowCount
+    const candleColumnWidth = slots > 0 ? innerWidth / slots : 0
+    extras = {
+      ...extras,
+      columnWidth: candleColumnWidth,
+      bandWidth: family.candleWidth ?? candleColumnWidth * (1 - family.candleGap),
+    }
+  }
+
+  return extras satisfies ContextExtras<Row>
+}
+
 const shortDate = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
 
 function contextGeometry(
@@ -190,46 +237,6 @@ type ContextExtras<Row> = Pick<
   | 'bandWidth'
 >
 
-function contextExtras<Row>(
-  family: TimeSeriesContextFamily<Row>,
-  columnWidth: number,
-  visibleDomain: readonly [Date, Date] | undefined,
-  requestedSlots: number | undefined,
-  rowCount: number,
-  innerWidth: number,
-): ContextExtras<Row> {
-  const kind = Predicate.isString(family) ? family : family.kind
-  let extras: ContextExtras<Row> = {}
-
-  if (kind === 'line' || kind === 'area') {
-    extras = { ...extras, columnWidth }
-
-    if (visibleDomain !== undefined) {
-      extras = {
-        ...extras,
-        xDomain: [visibleDomain[0], visibleDomain[1]],
-        xDomainSlotCount: requestedSlots,
-      }
-    }
-  }
-
-  if (!Predicate.isString(family) && family.kind === 'composed') {
-    extras = { ...extras, ...family.extras }
-  }
-
-  if (!Predicate.isString(family) && family.kind === 'candlestick') {
-    const slots = requestedSlots ?? rowCount
-    const candleColumnWidth = slots > 0 ? innerWidth / slots : 0
-    extras = {
-      ...extras,
-      columnWidth: candleColumnWidth,
-      bandWidth: family.candleWidth ?? candleColumnWidth * (1 - family.candleGap),
-    }
-  }
-
-  return extras
-}
-
 /** One input scope owns its derived context cache; rows and hover remain in the checked parent. */
 export function projectTimeSeriesViewContext<Row extends Readonly<Record<string, unknown>>>(
   props: TimeSeriesProps<Row>,
@@ -243,14 +250,19 @@ export function projectTimeSeriesViewContext<Row extends Readonly<Record<string,
   let lastData: ReadonlyArray<Row> | undefined
   let lastKey: string | undefined
   let stable: ChartStableContextValue<Row> | undefined
-
-  return <Message>(
+  const project: <Message>(
     data: ReadonlyArray<Row>,
     index: number | null,
     state: Interaction,
     viewport: ChartViewport | undefined,
     capabilities: ChartContextCapabilities<Row, Message>,
-  ): ChartViewContext<Row, Message> => {
+  ) => ChartViewContext<Row, Message> = <Message>(
+    data: ReadonlyArray<Row>,
+    index: number | null,
+    state: Interaction,
+    viewport: ChartViewport | undefined,
+    capabilities: ChartContextCapabilities<Row, Message>,
+  ) => {
     const geometry = contextGeometry(props.margin, viewport, state.domains)
     const { width, height, margin, innerWidth, innerHeight } = geometry
     const { visibleDomain, columnWidth } = contextWindow(props, data, x, state.brush, innerWidth)
@@ -297,10 +309,10 @@ export function projectTimeSeriesViewContext<Row extends Readonly<Record<string,
 
     if (stable === undefined || lastData !== data || lastKey !== key) {
       const yScales = Object.fromEntries(
-        Object.entries(yDomains).map(([id, domain]): [string, ScaleLinear<number, number>] => [
-          id,
-          valueScale(domain, innerHeight),
-        ]),
+        Object.entries(yDomains).map(
+          ([id, domain]) =>
+            [id, valueScale(domain, innerHeight)] satisfies [string, ScaleLinear<number, number>],
+        ),
       )
 
       const extras = contextExtras(
@@ -369,6 +381,8 @@ export function projectTimeSeriesViewContext<Row extends Readonly<Record<string,
       hover = { ...hover, setHoveredBarIndex: capabilities.focusRow }
     }
 
-    return { stable, hover }
+    return { stable, hover } satisfies ChartViewContext<Row, Message>
   }
+
+  return project
 }

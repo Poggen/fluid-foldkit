@@ -125,10 +125,18 @@ test('Tabs SSR hides fine-pointer scrollbars while native horizontal wheel scrol
 
 test('Denied clipboard captures actual temporary textarea styling before exact-node cleanup', async ({
   page,
+  context,
 }) => {
   await mountRuntimeFixture(page, '/components/input-copy', clipboardCode)
+  const cdp = await context.newCDPSession(page)
+  const { targetInfo } = await cdp.send('Target.getTargetInfo')
+  if (targetInfo.browserContextId === undefined) throw new Error('Isolated context required')
+  await cdp.send('Browser.setPermission', {
+    browserContextId: targetInfo.browserContextId,
+    permission: { name: 'clipboard-write' },
+    setting: 'denied',
+  })
   const observation = await page.evaluateHandle(() => {
-    const writes: string[] = []
     const snapshots: Array<{
       command: string
       value: string
@@ -138,24 +146,20 @@ test('Denied clipboard captures actual temporary textarea styling before exact-n
       readOnly: boolean
       start: number
       end: number
+      result: boolean
     }> = []
     let captured: HTMLTextAreaElement | null = null
-    Object.defineProperty(navigator, 'clipboard', {
-      configurable: true,
-      value: {
-        writeText: async (value: string) => {
-          writes.push(value)
-          throw new Error('clipboard denied')
-        },
-      },
-    })
+    const descriptor = Object.getOwnPropertyDescriptor(document, 'execCommand')
+    const execute = document.execCommand
     Object.defineProperty(document, 'execCommand', {
       configurable: true,
-      value: (command: string) => {
+      value: function (this: Document, ...args: Parameters<Document['execCommand']>) {
+        const [command] = args
         const textarea = document.querySelector('textarea')
         if (textarea === null) throw new Error('Missing live fallback textarea')
         captured = textarea
         const style = getComputedStyle(textarea)
+        const result = Reflect.apply(execute, this, args)
         snapshots.push({
           command,
           value: textarea.value,
@@ -165,34 +169,44 @@ test('Denied clipboard captures actual temporary textarea styling before exact-n
           readOnly: textarea.readOnly,
           start: textarea.selectionStart,
           end: textarea.selectionEnd,
+          result,
         })
-        return true
+        return result
       },
     })
     return {
-      read: () => ({ writes, snapshots, removed: captured !== null && !captured.isConnected }),
+      read: () => ({ snapshots, removed: captured !== null && !captured.isConnected }),
+      restore: () => {
+        if (descriptor === undefined) Reflect.deleteProperty(document, 'execCommand')
+        else Object.defineProperty(document, 'execCommand', descriptor)
+      },
     }
   })
-  await page.locator('#copy-contract-button').click()
-  await expect(page.locator('#copy-contract-button')).toHaveAttribute('aria-label', 'Copied')
-  expect(await observation.evaluate((value) => value.read())).toEqual({
-    writes: ['fallback value'],
-    snapshots: [
-      {
-        command: 'copy',
-        value: 'fallback value',
-        position: 'fixed',
-        opacity: '0',
-        fontSize: '16px',
-        readOnly: true,
-        start: 0,
-        end: 14,
-      },
-    ],
-    removed: true,
-  })
-  await expect(page.locator('textarea')).toHaveCount(0)
-  await observation.dispose()
+  try {
+    await page.locator('#copy-contract-button').click()
+    await expect(page.locator('#copy-contract-button')).toHaveAttribute('aria-label', 'Copied')
+    expect(await observation.evaluate((value) => value.read())).toEqual({
+      snapshots: [
+        {
+          command: 'copy',
+          value: 'fallback value',
+          position: 'fixed',
+          opacity: '0',
+          fontSize: '16px',
+          readOnly: true,
+          start: 0,
+          end: 14,
+          result: true,
+        },
+      ],
+      removed: true,
+    })
+    await expect(page.locator('textarea')).toHaveCount(0)
+  } finally {
+    await observation.evaluate((value) => value.restore())
+    await observation.dispose()
+    await cdp.detach()
+  }
 })
 
 test('Slider actual layout keeps comfortable and compact previews and fixed tooltips through pointer dragging', async ({

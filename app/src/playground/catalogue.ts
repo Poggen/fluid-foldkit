@@ -25,13 +25,18 @@ export type Control =
       readonly max: number
       readonly step: number
     }
-const choice = (
+const choice: (
+  prop: PropName,
+  values: ReadonlyArray<string | number>,
+  initial?: string | number,
+) => Control = (
   prop: PropName,
   values: ReadonlyArray<string | number>,
   initial = values[0] ?? '',
-): Control => ({ kind: 'choice', prop, values, initial })
-const toggle = (prop: PropName, initial = false): Control => ({ kind: 'toggle', prop, initial })
-const text = (prop: PropName, initial: string): Control => ({
+) => ({ kind: 'choice', prop, values, initial }) satisfies Control
+const toggle: (prop: PropName, initial?: boolean) => Control = (prop: PropName, initial = false) =>
+  ({ kind: 'toggle', prop, initial }) satisfies Control
+const text: (prop: PropName, initial: string) => Control = (prop: PropName, initial: string) => ({
   kind: 'text',
   prop,
   initial,
@@ -41,14 +46,21 @@ const text = (prop: PropName, initial: string): Control => ({
       ? [initial, 'Your next great idea…', 'Search the collection…']
       : [initial, 'Make it yours', 'Studio notes', 'A little more detail'],
 })
-const number = (prop: PropName, initial: number, min: number, max: number, step = 1): Control => ({
-  kind: 'number',
-  prop,
-  initial,
-  min,
-  max,
-  step,
-})
+const number: (
+  prop: PropName,
+  initial: number,
+  min: number,
+  max: number,
+  step?: number,
+) => Control = (prop: PropName, initial: number, min: number, max: number, step = 1) =>
+  ({
+    kind: 'number',
+    prop,
+    initial,
+    min,
+    max,
+    step,
+  }) satisfies Control
 const variants = ['primary', 'secondary', 'tertiary', 'ghost', 'destructive']
 const size = choice('size', ['default', 'compact'])
 const disabled = toggle('disabled')
@@ -267,12 +279,14 @@ const chartControls: Readonly<Record<string, ReadonlyArray<Control>>> = {
   'stat-flow': [number('value', 12480, 0, 50000, 1000)],
   'bar-skeleton': [number('barCount', 14, 2, 24)],
 }
-export const controlsFor = (page: ComponentPage): ReadonlyArray<Control> => {
+export const controlsFor: (page: ComponentPage) => ReadonlyArray<Control> = (
+  page: ComponentPage,
+) => {
   const specific = (page.family === 'fluid' ? controls : chartControls)[page.slug]
   if (specific === undefined) throw new Error(`Missing playground: ${page.family}/${page.slug}`)
   return specific
 }
-export const initialProps = (page: ComponentPage): PreviewOptions =>
+export const initialProps: (page: ComponentPage) => PreviewOptions = (page: ComponentPage) =>
   Schema.decodeUnknownSync(PreviewOptions)(
     Object.fromEntries(controlsFor(page).map((control) => [control.prop, control.initial])),
   )

@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { HoverMode } from './hover-observation.js'
 import { Layer, Schema } from 'effect'
 import { Block } from 'foldkit'
@@ -43,13 +43,14 @@ export interface InputGroupConfig {
 const Hover = InputGroupBlock.makeRequiredFieldBinding(HoverBlock, {
   field: 'hover',
   init: {
-    contextToArgs: (config: InputGroupConfig): [HoverConfig] => [
-      {
-        id: config.id,
-        gapClick: false,
-        ...(config.hoverMode === undefined ? {} : { mode: config.hoverMode }),
-      },
-    ],
+    contextToArgs: (config: InputGroupConfig) =>
+      [
+        {
+          id: config.id,
+          gapClick: false,
+          ...(config.hoverMode === undefined ? {} : { mode: config.hoverMode }),
+        },
+      ] satisfies [HoverConfig],
   },
 }).withOutMessagePolicy({
   fold: InputGroupBlock.makeOutMessageFold(HoverBlock, {

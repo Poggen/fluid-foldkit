@@ -1,8 +1,9 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
 // @effect-diagnostics-next-line nodeBuiltinImport:off -- Build fixture generator reads and writes the serialized HTML artifact outside the application runtime.
 import { readFile, writeFile } from 'node:fs/promises'
 import { Effect } from 'effect'
 import { renderToString } from 'foldkit/experimental/server'
-import { liveModelExample } from '../src/live-model-fixture'
+import { liveModelExample } from '../src/live-model.fixture'
 
 const path = new URL('../live-model-ssr.html', import.meta.url)
 const template = (await readFile(path, 'utf8')).replace(

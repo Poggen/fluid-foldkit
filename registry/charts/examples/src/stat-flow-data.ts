@@ -16,9 +16,15 @@ const successors: Record<StatFlowFormatName, StatFlowFormatName> = {
   percent: 'plain',
 }
 
-export const nextStatFormat = (format: StatFlowFormatName): StatFlowFormatName => successors[format]
+export const nextStatFormat: (format: StatFlowFormatName) => StatFlowFormatName = (
+  format: StatFlowFormatName,
+) => successors[format]
 
-export const statFlowConfiguration = (
+export const statFlowConfiguration: (
   value: number,
   format: StatFlowFormatName,
-): ChartStatFlowProps => ({ value, formatOptions: formats[format], label: 'Revenue' })
+) => ChartStatFlowProps = (value: number, format: StatFlowFormatName) => ({
+  value,
+  formatOptions: formats[format],
+  label: 'Revenue',
+})

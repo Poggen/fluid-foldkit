@@ -10,15 +10,16 @@ interface ScreenPoint {
 
 const TOOLTIP_CLAMP = 60
 
-const clamp = (value: number, min: number, size: number): number =>
-  Math.max(min + TOOLTIP_CLAMP, Math.min(min + size - TOOLTIP_CLAMP, value))
+const clamp: (value: number, min: number, size: number) => number = (
+  value: number,
+  min: number,
+  size: number,
+) => Math.max(min + TOOLTIP_CLAMP, Math.min(min + size - TOOLTIP_CLAMP, value))
 
-// bklit's tooltip point: the projected geographic centroid (path.centroid skews toward Alaska/Russia), clamped to the unzoomed map so edge
-// features keep their tooltip inside it, in base (unzoomed) space; bklit applies the zoom transform to it afterwards.
-export const baseTooltipPoint = (
+export const baseTooltipPoint: (
   holder: Readonly<ProjectionHolder>,
   feature: ChoroplethFeature,
-): ScreenPoint | undefined => {
+) => ScreenPoint | undefined = (holder: Readonly<ProjectionHolder>, feature: ChoroplethFeature) => {
   const { chart, projection } = holder
   const [lon, lat] = centroidOf(feature)
   const base = projection?.([lon, lat])
@@ -30,23 +31,23 @@ export const baseTooltipPoint = (
   return { x: clamp(base[0], chart.x, chart.width), y: clamp(base[1], chart.y, chart.height) }
 }
 
-// Hover anchors where bklit does (the zoomed base point). A keyboard stop is any feature with a visible piece, whose centroid can sit
-// off screen while zoomed: then the anchor is the centre of the feature's largest visible piece, so the tooltip is next to what is drawn.
 export const tooltipAnchor =
   (holder: Readonly<ProjectionHolder>, geometry: GeoGeometry) =>
   (
     points: ReadonlyArray<ChartPoint<ChoroplethFeature>>,
     context: { focus: { source: string }; plot: ChartBounds },
-  ): ScreenPoint | undefined => {
+  ) => {
     const first = points.at(0)
 
     if (first === undefined) {
-      return undefined
+      return undefined satisfies ScreenPoint | undefined
     }
 
     const { k, x: tx, y: ty } = holder.transform
 
-    const zoomed = (point: Readonly<ScreenPoint>): ScreenPoint => ({
+    const zoomed: (point: Readonly<ScreenPoint>) => ScreenPoint = (
+      point: Readonly<ScreenPoint>,
+    ) => ({
       x: point.x * k + tx,
       y: point.y * k + ty,
     })
@@ -55,7 +56,7 @@ export const tooltipAnchor =
     const anchor = base ? zoomed(base) : { x: first.x * k + tx, y: first.y * k + ty }
 
     if (context.focus.source !== 'keyboard') {
-      return anchor
+      return anchor satisfies ScreenPoint | undefined
     }
 
     const { plot } = context
@@ -66,10 +67,10 @@ export const tooltipAnchor =
       anchor.y >= plot.y &&
       anchor.y <= plot.y + plot.height
     ) {
-      return anchor
+      return anchor satisfies ScreenPoint | undefined
     }
 
     const piece = geometry.visibleCenter(first.datum)
 
-    return piece ? zoomed({ x: piece[0], y: piece[1] }) : anchor
+    return (piece ? zoomed({ x: piece[0], y: piece[1] }) : anchor) satisfies ScreenPoint | undefined
   }

@@ -1,6 +1,6 @@
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
 import { makeInitIfMissingStep } from 'foldkit/binding'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { modifyFields } from 'foldkit/struct'
 import { Data, Layer, Option, Predicate, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
@@ -78,9 +78,8 @@ export interface ChatMessageConfig {
 const Touch = ChatMessageBlock.makeRequiredFieldBinding(TouchPrimaryBlock, {
   field: 'touch',
   init: {
-    contextToArgs: (config: ChatMessageConfig): [{ readonly id: string }] => [
-      { id: `${config.id}-touch` },
-    ],
+    contextToArgs: (config: ChatMessageConfig) =>
+      [{ id: `${config.id}-touch` }] satisfies [{ readonly id: string }],
   },
 }).withOutMessagePolicy({
   fold: ChatMessageBlock.makeOutMessageFold(TouchPrimaryBlock, {
@@ -97,7 +96,6 @@ const initializeThumbnail = (options: {
   readonly args: [FileThumbnailConfig]
 }) => makeInitIfMissingStep(Thumbnail, options)
 
-// Source keys include the list position: replacing/reordering an attachment remounts its preview.
 const fileKey = (file: Attachment, index: number) =>
   'url' in file
     ? `remote:${file.url}:${index}`
@@ -221,8 +219,6 @@ const view = ChatMessageComposition.makeView.withInputs<ChatMessageViewInputs>(
           )
         : h.empty
 
-    // Source Motion 14.1 keeps its initially disabled projection inert after entrance.
-    // Callers can still add shared-layout options through their owning motion scope.
     return inputs.animate(
       h.div(
         sourceStyleAttributes({ transformOrigin: user ? 'bottom right' : 'bottom left' }, [

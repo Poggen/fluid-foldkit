@@ -1,23 +1,21 @@
 import type { Html, HtmlBuilder } from 'foldkit/html'
 
-const BAND_STOPS = Array.from({ length: 17 }, (_, index) => {
-  const t = index / 16
-
-  return {
-    offset: `${(t * 100).toFixed(0)}%`,
-    opacity: Number((0.05 + Math.sin(t * Math.PI) ** 2 * 0.85).toFixed(3)),
-  }
-})
-
 /** Physical iteration is an observation. Only the owning Block may decide whether to advance its seed. */
-export function sweepMask<Message, Mounts>(
+export const sweepMask: <Message, Mounts>(
   h: HtmlBuilder<Message, Mounts>,
   chartId: string,
   width: number,
   height: number,
   durationSeconds: number,
   onSweepObserved: Message,
-): ReadonlyArray<Html> {
+) => ReadonlyArray<Html> = function sweepMask<Message, Mounts>(
+  h: HtmlBuilder<Message, Mounts>,
+  chartId: string,
+  width: number,
+  height: number,
+  durationSeconds: number,
+  onSweepObserved: Message,
+) {
   return [
     h.linearGradient(
       [
@@ -58,5 +56,14 @@ export function sweepMask<Message, Mounts>(
         ),
       ],
     ),
-  ]
+  ] satisfies ReadonlyArray<Html>
 }
+
+const BAND_STOPS = Array.from({ length: 17 }, (_, index) => {
+  const t = index / 16
+
+  return {
+    offset: `${(t * 100).toFixed(0)}%`,
+    opacity: Number((0.05 + Math.sin(t * Math.PI) ** 2 * 0.85).toFixed(3)),
+  }
+})

@@ -1,7 +1,6 @@
 import { Context, Layer } from 'effect'
 import { popupActiveElement, popupContains } from './date-picker-popup-focus.js'
 
-// A nested popup suppresses its ancestor; unrelated roots retain independent dismissal.
 interface PopupOccurrence {
   readonly element: HTMLElement
 

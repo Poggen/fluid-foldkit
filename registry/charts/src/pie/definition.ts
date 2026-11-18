@@ -10,7 +10,7 @@ import { defaultPieColors } from './options'
 
 export const DEFAULT_HOVER_OFFSET = 10
 
-export const scopePaint = (paint: string, id: string): string =>
+export const scopePaint: (paint: string, id: string) => string = (paint: string, id: string) =>
   paint.replace(/url\(#([^)]*)\)/g, `url(#${id}-$1)`)
 
 export function pieGeometry(props: PieChartProps, size: number, id: string) {
@@ -47,10 +47,10 @@ export function pieGeometry(props: PieChartProps, size: number, id: string) {
       : (configByIndex.get(arc.index) ?? { index: arc.index }),
   )
 
-  const color = (index: number): string =>
+  const color: (index: number) => string = (index: number) =>
     props.data[index]?.color || defaultPieColors[index % 5] || 'var(--chart-1)'
 
-  const fill = (index: number): string => {
+  const fill: (index: number) => string = (index: number) => {
     const paint = props.data[index]?.fill
 
     return paint ? scopePaint(paint, id) : color(index)

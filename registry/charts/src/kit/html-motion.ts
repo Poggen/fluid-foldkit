@@ -14,7 +14,7 @@ export function mountHtmlMotion(
     },
     props,
     presenceContext: null,
-    // Original MotionConfig defaults to never; TooltipBox has no useReducedMotion override.
+
     reducedMotionConfig: reducedMotion,
   })
 

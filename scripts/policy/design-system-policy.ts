@@ -10,12 +10,11 @@ export const designSystemSettings = {
 
 export const designSystemRules = {
   'foldkit-design/no-shadowed-class': 'error',
-  // A declared CSS hook whose name happens to start with Tailwind's accent utility.
+
   'shadcn/no-raw-colors': ['error', { allow: ['accent-swatch'] }],
   'shadcn/no-unknown-classes': [
     'error',
     {
-      // These namespaces include DOM hooks consumed by chart tests and calendar adapters.
       allow: ['bkm-*', 'ts-bkm-*', 'rdp-*', 'is-*', ...designSystemHooks],
     },
   ],

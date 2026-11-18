@@ -109,7 +109,7 @@ export const makeInputMessagePlaygroundView = () => {
     config: Configuration,
     settings: ResolvedSettings,
     h: FluidViewBuilder,
-  ): Html =>
+  ) =>
     lazy('input-message-playground', render, [
       model.composer,
       model.tooltips,
@@ -118,5 +118,5 @@ export const makeInputMessagePlaygroundView = () => {
       config.appearance.size ?? settings.size,
       config.appearance.hover ?? settings.hover,
       h,
-    ])
+    ]) satisfies Html
 }

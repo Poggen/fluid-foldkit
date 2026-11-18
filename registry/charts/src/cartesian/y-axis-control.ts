@@ -4,19 +4,14 @@ import type { YAxisConfig } from './axis-options'
 import type { ReferenceAreaConfig } from './context-types'
 import { axisId, DEFAULT_Y_AXIS_ID } from './series'
 
-interface SourceYAxisControlOptions {
-  readonly id: string
-  readonly axes: ReadonlyArray<YAxisConfig>
-  readonly referenceAreas: ReadonlyArray<ReferenceAreaConfig>
-  readonly horizontalBarDomains?: Readonly<Record<string, readonly [number, number]>>
-}
-
-export function sourceYAxisControl({
+export const sourceYAxisControl: (
+  argument0: SourceYAxisControlOptions,
+) => ChartControl<never, never> = function sourceYAxisControl({
   id,
   axes,
   referenceAreas,
   horizontalBarDomains,
-}: SourceYAxisControlOptions): ChartControl<never, never> {
+}: SourceYAxisControlOptions) {
   const controlId = `${id}:source-y-axes`
 
   return {
@@ -39,7 +34,6 @@ export function sourceYAxisControl({
             : (horizontalBarDomains[canonicalId] ?? horizontalBarDomains.left ?? [0, 100])
         if (domain.length === 0) continue
 
-        // D3 enumerates raw count hints; resolved engine maps own every coordinate.
         const ticks = scaleLinear()
           .domain(domain)
           .ticks(axis.numTicks === undefined || !Number.isFinite(axis.numTicks) ? 5 : axis.numTicks)
@@ -64,7 +58,7 @@ export function sourceYAxisControl({
             kind: 'label',
             key: `${scale.id}-tick-label:${JSON.stringify([controlId, canonicalId, occurrence, value])}`,
             x: side === 'left' ? chart.x - 4 : chart.x + chart.width + 4,
-            // The existing horizontal Bar extension reads primary x displacement as top.
+
             y: horizontalBarDomains === undefined ? map(value) : map(value) - chart.x + chart.y,
             text:
               axis.formatValue?.(value) ??
@@ -95,4 +89,11 @@ export function sourceYAxisControl({
       }
     },
   }
+}
+
+interface SourceYAxisControlOptions {
+  readonly id: string
+  readonly axes: ReadonlyArray<YAxisConfig>
+  readonly referenceAreas: ReadonlyArray<ReferenceAreaConfig>
+  readonly horizontalBarDomains?: Readonly<Record<string, readonly [number, number]>>
 }

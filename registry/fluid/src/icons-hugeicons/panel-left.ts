@@ -1,4 +1,4 @@
-// Exact @hugeicons/react 1.1.6 SVG. MIT; see NOTICE
+/* @license Exact @hugeicons/react 1.1.6 SVG. MIT; see NOTICE */
 import type { Icon } from '../presentation.js'
 
 export const icon: Icon = (options, h) =>

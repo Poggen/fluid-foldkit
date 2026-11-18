@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment node
 import { Effect, Layer, Option, Schema } from 'effect'
 import { Block, Story } from 'foldkit'

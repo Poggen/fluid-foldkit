@@ -1,4 +1,3 @@
-// Radar data -> flat rows consumed by the native polar marks.
 /** One metric (spoke) of a radar chart. */
 export interface RadarMetric {
   /** Unique key of the metric. Series look up their value in `values` under this key. */
@@ -29,11 +28,11 @@ export interface RadarRow {
 
 export const RADAR_VALUE_MAX = 100
 
-export const seriesRows = (
+export const seriesRows: (
   datum: RadarData,
   index: number,
   metrics: ReadonlyArray<RadarMetric>,
-): Array<RadarRow> =>
+) => Array<RadarRow> = (datum: RadarData, index: number, metrics: ReadonlyArray<RadarMetric>) =>
   metrics.map((metric) => ({
     label: metric.label,
     metric: metric.key,
@@ -42,13 +41,12 @@ export const seriesRows = (
   }))
 
 /** One closed ring per level: a constant radius at every metric angle. */
-export const ringRows = (
+export const ringRows: (
   level: number,
   levels: number,
   metrics: ReadonlyArray<RadarMetric>,
-): Array<RadarRow> =>
+) => Array<RadarRow> = (level: number, levels: number, metrics: ReadonlyArray<RadarMetric>) =>
   metrics.map((metric, i) => ({
-    // bklit: vertex i sits at -(i * step + step / 2) degrees.
     angle: 360 - ((i * 360) / metrics.length + 180 / metrics.length),
     label: metric.label,
     metric: metric.key,
@@ -56,5 +54,7 @@ export const ringRows = (
     value: ((level + 1) * RADAR_VALUE_MAX) / levels,
   }))
 
-export const metricRows = (metrics: ReadonlyArray<RadarMetric>, value: number): Array<RadarRow> =>
-  metrics.map((metric) => ({ label: metric.label, metric: metric.key, series: -1, value }))
+export const metricRows: (metrics: ReadonlyArray<RadarMetric>, value: number) => Array<RadarRow> = (
+  metrics: ReadonlyArray<RadarMetric>,
+  value: number,
+) => metrics.map((metric) => ({ label: metric.label, metric: metric.key, series: -1, value }))

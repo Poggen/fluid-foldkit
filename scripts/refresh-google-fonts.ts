@@ -1,4 +1,3 @@
-// Refresh with: bun scripts/refresh-google-fonts.ts
 import { writeFile } from 'node:fs/promises'
 import { FontCatalogue } from '../app/src/fonts/catalogue'
 import { Schema } from 'effect'
@@ -19,7 +18,9 @@ const response = await fetch(source)
 if (!response.ok) throw new Error(`Google Fonts metadata returned ${response.status}`)
 const raw: unknown = JSON.parse((await response.text()).replace(/^\)\]\}'\s*/u, ''))
 const metadata = Schema.decodeUnknownSync(Metadata)(raw)
-const category = (value: string): (typeof FontCatalogue.Type.fonts)[number]['category'] => {
+const category: (value: string) => (typeof FontCatalogue.Type.fonts)[number]['category'] = (
+  value: string,
+) => {
   switch (value) {
     case 'Serif':
       return 'serif'
@@ -38,7 +39,7 @@ const category = (value: string): (typeof FontCatalogue.Type.fonts)[number]['cat
 const fonts = metadata.familyMetadataList
   .map((font) => {
     const normal = Object.keys(font.fonts).filter((key) => /^\d+$/u.test(key))
-    const axis = (tag: string): readonly [number, number] | null => {
+    const axis: (tag: string) => readonly [number, number] | null = (tag: string) => {
       const found = font.axes.find((axis) => axis.tag === tag)
       return found === undefined ? null : [found.min, found.max]
     }

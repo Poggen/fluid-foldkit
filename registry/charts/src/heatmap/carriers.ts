@@ -1,5 +1,3 @@
-// Config carriers for HeatmapChart. They render nothing: the chart reads their props
-// (see ../kit/read-children) and folds them into one native definition.
 import type { ChartStyle as CSSProperties } from '../cartesian/content-types'
 
 import type { HeatmapYAxisLabelFormat, HeatmapYAxisTickFilter } from './day-labels'

@@ -14,7 +14,7 @@ import {
 } from './parts'
 import type { LegendRowMessages } from './parts'
 
-export function legendView<Message, Mounts, Item extends LegendItemData>(
+export const legendView: <Message, Mounts, Item extends LegendItemData>(
   h: HtmlBuilder<Message, Mounts>,
   id: string,
   items: ReadonlyArray<Item>,
@@ -22,7 +22,15 @@ export function legendView<Message, Mounts, Item extends LegendItemData>(
   presentation: LegendPresentation<Item>,
   messages: LegendRowMessages<Message>,
   mounted: Parameters<HtmlBuilder<Message, Mounts>['div']>[0],
-): Html {
+) => Html = function <Message, Mounts, Item extends LegendItemData>(
+  h: HtmlBuilder<Message, Mounts>,
+  id: string,
+  items: ReadonlyArray<Item>,
+  hoveredIndex: number | null,
+  presentation: LegendPresentation<Item>,
+  messages: LegendRowMessages<Message>,
+  mounted: Parameters<HtmlBuilder<Message, Mounts>['div']>[0],
+) {
   if (presentation.kind === 'profitLoss') {
     const alignment = {
       start: 'bk-justify-start',
@@ -63,14 +71,17 @@ export function legendView<Message, Mounts, Item extends LegendItemData>(
           mounted,
         ),
       ],
-    )
+    ) satisfies Html
   }
 
   const { props } = presentation
   const { title } = props
   const context = { items, hoveredIndex, setHoveredIndex: messages.pointer }
 
-  const itemRow = (index: number, itemProps: LegendItemProps<Item>): Html => {
+  const itemRow: (index: number, itemProps: LegendItemProps<Item>) => Html = (
+    index: number,
+    itemProps: LegendItemProps<Item>,
+  ) => {
     const item = items[index]
 
     if (item === undefined || !Number.isInteger(index)) {
@@ -140,5 +151,5 @@ export function legendView<Message, Mounts, Item extends LegendItemData>(
           ]),
       ...rows,
     ],
-  )
+  ) satisfies Html
 }

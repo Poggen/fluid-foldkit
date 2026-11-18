@@ -1,9 +1,13 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
-// Six-role type scale: each role is a font size and a line height, per step
-// of the size ladder. This file is the single source: the CSS variables, the
-// Tailwind theme tokens (text-<role>) and the registry `type-scale` item are
-// generated from `typeStyles` below.
+/** The class string for one role at one step (size + leading). */
+const typeClass: (role: TypeScaleRole, variant?: TypeScaleVariant) => string = function typeClass(
+  role: TypeScaleRole,
+  variant: TypeScaleVariant = 'default',
+) {
+  return typeClasses[variant][role]
+}
+
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 
 type TypeScaleVariant = 'default' | 'compact'
 
@@ -64,9 +68,7 @@ const typeScaleRoles = [
   'micro',
 ] satisfies Array<TypeScaleRole>
 
-/** Font sizes alone, per role and step: the shape `typeScale` has always
- *  had, for code that reads it as numbers. */
-const sizes = (role: TypeScaleRole): TypeScaleStep => ({
+const sizes: (role: TypeScaleRole) => TypeScaleStep = (role: TypeScaleRole) => ({
   default: typeStyles[role].default.size,
   compact: typeStyles[role].compact.size,
 })
@@ -80,14 +82,6 @@ const typeScale: Record<TypeScaleRole, TypeScaleStep> = {
   micro: sizes('micro'),
 }
 
-// Class strings per role and step (size + leading). Arbitrary values over the CSS variables,
-// with the px values as fallbacks, so a component renders the right size even
-// where the `type-scale` tokens were never installed, and stock
-// tailwind-merge reads them as font-size / line-height (a bare `text-caption`
-// would be taken for a color and dropped next to `text-muted-foreground`).
-// Literal strings on purpose: Tailwind only generates classes it can read in
-// source. Written by scripts/generate-type-scale.mjs, do not edit by hand.
-// <generated:type-classes>
 const typeClasses = {
   default: {
     display: 'text-[length:var(--fs-display,28px)] leading-[var(--lh-display,34px)]',
@@ -109,13 +103,6 @@ const typeClasses = {
     micro: 'text-[length:var(--fs-micro-compact,10px)] leading-[var(--lh-micro-compact,12px)]',
   },
 } satisfies Record<TypeScaleVariant, Record<TypeScaleRole, string>>
-
-// </generated:type-classes>
-
-/** The class string for one role at one step (size + leading). */
-function typeClass(role: TypeScaleRole, variant: TypeScaleVariant = 'default'): string {
-  return typeClasses[variant][role]
-}
 
 /** Editable fields add this after their role. iOS Safari zooms the page into
  *  a focused field set under 16px, so touch screens get 16px. It sets the

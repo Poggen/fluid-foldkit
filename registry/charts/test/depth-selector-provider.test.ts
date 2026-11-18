@@ -31,7 +31,9 @@ const chartLayer = ChartBlock.makeLayer(chart.plans<typeof DepthSelectorChartKey
 
 const firstSegments = (_row: typeof Row.Type) => [{ value: 8 }]
 
-const forbiddenSegments = (_row: typeof Row.Type): ReadonlyArray<{ readonly value: number }> => {
+const forbiddenSegments: (_row: typeof Row.Type) => ReadonlyArray<{ readonly value: number }> = (
+  _row: typeof Row.Type,
+) => {
   throw new Error('A later provider must not be selected')
 }
 

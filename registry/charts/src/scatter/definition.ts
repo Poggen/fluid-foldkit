@@ -35,11 +35,7 @@ import type { ChartTooltipExtension } from '@tanstack/charts/tooltip'
 import { tooltipBoxMotion } from '../cartesian/tooltip-motion'
 import { userGradients } from '../kit/gradients'
 
-const date = (value: number) => DateTime.toDateUtc(DateTime.makeUnsafe(Math.trunc(value)))
-
-const isScatterCoordinate = Schema.is(Schema.Finite)
-
-export function buildScatterDefinition<Row extends Readonly<Record<string, unknown>>>(
+export const buildScatterDefinition: <Row extends Readonly<Record<string, unknown>>>(
   data: ReadonlyArray<Row>,
   options: {
     readonly id: string
@@ -54,7 +50,24 @@ export function buildScatterDefinition<Row extends Readonly<Record<string, unkno
     readonly clock: () => number
     readonly onBuilt: (snapshot: CartesianSnapshot<Row>) => void
   },
-): DomChartDefinition<Row, Date, number> {
+) => DomChartDefinition<Row, Date, number> = function buildScatterDefinition<
+  Row extends Readonly<Record<string, unknown>>,
+>(
+  data: ReadonlyArray<Row>,
+  options: {
+    readonly id: string
+    readonly tooltipExtension?: ChartTooltipExtension
+    readonly onPointerResolver: (
+      resolve: (point: { readonly x: number; readonly y: number }) => number | null,
+    ) => void
+    readonly occurrences: WeakMap<ChartPoint, number>
+    readonly renderer: ChartLayerRenderer<Row, Date, number>
+    readonly props: ScatterChartProps<Row>
+    readonly state: Interaction
+    readonly clock: () => number
+    readonly onBuilt: (snapshot: CartesianSnapshot<Row>) => void
+  },
+) {
   const { props, state } = options
   const { occurrences } = options
   const series = resolveScatterSeries(props.children)
@@ -124,7 +137,7 @@ export function buildScatterDefinition<Row extends Readonly<Record<string, unkno
     ((value: Date) =>
       new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(value))
 
-  const xDomainAt = (width: number): [Date, Date] => {
+  const xDomainAt: (width: number) => [Date, Date] = (width: number) => {
     const plot = Math.max(1, width - margin.left - margin.right - xPad * 2)
 
     if (maxT === minT) {
@@ -138,7 +151,13 @@ export function buildScatterDefinition<Row extends Readonly<Record<string, unkno
 
   type Marks = Array<SeriesMark<Row> | ReturnType<typeof gridColumnGuides>[number]>
 
-  const chart = ({ width, height }: { width: number; height: number }): ChartSpec<Marks> => {
+  const chart: (argument0: { width: number; height: number }) => ChartSpec<Marks> = ({
+    width,
+    height,
+  }: {
+    width: number
+    height: number
+  }) => {
     const sourceGrid = sourceGridMasks(options.id, width, height, margin, grid)
     live.innerWidth = Math.max(1, width - margin.left - margin.right)
     live.innerHeight = height - margin.top - margin.bottom
@@ -309,7 +328,9 @@ export function buildScatterDefinition<Row extends Readonly<Record<string, unkno
       },
     }
 
-    return colors.domain.length === 0 ? specification : { ...specification, color: colors }
+    return (
+      colors.domain.length === 0 ? specification : { ...specification, color: colors }
+    ) satisfies ChartSpec<Marks>
   }
 
   const focus = {
@@ -317,15 +338,17 @@ export function buildScatterDefinition<Row extends Readonly<Record<string, unkno
     resolve<Datum, X extends ChartValue, Y extends ChartValue>(
       points: ReadonlyArray<ChartPoint<Datum, X, Y>>,
       context: ChartFocusResolveContext,
-    ): ReadonlyArray<ChartPoint<Datum, X, Y>> {
+    ) {
       const occurrence = pointer.resolve(context)
 
-      return occurrence === null
-        ? []
-        : focusGroupX.resolve(
-            points.filter((point) => occurrences.get(point) === occurrence),
-            context,
-          )
+      return (
+        occurrence === null
+          ? []
+          : focusGroupX.resolve(
+              points.filter((point) => occurrences.get(point) === occurrence),
+              context,
+            )
+      ) satisfies ReadonlyArray<ChartPoint<Datum, X, Y>>
     },
   }
 
@@ -354,5 +377,12 @@ export function buildScatterDefinition<Row extends Readonly<Record<string, unkno
 
   const chartOptions = tooltip === undefined ? chartOptionsBase : { focus, ...chartOptionsBase }
 
-  return defineChart<Marks, ChartSpec<Marks>, typeof chartOptions>({ chart }, chartOptions)
+  return defineChart<Marks, ChartSpec<Marks>, typeof chartOptions>(
+    { chart },
+    chartOptions,
+  ) satisfies DomChartDefinition<Row, Date, number>
 }
+
+const date = (value: number) => DateTime.toDateUtc(DateTime.makeUnsafe(Math.trunc(value)))
+
+const isScatterCoordinate = Schema.is(Schema.Finite)

@@ -50,11 +50,17 @@ export type PieChild =
   | { readonly kind: 'center'; readonly props: PieCenterProps }
   | { readonly kind: 'resource'; readonly render: (idPrefix: string) => SVGElement }
 
-export const PieSlice = (props: PieSliceProps): PieChild => ({ kind: 'slice', props })
+export const PieSlice: (props: PieSliceProps) => PieChild = (props: PieSliceProps) => ({
+  kind: 'slice',
+  props,
+})
 
-export const PieCenter = (props: PieCenterProps = {}): PieChild => ({ kind: 'center', props })
+export const PieCenter: (props?: PieCenterProps) => PieChild = (props: PieCenterProps = {}) =>
+  ({ kind: 'center', props }) satisfies PieChild
 
-export const PieResource = (render: (idPrefix: string) => SVGElement): PieChild => ({
+export const PieResource: (render: (idPrefix: string) => SVGElement) => PieChild = (
+  render: (idPrefix: string) => SVGElement,
+) => ({
   kind: 'resource',
   render,
 })

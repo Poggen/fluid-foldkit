@@ -227,7 +227,7 @@ const update = TooltipInteractionComposition.makeUpdate.withContext(
             }),
             observation,
           ),
-    // A policy change cannot discard the departure owed by an already-hovered bubble.
+
     MovedInBaseGrace: (model, { observation }) =>
       baseGraceMove(
         model,

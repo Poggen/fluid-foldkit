@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom -- Exercise the real keyboard event cancellation boundary.
 import { dropdownPanelKeys } from '../src/dropdown-panel-keys.js'
 import type { DropdownPanelObservation } from '../src/dropdown-observation.js'
