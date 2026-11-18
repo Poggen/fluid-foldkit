@@ -1,4 +1,4 @@
-// Geometry derived from the pinned Base UI safePolygon implementation; MIT.
+/* @license Geometry derived from the pinned Base UI safePolygon implementation; MIT. */
 import { Option, Schema } from 'effect'
 import { modifyFields } from 'foldkit/struct'
 import { Side } from './domain.js'

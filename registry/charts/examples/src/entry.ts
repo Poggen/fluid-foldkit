@@ -19,5 +19,5 @@ const program = Program.makeElement({
   flags: Effect.succeed(configuration),
   container: document.getElementById('root'),
 })
-// Freeze the fixture's font environment before either renderer measures its first frame.
+
 void document.fonts.load('700 30px Geist').then(() => Runtime.run(program))

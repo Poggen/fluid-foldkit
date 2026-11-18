@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Effect, Queue, Schema, Stream } from 'effect'
 import { DialogObservation, DIALOG_MOTION_COMPLETE } from './dialog-observation.js'
 import type { DialogResourceOptions, DialogCallbacks } from './dialog-resource-contract.js'
@@ -33,7 +33,7 @@ export const observeDialogRoot =
   (document: Document, options: DialogResourceOptions, lifetime: DialogLifetime) =>
   (element: Element, id: string) =>
     Stream.callback<DialogObservation>((queue) => {
-      const emit = (message: DialogObservation): void => {
+      const emit: (message: DialogObservation) => void = (message: DialogObservation) => {
         Queue.offerUnsafe(queue, message)
       }
 

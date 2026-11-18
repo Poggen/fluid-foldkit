@@ -1,6 +1,6 @@
 import type { SelectViewInputs } from './select.js'
 import type { DropdownResources } from './dropdown-resources.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { layer as SelectLayer, SelectBlock } from './select.js'
 import { SwitchLayer as ToggleLayer, SwitchBlock } from './switch.js'
 import { layer as FieldLayer, InputFieldBlock } from './input-group-field.js'

@@ -1,6 +1,44 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { Attribute, ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
 import { cn } from './lib/utils.js'
+
+/** Classes preserve native HTML composition, including nested scroll sections and SSR markup. */
+export const Reveal: <Message>(props: RevealProps<Message>, h: HtmlBuilder<Message>) => Html =
+  function Reveal<Message>(props: RevealProps<Message>, h: HtmlBuilder<Message>) {
+    const attributes = [
+      h.Class(
+        cn(
+          props.preset,
+          props.scroll && 'reveal-scroll',
+          props.items && 'reveal-items',
+          props.swap && 'reveal-swap',
+          props.className,
+        ),
+      ),
+      ...(props.attributes ?? []),
+    ]
+
+    return (
+      props.render ? props.render(attributes, props.children) : h.div(attributes, props.children)
+    ) satisfies Html
+  }
+
+export const RevealSkeleton: <Message>(
+  props: RevealSkeletonProps<Message>,
+  h: HtmlBuilder<Message>,
+) => Html = function RevealSkeleton<Message>(
+  props: RevealSkeletonProps<Message>,
+  h: HtmlBuilder<Message>,
+) {
+  return h.div(
+    [
+      h.DataAttribute('slot', 'skeleton'),
+      h.Class(cn('bg-accent animate-pulse rounded-md', props.className)),
+      ...(props.attributes ?? []),
+    ],
+    props.children ?? [],
+  ) satisfies Html
+}
 
 export interface RevealPreset {
   readonly spring: 'slow' | 'moderate'
@@ -49,40 +87,8 @@ export interface RevealProps<Message> {
   ) => Html
 }
 
-/** Classes preserve native HTML composition, including nested scroll sections and SSR markup. */
-export function Reveal<Message>(props: RevealProps<Message>, h: HtmlBuilder<Message>): Html {
-  const attributes = [
-    h.Class(
-      cn(
-        props.preset,
-        props.scroll && 'reveal-scroll',
-        props.items && 'reveal-items',
-        props.swap && 'reveal-swap',
-        props.className,
-      ),
-    ),
-    ...(props.attributes ?? []),
-  ]
-
-  return props.render ? props.render(attributes, props.children) : h.div(attributes, props.children)
-}
-
 export interface RevealSkeletonProps<Message> {
   readonly className?: string
   readonly attributes?: ReadonlyArray<Attribute<Message> | ChildAttribute>
   readonly children?: ReadonlyArray<Html | string>
-}
-
-export function RevealSkeleton<Message>(
-  props: RevealSkeletonProps<Message>,
-  h: HtmlBuilder<Message>,
-): Html {
-  return h.div(
-    [
-      h.DataAttribute('slot', 'skeleton'),
-      h.Class(cn('bg-accent animate-pulse rounded-md', props.className)),
-      ...(props.attributes ?? []),
-    ],
-    props.children ?? [],
-  )
 }

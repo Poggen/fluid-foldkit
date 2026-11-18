@@ -1,11 +1,127 @@
 import { DateTime } from 'effect'
-// The live tip: dashed value rule, halo + dot, value badge. Native has no pulsing-ring or text-pill mark, so this is one
-// createMark emitting plain scene nodes from the chart's scales; the pulse ring is HTML over the chart (live-pulse.tsx).
+
 import type { LiveRow } from './definition'
 import { createMark } from '@tanstack/charts'
 import type { ChartMark, SceneNode } from '@tanstack/charts'
 import { LABEL_POOL, labelWindow } from './head-ease'
 import type { HeadLabel } from './head-ease'
+
+export const liveTip: (options: LiveTipOptions) => ChartMark<LiveRow, Date, number> =
+  function liveTip(options: LiveTipOptions) {
+    const { id, time, value, color, stroke, dotSize, badge, labels, parity, ease } = options
+
+    return createMark<LiveRow, Date, number>(
+      () => ({
+        id,
+
+        channels: {},
+        render: ({ scales, chart }) => {
+          const x = scales.x?.map(DateTime.toDateUtc(DateTime.makeUnsafe(time))) ?? Number.NaN
+          const y = scales.y?.map(value) ?? Number.NaN
+
+          if (!Number.isFinite(x) || !Number.isFinite(y)) {
+            return { nodes: [] }
+          }
+
+          const children: Array<SceneNode> = [
+            {
+              kind: 'rule',
+              key: `${id}:rule`,
+              x1: chart.x,
+              x2: x,
+              y1: y,
+              y2: y,
+              style: { stroke, strokeOpacity: 0.25, strokeWidth: 1, strokeDasharray: '4 4' },
+            },
+          ]
+
+          const lx = ease ? 0 : x
+          const ly = ease ? 0 : y
+
+          const indicator: Array<SceneNode> = []
+          indicator.push(
+            {
+              kind: 'dot',
+              key: `${id}:halo`,
+              x: lx,
+              y: ly,
+              radius: dotSize + 2,
+              style: { fill: color, fillOpacity: 0.1 },
+            },
+            {
+              kind: 'dot',
+              key: `${id}:dot`,
+              x: lx,
+              y: ly,
+              radius: dotSize,
+              style: { fill: color, stroke: 'var(--chart-background)', strokeWidth: 2 },
+            },
+          )
+
+          if (badge) {
+            for (let i = 0; i < LABEL_POOL; i += 1) {
+              const label = labels.at(i)
+
+              const window =
+                label === undefined
+                  ? 'bkm-lbl'
+                  : `bkm-lbl ${labelWindow(label.step, labels.at(i + 1)?.step)}`
+
+              indicator.push(
+                {
+                  kind: 'rect',
+                  key: `${id}:badge:${i}`,
+                  className: window,
+                  x: lx + BADGE_GAP,
+                  y: ly - BADGE_HEIGHT / 2,
+                  width: (label?.text.length ?? 0) * CHAR_WIDTH + BADGE_PAD,
+                  height: BADGE_HEIGHT,
+                  radius: 6,
+                  style: { fill: 'var(--bkm-popover)', fillOpacity: 0.95 },
+                },
+                {
+                  kind: 'label',
+                  key: `${id}:badge-text:${i}`,
+                  className: `bkm-live-badge-text ${window}`,
+                  x: lx + BADGE_GAP + 8,
+
+                  y: ly + BADGE_TEXT_DY,
+                  text: label?.text ?? '',
+                  anchor: 'start',
+                  fontSize: 11,
+                  fontWeight: 500,
+                },
+              )
+            }
+          }
+
+          children.push({
+            kind: 'group',
+            key: `${id}:indicator`,
+            className: 'bkm-live-indicator',
+            ...(ease ? { translateX: x, translateY: y } : {}),
+            children: indicator,
+          })
+
+          return {
+            nodes: [
+              {
+                kind: 'group',
+                key: id,
+                className: ease
+                  ? `bkm-live-tip bkm-dp${parity} bkm-sp${parity}`
+                  : `bkm-live-tip bkm-sp${parity}`,
+                ariaHidden: true,
+                children,
+              },
+            ],
+            points: [],
+          }
+        },
+      }),
+      ease ? false : undefined,
+    )
+  }
 
 export interface LiveTipOptions {
   readonly id: string
@@ -34,122 +150,3 @@ const CHAR_WIDTH = 7.5
 const BADGE_PAD = 16
 
 const BADGE_TEXT_DY = 4
-
-export function liveTip(options: LiveTipOptions): ChartMark<LiveRow, Date, number> {
-  const { id, time, value, color, stroke, dotSize, badge, labels, parity, ease } = options
-
-  return createMark<LiveRow, Date, number>(
-    () => ({
-      id,
-      // No channels: the tip never influences either domain.
-      channels: {},
-      render: ({ scales, chart }) => {
-        const x = scales.x?.map(DateTime.toDateUtc(DateTime.makeUnsafe(time))) ?? Number.NaN
-        const y = scales.y?.map(value) ?? Number.NaN
-
-        if (!Number.isFinite(x) || !Number.isFinite(y)) {
-          return { nodes: [] }
-        }
-
-        const children: Array<SceneNode> = [
-          {
-            kind: 'rule',
-            key: `${id}:rule`,
-            x1: chart.x,
-            x2: x,
-            y1: y,
-            y2: y,
-            style: { stroke, strokeOpacity: 0.25, strokeWidth: 1, strokeDasharray: '4 4' },
-          },
-        ]
-
-        // At rest the indicator group carries the tip's translate, so a tick rewrites one transform; while the tip tweens (`ease` off)
-        // the nodes take absolute coordinates so each follows the chart's roll.
-        const lx = ease ? 0 : x
-        const ly = ease ? 0 : y
-        // A slot the tick does not use drops its parity and window classes and nothing else, so it stays untouched from tick to tick.
-        const indicator: Array<SceneNode> = []
-        indicator.push(
-          {
-            kind: 'dot',
-            key: `${id}:halo`,
-            x: lx,
-            y: ly,
-            radius: dotSize + 2,
-            style: { fill: color, fillOpacity: 0.1 },
-          },
-          {
-            kind: 'dot',
-            key: `${id}:dot`,
-            x: lx,
-            y: ly,
-            radius: dotSize,
-            style: { fill: color, stroke: 'var(--chart-background)', strokeWidth: 2 },
-          },
-        )
-
-        if (badge) {
-          // Each window's pill is painted directly before its text; a step switch hides one window and shows the next in the same style update, so exactly one badge is visible.
-          for (let i = 0; i < LABEL_POOL; i += 1) {
-            const label = labels.at(i)
-
-            const window =
-              label === undefined
-                ? 'bkm-lbl'
-                : `bkm-lbl ${labelWindow(label.step, labels.at(i + 1)?.step)}`
-
-            indicator.push(
-              {
-                kind: 'rect',
-                key: `${id}:badge:${i}`,
-                className: window,
-                x: lx + BADGE_GAP,
-                y: ly - BADGE_HEIGHT / 2,
-                width: (label?.text.length ?? 0) * CHAR_WIDTH + BADGE_PAD,
-                height: BADGE_HEIGHT,
-                radius: 6,
-                style: { fill: 'var(--bkm-popover)', fillOpacity: 0.95 },
-              },
-              {
-                kind: 'label',
-                key: `${id}:badge-text:${i}`,
-                className: `bkm-live-badge-text ${window}`,
-                x: lx + BADGE_GAP + 8,
-                // bklit: <text y={4}> in a 24px box centred on the dot, alphabetic baseline (not dominant-baseline middle).
-                y: ly + BADGE_TEXT_DY,
-                text: label?.text ?? '',
-                anchor: 'start',
-                fontSize: 11,
-                fontWeight: 500,
-              },
-            )
-          }
-        }
-
-        children.push({
-          kind: 'group',
-          key: `${id}:indicator`,
-          className: 'bkm-live-indicator',
-          ...(ease ? { translateX: x, translateY: y } : {}),
-          children: indicator,
-        })
-
-        return {
-          nodes: [
-            {
-              kind: 'group',
-              key: id,
-              className: ease
-                ? `bkm-live-tip bkm-dp${parity} bkm-sp${parity}`
-                : `bkm-live-tip bkm-sp${parity}`,
-              ariaHidden: true,
-              children,
-            },
-          ],
-          points: [],
-        }
-      },
-    }),
-    ease ? false : undefined,
-  )
-}

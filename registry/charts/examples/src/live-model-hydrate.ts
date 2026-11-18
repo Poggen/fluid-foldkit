@@ -1,5 +1,5 @@
 import { Program, Runtime } from 'foldkit'
-import { liveModelExample } from './live-model-fixture'
+import { liveModelExample } from './live-model.fixture'
 import '@foldkit-visuals/charts/styles.css'
 import './style.css'
 

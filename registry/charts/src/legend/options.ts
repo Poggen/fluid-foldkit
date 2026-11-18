@@ -3,6 +3,51 @@ import type { ProfitLossLegendProps } from './profit-loss'
 import type { LegendContent } from './content'
 import type { LegendContextValue, LegendItemContextValue, LegendItemData } from './contexts'
 
+export const legendPresentation: <Item extends LegendItemData>(
+  inputs: LegendViewInputs<Item>,
+) => LegendPresentation<Item> = function legendPresentation<Item extends LegendItemData>(
+  inputs: LegendViewInputs<Item>,
+) {
+  if (inputs.kind === 'profitLoss') {
+    return { kind: 'profitLoss', props: inputs.props } satisfies LegendPresentation<Item>
+  }
+
+  if (inputs.kind === 'chart') {
+    let props: ChartLegendProps<Item> = { ...inputs.props }
+
+    if (inputs.formatValue !== undefined) {
+      props = { ...props, formatValue: inputs.formatValue }
+    }
+
+    if (inputs.renderItem !== undefined) {
+      props = { ...props, renderItem: inputs.renderItem }
+    }
+
+    return { kind: 'chart', props } satisfies LegendPresentation<Item>
+  }
+
+  if (inputs.kind === 'composable') {
+    return {
+      kind: 'composable',
+      props: { ...inputs.props, children: inputs.renderLegend },
+    } satisfies LegendPresentation<Item>
+  }
+
+  let children: LegendItemProps<Item> = { children: inputs.children }
+
+  if (inputs.itemClassName !== undefined) {
+    children = { className: inputs.itemClassName, ...children }
+  }
+
+  return {
+    kind: 'composable',
+    props: {
+      ...inputs.props,
+      children,
+    },
+  } satisfies LegendPresentation<Item>
+}
+
 export type LegendItem = LegendItemData
 
 export interface LegendValueProps {
@@ -104,43 +149,3 @@ export type LegendViewInputs<Item extends LegendItemData> =
       readonly hoveredIndex: number | null
       readonly props: ProfitLossLegendProps
     }
-
-export function legendPresentation<Item extends LegendItemData>(
-  inputs: LegendViewInputs<Item>,
-): LegendPresentation<Item> {
-  if (inputs.kind === 'profitLoss') {
-    return { kind: 'profitLoss', props: inputs.props }
-  }
-
-  if (inputs.kind === 'chart') {
-    let props: ChartLegendProps<Item> = { ...inputs.props }
-
-    if (inputs.formatValue !== undefined) {
-      props = { ...props, formatValue: inputs.formatValue }
-    }
-
-    if (inputs.renderItem !== undefined) {
-      props = { ...props, renderItem: inputs.renderItem }
-    }
-
-    return { kind: 'chart', props }
-  }
-
-  if (inputs.kind === 'composable') {
-    return { kind: 'composable', props: { ...inputs.props, children: inputs.renderLegend } }
-  }
-
-  let children: LegendItemProps<Item> = { children: inputs.children }
-
-  if (inputs.itemClassName !== undefined) {
-    children = { className: inputs.itemClassName, ...children }
-  }
-
-  return {
-    kind: 'composable',
-    props: {
-      ...inputs.props,
-      children,
-    },
-  }
-}

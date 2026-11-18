@@ -1,16 +1,19 @@
 import { toCssEase } from '../kit/motion/enter-transition'
 
-// The prop-derived numbers funnel.css reads, as custom properties on the host (hover and entrance state are never props of the definition).
 type CSSProperties = Readonly<Record<string, string | number>>
 
-const range = (n: number): Array<number> => Array.from({ length: n }, (_, i) => i)
+const range: (n: number) => Array<number> = (n: number) => Array.from({ length: n }, (_, i) => i)
 
 /** Per-layer resting transform of a hot ring (`--bkm-hot<layer>`): the scale on the pop axis, precomputed so no hover rule evaluates a calc. */
-const funnelHoverVars = (
+const funnelHoverVars: (
   layers: number,
   horizontal: boolean,
   pop: (layer: number, layers: number) => number,
-): CSSProperties => {
+) => CSSProperties = (
+  layers: number,
+  horizontal: boolean,
+  pop: (layer: number, layers: number) => number,
+) => {
   const vars: Array<[string, string]> = []
 
   for (const layer of range(layers)) {
@@ -29,7 +32,9 @@ interface FunnelEntranceInput {
 }
 
 /** Entrance duration, easing, grow origin and stage stagger (the stage index is `--bkm-fi` in funnel.css). */
-const funnelEntranceVars = (input: Readonly<FunnelEntranceInput>): CSSProperties =>
+const funnelEntranceVars: (input: Readonly<FunnelEntranceInput>) => CSSProperties = (
+  input: Readonly<FunnelEntranceInput>,
+) =>
   Object.fromEntries<string>([
     ['--bkm-e-dur', `${Math.round(input.durationSec * 1000)}ms`],
     ['--bkm-e-ease', toCssEase(input.ease)],
@@ -38,7 +43,11 @@ const funnelEntranceVars = (input: Readonly<FunnelEntranceInput>): CSSProperties
   ])
 
 /** Instance-owned index and resting hover paint for every stage emitted by the real mark. */
-const funnelStageCss = (id: string, stages: number, layers: number): string => {
+const funnelStageCss: (id: string, stages: number, layers: number) => string = (
+  id: string,
+  stages: number,
+  layers: number,
+) => {
   const host = `[data-bkm-funnel-id="${encodeURIComponent(id)}"]`
 
   const stageRules = range(stages).map((index) => {

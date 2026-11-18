@@ -8,6 +8,24 @@ import { brushPlot } from './plot'
 import type { BrushPlot, BrushViewInputs, ChartBrushLayoutProps, ChartBrushProps } from './options'
 import type { OwnerConfiguration } from './state'
 
+/** Layout presentation shares its Brush Block's one selection owner. */
+export const ChartBrushLayout: <Row extends Readonly<Record<string, unknown>>>(
+  props: ChartBrushLayoutProps<Row>,
+) => BrushViewInputs<Row> = function ChartBrushLayout<
+  Row extends Readonly<Record<string, unknown>>,
+>(props: ChartBrushLayoutProps<Row>) {
+  const inputs = {
+    height: props.height,
+    fitMainContent: props.fitMainContent ?? false,
+    renderMain: props.children,
+    renderStrip: props.brushStrip ?? constUndefined,
+  }
+
+  return (
+    props.className === undefined ? inputs : { ...inputs, className: props.className }
+  ) satisfies BrushViewInputs<Row>
+}
+
 export { ChartBrushSelectionOverlay, ChartBrushTrackOverlay } from './overlays'
 
 export type {
@@ -24,20 +42,6 @@ export type {
   ChartBrushLayoutProps,
 } from './options'
 
-/** Layout presentation shares its Brush Block's one selection owner. */
-export function ChartBrushLayout<Row extends Readonly<Record<string, unknown>>>(
-  props: ChartBrushLayoutProps<Row>,
-): BrushViewInputs<Row> {
-  const inputs = {
-    height: props.height,
-    fitMainContent: props.fitMainContent ?? false,
-    renderMain: props.children,
-    renderStrip: props.brushStrip ?? constUndefined,
-  }
-
-  return props.className === undefined ? inputs : { ...inputs, className: props.className }
-}
-
 /** Checked Brush owner; gesture reports leave through its typed OutMessage contract. */
 export function ChartBrush<
   RowSchema extends ChartRowSchema & { readonly Type: Readonly<Record<string, unknown>> },
@@ -45,21 +49,26 @@ export function ChartBrush<
   type Row = RowSchema['Type']
 
   const recipe = defineChartBrushBlock(options)
-
-  return {
-    ...recipe,
-    plot: (id: string, plot: TimeSeriesProps<Row>, brush?: ChartBrushProps) =>
-      brushPlot(id, plot, brush),
-    inputs: (plot: BrushPlot<Row>, height = 80): BrushViewInputs<Row> => ({
+  const inputs: (plot: BrushPlot<Row>, height?: number) => BrushViewInputs<Row> = (
+    plot: BrushPlot<Row>,
+    height = 80,
+  ) =>
+    ({
       height,
       fitMainContent: false,
       renderStrip: () => plot,
-    }),
-    configuration: (
-      layout: Pick<ChartBrushLayoutProps<Row>, 'xDataKey' | 'xExtentMax' | 'enabled'>,
-      plot: TimeSeriesProps<Row>,
-      brush: ChartBrushProps = {},
-    ): OwnerConfiguration => ({
+    }) satisfies BrushViewInputs<Row>
+
+  const configuration: (
+    layout: Pick<ChartBrushLayoutProps<Row>, 'xDataKey' | 'xExtentMax' | 'enabled'>,
+    plot: TimeSeriesProps<Row>,
+    brush?: ChartBrushProps,
+  ) => OwnerConfiguration = (
+    layout: Pick<ChartBrushLayoutProps<Row>, 'xDataKey' | 'xExtentMax' | 'enabled'>,
+    plot: TimeSeriesProps<Row>,
+    brush: ChartBrushProps = {},
+  ) =>
+    ({
       plot: timeSeriesConfiguration(plot),
       xDataKey: layout.xDataKey ?? plot.xDataKey ?? 'date',
       xExtentMax:
@@ -74,6 +83,13 @@ export function ChartBrush<
               start: brush.initialSelection.start.getTime(),
               end: brush.initialSelection.end.getTime(),
             }),
-    }),
+    }) satisfies OwnerConfiguration
+
+  return {
+    ...recipe,
+    plot: (id: string, plot: TimeSeriesProps<Row>, brush?: ChartBrushProps) =>
+      brushPlot(id, plot, brush),
+    inputs,
+    configuration,
   }
 }

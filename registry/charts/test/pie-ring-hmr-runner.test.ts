@@ -1,9 +1,15 @@
 import { afterEach, expect, test } from 'vitest'
+
+// oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
 // @effect-diagnostics-next-line nodeBuiltinImport:off -- This fixture executes the standalone Node runner in an isolated process to verify exit status and cleanup.
 import { spawnSync } from 'node:child_process'
+
+// oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
 // @effect-diagnostics-next-line nodeBuiltinImport:off -- Native fixture setup and byte-for-byte restoration checks stay outside the runner being tested.
 import fs from 'node:fs'
 import os from 'node:os'
+
+// oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
 // @effect-diagnostics-next-line nodeBuiltinImport:off -- The isolated executable fixture uses host-native paths and PATH delimiters.
 import path from 'node:path'
 

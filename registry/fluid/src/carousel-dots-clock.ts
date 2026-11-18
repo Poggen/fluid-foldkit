@@ -31,7 +31,7 @@ export const observeCarouselFrames = (element: Element, emit: (elapsed: number) 
     },
     { rootMargin: '120px 0px' },
   )
-  // Foldkit's physical Mount anchor can be display:contents and have no intersection box.
+
   const target =
     view.getComputedStyle(element).display === 'contents'
       ? (element.parentElement ?? element)

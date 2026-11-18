@@ -1,8 +1,26 @@
 import { Predicate } from 'effect'
 
-// Numeric style semantics from React DOM 19.2.4, used by pinned Fluid cc276ca0.
-// MIT, copyright Meta Platforms, Inc. and affiliates. See ../../NOTICE
-// Keep the exact source names: vendor-prefix expansion changes their semantics.
+export const cssStyle: (
+  style: Readonly<Record<string, string | number>> | undefined,
+) => Record<string, string> = function cssStyle(
+  style: Readonly<Record<string, string | number>> | undefined,
+) {
+  return Object.fromEntries(
+    Object.entries(style ?? {}).map(([key, value]) => {
+      if (key.startsWith('--')) return [key, String(value)]
+
+      return [
+        key,
+        Predicate.isNumber(value) && value !== 0 && !unitlessProperties.has(key)
+          ? `${value}px`
+          : String(value).trim(),
+      ]
+    }),
+  )
+}
+
+/* @license MIT, copyright Meta Platforms, Inc. and affiliates. See ../../NOTICE */
+
 const unitlessProperties = new Set([
   'animationIterationCount',
   'aspectRatio',
@@ -76,20 +94,3 @@ const unitlessProperties = new Set([
   'WebkitFlexShrink',
   'WebkitLineClamp',
 ])
-
-export function cssStyle(
-  style: Readonly<Record<string, string | number>> | undefined,
-): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(style ?? {}).map(([key, value]) => {
-      if (key.startsWith('--')) return [key, String(value)]
-
-      return [
-        key,
-        Predicate.isNumber(value) && value !== 0 && !unitlessProperties.has(key)
-          ? `${value}px`
-          : String(value).trim(),
-      ]
-    }),
-  )
-}

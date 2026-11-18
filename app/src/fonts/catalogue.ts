@@ -97,14 +97,17 @@ export const matchingFonts = (
       : [...preferred, ...available.filter((font) => !preferred.includes(font))]
   ).slice(0, 50)
 }
-export const fontWeights = (font: GoogleFont): readonly number[] => {
+export const fontWeights: (font: GoogleFont) => readonly number[] = (font: GoogleFont) => {
   if (font.weightAxis === null) return font.weights
   const [min, max] = font.weightAxis
   const weights: number[] = []
   for (let weight = Math.ceil(min / 100) * 100; weight <= max; weight += 100) weights.push(weight)
   return weights.length ? weights : [min]
 }
-export const nearestWeight = (font: GoogleFont, weight: number): number =>
+export const nearestWeight: (font: GoogleFont, weight: number) => number = (
+  font: GoogleFont,
+  weight: number,
+) =>
   fontWeights(font).reduce(
     (best, candidate) =>
       Math.abs(candidate - weight) < Math.abs(best - weight) ? candidate : best,

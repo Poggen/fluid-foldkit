@@ -5,7 +5,7 @@ import type { TargetMotionOptions } from '../motion-target.js'
 import { boundAttributes, hasCustomComponent } from './slots.js'
 import { css } from './style.js'
 import { Button } from '../button.js'
-// Fluid Functionalism 200b4534, MIT, copyright 2026 Micka Touillaud.
+/* @license Fluid Functionalism 200b4534, MIT, copyright 2026 Micka Touillaud. */
 import type { CalendarChild, ViewContext, SlotProps } from './contracts.js'
 import { Action } from '../calendar-state.js'
 import type { Projection } from '../calendar-state.js'
@@ -13,6 +13,176 @@ import { calendarSlide } from '../calendar-presentation.js'
 import { spring } from '../lib/springs.js'
 import { typeClass } from '../lib/type-scale.js'
 import { cn } from '../lib/utils.js'
+
+const dayPickerCaption: (
+  ctx: ViewContext,
+  month: Projection['months'][number],
+  displayIndex: number,
+) => ReadonlyArray<CalendarChild> = function dayPickerCaption(
+  ctx: ViewContext,
+  month: Projection['months'][number],
+  displayIndex: number,
+) {
+  const { h, projection } = ctx
+  const props = { context: ctx, month, displayIndex, attributes: [], children: [] }
+
+  if (projection.captionLayout === 'label') {
+    return [
+      ctx.render('CaptionLabel', {
+        ...props,
+        attributes: [h.Role('status'), h.AriaLive('polite')],
+        children: [month.caption],
+      }),
+    ]
+  }
+  const dropdown = projection.dropdowns.find((item) => item.date === month.date)
+
+  if (dropdown === undefined) {
+    return []
+  }
+
+  const monthControl =
+    projection.captionLayout === 'dropdown' || projection.captionLayout === 'dropdown-months'
+      ? ctx.render('MonthsDropdown', { ...props, key: 'month' })
+      : h.keyed('span')('month', [], [dropdown.monthText])
+
+  const yearControl =
+    projection.captionLayout === 'dropdown' || projection.captionLayout === 'dropdown-years'
+      ? ctx.render('YearsDropdown', { ...props, key: 'year' })
+      : h.keyed('span')('year', [], [dropdown.yearText])
+
+  return [
+    ctx.render('DropdownNav', {
+      ...props,
+      children: [
+        ...(projection.monthYearOrder === 'year-first'
+          ? [yearControl, monthControl]
+          : [monthControl, yearControl]),
+        h.span(
+          [
+            h.Role('status'),
+            h.AriaLive('polite'),
+            h.Class(
+              '[border:0] [clip:rect(0_0_0_0)] h-px -m-px overflow-hidden p-0 absolute w-px whitespace-nowrap [word-wrap:normal]',
+            ),
+          ],
+          [month.caption],
+        ),
+      ],
+    }),
+  ]
+}
+
+const captionLayout: (
+  ctx: ViewContext,
+  caption: CalendarChild,
+  previous: CalendarChild,
+  next: CalendarChild,
+  first: boolean,
+  last: boolean,
+) => Array<CalendarChild> = function captionLayout(
+  ctx: ViewContext,
+  caption: CalendarChild,
+  previous: CalendarChild,
+  next: CalendarChild,
+  first: boolean,
+  last: boolean,
+) {
+  const { h, projection, visual } = ctx
+
+  const children: Array<CalendarChild> = []
+
+  if (ctx.twoUp) {
+    children.push(
+      h.div(
+        [
+          h.Class(
+            cn(
+              'absolute top-1/2 -translate-y-1/2',
+              projection.showWeekNumber ? 'left-[calc(var(--cell-size)*0.75)]' : 'left-0',
+            ),
+          ),
+        ],
+        [previous],
+      ),
+    )
+  }
+  const { stride } = visual
+
+  if (ctx.twoUp && stride !== null) {
+    const fade = first && projection.showWeekNumber ? `calc(var(--cell-size) * 0.75 + ${COL})` : COL
+    const mask = `linear-gradient(to ${first ? 'right' : 'left'}, transparent ${fade}, #000 calc(${fade} + 24px))`
+    children.push(
+      h.div(
+        [
+          h.Class('pointer-events-none absolute inset-y-0'),
+          h.Style(
+            css({
+              left: first ? 0 : -stride,
+              right: last ? 0 : -stride,
+              maskImage: mask,
+              WebkitMaskImage: mask,
+            }),
+          ),
+        ],
+        [
+          h.div(
+            [
+              h.Class('absolute inset-y-0 flex items-center justify-center'),
+              h.Style(
+                css({
+                  left: first ? 0 : stride,
+                  right: last ? 0 : stride,
+                }),
+              ),
+            ],
+            [caption],
+          ),
+        ],
+      ),
+    )
+  } else if (projection.months.length === 1 && stride !== null) {
+    const navWidth = projection.hideNavigation ? '0px' : `calc(${COL} * 2)`
+    const mask = `linear-gradient(to left, transparent calc(${stride}px + ${navWidth}), #000 calc(${stride}px + ${navWidth} + 24px))`
+    children.push(
+      h.div(
+        [
+          h.Class('pointer-events-none absolute inset-y-0'),
+          h.Style(
+            css({
+              left: -stride,
+              right: -stride,
+              maskImage: mask,
+              WebkitMaskImage: mask,
+            }),
+          ),
+        ],
+        [
+          h.div(
+            [
+              h.Class(
+                cn(
+                  'absolute inset-y-0 flex items-center',
+                  projection.showWeekNumber ? 'pl-[calc(var(--cell-size)*0.75+0.5rem)]' : 'pl-2',
+                ),
+              ),
+              h.Style(css({ left: stride, right: stride })),
+            ],
+            [caption],
+          ),
+        ],
+      ),
+      h.span([h.AriaHidden(true), h.Class('flex-1')], []),
+    )
+  } else {
+    children.push(caption)
+  }
+  children.push(
+    ctx.twoUp ? h.div([h.Class('absolute right-0 top-1/2 -translate-y-1/2')], [next]) : next,
+  )
+
+  return children
+}
 
 type Direction = 'previous' | 'next'
 
@@ -193,165 +363,6 @@ function captionNavigation(ctx: ViewContext, first: boolean, last: boolean) {
   }
 
   return first ? renderNav(ctx, ['previous', 'next']) : null
-}
-
-function dayPickerCaption(
-  ctx: ViewContext,
-  month: Projection['months'][number],
-  displayIndex: number,
-): ReadonlyArray<CalendarChild> {
-  const { h, projection } = ctx
-  const props = { context: ctx, month, displayIndex, attributes: [], children: [] }
-
-  if (projection.captionLayout === 'label') {
-    return [
-      ctx.render('CaptionLabel', {
-        ...props,
-        attributes: [h.Role('status'), h.AriaLive('polite')],
-        children: [month.caption],
-      }),
-    ]
-  }
-  const dropdown = projection.dropdowns.find((item) => item.date === month.date)
-
-  if (dropdown === undefined) {
-    return []
-  }
-
-  const monthControl =
-    projection.captionLayout === 'dropdown' || projection.captionLayout === 'dropdown-months'
-      ? ctx.render('MonthsDropdown', { ...props, key: 'month' })
-      : h.keyed('span')('month', [], [dropdown.monthText])
-
-  const yearControl =
-    projection.captionLayout === 'dropdown' || projection.captionLayout === 'dropdown-years'
-      ? ctx.render('YearsDropdown', { ...props, key: 'year' })
-      : h.keyed('span')('year', [], [dropdown.yearText])
-
-  return [
-    ctx.render('DropdownNav', {
-      ...props,
-      children: [
-        ...(projection.monthYearOrder === 'year-first'
-          ? [yearControl, monthControl]
-          : [monthControl, yearControl]),
-        h.span(
-          [
-            h.Role('status'),
-            h.AriaLive('polite'),
-            h.Class(
-              '[border:0] [clip:rect(0_0_0_0)] h-px -m-px overflow-hidden p-0 absolute w-px whitespace-nowrap [word-wrap:normal]',
-            ),
-          ],
-          [month.caption],
-        ),
-      ],
-    }),
-  ]
-}
-
-function captionLayout(
-  ctx: ViewContext,
-  caption: CalendarChild,
-  previous: CalendarChild,
-  next: CalendarChild,
-  first: boolean,
-  last: boolean,
-): Array<CalendarChild> {
-  const { h, projection, visual } = ctx
-
-  const children: Array<CalendarChild> = []
-
-  if (ctx.twoUp) {
-    children.push(
-      h.div(
-        [
-          h.Class(
-            cn(
-              'absolute top-1/2 -translate-y-1/2',
-              projection.showWeekNumber ? 'left-[calc(var(--cell-size)*0.75)]' : 'left-0',
-            ),
-          ),
-        ],
-        [previous],
-      ),
-    )
-  }
-  const { stride } = visual
-
-  if (ctx.twoUp && stride !== null) {
-    const fade = first && projection.showWeekNumber ? `calc(var(--cell-size) * 0.75 + ${COL})` : COL
-    const mask = `linear-gradient(to ${first ? 'right' : 'left'}, transparent ${fade}, #000 calc(${fade} + 24px))`
-    children.push(
-      h.div(
-        [
-          h.Class('pointer-events-none absolute inset-y-0'),
-          h.Style(
-            css({
-              left: first ? 0 : -stride,
-              right: last ? 0 : -stride,
-              maskImage: mask,
-              WebkitMaskImage: mask,
-            }),
-          ),
-        ],
-        [
-          h.div(
-            [
-              h.Class('absolute inset-y-0 flex items-center justify-center'),
-              h.Style(
-                css({
-                  left: first ? 0 : stride,
-                  right: last ? 0 : stride,
-                }),
-              ),
-            ],
-            [caption],
-          ),
-        ],
-      ),
-    )
-  } else if (projection.months.length === 1 && stride !== null) {
-    const navWidth = projection.hideNavigation ? '0px' : `calc(${COL} * 2)`
-    const mask = `linear-gradient(to left, transparent calc(${stride}px + ${navWidth}), #000 calc(${stride}px + ${navWidth} + 24px))`
-    children.push(
-      h.div(
-        [
-          h.Class('pointer-events-none absolute inset-y-0'),
-          h.Style(
-            css({
-              left: -stride,
-              right: -stride,
-              maskImage: mask,
-              WebkitMaskImage: mask,
-            }),
-          ),
-        ],
-        [
-          h.div(
-            [
-              h.Class(
-                cn(
-                  'absolute inset-y-0 flex items-center',
-                  projection.showWeekNumber ? 'pl-[calc(var(--cell-size)*0.75+0.5rem)]' : 'pl-2',
-                ),
-              ),
-              h.Style(css({ left: stride, right: stride })),
-            ],
-            [caption],
-          ),
-        ],
-      ),
-      h.span([h.AriaHidden(true), h.Class('flex-1')], []),
-    )
-  } else {
-    children.push(caption)
-  }
-  children.push(
-    ctx.twoUp ? h.div([h.Class('absolute right-0 top-1/2 -translate-y-1/2')], [next]) : next,
-  )
-
-  return children
 }
 
 export function renderCaption(

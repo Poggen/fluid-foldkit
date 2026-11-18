@@ -1,17 +1,14 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { Attribute, Html, HtmlBuilder } from 'foldkit/html'
 import { SidebarInput } from './sidebar-parts.js'
 import { resolvePresentation, type Presentation } from './presentation.js'
-
-export interface SidebarSearchFieldProps<Message> extends Presentation {
-  readonly placeholder?: string
-  readonly shortcut?: string | null
-  readonly attributes?: ReadonlyArray<Attribute<Message>>
-}
-export function SidebarSearchField<Message>(
+export const SidebarSearchField: <Message>(
   props: SidebarSearchFieldProps<Message>,
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function SidebarSearchField<Message>(
+  props: SidebarSearchFieldProps<Message>,
+  h: HtmlBuilder<Message>,
+) {
   const { size, icons } = resolvePresentation(props)
   const shortcut = props.shortcut === undefined ? '⌘K' : props.shortcut
   return h.div(
@@ -48,5 +45,11 @@ export function SidebarSearchField<Message>(
           ]
         : []),
     ],
-  )
+  ) satisfies Html
+}
+
+export interface SidebarSearchFieldProps<Message> extends Presentation {
+  readonly placeholder?: string
+  readonly shortcut?: string | null
+  readonly attributes?: ReadonlyArray<Attribute<Message>>
 }

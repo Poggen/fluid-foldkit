@@ -5,14 +5,11 @@ import { decorative } from '@tanstack/charts/mark/decorative'
 import type { CartesianLayer } from './layers'
 import type { ChartMarker, ChartMarkersProps, MarkerGroupProps } from './overlay-options'
 
-interface EventMarkerGroup {
-  readonly date: Date
-  readonly items: ReadonlyArray<Readonly<ChartMarker>>
-}
-
-export function groupMarkerItems<Item extends { readonly date: Date | number }>(
+export const groupMarkerItems: <Item extends { readonly date: Date | number }>(
   items: ReadonlyArray<Item>,
-): ReadonlyArray<ReadonlyArray<Item>> {
+) => ReadonlyArray<ReadonlyArray<Item>> = function groupMarkerItems<
+  Item extends { readonly date: Date | number },
+>(items: ReadonlyArray<Item>) {
   const byDate = new Map<number, Array<Item>>()
 
   for (const item of items) {
@@ -23,7 +20,69 @@ export function groupMarkerItems<Item extends { readonly date: Date | number }>(
     byDate.set(date, group)
   }
 
-  return [...byDate.values()]
+  return [...byDate.values()] satisfies ReadonlyArray<ReadonlyArray<Item>>
+}
+
+export const markerSets: <Row>(
+  children: ReadonlyArray<CartesianLayer<Row>>,
+) => ReadonlyArray<MarkerSetProps> = function markerSets<Row>(
+  children: ReadonlyArray<CartesianLayer<Row>>,
+) {
+  return [
+    ...children.flatMap((child) => (child.kind === 'markers' ? [child.props] : [])),
+    ...children.flatMap((child) =>
+      child.kind === 'markerGroup' ? [markerGroupProps(child.props)] : [],
+    ),
+  ] satisfies ReadonlyArray<MarkerSetProps>
+}
+
+const markerGroupProps: (props: MarkerGroupProps) => MarkerSetProps = function markerGroupProps(
+  props: MarkerGroupProps,
+) {
+  const set: MarkerSetProps = { items: props.markers }
+
+  if (props.size !== undefined) {
+    Object.assign(set, { size: props.size })
+  }
+
+  if (props.showLine !== undefined) {
+    Object.assign(set, { showLines: props.showLine })
+  }
+
+  if (props.maxFanned !== undefined) {
+    Object.assign(set, { maxFanned: props.maxFanned })
+  }
+
+  if (props.forceOpen !== undefined) {
+    Object.assign(set, { forceOpen: props.forceOpen })
+  }
+
+  if (props.marginLeft !== undefined) {
+    Object.assign(set, { marginLeft: props.marginLeft })
+  }
+
+  if (props.marginTop !== undefined) {
+    Object.assign(set, { marginTop: props.marginTop })
+  }
+
+  if (props.borderColor !== undefined) {
+    Object.assign(set, { borderColor: props.borderColor })
+  }
+
+  if (props.borderWidth !== undefined) {
+    Object.assign(set, { borderWidth: props.borderWidth })
+  }
+
+  if (props.isMuted !== undefined) {
+    Object.assign(set, { isMuted: props.isMuted })
+  }
+
+  return set
+}
+
+interface EventMarkerGroup {
+  readonly date: Date
+  readonly items: ReadonlyArray<Readonly<ChartMarker>>
 }
 
 const SHADOW_FILL = 'black'
@@ -33,7 +92,6 @@ const MARKER_BORDER = 'var(--chart-marker-border)'
 const FAN_RADIUS = 50
 
 const FAN_ANGLE = 160
-// bklit draws marker icons as HTML flex-centred in a 28px disc box; its glyph lands 1px below the SVG middle-baseline text (measured, /charts/markers and /charts/line at 390: 423 -> 22 diff px).
 
 const ICON_DY = 1
 /** ChartMarkers props plus the MarkerGroup styling props bklit's ChartMarkers does not forward (marker-group.tsx:140-143). */
@@ -51,8 +109,6 @@ interface EventMarkerOptions {
   readonly set: MarkerSetProps
 }
 
-// bklit MarkerGroup as one custom mark: a scene group per same-date marker group (`evtmarker:<mi>:g<gi>`), translated to the marker centre (8px above the plot top); the 1.0 scene has no per-node number hooks, so CSS derives group and fan item index from sibling-index() (Chromium-only, 138+: styles.css keeps the indices at 0 outside `@supports`).
-// styles.css has the generic rules (entrance, hover rule lift, cluster fan-out), all :hover on the group.
 interface OverlayScene {
   readonly nodes: Array<SceneNode>
   readonly points: []
@@ -62,10 +118,14 @@ function eventMarker({ id, mi, groups, set }: EventMarkerOptions) {
   const size = set.size ?? 28
   const showLines = set.showLines !== false
   const { maxFanned } = set
-  // bklit MarkerGroup `portalX = x + marginLeft`, `portalY = y + marginTop` (marker-group.tsx:185-186): the fan anchors off the marker by the gap to the chart margin (zero when unset, as ChartMarkers passes it).
+
   const r = size / 2
 
-  const icon = (x: number, y: number, v: ChartMarker['icon']): SceneNode => ({
+  const icon: (x: number, y: number, v: ChartMarker['icon']) => SceneNode = (
+    x: number,
+    y: number,
+    v: ChartMarker['icon'],
+  ) => ({
     kind: 'label',
     key: `${id}:icon`,
     x,
@@ -77,7 +137,11 @@ function eventMarker({ id, mi, groups, set }: EventMarkerOptions) {
     style: { fill: 'var(--chart-marker-foreground)' },
   })
 
-  const disc = (x: number, y: number, color?: string): SceneNode => ({
+  const disc: (x: number, y: number, color?: string) => SceneNode = (
+    x: number,
+    y: number,
+    color?: string,
+  ) => ({
     kind: 'dot',
     key: `${id}:disc`,
     x,
@@ -89,10 +153,8 @@ function eventMarker({ id, mi, groups, set }: EventMarkerOptions) {
       strokeWidth: set.borderWidth ?? 1.5,
     },
   })
-  // bklit's fan disc is `rounded-full shadow-lg` (box-shadow 0 10px 15px -3px / 0 4px 6px -4px, rgb 0 0 0 / .1); a CSS drop-shadow has no negative spread, so each layer is a blurred, shrunk circle behind the disc (radius attribute = rest radius, disc radius minus the spread, so any `size` works).
-  // Offset and blur come from styles.css `.bkm-evt-sh*`; kit/motion/marker-springs.ts springs them to bklit's hover shadow (hot radius = the disc radius, the `.bkm-evt-act:hover` rule in styles.css).
 
-  const shadows = (key: string): Array<SceneNode> =>
+  const shadows: (key: string) => Array<SceneNode> = (key: string) =>
     [1, 2].map((layer) => ({
       kind: 'dot',
       key: `${key}:sh${layer}`,
@@ -103,13 +165,13 @@ function eventMarker({ id, mi, groups, set }: EventMarkerOptions) {
       style: { fill: SHADOW_FILL },
     }))
 
-  const fanItem = (
+  const fanItem: (
     key: string,
     k: number,
     a: number,
     it: Readonly<ChartMarker>,
     gi: number,
-  ): SceneNode => {
+  ) => SceneNode = (key: string, k: number, a: number, it: Readonly<ChartMarker>, gi: number) => {
     const itemKey = `${key}:item${k}`
 
     const discNodes = [
@@ -117,7 +179,6 @@ function eventMarker({ id, mi, groups, set }: EventMarkerOptions) {
       { ...disc(0, 0, it.color), key: `${itemKey}:disc`, className: 'bkm-evt-item-disc' },
       { ...icon(0, ICON_DY, it.icon), key: `${itemKey}:icon` },
     ]
-    // bklit MarkerCircleHTML `hasAction` (marker-group.tsx:473): hover 1.15 / press 0.95 springs (marker-springs.ts), pointer cursor, click.
 
     const hasAction = it.onClick !== undefined || (it.href !== undefined && it.href !== '')
 
@@ -144,7 +205,7 @@ function eventMarker({ id, mi, groups, set }: EventMarkerOptions) {
     }
   }
 
-  const badge = (key: string, n: number): SceneNode => {
+  const badge: (key: string, n: number) => SceneNode = (key: string, n: number) => {
     const bx = r + 2
 
     return {
@@ -176,12 +237,12 @@ function eventMarker({ id, mi, groups, set }: EventMarkerOptions) {
     }
   }
 
-  const groupScene = (
+  const groupScene: (
     g: EventMarkerGroup,
     gi: number,
     x: number,
     chart: ChartBounds,
-  ): SceneNode => {
+  ) => SceneNode = (g: EventMarkerGroup, gi: number, x: number, chart: ChartBounds) => {
     const key = `${id}:g${gi}`
     const n = g.items.length
     const first = g.items.at(0)
@@ -229,13 +290,11 @@ function eventMarker({ id, mi, groups, set }: EventMarkerOptions) {
       className: 'bkm-evt-body',
       children: body,
     }
-    // bklit MarkerGroup `isMuted` (marker-group.tsx:153, 114-118): the resting body sits at opacity 0.4; the fan hides it, so only the resting state shows it.
 
     const restBody: SceneNode =
       set.isMuted === true
         ? { kind: 'group', key: `${key}:muted`, style: { opacity: 0.4 }, children: [bodyGroup] }
         : bodyGroup
-    // bklit's transparent hover rect (covers the disc with room for the badge); a cluster's grows to the fan area. It sits under the fan so an actionable fan disc takes the pointer first.
 
     children.push(restBody, {
       kind: 'rect',
@@ -249,10 +308,9 @@ function eventMarker({ id, mi, groups, set }: EventMarkerOptions) {
     })
 
     if (n > 1) {
-      // bklit MarkerGroup `maxFanned` (marker-group.tsx:148-149): only the first N fan out; the badge keeps the full count.
       const fanned = maxFanned === undefined ? g.items : g.items.slice(0, maxFanned)
 
-      const angleAt = (k: number): number =>
+      const angleAt: (k: number) => number = (k: number) =>
         ((-90 - FAN_ANGLE / 2 + (fanned.length > 1 ? (k * FAN_ANGLE) / (fanned.length - 1) : 0)) *
           Math.PI) /
         180
@@ -296,7 +354,7 @@ function eventMarker({ id, mi, groups, set }: EventMarkerOptions) {
     createMark<never, Date, number>(() => ({
       id,
       channels: {},
-      render: ({ scales, chart }): OverlayScene => {
+      render: ({ scales, chart }) => {
         const nodes = groups.flatMap((g, gi) => {
           const x = scales.x?.map(g.date) ?? Number.NaN
 
@@ -306,63 +364,10 @@ function eventMarker({ id, mi, groups, set }: EventMarkerOptions) {
         return {
           nodes: [{ kind: 'group', key: id, ariaHidden: true, children: nodes }],
           points: [],
-        }
+        } satisfies OverlayScene
       },
     })),
   )
-}
-
-function markerGroupProps(props: MarkerGroupProps): MarkerSetProps {
-  const set: MarkerSetProps = { items: props.markers }
-
-  if (props.size !== undefined) {
-    Object.assign(set, { size: props.size })
-  }
-
-  if (props.showLine !== undefined) {
-    Object.assign(set, { showLines: props.showLine })
-  }
-
-  if (props.maxFanned !== undefined) {
-    Object.assign(set, { maxFanned: props.maxFanned })
-  }
-
-  if (props.forceOpen !== undefined) {
-    Object.assign(set, { forceOpen: props.forceOpen })
-  }
-
-  if (props.marginLeft !== undefined) {
-    Object.assign(set, { marginLeft: props.marginLeft })
-  }
-
-  if (props.marginTop !== undefined) {
-    Object.assign(set, { marginTop: props.marginTop })
-  }
-
-  if (props.borderColor !== undefined) {
-    Object.assign(set, { borderColor: props.borderColor })
-  }
-
-  if (props.borderWidth !== undefined) {
-    Object.assign(set, { borderWidth: props.borderWidth })
-  }
-
-  if (props.isMuted !== undefined) {
-    Object.assign(set, { isMuted: props.isMuted })
-  }
-
-  return set
-}
-
-export function markerSets<Row>(
-  children: ReadonlyArray<CartesianLayer<Row>>,
-): ReadonlyArray<MarkerSetProps> {
-  return [
-    ...children.flatMap((child) => (child.kind === 'markers' ? [child.props] : [])),
-    ...children.flatMap((child) =>
-      child.kind === 'markerGroup' ? [markerGroupProps(child.props)] : [],
-    ),
-  ]
 }
 
 export function eventMarkerMarks<Row>(children: ReadonlyArray<CartesianLayer<Row>>) {

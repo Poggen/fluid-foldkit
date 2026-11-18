@@ -4,44 +4,30 @@ import { collectModuleOrigin } from '../../origin-mutation.ts'
 import { isGlobalReflectMethodCall } from '../shared/reflect-method.ts'
 import { importIdentity, immutableInitializer } from '../../import-identity.ts'
 
-const schemaImports = {
-  namespaces: new Set(['Schema']),
-  runtimeImportsOnly: true,
-  immutableAliasesOnly: true,
-}
-const cellPrimitives = new Set(['Finite', 'String', 'Date'])
-
-function schemaMember(expression: ESTree.Expression, context: Context): string | null {
-  const identity = importIdentity(
-    expression,
-    context.sourceCode.getScope(expression),
-    context,
-    schemaImports,
-  )
-
-  return identity?.module === 'effect/Schema' ? identity.name : null
-}
-
-function finiteCell(
+const finiteCell: (
+  expression: ESTree.Expression,
+  context: Context,
+  seen?: Set<ESTree.Node>,
+) => boolean = function (
   expression: ESTree.Expression,
   context: Context,
   seen = new Set<ESTree.Node>(),
-): boolean {
+) {
   if (seen.has(expression)) {
-    return false
+    return false satisfies boolean
   }
 
   seen.add(expression)
   const member = schemaMember(expression, context)
 
   if (member !== null && cellPrimitives.has(member)) {
-    return true
+    return true satisfies boolean
   }
 
   if (expression.type === 'Identifier') {
     const initializer = immutableInitializer(expression, context)
 
-    return initializer !== null && finiteCell(initializer, context, seen)
+    return (initializer !== null && finiteCell(initializer, context, seen)) satisfies boolean
   }
 
   if (
@@ -51,28 +37,30 @@ function finiteCell(
     expression.arguments.length !== 1 ||
     schemaMember(expression.callee, context) !== 'Union'
   ) {
-    return false
+    return false satisfies boolean
   }
 
   const members = expression.arguments.at(0)
 
-  return (
-    members?.type === 'ArrayExpression' &&
+  return (members?.type === 'ArrayExpression' &&
     members.elements.length > 0 &&
     members.elements.every(
       (item) =>
         item !== null && item.type !== 'SpreadElement' && finiteCell(item, context, new Set(seen)),
-    )
-  )
+    )) satisfies boolean
 }
 
-function optionDecoder(
+const optionDecoder: (
+  expression: ESTree.Expression,
+  context: Context,
+  seen?: Set<ESTree.Node>,
+) => boolean = function (
   expression: ESTree.Expression,
   context: Context,
   seen = new Set<ESTree.Node>(),
-): boolean {
+) {
   if (seen.has(expression)) {
-    return false
+    return false satisfies boolean
   }
 
   seen.add(expression)
@@ -80,7 +68,7 @@ function optionDecoder(
   if (expression.type === 'Identifier') {
     const initializer = immutableInitializer(expression, context)
 
-    return initializer !== null && optionDecoder(initializer, context, seen)
+    return (initializer !== null && optionDecoder(initializer, context, seen)) satisfies boolean
   }
 
   if (
@@ -90,33 +78,53 @@ function optionDecoder(
     expression.arguments.length !== 1 ||
     schemaMember(expression.callee, context) !== 'decodeUnknownOption'
   ) {
-    return false
+    return false satisfies boolean
   }
 
   const contract = expression.arguments.at(0)
 
-  return (
-    contract !== undefined && contract.type !== 'SpreadElement' && finiteCell(contract, context)
-  )
+  return (contract !== undefined &&
+    contract.type !== 'SpreadElement' &&
+    finiteCell(contract, context)) satisfies boolean
 }
 
-function directlyDecoded(node: ESTree.CallExpression, context: Context): boolean {
-  const parent = node.parent
+const schemaMember: (expression: ESTree.Expression, context: Context) => string | null =
+  function schemaMember(expression: ESTree.Expression, context: Context) {
+    const identity = importIdentity(
+      expression,
+      context.sourceCode.getScope(expression),
+      context,
+      schemaImports,
+    )
 
-  if (
-    node.arguments.length !== 2 ||
-    node.arguments.some((argument) => argument.type === 'SpreadElement') ||
-    parent?.type !== 'CallExpression' ||
-    parent.arguments.length !== 1 ||
-    parent.arguments.at(0) !== node ||
-    parent.callee.type === 'Super' ||
-    parent.callee.type === 'V8IntrinsicExpression'
-  ) {
-    return false
+    return identity?.module === 'effect/Schema' ? identity.name : null
   }
 
-  return optionDecoder(parent.callee, context)
+const directlyDecoded: (node: ESTree.CallExpression, context: Context) => boolean =
+  function directlyDecoded(node: ESTree.CallExpression, context: Context) {
+    const parent = node.parent
+
+    if (
+      node.arguments.length !== 2 ||
+      node.arguments.some((argument) => argument.type === 'SpreadElement') ||
+      parent?.type !== 'CallExpression' ||
+      parent.arguments.length !== 1 ||
+      parent.arguments.at(0) !== node ||
+      parent.callee.type === 'Super' ||
+      parent.callee.type === 'V8IntrinsicExpression'
+    ) {
+      return false
+    }
+
+    return optionDecoder(parent.callee, context)
+  }
+
+const schemaImports = {
+  namespaces: new Set(['Schema']),
+  runtimeImportsOnly: true,
+  immutableAliasesOnly: true,
 }
+const cellPrimitives = new Set(['Finite', 'String', 'Date'])
 
 /** Dynamic public cells must enter a concrete decoder before their value can escape. */
 export const noReflectGetRule = defineRule({

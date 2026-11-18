@@ -7,17 +7,16 @@ import { createGaugeLabel } from './label'
 import { createGaugeRenderer } from './notch-renderer'
 import type { GaugeProps } from './props'
 
-export interface GaugeHost {
-  readonly update: (props: GaugeProps) => void
-  readonly destroy: () => void
-}
-
 /** Owns only drawing inputs and the native renderer. No report data acquisition. */
-export function mountGauge(
+export const mountGauge: (
   container: HTMLElement,
   initialProps: GaugeProps,
   uid: string,
-): GaugeHost {
+) => GaugeHost = function mountGauge(
+  container: HTMLElement,
+  initialProps: GaugeProps,
+  uid: string,
+) {
   const gradientId = `${uid}-gauge-theme-active`
   const root = document.createElement('div')
   root.dataset.bkmChart = ''
@@ -77,7 +76,10 @@ export function mountGauge(
   let layoutKey = ''
   const styles = new WeakMap<HTMLElement, string>()
 
-  const writeStyle = (element: HTMLElement, css: string): void => {
+  const writeStyle: (element: HTMLElement, css: string) => void = (
+    element: HTMLElement,
+    css: string,
+  ) => {
     if (styles.get(element) === css) {
       return
     }
@@ -86,7 +88,9 @@ export function mountGauge(
     element.style.cssText = css
   }
 
-  const rebuildLayout = (layoutInfo: ReturnType<typeof gaugeLayout>): void => {
+  const rebuildLayout: (layoutInfo: ReturnType<typeof gaugeLayout>) => void = (
+    layoutInfo: ReturnType<typeof gaugeLayout>,
+  ) => {
     layoutKey = layoutInfo.nextLayout
     root.replaceChildren()
     linearLayout = undefined
@@ -131,7 +135,9 @@ export function mountGauge(
     }
   }
 
-  const updateLabelLayout = (layout: ReturnType<typeof gaugeLayout>): void => {
+  const updateLabelLayout: (layout: ReturnType<typeof gaugeLayout>) => void = (
+    layout: ReturnType<typeof gaugeLayout>,
+  ) => {
     if (layout.linear) {
       if (linearLayout !== undefined) {
         linearLayout.className = layout.linearLayoutClass
@@ -158,7 +164,7 @@ export function mountGauge(
     }
   }
 
-  const apply = (): void => {
+  const apply: () => void = () => {
     if (destroyed) {
       return
     }
@@ -175,8 +181,7 @@ export function mountGauge(
     writeStyle(chartWrapper, layout.wrapperStyle)
 
     const rebuilt = nextLayout !== layoutKey
-    // Preserve the source component tree. Alignment and size changes update styles in place.
-    // Source GaugeLabelLayout changes the renderer's tree only across these structural modes.
+
     const remount = layoutKey !== '' && rebuilt
 
     if (remount) {
@@ -250,4 +255,9 @@ export function mountGauge(
       root.remove()
     },
   }
+}
+
+export interface GaugeHost {
+  readonly update: (props: GaugeProps) => void
+  readonly destroy: () => void
 }

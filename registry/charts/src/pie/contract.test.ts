@@ -45,8 +45,9 @@ const ringAuthority = {
   ),
 }
 
-const flatten = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<SceneNode> =>
-  nodes.flatMap((n) => (n.kind === 'group' ? flatten(n.children) : [n]))
+const flatten: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<SceneNode> = (
+  nodes: ReadonlyArray<SceneNode>,
+) => nodes.flatMap((n) => (n.kind === 'group' ? flatten(n.children) : [n]))
 
 it('preserves ordered fractional pie sectors, no-op color override, fill precedence, and annular keyboard order in the real engine', () => {
   const props = {
@@ -206,9 +207,7 @@ effectIt.effect('keeps hover authority and row replacement in checked public Blo
   }),
 )
 
-const inspectSelection = (_index: number | null) => {
-  // Context assertions read state without requesting another selection.
-}
+const inspectSelection = (_index: number | null) => {}
 
 effectIt.effect(
   'context readiness follows checked mount and measurement observations rather than a guessed width',

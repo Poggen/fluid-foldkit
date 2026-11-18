@@ -1,5 +1,5 @@
 import { systemClasses } from './classes'
-// Adapted from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Adapted from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { Effect, Layer, Option, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { defineInMessageUnion, defineMessageUnion } from 'foldkit/message'
@@ -64,9 +64,10 @@ export { SkillSystemPageBlock as SkillPageBlock }
 const RawTabs = SkillSystemPageBlock.makeRequiredFieldBinding(TabsBlock, {
   field: 'tabs',
   init: {
-    contextToArgs: (settings: ComponentPresentation): [TabsConfig] => [
-      { id: 'system-skill-tabs', selectedIndex: 0, hoverMode: settings.hover },
-    ],
+    contextToArgs: (settings: ComponentPresentation) =>
+      [{ id: 'system-skill-tabs', selectedIndex: 0, hoverMode: settings.hover }] satisfies [
+        TabsConfig,
+      ],
   },
 })
 const Tabs = RawTabs.withOutMessagePolicy({
@@ -77,9 +78,10 @@ const Tabs = RawTabs.withOutMessagePolicy({
 const RawMenu = SkillSystemPageBlock.makeRequiredFieldBinding(DropdownBlock, {
   field: 'menu',
   init: {
-    contextToArgs: (settings: ComponentPresentation): [DropdownConfig] => [
-      { id: 'system-skill-menu', checkedIndex: 0, hoverMode: settings.hover },
-    ],
+    contextToArgs: (settings: ComponentPresentation) =>
+      [{ id: 'system-skill-menu', checkedIndex: 0, hoverMode: settings.hover }] satisfies [
+        DropdownConfig,
+      ],
   },
 })
 const Menu = RawMenu.withOutMessagePolicy({
@@ -104,9 +106,10 @@ const Menu = RawMenu.withOutMessagePolicy({
 const Copy = SkillSystemPageBlock.makeRequiredFieldBinding(InputCopyBlock, {
   field: 'copy',
   init: {
-    contextToArgs: (): [InputCopyConfig] => [
-      { id: 'system-skill-copy', value: command, variant: 'button', align: 'left' },
-    ],
+    contextToArgs: () =>
+      [{ id: 'system-skill-copy', value: command, variant: 'button', align: 'left' }] satisfies [
+        InputCopyConfig,
+      ],
   },
 }).withOutMessagePolicy({
   fold: SkillSystemPageBlock.makeOutMessageFold(InputCopyBlock, {

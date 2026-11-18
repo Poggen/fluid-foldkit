@@ -1,5 +1,5 @@
 import { modifyFields } from 'foldkit/struct'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { InputMessageRegionBlock, Payload } from './input-message-region.js'
 import { InputMessageEvent } from './input-message-domain.js'
 import { Array, flow, Option } from 'effect'

@@ -10,8 +10,10 @@ export interface ImportIdentityOptions {
   readonly immutableAliasesOnly?: boolean
 }
 
-export const variableOf = (name: string, scope: Scope | null): Variable | undefined =>
-  scope === null ? undefined : (scope.set.get(name) ?? variableOf(name, scope.upper))
+export const variableOf: (name: string, scope: Scope | null) => Variable | undefined = (
+  name: string,
+  scope: Scope | null,
+) => (scope === null ? undefined : (scope.set.get(name) ?? variableOf(name, scope.upper)))
 
 export const isStableVariable = (variable: Variable) =>
   variable.references.every((reference) => !reference.isWrite() || reference.init)
@@ -21,7 +23,10 @@ export interface ImportIdentity {
   readonly name: string | null
 }
 
-const useMutates = (initial: readonly ReferenceUse[], context: RuleContext): boolean => {
+const useMutates: (initial: readonly ReferenceUse[], context: RuleContext) => boolean = (
+  initial: readonly ReferenceUse[],
+  context: RuleContext,
+) => {
   const pending = [...initial]
   const seen = new Set<Variable>()
 
@@ -63,7 +68,10 @@ const useMutates = (initial: readonly ReferenceUse[], context: RuleContext): boo
   return false
 }
 
-export const hasLexicalMutation = (variable: Variable, context: RuleContext): boolean =>
+export const hasLexicalMutation: (variable: Variable, context: RuleContext) => boolean = (
+  variable: Variable,
+  context: RuleContext,
+) =>
   useMutates(
     variable.references.map((reference) => referenceUse(reference.identifier)),
     context,
@@ -73,7 +81,9 @@ type SchemaOrigin = 'namespace' | 'Finite' | 'String' | 'Date' | 'Union' | 'deco
 
 type ProvenanceResolver = (node: ESTree.Node) => ImportIdentity | null
 
-const schemaOrigin = (identity: ImportIdentity | null): SchemaOrigin | null => {
+const schemaOrigin: (identity: ImportIdentity | null) => SchemaOrigin | null = (
+  identity: ImportIdentity | null,
+) => {
   if (identity === null) {
     return null
   }
@@ -116,7 +126,10 @@ type ModuleOriginAnchor = Extract<
 
 const moduleAnchors = new WeakMap<ESTree.Program, Set<ModuleOriginAnchor>>()
 
-export const collectModuleOrigin = (context: RuleContext, node: ModuleOriginAnchor): void => {
+export const collectModuleOrigin: (context: RuleContext, node: ModuleOriginAnchor) => void = (
+  context: RuleContext,
+  node: ModuleOriginAnchor,
+) => {
   const program = context.sourceCode.ast
   let anchors = moduleAnchors.get(program)
 
@@ -129,7 +142,10 @@ export const collectModuleOrigin = (context: RuleContext, node: ModuleOriginAnch
   mutationIndexes.delete(program)
 }
 
-const maximalModuleEntry = (node: ESTree.Node, resolve: ProvenanceResolver): ESTree.Node => {
+const maximalModuleEntry: (node: ESTree.Node, resolve: ProvenanceResolver) => ESTree.Node = (
+  node: ESTree.Node,
+  resolve: ProvenanceResolver,
+) => {
   let current = node
 
   while (current.parent !== null) {
@@ -157,11 +173,15 @@ const maximalModuleEntry = (node: ESTree.Node, resolve: ProvenanceResolver): EST
   return current
 }
 
-const mutatedOrigins = (
+const mutatedOrigins: (
   context: RuleContext,
   policy: ImportIdentityOptions,
   resolve: ProvenanceResolver,
-): ReadonlySet<SchemaOrigin> => {
+) => ReadonlySet<SchemaOrigin> = (
+  context: RuleContext,
+  policy: ImportIdentityOptions,
+  resolve: ProvenanceResolver,
+) => {
   const program = context.sourceCode.ast
   let policies = mutationIndexes.get(program)
 
@@ -232,12 +252,17 @@ const mutatedOrigins = (
   return mutations
 }
 
-export const hasOriginMutation = (
+export const hasOriginMutation: (
   identities: readonly (ImportIdentity | null)[],
   context: RuleContext,
   policy: ImportIdentityOptions,
   resolve: ProvenanceResolver,
-): boolean => {
+) => boolean = (
+  identities: readonly (ImportIdentity | null)[],
+  context: RuleContext,
+  policy: ImportIdentityOptions,
+  resolve: ProvenanceResolver,
+) => {
   const origins = identities.flatMap((identity) => {
     const origin = schemaOrigin(identity)
 

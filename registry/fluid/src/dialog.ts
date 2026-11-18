@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Block } from 'foldkit'
 import { FluidDialogNamespace, dialogContract } from './dialog-definition.js'
 import { dialogPlans } from './dialog-plans.js'

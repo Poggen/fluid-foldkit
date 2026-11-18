@@ -78,10 +78,6 @@ export const CalendarBlock = Block.make('Calendar', {
   effects: Block.makeEffectsContract<never, CalendarEnvironment>(),
 })
 
-// One in-flight transition preserves source callback order when rapid pointer
-// or keyboard input arrives before a prior Effect completion is dispatched.
-// Revision-addressed providers keep earlier queued actions on their original
-// rules. Refreshed adopts a new revision without replacing the owner or its DOM.
 export const ComputeTransition = CalendarBlock.makeCommand('ComputeTransition', {
   args: { generation: Schema.Int, calendar: CalendarState, action: Action },
   messages: [Message.CompletedTransition],
@@ -124,8 +120,6 @@ export const FocusDay = CalendarBlock.makeCommand('FocusDay', {
   },
 })
 
-// A separate dispatch gives a parent's OutMessage fold the opportunity to
-// acknowledge controlled selection before the next queued user intent runs.
 export const ContinueQueue = CalendarBlock.makeCommand('ContinueQueue', {
   messages: [Message.ContinuedQueue],
   *handler() {

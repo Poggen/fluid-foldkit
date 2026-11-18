@@ -52,8 +52,9 @@ const props = {
   ],
 }
 
-const flatten = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<SceneNode> =>
-  nodes.flatMap((node) => (node.kind === 'group' ? flatten(node.children) : [node]))
+const flatten: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<SceneNode> = (
+  nodes: ReadonlyArray<SceneNode>,
+) => nodes.flatMap((node) => (node.kind === 'group' ? flatten(node.children) : [node]))
 
 effectIt.effect(
   'retains the same Scatter observations when grid fades are enabled or disabled',

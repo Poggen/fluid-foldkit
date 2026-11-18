@@ -105,22 +105,25 @@ const cases: readonly Case[] = [
     },
     error: /installed Foldkit SDK version/u,
   },
-  ...runtimeFiles.flatMap((file): readonly Case[] => [
-    {
-      name: `rejects unapplied or modified ${path.basename(file)}`,
-      mutate: (root) => {
-        writeFileSync(path.join(root, file), 'export {}')
-      },
-      error: /does not match the reviewed patch/u,
-    },
-    {
-      name: `rejects missing ${path.basename(file)}`,
-      mutate: (root) => {
-        rmSync(path.join(root, file))
-      },
-      error: /ENOENT.*runtime/u,
-    },
-  ]),
+  ...runtimeFiles.flatMap(
+    (file) =>
+      [
+        {
+          name: `rejects unapplied or modified ${path.basename(file)}`,
+          mutate: (root) => {
+            writeFileSync(path.join(root, file), 'export {}')
+          },
+          error: /does not match the reviewed patch/u,
+        },
+        {
+          name: `rejects missing ${path.basename(file)}`,
+          mutate: (root) => {
+            rmSync(path.join(root, file))
+          },
+          error: /ENOENT.*runtime/u,
+        },
+      ] satisfies readonly Case[],
+  ),
 ]
 
 for (const scenario of cases) {

@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom -- real checked Block tree and native form controls
 import { makeInputFileResourcesLayer } from '../src/input.js'
 import { createInputMessageFileRegistry } from '../src/input-message-file-registry.js'

@@ -39,7 +39,6 @@ const init = Composition.makeInit((config: CalendarPreparedConfig) => ({
   }),
 }))
 
-// Hover is accepted synchronously; queued transitions own date/projection state.
 const withAcceptedHover = (
   calendar: Model['calendar'],
   presentation: Model['calendar']['presentation'],
@@ -251,7 +250,6 @@ export type { CalendarViewInputs } from './calendar-view/contracts.js'
 
 export { calendarViewInputs, calendarTooltipKeys } from './calendar-view/composition.js'
 
-// Public adapters for the schema-backed values accepted by Calendar and DatePicker.
 export { dateValue, selectionValue, Selection } from './calendar-state.js'
 
 export const hoverModeOf = (model: typeof CalendarBlock.Model.Type) =>

@@ -21,8 +21,8 @@ export interface RadarGridProps {
   readonly className?: string
 }
 
-// Role marker: a declarative config carrier, read once by RadarChart and never rendered.
 /**
  * Draws the concentric grid rings (the spider web) and, by default, their value labels. Include it as a child of `RadarChart`; it renders nothing by itself. Leave it out for a chart without a grid.
  */
-export const RadarGrid = (props: RadarGridProps = {}): RadarChild => ({ kind: 'grid', props })
+export const RadarGrid: (props?: RadarGridProps) => RadarChild = (props: RadarGridProps = {}) =>
+  ({ kind: 'grid', props }) satisfies RadarChild

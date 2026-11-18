@@ -1,11 +1,15 @@
 import type { DataTableRow } from '../../src/data-table.js'
 
 /** Domain actions remain application-owned; DataTable owns selection and undo history. */
-export function applyTeamAction(
+export const applyTeamAction: (
   rows: ReadonlyArray<DataTableRow>,
   action: string,
   ids: ReadonlyArray<string>,
-): ReadonlyArray<DataTableRow> | undefined {
+) => ReadonlyArray<DataTableRow> | undefined = function applyTeamAction(
+  rows: ReadonlyArray<DataTableRow>,
+  action: string,
+  ids: ReadonlyArray<string>,
+) {
   if (!['admin', 'suspend', 'remove'].includes(action) || ids.length === 0) return undefined
   const selected = new Set(ids)
   if (action === 'remove') return rows.filter((row) => !selected.has(row.id))

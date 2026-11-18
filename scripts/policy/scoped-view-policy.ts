@@ -126,7 +126,9 @@ type Factory = {
   readonly fn: ts.ArrowFunction | ts.FunctionExpression
   readonly effect: boolean
 }
-const factoryOf = (node: ts.Node | undefined): Factory | undefined => {
+const factoryOf: (node: ts.Node | undefined) => Factory | undefined = (
+  node: ts.Node | undefined,
+) => {
   if (
     node === undefined ||
     !(ts.isArrowFunction(node) || ts.isFunctionExpression(node)) ||
@@ -155,11 +157,11 @@ const checkedView = (node: ts.Node | undefined) =>
     ts.isPropertyAccessExpression(node.expression.expression) &&
     node.expression.expression.name.text === 'makeView')
 
-export const inspectScopedViews = (
+export const inspectScopedViews: (
   text: string,
-  consumerText = text,
-  options: Options = {},
-): readonly string[] => {
+  consumerText?: string,
+  options?: Options,
+) => readonly string[] = (text: string, consumerText = text, options: Options = {}) => {
   const files = new Map<string, ts.SourceFile>()
   const add = (file: string, content: string) => {
     const key = resolve(file)
@@ -170,9 +172,9 @@ export const inspectScopedViews = (
   const source = add(options.file ?? 'view.ts', text)
   if (consumerText !== text) add(options.consumerFile ?? 'layer.ts', consumerText)
   for (const [file, content] of Object.entries(options.sources ?? {})) add(file, content)
-  // Only explicit construction consumers may prove a factory's lifetime.
+
   const constructionSources = [...files.values()]
-  const load = (file: string): ts.SourceFile | undefined => {
+  const load: (file: string) => ts.SourceFile | undefined = (file: string) => {
     const key = resolve(file)
     const existing = files.get(key)
     if (existing !== undefined) return existing
@@ -222,10 +224,10 @@ export const inspectScopedViews = (
   if (constructions.size === 0)
     return [
       'Implementation requires consumed Effect.gen plans or checked Layer.suspend record construction',
-    ]
+    ] satisfies readonly string[]
   const proven = new Set<ts.VariableDeclaration>()
   const proving = new Set<ts.VariableDeclaration>()
-  const proveFactory = (factory: Factory): boolean => {
+  const proveFactory: (factory: Factory) => boolean = (factory: Factory) => {
     if (proven.has(factory.declaration)) return true
     if (proving.has(factory.declaration)) return false
     proving.add(factory.declaration)
@@ -296,7 +298,10 @@ export const inspectScopedViews = (
     if (valid) proven.add(factory.declaration)
     return valid
   }
-  const stableView = (identifier: ts.Identifier, factory: Factory): boolean => {
+  const stableView: (identifier: ts.Identifier, factory: Factory) => boolean = (
+    identifier: ts.Identifier,
+    factory: Factory,
+  ) => {
     const name = identifier.text
     const from = identifier.getSourceFile()
     for (
@@ -391,11 +396,9 @@ export const inspectScopedViews = (
         errors.push('Lazy view function must be stable in module or construction scope')
     }
   }
-  return [...new Set(errors)]
+  return [...new Set(errors)] satisfies readonly string[]
 }
 
-// The pinned preview's module-only rule cannot recognize once-per-Layer construction.
-// Grant an override only after proving the explicit factory chain and renderer identities.
 export const checkedScopedViewOverrides = () => {
   const root = resolve(import.meta.dirname, '../..')
   const read = (file: string) => {

@@ -1,21 +1,18 @@
 import { defineRule } from '@oxlint/plugins'
 import type { ESTree } from '@oxlint/plugins'
 
-type TypeAssertionExpression = ESTree.TSAsExpression | ESTree.TSTypeAssertion
-
-function isTypeAssertionExpression(node: ESTree.Node): node is TypeAssertionExpression {
-  return node.type === 'TSAsExpression' || node.type === 'TSTypeAssertion'
-}
-
-function unwrapParenthesizedExpression(expression: ESTree.Expression): ESTree.Expression {
-  let current = expression
-  while (current.type === 'ParenthesizedExpression') {
-    current = current.expression
+const unwrapParenthesizedExpression: (expression: ESTree.Expression) => ESTree.Expression =
+  function unwrapParenthesizedExpression(expression: ESTree.Expression) {
+    let current = expression
+    while (current.type === 'ParenthesizedExpression') {
+      current = current.expression
+    }
+    return current
   }
-  return current
-}
 
-function isConstAssertion(node: TypeAssertionExpression): boolean {
+const isConstAssertion: (node: TypeAssertionExpression) => boolean = function isConstAssertion(
+  node: TypeAssertionExpression,
+) {
   const { typeAnnotation } = node
   return (
     typeAnnotation.type === 'TSTypeReference' &&
@@ -24,30 +21,38 @@ function isConstAssertion(node: TypeAssertionExpression): boolean {
   )
 }
 
-function isOutermostAssertionInChain(node: TypeAssertionExpression): boolean {
-  let current: ESTree.Expression = node
-  let parent = node.parent
+const isOutermostAssertionInChain: (node: TypeAssertionExpression) => boolean =
+  function isOutermostAssertionInChain(node: TypeAssertionExpression) {
+    let current: ESTree.Expression = node
+    let parent = node.parent
 
-  while (parent.type === 'ParenthesizedExpression' && parent.expression === current) {
-    current = parent
-    parent = parent.parent
+    while (parent.type === 'ParenthesizedExpression' && parent.expression === current) {
+      current = parent
+      parent = parent.parent
+    }
+
+    return !isTypeAssertionExpression(parent) || parent.expression !== current
   }
 
-  return !isTypeAssertionExpression(parent) || parent.expression !== current
-}
+const isForbiddenAssertionChain: (node: TypeAssertionExpression) => boolean =
+  function isForbiddenAssertionChain(node: TypeAssertionExpression) {
+    let assertionCount = 0
+    let hasNonConstAssertion = false
+    let current: ESTree.Expression = node
 
-function isForbiddenAssertionChain(node: TypeAssertionExpression): boolean {
-  let assertionCount = 0
-  let hasNonConstAssertion = false
-  let current: ESTree.Expression = node
+    while (isTypeAssertionExpression(current)) {
+      assertionCount += 1
+      hasNonConstAssertion ||= !isConstAssertion(current)
+      current = unwrapParenthesizedExpression(current.expression)
+    }
 
-  while (isTypeAssertionExpression(current)) {
-    assertionCount += 1
-    hasNonConstAssertion ||= !isConstAssertion(current)
-    current = unwrapParenthesizedExpression(current.expression)
+    return assertionCount > 1 && hasNonConstAssertion
   }
 
-  return assertionCount > 1 && hasNonConstAssertion
+type TypeAssertionExpression = ESTree.TSAsExpression | ESTree.TSTypeAssertion
+
+function isTypeAssertionExpression(node: ESTree.Node): node is TypeAssertionExpression {
+  return node.type === 'TSAsExpression' || node.type === 'TSTypeAssertion'
 }
 
 /** Disallow nested TypeScript type assertions, while permitting chains made only of const assertions. */

@@ -1,10 +1,89 @@
 import type { Model } from './input-message/definition.js'
 import { modifyFields } from 'foldkit/struct'
 import type { HoverMode } from './hover-observation.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Option, Schema } from 'effect'
 import { defineMessageUnion } from 'foldkit/message'
 import { MessageFile, QueuedMessage } from './input-message-domain.js'
+
+const initialButtonGlyph: (config: InputMessageConfig) => 'arrow' | 'stop' =
+  function initialButtonGlyph(config: InputMessageConfig) {
+    const canSend =
+      config.disabled !== true &&
+      (config.value.trim().length > 0 || (config.files?.length ?? 0) > 0)
+
+    const canQueue = config.supportsQueue === true && canSend
+
+    return config.status === 'streaming' && config.supportsStop === true && !canQueue
+      ? 'stop'
+      : 'arrow'
+  }
+
+export const initialInputMessage: (config: InputMessageConfig) => InputMessageModel =
+  function initialInputMessage(config: InputMessageConfig) {
+    return InputMessageModel.make({
+      id: config.id,
+      buttonGlyph: initialButtonGlyph(config),
+      buttonExiting: false,
+      buttonSwaps: 0,
+      value: config.value,
+      editRevision: 0,
+      disabled: config.disabled ?? false,
+      files: config.files ?? [],
+      supportsFiles: config.supportsFiles ?? false,
+      accept: config.accept ?? 'image/png,image/jpeg,application/pdf',
+      maxFiles: Option.fromNullishOr(config.maxFiles),
+      queue: config.queue ?? [],
+      status: Option.fromNullishOr(config.status),
+      supportsQueue: config.status !== undefined && (config.supportsQueue ?? false),
+      showQueue: config.showQueue ?? true,
+      supportsStop: config.supportsStop ?? false,
+      history: config.history ?? [],
+      historyIndex: Option.none(),
+      draftBeforeHistory: '',
+      suggestions: config.suggestions ?? [],
+      placeholderSuggestion: Option.fromNullishOr(config.placeholderSuggestion),
+      liveMessage: '',
+      enqueueSequence: 0,
+      focusVisible: false,
+      hovered: false,
+      dragOver: false,
+      isTouch: false,
+      reduceMotion: config.reduceMotion,
+      filesHeight: Option.none(),
+      queueHeight: Option.none(),
+      suggestionsHeight: Option.none(),
+      filePreviewSize: config.filePreviewSize ?? 80,
+      minRows: config.minRows ?? 1,
+      maxRows: config.maxRows ?? 8,
+      clickToFocus: config.clickToFocus ?? true,
+    })
+  }
+
+export const inputMessageButtonMode: (model: InputMessageModel) => 'send' | 'queue' | 'stop' =
+  function inputMessageButtonMode(model: InputMessageModel) {
+    const canSend = !model.disabled && (model.value.trim().length > 0 || model.files.length > 0)
+
+    if (Option.getOrNull(model.status) === 'streaming') {
+      if (canSend && model.supportsQueue) {
+        return 'queue'
+      }
+
+      return model.supportsStop ? 'stop' : 'send'
+    }
+
+    return 'send'
+  }
+
+export const reconcileInputMessageButton: (before: InputMessageModel, after: Model) => Model =
+  function reconcileInputMessageButton(before: InputMessageModel, after: Model) {
+    const target = inputMessageButtonMode(after) === 'stop' ? 'stop' : 'arrow'
+
+    return modifyFields(after, {
+      buttonGlyph: () => before.buttonGlyph,
+      buttonExiting: () => target !== before.buttonGlyph,
+    })
+  }
 
 export const inputMessageObservationFields = {
   CapturedValue: { value: Schema.String },
@@ -110,80 +189,6 @@ export interface InputMessageConfig {
   readonly maxRows?: number
   readonly clickToFocus?: boolean
   readonly reduceMotion: boolean
-}
-
-function initialButtonGlyph(config: InputMessageConfig): 'arrow' | 'stop' {
-  const canSend =
-    config.disabled !== true && (config.value.trim().length > 0 || (config.files?.length ?? 0) > 0)
-
-  const canQueue = config.supportsQueue === true && canSend
-
-  return config.status === 'streaming' && config.supportsStop === true && !canQueue
-    ? 'stop'
-    : 'arrow'
-}
-
-export function initialInputMessage(config: InputMessageConfig): InputMessageModel {
-  return InputMessageModel.make({
-    id: config.id,
-    buttonGlyph: initialButtonGlyph(config),
-    buttonExiting: false,
-    buttonSwaps: 0,
-    value: config.value,
-    editRevision: 0,
-    disabled: config.disabled ?? false,
-    files: config.files ?? [],
-    supportsFiles: config.supportsFiles ?? false,
-    accept: config.accept ?? 'image/png,image/jpeg,application/pdf',
-    maxFiles: Option.fromNullishOr(config.maxFiles),
-    queue: config.queue ?? [],
-    status: Option.fromNullishOr(config.status),
-    supportsQueue: config.status !== undefined && (config.supportsQueue ?? false),
-    showQueue: config.showQueue ?? true,
-    supportsStop: config.supportsStop ?? false,
-    history: config.history ?? [],
-    historyIndex: Option.none(),
-    draftBeforeHistory: '',
-    suggestions: config.suggestions ?? [],
-    placeholderSuggestion: Option.fromNullishOr(config.placeholderSuggestion),
-    liveMessage: '',
-    enqueueSequence: 0,
-    focusVisible: false,
-    hovered: false,
-    dragOver: false,
-    isTouch: false,
-    reduceMotion: config.reduceMotion,
-    filesHeight: Option.none(),
-    queueHeight: Option.none(),
-    suggestionsHeight: Option.none(),
-    filePreviewSize: config.filePreviewSize ?? 80,
-    minRows: config.minRows ?? 1,
-    maxRows: config.maxRows ?? 8,
-    clickToFocus: config.clickToFocus ?? true,
-  })
-}
-
-export function inputMessageButtonMode(model: InputMessageModel): 'send' | 'queue' | 'stop' {
-  const canSend = !model.disabled && (model.value.trim().length > 0 || model.files.length > 0)
-
-  if (Option.getOrNull(model.status) === 'streaming') {
-    if (canSend && model.supportsQueue) {
-      return 'queue'
-    }
-
-    return model.supportsStop ? 'stop' : 'send'
-  }
-
-  return 'send'
-}
-
-export function reconcileInputMessageButton(before: InputMessageModel, after: Model): Model {
-  const target = inputMessageButtonMode(after) === 'stop' ? 'stop' : 'arrow'
-
-  return modifyFields(after, {
-    buttonGlyph: () => before.buttonGlyph,
-    buttonExiting: () => target !== before.buttonGlyph,
-  })
 }
 
 export const inputMessageValues = <M extends InputMessageModel>(model: M) => ({

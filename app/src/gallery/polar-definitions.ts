@@ -135,9 +135,7 @@ export const pieInputs = pie.inputs('preview-pie', pieProps),
   funnelInputs = funnel.inputs('preview-funnel', funnelProps),
   heatInputs = heat.inputs('preview-heatmap', heatProps),
   liveInputs = live.inputs('preview-live', liveProps)
-// This paused fixture and its wall clock share an epoch. A current clock would stretch
-// the historical sample-to-tip tail hundreds of thousands of pixels offscreen.
-// Monotonic time and timers remain live, preserving intro and interaction motion.
+
 const liveSnapshotClock = Layer.effect(
   Clock.Clock,
   Clock.clockWith((clock) =>

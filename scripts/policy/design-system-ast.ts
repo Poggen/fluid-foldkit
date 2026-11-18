@@ -11,68 +11,94 @@ import {
 
 export { isStringModule, staticPropertyKeyName, staticPropertyName, unwrapExpression }
 
-export const resolveValue = (
+export const resolveValue: (
+  value: ESTree.Expression,
+  context: Context,
+  seen?: Set<ESTree.Node>,
+) => ESTree.Expression = (
   value: ESTree.Expression,
   context: Context,
   seen = new Set<ESTree.Node>(),
-): ESTree.Expression => {
+) => {
   const node = unwrapExpression(value)
-  if (node.type !== 'Identifier' || seen.has(node)) return node
+  if (node.type !== 'Identifier' || seen.has(node)) return node satisfies ESTree.Expression
   seen.add(node)
   const initializer = immutableInitializer(node, context)
-  return initializer === null ? node : resolveValue(initializer, context, seen)
+  return (
+    initializer === null ? node : resolveValue(initializer, context, seen)
+  ) satisfies ESTree.Expression
 }
 
-export const stringsIn = (
+export const stringsIn: (
+  value: ESTree.Expression,
+  context: Context,
+  seen?: Set<ESTree.Node>,
+) => readonly { readonly text: string; readonly node: ESTree.Node }[] = (
   value: ESTree.Expression,
   context: Context,
   seen = new Set<ESTree.Node>(),
-): readonly { readonly text: string; readonly node: ESTree.Node }[] => {
+) => {
   const node = resolveValue(value, context)
-  if (seen.has(node)) return []
+  if (seen.has(node))
+    return [] satisfies readonly { readonly text: string; readonly node: ESTree.Node }[]
   seen.add(node)
   const text = isStringModule(node)
-  if (text !== null) return [{ text, node }]
+  if (text !== null)
+    return [{ text, node }] satisfies readonly {
+      readonly text: string
+      readonly node: ESTree.Node
+    }[]
   switch (node.type) {
     case 'TemplateLiteral':
-      return node.quasis.map((part) => ({ text: part.value.cooked ?? part.value.raw, node: part }))
+      return node.quasis.map((part) => ({
+        text: part.value.cooked ?? part.value.raw,
+        node: part,
+      })) satisfies readonly { readonly text: string; readonly node: ESTree.Node }[]
     case 'ConditionalExpression':
       return [
         ...stringsIn(node.consequent, context, seen),
         ...stringsIn(node.alternate, context, seen),
-      ]
+      ] satisfies readonly { readonly text: string; readonly node: ESTree.Node }[]
     case 'LogicalExpression':
-      return [...stringsIn(node.left, context, seen), ...stringsIn(node.right, context, seen)]
+      return [
+        ...stringsIn(node.left, context, seen),
+        ...stringsIn(node.right, context, seen),
+      ] satisfies readonly { readonly text: string; readonly node: ESTree.Node }[]
     case 'ArrayExpression':
       return node.elements.flatMap((item) =>
         item === null
           ? []
           : stringsIn(item.type === 'SpreadElement' ? item.argument : item, context, seen),
-      )
+      ) satisfies readonly { readonly text: string; readonly node: ESTree.Node }[]
     case 'ObjectExpression':
       return node.properties.flatMap((property) => {
         if (property.type === 'SpreadElement') return stringsIn(property.argument, context, seen)
         const key = staticPropertyKeyName(property)
         return key === undefined ? [] : [{ text: key, node: property.key }]
-      })
+      }) satisfies readonly { readonly text: string; readonly node: ESTree.Node }[]
     case 'BinaryExpression': {
-      if (node.operator !== '+') return []
+      if (node.operator !== '+')
+        return [] satisfies readonly { readonly text: string; readonly node: ESTree.Node }[]
       const left = stringsIn(node.left, context, seen)
       const right = stringsIn(node.right, context, seen)
-      return left.length === 1 && right.length === 1
-        ? [{ text: `${left[0]?.text ?? ''}${right[0]?.text ?? ''}`, node }]
-        : [...left, ...right]
+      return (
+        left.length === 1 && right.length === 1
+          ? [{ text: `${left[0]?.text ?? ''}${right[0]?.text ?? ''}`, node }]
+          : [...left, ...right]
+      ) satisfies readonly { readonly text: string; readonly node: ESTree.Node }[]
     }
     case 'CallExpression': {
       const name = node.callee.type === 'Identifier' ? node.callee.name : null
-      return ['cn', 'clsx', 'twMerge'].includes(name ?? '')
-        ? node.arguments.flatMap((arg) =>
-            stringsIn(arg.type === 'SpreadElement' ? arg.argument : arg, context, seen),
-          )
-        : []
+      return (
+        ['cn', 'clsx', 'twMerge'].includes(name ?? '')
+          ? node.arguments.flatMap((arg) =>
+              stringsIn(arg.type === 'SpreadElement' ? arg.argument : arg, context, seen),
+            )
+          : []
+      ) satisfies readonly { readonly text: string; readonly node: ESTree.Node }[]
     }
     default:
-      return []
+      return [] satisfies readonly { readonly text: string; readonly node: ESTree.Node }[]
   }
 }
 
@@ -91,7 +117,10 @@ const namespaces = new Set([
 const componentImports = { namespaces, runtimeImportsOnly: true, immutableAliasesOnly: true }
 const builderImports = { namespaces: new Set<string>() }
 
-export const componentName = (value: ESTree.Expression, context: Context): string | null => {
+export const componentName: (value: ESTree.Expression, context: Context) => string | null = (
+  value: ESTree.Expression,
+  context: Context,
+) => {
   const source = resolveValue(value, context)
   const target =
     source.type === 'CallExpression' &&
@@ -111,25 +140,35 @@ export const componentName = (value: ESTree.Expression, context: Context): strin
   return name?.replace(/Block$/u, '') ?? null
 }
 
-export const bindingComponent = (
+export const bindingComponent: (
+  value: ESTree.Expression,
+  context: Context,
+  seen?: Set<ESTree.Node>,
+) => string | null = (
   value: ESTree.Expression,
   context: Context,
   seen = new Set<ESTree.Node>(),
-): string | null => {
+) => {
   const node = resolveValue(value, context)
-  if (seen.has(node)) return null
+  if (seen.has(node)) return null satisfies string | null
   seen.add(node)
-  if (node.type !== 'CallExpression' || node.callee.type !== 'MemberExpression') return null
+  if (node.type !== 'CallExpression' || node.callee.type !== 'MemberExpression')
+    return null satisfies string | null
   const method = staticPropertyName(node.callee)
-  if (method === 'withOutMessagePolicy') return bindingComponent(node.callee.object, context, seen)
-  if (method !== 'makeRequiredFieldBinding' && method !== 'makeKeyedArrayBinding') return null
+  if (method === 'withOutMessagePolicy')
+    return bindingComponent(node.callee.object, context, seen) satisfies string | null
+  if (method !== 'makeRequiredFieldBinding' && method !== 'makeKeyedArrayBinding')
+    return null satisfies string | null
   const child = node.arguments[0]
-  return child === undefined || child.type === 'SpreadElement'
-    ? null
-    : componentName(child, context)
+  return (
+    child === undefined || child.type === 'SpreadElement' ? null : componentName(child, context)
+  ) satisfies string | null
 }
 
-export const isBuilder = (value: ESTree.Expression, context: Context): boolean => {
+export const isBuilder: (value: ESTree.Expression, context: Context) => boolean = (
+  value: ESTree.Expression,
+  context: Context,
+) => {
   const node = resolveValue(value, context)
   if (node.type !== 'Identifier') return false
   const definition = variableOf(node.name, context.sourceCode.getScope(node))?.defs[0]
@@ -177,15 +216,20 @@ export const isBuilder = (value: ESTree.Expression, context: Context): boolean =
   return fn.params[index] === parameter
 }
 
-export const properties = (
+export const properties: (
+  value: ESTree.Expression,
+  context: Context,
+  seen?: Set<ESTree.Node>,
+) => readonly ESTree.ObjectProperty[] = (
   value: ESTree.Expression,
   context: Context,
   seen = new Set<ESTree.Node>(),
-): readonly ESTree.ObjectProperty[] => {
+) => {
   const node = resolveValue(value, context)
-  if (node.type !== 'ObjectExpression' || seen.has(node)) return []
+  if (node.type !== 'ObjectExpression' || seen.has(node))
+    return [] satisfies readonly ESTree.ObjectProperty[]
   seen.add(node)
   return node.properties.flatMap((property) =>
     property.type === 'SpreadElement' ? properties(property.argument, context, seen) : [property],
-  )
+  ) satisfies readonly ESTree.ObjectProperty[]
 }

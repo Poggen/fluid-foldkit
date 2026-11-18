@@ -28,7 +28,7 @@ export function createFlowEntrance(publish: () => void) {
   let current: SankeyChartProps | undefined
   let focus: SankeyHoverFocus | null = null
 
-  const target = (flow: FlowEntrance): MotionNodeOptions => {
+  const target: (flow: FlowEntrance) => MotionNodeOptions = (flow: FlowEntrance) => {
     let opacity = flow.normalOpacity
 
     if (active !== null) {
@@ -99,7 +99,6 @@ export function createFlowEntrance(publish: () => void) {
         const length = path.getTotalLength()
         const existing = flows.get(key)
 
-        // React keeps the keyed link's progress during data/geometry changes, but replays when its delay changes.
         if (existing !== undefined && existing.delay === delay) {
           existing.path = path
           existing.length = length

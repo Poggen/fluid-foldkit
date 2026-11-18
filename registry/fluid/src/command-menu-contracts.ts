@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Schema } from 'effect'
 import { HoverMode } from './hover.js'
 import type { Html } from 'foldkit/html'
@@ -18,7 +18,10 @@ export const CommandMenuItem = Schema.Struct({
 
 export type CommandMenuItem = typeof CommandMenuItem.Type
 
-export const defaultCommandMenuFilter = (item: CommandMenuItem, query: string): boolean => {
+export const defaultCommandMenuFilter: (item: CommandMenuItem, query: string) => boolean = (
+  item: CommandMenuItem,
+  query: string,
+) => {
   const haystack = [item.label, item.description ?? '', ...(item.keywords ?? [])]
     .join(' ')
     .toLowerCase()
@@ -30,13 +33,19 @@ export const defaultCommandMenuFilter = (item: CommandMenuItem, query: string): 
     .every((word) => haystack.includes(word))
 }
 
-export const commandMenuRows = (
+export const commandMenuRows: (
+  items: ReadonlyArray<CommandMenuItem>,
+  query: string,
+  suggestions: ReadonlyArray<string>,
+  label: string,
+  filter?: (item: CommandMenuItem, query: string) => boolean,
+) => ReadonlyArray<CommandMenuItem> = (
   items: ReadonlyArray<CommandMenuItem>,
   query: string,
   suggestions: ReadonlyArray<string>,
   label: string,
   filter = defaultCommandMenuFilter,
-): ReadonlyArray<CommandMenuItem> => {
+) => {
   const visible = query === '' ? items : items.filter((item) => filter(item, query))
 
   const suggested =
@@ -64,7 +73,7 @@ export const commandMenuRows = (
     }
   }
 
-  return [...groups.values()].flat()
+  return [...groups.values()].flat() satisfies ReadonlyArray<CommandMenuItem>
 }
 
 export const CommandMenuConfig = Schema.Struct({

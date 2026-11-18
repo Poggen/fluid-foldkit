@@ -24,7 +24,6 @@ function measurementChanged(previous: TooltipBoxGeometry, next: TooltipBoxGeomet
   )
 }
 
-/** One visible occurrence owns the same MotionValues/engine as Original's useSpring. */
 function mountOccurrence(
   element: HTMLElement,
   body: HTMLElement,
@@ -98,7 +97,7 @@ function mountOccurrence(
 
   paintPosition()
 
-  const outerProps = (): TooltipMotionProps => ({
+  const outerProps: () => TooltipMotionProps = () => ({
     initial: props.entrance === false ? false : { opacity: 0 },
     animate: { opacity: 1 },
     transition: { duration: 0.1 },
@@ -184,7 +183,7 @@ function mountOccurrence(
     element.dataset.placement = (props.flipped ?? flip) ? 'left' : 'right'
   }
 
-  const readPositiveSize = (): TooltipPanelSize => ({
+  const readPositiveSize: () => TooltipPanelSize = () => ({
     width: element.offsetWidth || size.width,
     height: element.offsetHeight || size.height,
   })
@@ -205,7 +204,7 @@ function mountOccurrence(
     }
 
     size = nextSize
-    // The first delivery completes the initial pre-measure flip phase, even at equal size.
+
     pendingFlipReconciliation = false
     retarget()
     reconcileFlip(target.flipped)
@@ -217,7 +216,7 @@ function mountOccurrence(
     const measure = !measured || (!observesSize && measurementChanged(props, next))
 
     props = next
-    // React calculates flip before its layout effect refreshes the measured size.
+
     const nextFlip = tooltipBoxTarget(props, size).flipped
     const nextSpring = props.springConfig ?? { stiffness: 100, damping: 20 }
 
@@ -253,14 +252,12 @@ function mountOccurrence(
   if (sizeObserver) {
     sizeObserver.observe(element, { box: 'border-box' })
   } else {
-    // Without RO, stationary font/style changes still need visible-occurrence sampling.
     frame.read(acceptObservedSize, true)
   }
 
   return {
     update,
     restartEntrance() {
-      // A React portal target change recreates visuals, while its position hooks survive.
       outer?.destroy()
       inner?.destroy()
       outer = enterOuter()

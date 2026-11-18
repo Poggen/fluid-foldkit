@@ -8,36 +8,15 @@ import type { SliderViewInputs } from './slider-parts.js'
 import type { SliderModel } from './slider-state.js'
 import { sliderValues } from './slider-state.js'
 
-const compactPreviewRadius = (sharp: boolean, curvesRight: boolean) => {
-  if (sharp) {
-    return '0'
-  }
-
-  return curvesRight ? '0 9999px 9999px 0' : '9999px 0 0 9999px'
-}
-
-function compactSteps(model: SliderModel) {
-  const { settings } = model
-
-  if (!settings.appearance.showSteps) {
-    return []
-  }
-
-  if (settings.steps.length > 1) {
-    return settings.steps
-  }
-
-  return Array.from(
-    { length: Math.round((settings.max - settings.min) / settings.step) + 1 },
-    (_, index) => settings.min + index * settings.step,
-  )
-}
-
-function compactTrack<M, R>(
+const compactTrack: <M, R>(
   model: SliderModel,
   inputs: SliderViewInputs,
   h: HtmlBuilder<M, R>,
-): Html {
+) => Html = function compactTrack<M, R>(
+  model: SliderModel,
+  inputs: SliderViewInputs,
+  h: HtmlBuilder<M, R>,
+) {
   const { appearance } = model.settings
   const { shape, reducedMotion } = resolvePresentation(inputs)
   const position = appearance.valuePosition ?? 'left'
@@ -201,15 +180,20 @@ function compactTrack<M, R>(
         : null,
       ...values.map((_, index) => thumb(index)),
     ],
-  )
+  ) satisfies Html
 }
 
-export function sliderCompactView<M, R>(
+export const sliderCompactView: <M, R>(
   model: SliderModel,
   inputs: SliderViewInputs,
   attributes: NonNullable<Parameters<HtmlBuilder<M, R>['div']>[0]>,
   h: HtmlBuilder<M, R>,
-): Html {
+) => Html = function sliderCompactView<M, R>(
+  model: SliderModel,
+  inputs: SliderViewInputs,
+  attributes: NonNullable<Parameters<HtmlBuilder<M, R>['div']>[0]>,
+  h: HtmlBuilder<M, R>,
+) {
   const { appearance } = model.settings
   const values = sliderValues(model.settings.value)
   const position = appearance.valuePosition ?? 'left'
@@ -269,5 +253,30 @@ export function sliderCompactView<M, R>(
       ],
     ),
     model,
+  ) satisfies Html
+}
+
+const compactPreviewRadius = (sharp: boolean, curvesRight: boolean) => {
+  if (sharp) {
+    return '0'
+  }
+
+  return curvesRight ? '0 9999px 9999px 0' : '9999px 0 0 9999px'
+}
+
+function compactSteps(model: SliderModel) {
+  const { settings } = model
+
+  if (!settings.appearance.showSteps) {
+    return []
+  }
+
+  if (settings.steps.length > 1) {
+    return settings.steps
+  }
+
+  return Array.from(
+    { length: Math.round((settings.max - settings.min) / settings.step) + 1 },
+    (_, index) => settings.min + index * settings.step,
   )
 }

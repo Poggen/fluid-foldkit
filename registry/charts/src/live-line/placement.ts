@@ -2,10 +2,13 @@ import { resolveChartTooltipPlacement } from '@tanstack/charts/tooltip/model'
 import type { ChartTooltipPortalExtension } from '@tanstack/charts/tooltip/portal'
 import { tooltipBoxTarget } from '../cartesian/tooltip-box-geometry'
 
-export function familyTooltipPlacement(
+export const familyTooltipPlacement: (
   mode: 'live' | 'heatmap',
   bottomInset: number,
-): ChartTooltipPortalExtension {
+) => ChartTooltipPortalExtension = function familyTooltipPlacement(
+  mode: 'live' | 'heatmap',
+  bottomInset: number,
+) {
   return {
     id: 'heatmap-live-tooltip-placement',
     create: ({ element, schedulePosition }) => {

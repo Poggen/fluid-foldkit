@@ -46,8 +46,7 @@ const ItemLayer = ItemFixture.makeLayer({
     ),
   ),
 })
-// Attribute selectors also cover SVG class attributes in the public Scene query model.
-// Static stateless-render contract; focus/hover transitions belong to the browser candidate.
+
 for (const compact of [false, true]) {
   for (const state of [
     { active: false, checked: false },

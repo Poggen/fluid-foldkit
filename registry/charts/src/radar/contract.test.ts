@@ -24,8 +24,9 @@ const data: Array<RadarData> = [
   { label: 'Second', color: 'blue', values: { a: 30, b: 60, c: 90 } },
 ]
 
-const flat = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<SceneNode> =>
-  nodes.flatMap((n) => (n.kind === 'group' ? flat(n.children) : [n]))
+const flat: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<SceneNode> = (
+  nodes: ReadonlyArray<SceneNode>,
+) => nodes.flatMap((n) => (n.kind === 'group' ? flat(n.children) : [n]))
 
 it('draws only requested radar parts with raw Source data, per-area paint and navigable series', () => {
   expect(

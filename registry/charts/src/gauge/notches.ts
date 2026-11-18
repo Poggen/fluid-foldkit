@@ -1,11 +1,11 @@
-// Pure notch model for the native gauge: angles/rects and fills, mirroring bklit's notch geometry.
 const CHART_1 = 'var(--chart-1)'
 
 const DEFAULT_ACTIVE_GRADIENT: readonly [string, string] = [CHART_1, 'var(--chart-5)']
 
 const DEG = Math.PI / 180
 
-const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v))
+const clamp: (v: number, lo: number, hi: number) => number = (v: number, lo: number, hi: number) =>
+  Math.min(hi, Math.max(lo, v))
 
 export interface GaugeNotchRow {
   readonly index: number
@@ -34,7 +34,7 @@ export interface FillOptions {
   readonly themeGradientPaint?: string
 }
 
-const parseHex = (hex: string): [number, number, number] | null => {
+const parseHex: (hex: string) => [number, number, number] | null = (hex: string) => {
   const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/iu.exec(hex.trim())
   const matched = m?.[1]
 
@@ -48,8 +48,7 @@ const parseHex = (hex: string): [number, number, number] | null => {
   ]
 }
 
-/** Interpolates two colours: hex pairs are lerped in sRGB, anything else (CSS vars) via color-mix. */
-const mixColor = (a: string, b: string, t: number): string => {
+const mixColor: (a: string, b: string, t: number) => string = (a: string, b: string, t: number) => {
   const pa = parseHex(a)
   const pb = parseHex(b)
 
@@ -62,7 +61,11 @@ const mixColor = (a: string, b: string, t: number): string => {
 
 const nonEmpty = (v: string | undefined): v is string => v !== undefined && v !== ''
 
-const activeColor = (o: FillOptions, ag: readonly [string, string], t: number): string => {
+const activeColor: (o: FillOptions, ag: readonly [string, string], t: number) => string = (
+  o: FillOptions,
+  ag: readonly [string, string],
+  t: number,
+) => {
   if (nonEmpty(o.activeFill)) {
     return o.activeFill
   }
@@ -74,7 +77,11 @@ const activeColor = (o: FillOptions, ag: readonly [string, string], t: number): 
   return o.useGradient ? mixColor(ag[0], ag[1], t) : CHART_1
 }
 
-const trackColor = (o: FillOptions, ig: readonly [string, string], t: number): string => {
+const trackColor: (o: FillOptions, ig: readonly [string, string], t: number) => string = (
+  o: FillOptions,
+  ig: readonly [string, string],
+  t: number,
+) => {
   if (nonEmpty(o.inactiveFill)) {
     return o.inactiveFill
   }
@@ -92,7 +99,10 @@ const trackColor = (o: FillOptions, ig: readonly [string, string], t: number): s
   return o.linear ? 'var(--chart-background)' : 'var(--bkm-border)'
 }
 
-const fills = (index: number, o: FillOptions): Pick<GaugeNotchRow, 'activeFill' | 'trackFill'> => {
+const fills: (index: number, o: FillOptions) => Pick<GaugeNotchRow, 'activeFill' | 'trackFill'> = (
+  index: number,
+  o: FillOptions,
+) => {
   const t = index / (o.total > 1 ? o.total - 1 : 1)
   const ag = o.activeGradient ?? DEFAULT_ACTIVE_GRADIENT
   const ig = o.inactiveGradient ?? ag
@@ -107,7 +117,7 @@ interface ArcInput extends FillOptions {
   readonly endAngle: number
 }
 
-const arcNotches = (o: ArcInput): Array<GaugeNotchRow> => {
+const arcNotches: (o: ArcInput) => Array<GaugeNotchRow> = (o: ArcInput) => {
   const totalAngle = o.endAngle - o.startAngle
   const notchAngle = o.total > 0 ? (totalAngle * (1 - o.spacing / 100)) / o.total : 0
   const gap = (totalAngle * (o.spacing / 100)) / (o.total - 1 > 0 ? o.total - 1 : 1)
@@ -140,7 +150,7 @@ export interface LinearInput extends FillOptions {
   readonly notchLengthPercent: number
 }
 
-export const linearNotches = (o: LinearInput): Array<GaugeNotchRow> => {
+export const linearNotches: (o: LinearInput) => Array<GaugeNotchRow> = (o: LinearInput) => {
   const slot = o.total > 0 ? (o.width * (1 - o.spacing / 100)) / o.total : 0
   const gap = (o.width * (o.spacing / 100)) / (o.total - 1 > 0 ? o.total - 1 : 1)
   const half = (slot * (clamp(o.notchWidthPercent, 10, 100) / 100)) / 2
@@ -164,16 +174,17 @@ export const linearNotches = (o: LinearInput): Array<GaugeNotchRow> => {
   })
 }
 
-export const clampStagger = (scale: number): number => clamp(scale, 0.25, 2.5)
+export const clampStagger: (scale: number) => number = (scale: number) => clamp(scale, 0.25, 2.5)
 
-/** A polygon notch is the rows sharing an `index`, one per vertex in drawing order, carried as a point (x1 = x2, y1 = y2) on the notch row. */
-// Server and client trig differ in the last bits, which breaks hydration; 0.001px is sub-pixel.
-const round = (v: number): number => Math.round(v * 1000) / 1000
+const round: (v: number) => number = (v: number) => Math.round(v * 1000) / 1000
 
-const vertices = (
+const vertices: (
   row: GaugeNotchRow,
   points: ReadonlyArray<readonly [number, number]>,
-): Array<GaugeNotchRow> =>
+) => Array<GaugeNotchRow> = (
+  row: GaugeNotchRow,
+  points: ReadonlyArray<readonly [number, number]>,
+) =>
   points.map(([px, py]) => {
     const x = round(px)
     const y = round(py)
@@ -182,10 +193,10 @@ const vertices = (
   })
 
 /** bklit's tapered linear notch: the bottom edge is `ratio` (28/42) of the top edge's width, both centred on the notch. */
-export const taperedLinearVertices = (
+export const taperedLinearVertices: (
   rows: ReadonlyArray<GaugeNotchRow>,
   ratio: number,
-): Array<GaugeNotchRow> =>
+) => Array<GaugeNotchRow> = (rows: ReadonlyArray<GaugeNotchRow>, ratio: number) =>
   rows.flatMap((r) => {
     const cx = (r.x1 + r.x2) / 2
     const inner = ((r.x2 - r.x1) / 2) * ratio
@@ -199,7 +210,9 @@ export const taperedLinearVertices = (
   })
 
 /** Uniform linear notch as a polygon (bklit builds every notch with `createNotchPath`, so the rounded corners are quadratic cuts, not circular arcs). */
-export const rectLinearVertices = (rows: ReadonlyArray<GaugeNotchRow>): Array<GaugeNotchRow> =>
+export const rectLinearVertices: (rows: ReadonlyArray<GaugeNotchRow>) => Array<GaugeNotchRow> = (
+  rows: ReadonlyArray<GaugeNotchRow>,
+) =>
   rows.flatMap((r) =>
     vertices(r, [
       [r.x1, r.y1],
@@ -223,7 +236,9 @@ export interface ArcPolygonInput extends FillOptions {
 }
 
 /** bklit's arc notch as a straight-sided polygon: outer edge a chord; inner edge a chord at the inner radius, or sides parallel to the centre line when `uniform`. */
-export const arcPolygonVertices = (o: ArcPolygonInput): Array<GaugeNotchRow> => {
+export const arcPolygonVertices: (o: ArcPolygonInput) => Array<GaugeNotchRow> = (
+  o: ArcPolygonInput,
+) => {
   const size = Math.min(o.width, o.height)
   const outer = size * 0.42
   const length = (outer - size * 0.28) * (clamp(o.notchLengthPercent, 5, 100) / 100)
@@ -232,10 +247,11 @@ export const arcPolygonVertices = (o: ArcPolygonInput): Array<GaugeNotchRow> => 
     const mid = (r.startAngle + r.endAngle) / 2 - Math.PI / 2
     const half = (r.endAngle - r.startAngle) / 2
 
-    const at = (a: number, radius = outer): [number, number] => [
-      o.width / 2 + Math.cos(a) * radius,
-      o.height / 2 + Math.sin(a) * radius,
-    ]
+    const at: (a: number, radius?: number) => [number, number] = (a: number, radius = outer) =>
+      [o.width / 2 + Math.cos(a) * radius, o.height / 2 + Math.sin(a) * radius] satisfies [
+        number,
+        number,
+      ]
 
     const [x1, y1] = at(mid - half)
     const [x2, y2] = at(mid + half)

@@ -15,7 +15,10 @@ import { datePickerCode } from '../playground/configs/date-picker-code'
 import { askUserQuestionsCode } from '../playground/configs/ask-user-questions-code'
 import { sidebarCode } from '../playground/configs/sidebar-code'
 
-export const previewCode = (_page: ComponentPage, configuration: PlaygroundConfiguration): string =>
+export const previewCode: (
+  _page: ComponentPage,
+  configuration: PlaygroundConfiguration,
+) => string = (_page: ComponentPage, configuration: PlaygroundConfiguration) =>
   Match.value(configuration).pipe(
     Match.tag('none', () => ''),
     Match.tag('code-block', 'context-menu', 'data-table', dataComponentCode),

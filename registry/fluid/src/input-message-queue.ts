@@ -1,6 +1,6 @@
 import { modifyFields } from 'foldkit/struct'
 import type { DocumentTooltipOccurrenceViewInputs } from './tooltip-native-public.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Array, Data, Layer, Option, Result, Schema, Stream } from 'effect'
 import { Block, Update } from 'foldkit'
 import { childAttributes } from 'foldkit/html'
@@ -8,6 +8,7 @@ import type { Attribute, ChildAttribute, Html } from 'foldkit/html'
 import { defineInMessageUnion, defineMessageUnion } from 'foldkit/message'
 import { QueuedMessage, inputMessageRemoveTooltipKey } from './input-message-domain.js'
 import { fontWeights } from './lib/font-weight.js'
+import type { InputMessageQueueKey as ObservedQueueKey } from './input-message-queue-native.js'
 import { InputMessageQueueNative } from './input-message-queue-native.js'
 import { InputMessageQueueRow, inputMessageQueueLabel } from './input-message-parts.js'
 import { ReorderBlock, layer as ReorderLayer, reorderItemAttributes } from './reorder.js'
@@ -83,22 +84,28 @@ const ObserveRow = InputMessageQueueBlock.makeMountStream('ObserveRow', {
 
     return ({ element, viewStateChanges, id }) =>
       native.observe(element, viewStateChanges).pipe(
-        Stream.filterMap(({ key, alt }): Result.Result<RowRequest, void> => {
+        Stream.filterMap<ObservedQueueKey, RowRequest, void>(({ key, alt }) => {
           if (key === 'Enter' || key === 'F2') {
-            return Result.succeed(Message.RequestedEdit({ id }))
+            return Result.succeed(Message.RequestedEdit({ id })) satisfies Result.Result<
+              RowRequest,
+              void
+            >
           }
 
           if (key === 'Delete' || key === 'Backspace') {
-            return Result.succeed(Message.RequestedRemove({ id }))
+            return Result.succeed(Message.RequestedRemove({ id })) satisfies Result.Result<
+              RowRequest,
+              void
+            >
           }
 
           if (alt && (key === 'ArrowUp' || key === 'ArrowDown')) {
             return Result.succeed(
               Message.RequestedMove({ id, direction: key === 'ArrowUp' ? -1 : 1 }),
-            )
+            ) satisfies Result.Result<RowRequest, void>
           }
 
-          return Result.failVoid
+          return Result.failVoid satisfies Result.Result<RowRequest, void>
         }),
       )
   },
@@ -112,9 +119,10 @@ export interface InputMessageQueueConfig {
 const Reorder = InputMessageQueueBlock.makeRequiredFieldBinding(ReorderBlock, {
   field: 'reorder',
   init: {
-    contextToArgs: (config: InputMessageQueueConfig): [ReorderConfig] => [
-      { id: config.id, ids: config.items.map((item) => item.id), axis: 'y' },
-    ],
+    contextToArgs: (config: InputMessageQueueConfig) =>
+      [{ id: config.id, ids: config.items.map((item) => item.id), axis: 'y' }] satisfies [
+        ReorderConfig,
+      ],
   },
 }).withOutMessagePolicy({
   fold: InputMessageQueueBlock.makeOutMessageFold(ReorderBlock, {

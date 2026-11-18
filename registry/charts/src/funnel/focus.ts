@@ -1,5 +1,3 @@
-// Cell-containment focus for the funnel (one area per stage and ring): bklit's hover target is the whole stage cell, labels included,
-// so pointer focus resolves by the cell under the pointer, not the nearest ring vertex.
 import type { ChartFocusStrategy, ChartPoint } from '@tanstack/charts'
 
 interface FunnelDatum {
@@ -9,16 +7,18 @@ interface FunnelDatum {
 
 const FUNNEL_FOCUS_LAYER = 0
 
-const createFunnelFocus = (
+const createFunnelFocus: (
   horizontal: boolean,
-): ChartFocusStrategy<FunnelDatum, number, number> => {
-  const axis = (point: ChartPoint<FunnelDatum, number, number>): number =>
-    horizontal ? point.x : point.y
+) => ChartFocusStrategy<FunnelDatum, number, number> = (horizontal: boolean) => {
+  const axis: (point: ChartPoint<FunnelDatum, number, number>) => number = (
+    point: ChartPoint<FunnelDatum, number, number>,
+  ) => (horizontal ? point.x : point.y)
 
-  const outer = (
+  const outer: (
     points: ReadonlyArray<ChartPoint<FunnelDatum, number, number>>,
-  ): Array<ChartPoint<FunnelDatum, number, number>> =>
-    points.filter((point) => point.datum.layer === FUNNEL_FOCUS_LAYER)
+  ) => Array<ChartPoint<FunnelDatum, number, number>> = (
+    points: ReadonlyArray<ChartPoint<FunnelDatum, number, number>>,
+  ) => points.filter((point) => point.datum.layer === FUNNEL_FOCUS_LAYER)
 
   return {
     group: (_points, context) => [context.point],
@@ -47,7 +47,6 @@ const createFunnelFocus = (
         }
       }
 
-      // bklit's hover target is the cell element itself, so the gap between two cells hovers nothing.
       for (const span of spans.values()) {
         if (pointer >= span.lo && pointer <= span.hi) {
           return [span.point]

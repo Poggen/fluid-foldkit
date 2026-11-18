@@ -1,4 +1,4 @@
-// Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT.
+/* @license Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT. */
 import { geoGraticule, geoMercator } from 'd3-geo'
 import type { GeoProjection } from 'd3-geo'
 import type { ChartBounds } from '@tanstack/charts'
@@ -24,31 +24,37 @@ const TRANSLATE_Y_OFFSET = 50
 
 export { scopePatterns } from './resources'
 
-const resolveFill = (
+const resolveFill: (
+  feature: ChoroplethFeature,
+  index: number,
+  config: Readonly<ChoroplethFeatureProps> | undefined,
+  idPrefix?: string,
+) => string = (
   feature: ChoroplethFeature,
   index: number,
   config: Readonly<ChoroplethFeatureProps> | undefined,
   idPrefix = '',
-): string => {
+) => {
   const patternId = config?.getFeaturePattern?.(feature, index)
 
   if (patternId !== undefined && patternId !== '') {
-    return `url(#${idPrefix}${patternId})`
+    return `url(#${idPrefix}${patternId})` satisfies string
   }
 
   if (config?.fill !== undefined && config.fill !== '') {
-    return config.fill
+    return config.fill satisfies string
   }
 
   if (config?.getFeatureColor !== undefined) {
-    return config.getFeatureColor(feature, index)
+    return config.getFeatureColor(feature, index) satisfies string
   }
 
-  return DEFAULT_COLORS[index % DEFAULT_COLORS.length] ?? 'var(--chart-1)'
+  return (DEFAULT_COLORS[index % DEFAULT_COLORS.length] ?? 'var(--chart-1)') satisfies string
 }
 
-const featureKey = (feature: Readonly<Pick<ChoroplethFeature, 'properties' | 'id'>>): string =>
-  feature.properties?.name ?? String(feature.id ?? '')
+const featureKey: (feature: Readonly<Pick<ChoroplethFeature, 'properties' | 'id'>>) => string = (
+  feature: Readonly<Pick<ChoroplethFeature, 'properties' | 'id'>>,
+) => feature.properties?.name ?? String(feature.id ?? '')
 
 interface ProjectionOptions {
   readonly scale: number | undefined
@@ -59,12 +65,10 @@ interface ProjectionOptions {
   readonly ty: number
 }
 
-// Single projection recipe shared by the geoShape layers and the context helpers.
-// Zoom rides the projection (scale*k, translate*k+t) so geoShape repaints natively.
-const makeProjection = (
+const makeProjection: (
   bounds: Readonly<ChartBounds>,
   o: Readonly<ProjectionOptions>,
-): GeoProjection => {
+) => GeoProjection = (bounds: Readonly<ChartBounds>, o: Readonly<ProjectionOptions>) => {
   const baseScale =
     o.scale ?? (bounds.width > 0 ? (bounds.width / REFERENCE_WIDTH) * BASE_SCALE : BASE_SCALE)
 
@@ -79,7 +83,9 @@ const makeProjection = (
     .translate([o.k * baseTranslate[0] + o.tx, o.k * baseTranslate[1] + o.ty])
 }
 
-const graticuleFeature = (step: [number, number] | undefined): ChoroplethFeature => ({
+const graticuleFeature: (step: [number, number] | undefined) => ChoroplethFeature = (
+  step: [number, number] | undefined,
+) => ({
   geometry: (step ? geoGraticule().step(step) : geoGraticule())(),
   properties: { name: 'graticule' },
   type: 'Feature',

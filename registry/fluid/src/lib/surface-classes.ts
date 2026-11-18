@@ -1,5 +1,24 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+export const surfaceClasses: (bgLevel: number, shadowLevel?: number) => string =
+  function surfaceClasses(bgLevel: number, shadowLevel: number = bgLevel) {
+    const bg = Math.round(Math.max(1, Math.min(8, bgLevel)))
+    const shadow = Math.round(Math.max(1, Math.min(8, shadowLevel)))
+
+    return `${SURFACE_BG[bg]} ${SURFACE_SHADOW[shadow]}`
+  }
+
+/** The hover half of `surfaceClasses`: the level a surface rises to while the
+ *  pointer is on it. Same literal-lookup reason as above — `hover:bg-surface-`
+ *  plus a template expression generates nothing. */
+export const surfaceHoverClasses: (bgLevel: number, shadowLevel?: number) => string =
+  function surfaceHoverClasses(bgLevel: number, shadowLevel: number = bgLevel) {
+    const bg = Math.round(Math.max(1, Math.min(8, bgLevel)))
+    const shadow = Math.round(Math.max(1, Math.min(8, shadowLevel)))
+
+    return `${SURFACE_HOVER_BG[bg]} ${SURFACE_HOVER_SHADOW[shadow]}`
+  }
+
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 /**
  * Static lookup tables for surface tokens.
  *
@@ -58,23 +77,4 @@ export const SURFACE_HOVER_SHADOW: Record<number, string> = {
   6: 'hover:shadow-surface-6',
   7: 'hover:shadow-surface-7',
   8: 'hover:shadow-surface-8',
-}
-
-export function surfaceClasses(bgLevel: number, shadowLevel: number = bgLevel): string {
-  // Round after clamping so a fractional level can't index out of the lookup
-  // tables (which would render "undefined undefined").
-  const bg = Math.round(Math.max(1, Math.min(8, bgLevel)))
-  const shadow = Math.round(Math.max(1, Math.min(8, shadowLevel)))
-
-  return `${SURFACE_BG[bg]} ${SURFACE_SHADOW[shadow]}`
-}
-
-/** The hover half of `surfaceClasses`: the level a surface rises to while the
- *  pointer is on it. Same literal-lookup reason as above — `hover:bg-surface-`
- *  plus a template expression generates nothing. */
-export function surfaceHoverClasses(bgLevel: number, shadowLevel: number = bgLevel): string {
-  const bg = Math.round(Math.max(1, Math.min(8, bgLevel)))
-  const shadow = Math.round(Math.max(1, Math.min(8, shadowLevel)))
-
-  return `${SURFACE_HOVER_BG[bg]} ${SURFACE_HOVER_SHADOW[shadow]}`
 }

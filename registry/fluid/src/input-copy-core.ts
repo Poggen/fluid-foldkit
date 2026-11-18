@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { modifyFields } from 'foldkit/struct'
 import { Data, Layer, Match, Option, Schema, Number } from 'effect'
 import { Block } from 'foldkit'
@@ -11,6 +11,12 @@ import type { InputCopyResources } from './input-copy-resources.js'
 import { inputCopyPaint } from './input-copy-view.js'
 import type { InputCopyViewInputs } from './input-copy-view.js'
 import { EXIT_COMPLETE_EVENT } from './motion-target.js'
+
+const copyResultLabel: (status: typeof Status.Type) => string = function copyResultLabel(
+  status: typeof Status.Type,
+) {
+  return status === 'error' ? 'Copy failed' : 'Copied'
+}
 
 const effects = Block.makeEffectsContract<never, InputCopyResources>()
 
@@ -57,10 +63,6 @@ const init = InputCopyComposition.makeInit((config: InputCopyConfig) => ({
     exiting: false,
   }),
 }))
-
-function copyResultLabel(status: typeof Status.Type): string {
-  return status === 'error' ? 'Copy failed' : 'Copied'
-}
 
 function tooltipChanged(
   status: typeof Status.Type,

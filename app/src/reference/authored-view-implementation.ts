@@ -42,7 +42,7 @@ import {
 
 import { authoredFeature } from './authored-routes'
 
-// Derived from Fluid Functionalism cc276ca0 docs. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0 docs. MIT, copyright 2026 Micka Touillaud. */
 import { AccordionItem, AccordionTrigger, AccordionContent } from '@foldkit-visuals/fluid/accordion'
 import { Button } from '@foldkit-visuals/fluid/button'
 import { defaultIcons } from '@foldkit-visuals/fluid/icons'
@@ -388,7 +388,9 @@ export const renderAuthoredView = (
     )
   }
   if (inputs.slug !== 'accordion') return h.empty
-  const accordionInputs = (rows: typeof standaloneRows): AccordionViewInputs => ({
+  const accordionInputs: (rows: typeof standaloneRows) => AccordionViewInputs = (
+    rows: typeof standaloneRows,
+  ) => ({
     context,
     animate: motion.node,
     animateHighlight: highlight,

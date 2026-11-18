@@ -1,4 +1,4 @@
-// Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT.
+/* @license Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT. */
 /** A node of a Sankey diagram. */
 export interface SankeyNodeDatum {
   /** Display name of the node, shown in labels and tooltips. */
@@ -34,7 +34,6 @@ export interface Margin {
   readonly left: number
 }
 
-// Consumer-callback shapes (mirror d3-sankey rows as bklit exposes them).
 export interface SankeyPropNode {
   readonly name: string
   readonly index?: number | undefined

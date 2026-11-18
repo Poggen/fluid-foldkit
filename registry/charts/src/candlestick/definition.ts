@@ -35,34 +35,29 @@ import type { ChartTooltipExtension } from '@tanstack/charts/tooltip'
 import { mergeTooltipCarriers } from '../cartesian/tooltip-carriers'
 import { tooltipBoxMotion } from '../cartesian/tooltip-motion'
 
-const POSITIVE = 'var(--color-emerald-500, oklch(69.6% 0.17 162.48))'
-
-const NEGATIVE = 'var(--color-red-500, oklch(63.7% 0.237 25.331))'
-
-const date = (value: number) => DateTime.toDateUtc(DateTime.makeUnsafe(value))
-
-function assertCandlestickLayers<Row>(children: ReadonlyArray<CartesianLayer<Row>>): void {
-  for (const child of children) {
-    if (
-      ![
-        'candlestick',
-        'referenceArea',
-        'gradient',
-        'pattern',
-        'grid',
-        'xAxis',
-        'yAxis',
-        'tooltip',
-        'tooltipDot',
-        'tooltipIndicator',
-      ].includes(child.kind)
-    ) {
-      throw new TypeError(`Candlestick ${child.kind} compilation is not ported yet`)
+const assertCandlestickLayers: <Row>(children: ReadonlyArray<CartesianLayer<Row>>) => void =
+  function assertCandlestickLayers<Row>(children: ReadonlyArray<CartesianLayer<Row>>) {
+    for (const child of children) {
+      if (
+        ![
+          'candlestick',
+          'referenceArea',
+          'gradient',
+          'pattern',
+          'grid',
+          'xAxis',
+          'yAxis',
+          'tooltip',
+          'tooltipDot',
+          'tooltipIndicator',
+        ].includes(child.kind)
+      ) {
+        throw new TypeError(`Candlestick ${child.kind} compilation is not ported yet`)
+      }
     }
   }
-}
 
-export function buildCandlestickDefinition<Row extends OHLCValues>(
+export const buildCandlestickDefinition: <Row extends OHLCValues>(
   data: ReadonlyArray<Row>,
   options: {
     readonly id: string
@@ -72,7 +67,19 @@ export function buildCandlestickDefinition<Row extends OHLCValues>(
     readonly clock: () => number
     readonly onBuilt: (snapshot: CartesianSnapshot<Row>) => void
   },
-): DomChartDefinition<Row, Date, number> {
+) => DomChartDefinition<Row, Date, number> = function buildCandlestickDefinition<
+  Row extends OHLCValues,
+>(
+  data: ReadonlyArray<Row>,
+  options: {
+    readonly id: string
+    readonly tooltipExtension?: ChartTooltipExtension
+    readonly props: CandlestickChartProps<Row>
+    readonly state: Interaction
+    readonly clock: () => number
+    readonly onBuilt: (snapshot: CartesianSnapshot<Row>) => void
+  },
+) {
   const { props, state } = options
 
   assertCandlestickLayers(props.children)
@@ -101,7 +108,10 @@ export function buildCandlestickDefinition<Row extends OHLCValues>(
     ]),
   )
 
-  const paint = (value: string | undefined, fallback: string): string => {
+  const paint: (value: string | undefined, fallback: string) => string = (
+    value: string | undefined,
+    fallback: string,
+  ) => {
     const source = value ?? fallback
 
     return defaultPaints.get(source) ?? source
@@ -152,7 +162,13 @@ export function buildCandlestickDefinition<Row extends OHLCValues>(
     | ReturnType<typeof referenceAreaMarks>[number]
   >
 
-  const chart = ({ width, height }: { width: number; height: number }): ChartSpec<Marks> => {
+  const chart: (argument0: { width: number; height: number }) => ChartSpec<Marks> = ({
+    width,
+    height,
+  }: {
+    width: number
+    height: number
+  }) => {
     const sourceGrid = sourceGridMasks(options.id, width, height, margin, grid)
 
     const plot = {
@@ -282,7 +298,7 @@ export function buildCandlestickDefinition<Row extends OHLCValues>(
                 },
         },
       },
-    }
+    } satisfies ChartSpec<Marks>
   }
 
   const chartOptions = {
@@ -308,5 +324,14 @@ export function buildCandlestickDefinition<Row extends OHLCValues>(
           },
   } satisfies ChartDefinitionOptions<Row, Date, number>
 
-  return defineChart<Marks, ChartSpec<Marks>, typeof chartOptions>({ chart }, chartOptions)
+  return defineChart<Marks, ChartSpec<Marks>, typeof chartOptions>(
+    { chart },
+    chartOptions,
+  ) satisfies DomChartDefinition<Row, Date, number>
 }
+
+const POSITIVE = 'var(--color-emerald-500, oklch(69.6% 0.17 162.48))'
+
+const NEGATIVE = 'var(--color-red-500, oklch(63.7% 0.237 25.331))'
+
+const date = (value: number) => DateTime.toDateUtc(DateTime.makeUnsafe(value))

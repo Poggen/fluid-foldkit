@@ -1,9 +1,6 @@
-interface CartesianCssScope {
-  readonly className: string
-  readonly selector: string
-}
-
-export function cartesianCssScope(id: string): CartesianCssScope {
+export const cartesianCssScope: (id: string) => CartesianCssScope = function cartesianCssScope(
+  id: string,
+) {
   let className = 'bkm-scope-'
 
   for (let index = 0; index < id.length; index += 1) {
@@ -14,21 +11,27 @@ export function cartesianCssScope(id: string): CartesianCssScope {
   return { className, selector: `.${className}` }
 }
 
-export function mountCartesianCssScope(element: HTMLElement, id: string): () => void {
-  const { className } = cartesianCssScope(id)
-  const preexisting = element.classList.contains(className)
-  element.classList.add(className)
-  let released = false
+export const mountCartesianCssScope: (element: HTMLElement, id: string) => () => void =
+  function mountCartesianCssScope(element: HTMLElement, id: string) {
+    const { className } = cartesianCssScope(id)
+    const preexisting = element.classList.contains(className)
+    element.classList.add(className)
+    let released = false
 
-  return () => {
-    if (released) {
-      return
-    }
+    return () => {
+      if (released) {
+        return
+      }
 
-    released = true
+      released = true
 
-    if (!preexisting) {
-      element.classList.remove(className)
+      if (!preexisting) {
+        element.classList.remove(className)
+      }
     }
   }
+
+interface CartesianCssScope {
+  readonly className: string
+  readonly selector: string
 }

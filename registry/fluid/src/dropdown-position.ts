@@ -1,4 +1,4 @@
-// Derived from pinned Radix Popper and Base UI useAnchorPositioning. MIT; see dropdown-primitives.txt.
+/* @license Derived from pinned Radix Popper and Base UI useAnchorPositioning. MIT; see dropdown-primitives.txt. */
 import {
   arrow,
   autoUpdate,
@@ -19,16 +19,9 @@ import type {
 import { Effect, Exit, Queue, Schema, Stream } from 'effect'
 import { flow } from 'effect/Function'
 import { DropdownIndex } from './dropdown-state.js'
-const Config = Schema.Struct({
-  side: Schema.Literals(['top', 'bottom', 'left', 'right']),
-  align: Schema.Literals(['start', 'center', 'end']),
-  sideOffset: DropdownIndex,
-  alignOffset: DropdownIndex,
-  direction: Schema.Literals(['ltr', 'rtl']),
-  sub: Schema.Boolean,
-})
-export type DropdownPositionConfig = typeof Config.Type
-function configuration(element: HTMLElement): DropdownPositionConfig {
+const configuration: (element: HTMLElement) => DropdownPositionConfig = function configuration(
+  element: HTMLElement,
+) {
   return Schema.decodeUnknownSync(Config)({
     side: element.dataset.requestedSide,
     align: element.dataset.requestedAlign,
@@ -38,18 +31,16 @@ function configuration(element: HTMLElement): DropdownPositionConfig {
     sub: element.dataset.sub === 'true',
   })
 }
-const part = (placement: Placement) => {
-  const [side, align] = placement.split('-')
-  return { side, align: align ?? 'center' }
-}
-// Preserve the primitives' JavaScript `||` fallback for zero and NaN.
-const sourceNumberOr = (value: number | undefined, fallback: number): number =>
-  value === undefined || value === 0 || Number.isNaN(value) ? fallback : value
-export function dropdownPositionMiddleware(
+
+export const dropdownPositionMiddleware: (
   config: DropdownPositionConfig,
   element: HTMLElement,
   active: () => boolean,
-): ReadonlyArray<Middleware> {
+) => ReadonlyArray<Middleware> = function dropdownPositionMiddleware(
+  config: DropdownPositionConfig,
+  element: HTMLElement,
+  active: () => boolean,
+) {
   const sizeOptions: Parameters<typeof size>[0] = {
     padding: 5,
     apply: ({ rects, availableWidth, availableHeight }) => {
@@ -144,6 +135,25 @@ export function dropdownPositionMiddleware(
     },
   ]
 }
+
+const Config = Schema.Struct({
+  side: Schema.Literals(['top', 'bottom', 'left', 'right']),
+  align: Schema.Literals(['start', 'center', 'end']),
+  sideOffset: DropdownIndex,
+  alignOffset: DropdownIndex,
+  direction: Schema.Literals(['ltr', 'rtl']),
+  sub: Schema.Boolean,
+})
+export type DropdownPositionConfig = typeof Config.Type
+const part = (placement: Placement) => {
+  const [side, align] = placement.split('-')
+  return { side, align: align ?? 'center' }
+}
+
+const sourceNumberOr: (value: number | undefined, fallback: number) => number = (
+  value: number | undefined,
+  fallback: number,
+) => (value === undefined || value === 0 || Number.isNaN(value) ? fallback : value)
 class DropdownPositionError extends Schema.TaggedError<
   DropdownPositionError,
   {

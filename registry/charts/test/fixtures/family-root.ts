@@ -124,7 +124,7 @@ export function familyRootFixture(
     init: { contextToArgs: () => [name, rows, recipe.configuration(props)] },
   })
   const Composition = Parent.makeComposition({ bindings: [Binding] })
-  const inputs = (selected: Case): CartesianViewInputs<typeof Row.Type> => {
+  const inputs: (selected: Case) => CartesianViewInputs<typeof Row.Type> = (selected: Case) => {
     if (lowLevel)
       return {
         ...lowBase,

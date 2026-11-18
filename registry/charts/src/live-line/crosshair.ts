@@ -2,20 +2,21 @@ import type { LiveRow } from './definition'
 import { createMark } from '@tanstack/charts'
 import type { ChartGradient } from '@tanstack/charts'
 
-export function crosshairGradient(id: string, color: string): ChartGradient {
-  return {
-    id,
-    x1: 0,
-    y1: 0,
-    x2: 0,
-    y2: 1,
-    stops: [0, 0.1, 0.9, 1].map((offset) => ({
-      offset,
-      color,
-      opacity: offset === 0 || offset === 1 ? 0 : 1,
-    })),
+export const crosshairGradient: (id: string, color: string) => ChartGradient =
+  function crosshairGradient(id: string, color: string) {
+    return {
+      id,
+      x1: 0,
+      y1: 0,
+      x2: 0,
+      y2: 1,
+      stops: [0, 0.1, 0.9, 1].map((offset) => ({
+        offset,
+        color,
+        opacity: offset === 0 || offset === 1 ? 0 : 1,
+      })),
+    }
   }
-}
 
 export function crosshairRuleMark(options: {
   readonly id: string

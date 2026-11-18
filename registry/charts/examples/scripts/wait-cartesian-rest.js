@@ -19,7 +19,7 @@
     const overlay = [...(fixture?.querySelectorAll('.bkm-hov *') ?? [])]
       .map((element) => element.getAttribute('style'))
       .join('|')
-    // Engine tooltip movement and overlay glides use RAF springs, outside WAAPI.
+
     const moving =
       window.chartFrameObservation.snapshot().pending.length > 0 ||
       !fixture?.querySelector('[data-bkm-ready]') ||

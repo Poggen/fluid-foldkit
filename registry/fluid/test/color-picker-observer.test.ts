@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { constant } from 'effect/Function'
 import { it } from '@effect/vitest'
@@ -50,13 +51,16 @@ it.effect(
       }
 
       const css = view.CSS
+      // oxlint-disable-next-line landmines-testing/no-test-doubles -- HappyDOM always accepts CSS and lacks denied pointer lock; actual Chromium denial keeper: color-scrub-contracts.e2e.ts.
       vi.spyOn(css, 'supports').mockReturnValue(false)
+      // oxlint-disable-next-line landmines-testing/no-test-doubles -- HappyDOM always accepts CSS and lacks denied pointer lock; actual Chromium denial keeper: color-scrub-contracts.e2e.ts.
       vi.spyOn(view, 'CSS', 'get').mockReturnValue(css)
       expect(view.CSS.supports('-webkit-backdrop-filter:none')).toBe(false)
       Object.defineProperty(field, 'setPointerCapture', { configurable: true, value: vi.fn() })
       Object.defineProperty(field, 'hasPointerCapture', { configurable: true, value: () => true })
       Object.defineProperty(field, 'releasePointerCapture', { configurable: true, value: vi.fn() })
 
+      // oxlint-disable-next-line landmines-testing/no-test-doubles -- HappyDOM always accepts CSS and lacks denied pointer lock; actual Chromium denial keeper: color-scrub-contracts.e2e.ts.
       const request = vi
         .fn<typeof document.body.requestPointerLock>()
         .mockRejectedValue(new Error('Pointer lock denied by external browser policy'))

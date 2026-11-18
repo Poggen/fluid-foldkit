@@ -4,9 +4,7 @@ import { defaultChartStatFlowFormat, statFlowCodec } from './props.js'
 
 import { STAT_HOST, CONFIG_ATTRIBUTE, CONFIG_EVENT, registerStatHost } from './bridge.js'
 
-const NUMBER_TAG = 'fk-bklit-stat-number'
-
-export function registerStatNumber(): void {
+export const registerStatNumber: () => void = function registerStatNumber() {
   if (customElements.get(NUMBER_TAG) === undefined) {
     define(NUMBER_TAG, class extends NumberFlowLite {})
   }
@@ -14,7 +12,9 @@ export function registerStatNumber(): void {
   registerStatHost()
 }
 
-export function mountStatNumber(element: Element): () => void {
+export const mountStatNumber: (element: Element) => () => void = function mountStatNumber(
+  element: Element,
+) {
   if (!(element instanceof HTMLElement) || element.localName !== STAT_HOST) {
     throw new TypeError('ChartStatFlow requires its registered value element')
   }
@@ -68,7 +68,7 @@ export function mountStatNumber(element: Element): () => void {
   try {
     update(true)
     shadow.replaceChildren(number)
-    // React19 primes data before insertion and reapplies it in componentDidMount.
+
     update(true)
   } catch (error) {
     element.removeEventListener(CONFIG_EVENT, changed)
@@ -80,9 +80,11 @@ export function mountStatNumber(element: Element): () => void {
 
   return () => {
     element.removeEventListener(CONFIG_EVENT, changed)
-    // The engine waits on animation.finished; its public setter finishes without rejecting it.
+
     number.animated = false
     number.remove()
     shadow.replaceChildren(element.ownerDocument.createElement('slot'))
   }
 }
+
+const NUMBER_TAG = 'fk-bklit-stat-number'

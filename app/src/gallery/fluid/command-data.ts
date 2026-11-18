@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import type { CommandMenuItem } from '@foldkit-visuals/fluid/command-menu'
 import type { IconName } from '@foldkit-visuals/fluid/icons'
 export const commandItems: ReadonlyArray<CommandMenuItem & { readonly icon: IconName }> = [

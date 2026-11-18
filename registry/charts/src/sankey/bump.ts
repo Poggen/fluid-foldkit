@@ -1,10 +1,12 @@
-// Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT.
-// d3's bump-x curve for the flow ribbons, written out so the sankey bundle needs neither d3-shape nor d3-path.
+/* @license Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT. */
+
 import type { ChartCurve } from '@tanstack/charts'
 
 type Point = readonly [number, number]
 
-export const bumpPath = (points: ReadonlyArray<Point>): string => {
+export const bumpPath: (points: ReadonlyArray<Point>) => string = (
+  points: ReadonlyArray<Point>,
+) => {
   let d = ''
 
   for (let i = 0; i < points.length; i++) {
@@ -23,5 +25,4 @@ export const bumpPath = (points: ReadonlyArray<Point>): string => {
   return d
 }
 
-// Flow ribbons are stroked lines, so the area form is never drawn; the contract still asks for one.
 export const BUMP_CURVE: ChartCurve = { line: bumpPath, area: (top) => bumpPath(top) }

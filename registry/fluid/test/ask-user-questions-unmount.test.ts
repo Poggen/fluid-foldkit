@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { it as test } from '@effect/vitest'
 import { Effect, Layer, Schedule, Schema } from 'effect'
@@ -48,7 +49,6 @@ test.live(
   'Ask DOM removal releases observation and invalidates its retained draft generation',
   () =>
     Effect.gen(function* () {
-      // happy-dom rejects canceled WAAPI promises; use Motion's real JS fallback.
       yield* Effect.acquireRelease(
         Effect.sync(() => {
           const descriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'animate')

@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom -- real Motion resource with controlled layout measurements
 import { constant } from 'effect/Function'
 import { HTMLVisualElement } from 'motion-dom'
@@ -35,6 +36,7 @@ it.live(
 
       yield* Effect.acquireRelease(
         Effect.sync(() => {
+          // oxlint-disable-next-line landmines-testing/no-test-doubles -- Controlled ResizeObserver delivery exercises generation/resize races; native resize keeper: host-geometry-contracts.e2e.ts.
           vi.stubGlobal('ResizeObserver', Observer)
         }),
         () =>
@@ -91,7 +93,11 @@ it.live(
 
       const closed = vi.fn<() => void>()
 
-      panel.addEventListener('thinking-close-1', closed)
+      const closeCompleted = Promise.withResolvers<void>()
+      panel.addEventListener('thinking-close-1', () => {
+        closed()
+        closeCompleted.resolve()
+      })
       yield* Effect.promise(
         constant(Promise.resolve(expect.poll(() => panel.style.height).toBe('0px'))),
       )
@@ -133,9 +139,8 @@ it.live(
       yield* Effect.promise(
         constant(Promise.resolve(expect.poll(() => panel.style.height).toBe('0px'))),
       )
-      yield* Effect.promise(
-        constant(Promise.resolve(expect.poll(() => closed.mock.calls.length).toBe(1))),
-      )
+      yield* Effect.promise(() => closeCompleted.promise)
+      expect(closed).toHaveBeenCalledTimes(1)
 
       height = 204
       panel.dataset.thinkingOpen = 'true'

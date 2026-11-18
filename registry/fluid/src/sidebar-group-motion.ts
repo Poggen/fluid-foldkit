@@ -3,11 +3,10 @@ import type { AnimationPlaybackControlsWithThen } from 'motion-dom'
 import type { MotionResource } from './motion-resource.js'
 import { spring } from './lib/springs.js'
 
-/** Descendant resizes snap; only this physical wrapper's own toggles spring. */
-const measuredSidebarMotion = (
+const measuredSidebarMotion: (
   openAttribute: string,
   settledOverflow: 'visible' | 'hidden',
-): MotionResource => ({
+) => MotionResource = (openAttribute: string, settledOverflow: 'visible' | 'hidden') => ({
   key: {},
   mount(visual) {
     const element = visual.current

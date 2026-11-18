@@ -34,10 +34,13 @@ export const isExpressionWrapper = (node: ESTree.Node): node is ExpressionWrappe
   return false
 }
 
-export const unwrapExpression = (node: ESTree.Expression): ESTree.Expression =>
-  isExpressionWrapper(node) ? unwrapExpression(node.expression) : node
+export const unwrapExpression: (node: ESTree.Expression) => ESTree.Expression = (
+  node: ESTree.Expression,
+) => (isExpressionWrapper(node) ? unwrapExpression(node.expression) : node)
 
-export const staticPropertyKeyName = (node: PropertyNode): string | undefined => {
+export const staticPropertyKeyName: (node: PropertyNode) => string | undefined = (
+  node: PropertyNode,
+) => {
   if (!node.computed && node.key.type === 'Identifier') {
     return node.key.name
   }
@@ -86,7 +89,9 @@ export interface StaticProjection {
   readonly path: readonly string[]
 }
 
-export const staticProjection = (expression: ESTree.Expression): StaticProjection | null => {
+export const staticProjection: (expression: ESTree.Expression) => StaticProjection | null = (
+  expression: ESTree.Expression,
+) => {
   const target = unwrapExpression(expression)
 
   if (target.type !== 'MemberExpression') {
@@ -112,7 +117,9 @@ export interface BindingSources {
   readonly unsupported: boolean
 }
 
-export const bindingSources = (declaration: ESTree.VariableDeclarator): BindingSources | null => {
+export const bindingSources: (declaration: ESTree.VariableDeclarator) => BindingSources | null = (
+  declaration: ESTree.VariableDeclarator,
+) => {
   if (declaration.init === null) {
     return null
   }
@@ -171,10 +178,15 @@ const captureCarriers = new Set<ESTree.Node['type']>([
   'YieldExpression',
 ])
 
-const isCaptureCarrier = (parent: ESTree.Node, current: ESTree.Node): boolean =>
-  (parent.type === 'Property' && parent.value === current) || captureCarriers.has(parent.type)
+const isCaptureCarrier: (parent: ESTree.Node, current: ESTree.Node) => boolean = (
+  parent: ESTree.Node,
+  current: ESTree.Node,
+) => (parent.type === 'Property' && parent.value === current) || captureCarriers.has(parent.type)
 
-const isMutationTarget = (parent: ESTree.Node | null, current: ESTree.Node): boolean =>
+const isMutationTarget: (parent: ESTree.Node | null, current: ESTree.Node) => boolean = (
+  parent: ESTree.Node | null,
+  current: ESTree.Node,
+) =>
   (parent?.type === 'AssignmentExpression' && parent.left === current) ||
   (parent?.type === 'UpdateExpression' && parent.argument === current) ||
   (parent?.type === 'UnaryExpression' &&
@@ -183,7 +195,9 @@ const isMutationTarget = (parent: ESTree.Node | null, current: ESTree.Node): boo
   ((parent?.type === 'ForInStatement' || parent?.type === 'ForOfStatement') &&
     parent.left === current)
 
-const referenceExpression = (identifier: ESTree.Node): ESTree.Node | null => {
+const referenceExpression: (identifier: ESTree.Node) => ESTree.Node | null = (
+  identifier: ESTree.Node,
+) => {
   let expression: ESTree.Node = identifier
 
   while (expression.parent !== null) {
@@ -205,10 +219,14 @@ const referenceExpression = (identifier: ESTree.Node): ESTree.Node | null => {
   return expression
 }
 
-const isTypeQualification = (parent: ESTree.Node, current: ESTree.Node): boolean =>
-  parent.type === 'TSQualifiedName' && (parent.left === current || parent.right === current)
+const isTypeQualification: (parent: ESTree.Node, current: ESTree.Node) => boolean = (
+  parent: ESTree.Node,
+  current: ESTree.Node,
+) => parent.type === 'TSQualifiedName' && (parent.left === current || parent.right === current)
 
-export const referenceUse = (identifier: ESTree.Node): ReferenceUse => {
+export const referenceUse: (identifier: ESTree.Node) => ReferenceUse = (
+  identifier: ESTree.Node,
+) => {
   const expression = referenceExpression(identifier)
 
   if (expression === null) {

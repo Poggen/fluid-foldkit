@@ -7,11 +7,15 @@ export const QueueEnvironment = Schema.Struct({
 })
 export type QueueEnvironment = typeof QueueEnvironment.Type
 
-export const observeQueueEnvironment = <Message>(
+export const observeQueueEnvironment: <Message>(
   element: Element,
   viewStateChanges: Stream.Stream<Mount.ViewState>,
   toMessage: (environment: QueueEnvironment) => Message,
-): Stream.Stream<Message> =>
+) => Stream.Stream<Message> = <Message>(
+  element: Element,
+  viewStateChanges: Stream.Stream<Mount.ViewState>,
+  toMessage: (environment: QueueEnvironment) => Message,
+) =>
   viewStateChanges.pipe(
     Stream.switchMap((state) =>
       state === 'Live'
@@ -43,4 +47,4 @@ export const observeQueueEnvironment = <Message>(
           )
         : Stream.empty,
     ),
-  )
+  ) satisfies Stream.Stream<Message>

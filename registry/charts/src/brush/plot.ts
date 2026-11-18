@@ -11,11 +11,15 @@ import {
 } from './overlays'
 
 /** Build once per declaration, so a preview cannot reset the controlled native gesture. */
-export function brushPlot<Row extends Readonly<Record<string, unknown>>>(
+export const brushPlot: <Row extends Readonly<Record<string, unknown>>>(
+  id: string,
+  plot: TimeSeriesProps<Row>,
+  brush?: ChartBrushProps,
+) => BrushPlot<Row> = function brushPlot<Row extends Readonly<Record<string, unknown>>>(
   id: string,
   plot: TimeSeriesProps<Row>,
   brush: ChartBrushProps = {},
-): BrushPlot<Row> {
+) {
   const inputs = cartesianInputs('area', id, plot, undefined, 'drawing')
 
   return {
@@ -67,5 +71,5 @@ export function brushPlot<Row extends Readonly<Record<string, unknown>>>(
         ],
       )
     },
-  }
+  } satisfies BrushPlot<Row>
 }

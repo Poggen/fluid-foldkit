@@ -13,7 +13,10 @@ test('short right rail scrolls independently and delivers lower Card controls', 
   const rail = page.locator('#site-customizer')
   const media = rail.getByRole('combobox', { name: 'Media', exact: true })
   await expect(media).toBeAttached()
-  await page.mouse.move(1160, 440)
+  await expect(
+    page.locator('#site-customizer').getByRole('combobox', { name: 'Media', exact: true }),
+  ).toBeAttached()
+  await page.locator(viewport).hover()
   await page.mouse.wheel(0, 650)
   await expect(media).toBeInViewport()
   expect(await page.evaluate(() => scrollY)).toBe(0)
@@ -68,7 +71,10 @@ test('scrolled rail survives route replacement and two-column controls retain ow
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.goto('/components/card')
-  await page.mouse.move(1160, 440)
+  await expect(
+    page.locator('#site-customizer').getByRole('combobox', { name: 'Media', exact: true }),
+  ).toBeAttached()
+  await page.locator(viewport).hover()
   await page.mouse.wheel(0, 650)
   await expect
     .poll(() => page.locator(viewport).evaluate((element) => element.scrollTop))

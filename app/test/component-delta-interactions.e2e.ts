@@ -270,13 +270,16 @@ test('DataTable moves rows with pointer and keyboard and confirms removal of sor
   )
   expect([...afterPointer].sort()).toEqual([...initial].sort())
   const beforeKeyboard = await rows.first().getAttribute('data-grid-row')
-  await rows.first().locator('[data-grid-cell]').first().focus()
-  await page.keyboard.press('Alt+ArrowDown')
+  await rows.first().locator('[data-grid-cell]').first().press('Alt+ArrowDown')
   await expect.poll(() => rows.nth(1).getAttribute('data-grid-row')).toBe(beforeKeyboard)
   await table.getByRole('button', { name: 'Step', exact: true }).click()
   await page.getByRole('menuitem', { name: 'Sort ascending', exact: true }).click()
-  await rows.first().locator('[data-grid-cell]').first().focus()
-  await page.keyboard.press('Alt+ArrowDown')
+  await expect(table.locator('th[data-grid-column="step"]')).toHaveAttribute(
+    'aria-sort',
+    'ascending',
+  )
+  await expect(page.getByRole('menuitem', { name: 'Sort ascending', exact: true })).toHaveCount(0)
+  await rows.first().locator('[data-grid-cell]').first().press('Alt+ArrowDown')
   const confirmation = page.getByRole('dialog', { name: 'Remove sorting?', exact: true })
   await expect(confirmation).toBeVisible()
   await confirmation.getByRole('button', { name: 'Cancel', exact: true }).click()
@@ -284,8 +287,7 @@ test('DataTable moves rows with pointer and keyboard and confirms removal of sor
     'aria-sort',
     'ascending',
   )
-  await rows.first().locator('[data-grid-cell]').first().focus()
-  await page.keyboard.press('Alt+ArrowDown')
+  await rows.first().locator('[data-grid-cell]').first().press('Alt+ArrowDown')
   await confirmation.getByRole('button', { name: 'Remove sorting', exact: true }).click()
   await expect(confirmation).toHaveCount(0)
   await expect(table.locator('thead th[data-grid-column="step"]')).toHaveAttribute(

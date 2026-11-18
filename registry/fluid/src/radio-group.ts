@@ -2,7 +2,7 @@ import { modifyFields } from 'foldkit/struct'
 import { HoverMode } from './hover-observation.js'
 import { selectionTarget } from './selection-group-navigation.js'
 import { focusSelectionRow } from './selection-group-focus.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { rectAt } from './lib/indexed-geometry.js'
 import { Data, Effect, Layer, Option, Schema, Struct, Number } from 'effect'
 import { Block, Update } from 'foldkit'
@@ -170,9 +170,10 @@ const Highlight = RadioGroupBlock.makeRequiredFieldBinding(HoverHighlightBlock, 
 const Hover = RadioGroupBlock.makeRequiredFieldBinding(HoverBlock, {
   field: 'hover',
   init: {
-    contextToArgs: (config: RadioGroupConfig): [HoverConfig] => [
-      { id: config.id, ...(config.hoverMode === undefined ? {} : { mode: config.hoverMode }) },
-    ],
+    contextToArgs: (config: RadioGroupConfig) =>
+      [
+        { id: config.id, ...(config.hoverMode === undefined ? {} : { mode: config.hoverMode }) },
+      ] satisfies [HoverConfig],
   },
 }).withOutMessagePolicy({
   fold: RadioGroupBlock.makeOutMessageFold(HoverBlock, {

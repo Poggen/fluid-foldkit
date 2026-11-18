@@ -412,7 +412,6 @@ const inMessageUpdate = HoverComposition.makeInMessageUpdate({
     const mode = options.mode ?? model.mode
     const next = modifyFields(model, { mode: () => mode, options: () => toModelOptions(options) })
 
-    // A mode switch invalidates a nearest-item result even if the pointer has not moved.
     return mode === model.mode
       ? { model: next }
       : changed(modifyFields(next, { activeIndex: () => null, sessionPending: () => true }))

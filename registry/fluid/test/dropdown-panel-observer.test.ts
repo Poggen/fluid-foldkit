@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { it } from '@effect/vitest'
 import { Deferred, Effect, Fiber, Option, Queue, Schema, Stream } from 'effect'
@@ -30,7 +31,7 @@ const acquirePanel = (
     host.id = id
     host.dataset.state = 'open'
     host.dataset.generation = '0'
-    // This resource test uses the real hover-open admission to avoid scheduling autofocus.
+
     host.dataset.openedByHover = 'true'
     host.dataset.restoreFocus = 'false'
     const panel = document.createElement('div')
@@ -87,8 +88,6 @@ const acquirePanel = (
 
 type Panel = Effect.Success<ReturnType<typeof acquirePanel>>
 
-// Deliver each real MutationObserver checkpoint before starting the next one.
-// The chain stays in microtasks until finish(), before a browser animation frame.
 const mutationCheckpoints = (
   host: HTMLElement,
   mutations: ReadonlyArray<() => void>,
@@ -119,7 +118,6 @@ const mutationCheckpoints = (
     return Effect.sync(() => observer.disconnect())
   })
 
-// Exercise the actual public Motion read queue, without replacing its scheduler.
 const readFrameNow = () => {
   let reached = false
   const marker = () => {
@@ -134,7 +132,6 @@ const readFrameNow = () => {
   }
 }
 
-// MovedPointer comes through the same native Stream queue after all earlier observations.
 const observationsThroughBarrier = (subject: Panel) =>
   Effect.gen(function* () {
     subject.panel.dispatchEvent(
@@ -473,7 +470,6 @@ it.effect('input earlier in the same Motion read batch retires the queued row sc
       subject.host,
       [
         () => {
-          // This callback enters the public read queue before the observer's pending scan.
           frame.read(inputDuringRead)
           subject.first.style.visibility = 'hidden'
         },

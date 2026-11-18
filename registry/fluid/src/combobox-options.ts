@@ -1,11 +1,11 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { Model } from './combobox-definition.js'
 import type { ComboboxViewInputs } from './combobox-view.js'
 import type { SelectOption } from './select.js'
 import { Option } from 'effect'
 export const presentedComboboxOptions = (model: typeof Model.Type, inputs: ComboboxViewInputs) => {
   const selectedLabel = model.items.find((item) => item.value === model.values[0])?.label ?? ''
-  // Base clears the field immediately but freezes its filter until the popup exits.
+
   const filterQuery = !model.open
     ? Option.getOrElse(model.closingQuery, () => model.query)
     : model.query

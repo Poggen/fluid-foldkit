@@ -20,10 +20,10 @@ type Scene = ChartScene<RadarRow, string | number, number>
 
 type Visual = ReturnType<typeof createRadarAreaVisual>
 
-const activeRoles = (
+const activeRoles: (
   nodes: ReadonlyArray<SceneNode>,
   roles: ReadonlyArray<number>,
-): Set<number> => {
+) => Set<number> = (nodes: ReadonlyArray<SceneNode>, roles: ReadonlyArray<number>) => {
   const found = new Set<number>()
 
   for (const node of nodes) {
@@ -67,7 +67,7 @@ export function createRadarAreaLayer() {
     }
   }
 
-  const progressOf = (series: number): number => {
+  const progressOf: (series: number) => number = (series: number) => {
     if (props === undefined) {
       return 1
     }
@@ -162,7 +162,7 @@ export function createRadarAreaLayer() {
           let scene: Scene | undefined
           const presentationListeners = new Set<(points: ReadonlyArray<Point>) => void>()
 
-          const points = (): ReadonlyArray<Point> | undefined => {
+          const points: () => ReadonlyArray<Point> | undefined = () => {
             if (scene === undefined) {
               return undefined
             }

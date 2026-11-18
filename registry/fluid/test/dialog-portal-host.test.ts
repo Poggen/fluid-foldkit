@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom -- document-owned portal ordering and cleanup
 import { it } from '@effect/vitest'
 import { Effect, Schedule, Stream } from 'effect'

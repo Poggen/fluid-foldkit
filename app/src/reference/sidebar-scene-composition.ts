@@ -20,17 +20,19 @@ export const Scroll = Root.makeRequiredFieldBinding(ScrollAreaBlock, {
 export const Sidebar = Root.makeRequiredFieldBinding(SidebarBlock, {
   field: 'sidebar',
   init: {
-    contextToArgs: (config): [SidebarConfig] => [
-      {
-        id: config.id,
-        variant: config.variant,
-        persist: false,
-        mobileBreakpoint: 0,
-        collapsible: config.kind === 'layout' || config.kind === 'collapse' ? 'offcanvas' : 'none',
-        peek: config.click ? 'click' : 'hover',
-        defaultOpen: !config.click,
-      },
-    ],
+    contextToArgs: (config) =>
+      [
+        {
+          id: config.id,
+          variant: config.variant,
+          persist: false,
+          mobileBreakpoint: 0,
+          collapsible:
+            config.kind === 'layout' || config.kind === 'collapse' ? 'offcanvas' : 'none',
+          peek: config.click ? 'click' : 'hover',
+          defaultOpen: !config.click,
+        },
+      ] satisfies [SidebarConfig],
   },
 }).withOutMessagePolicy({
   fold: Root.makeOutMessageFold(SidebarBlock, {

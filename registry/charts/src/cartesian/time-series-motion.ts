@@ -6,6 +6,54 @@ import type { CartesianCompilationOptions } from './definition'
 import type { SeriesMark } from './build-state'
 import type { Margin } from './context-types'
 
+export const timeSeriesMotion: <Datum>(options: MotionOptions) => ChartMotionDefinition<Datum> =
+  function timeSeriesMotion<Datum>(options: MotionOptions) {
+    return ((context) => {
+      if (context.key.startsWith(WIPE_KEY)) {
+        return revealMotion(options)
+      }
+
+      if (options.domainFrame !== undefined) {
+        return false
+      }
+
+      if (options.updateStep === 'window') {
+        const moves =
+          context.axis === 'y' ||
+          context.role === 'line' ||
+          context.role === 'area' ||
+          context.markId === 'grid-rows' ||
+          context.markId === 'grid-highlight-rows'
+
+        return context.phase === 'update' && moves ? glide : false
+      }
+
+      if (context.phase === 'enter') {
+        return instant
+      }
+
+      if (options.updateStep === 'snap') {
+        return false
+      }
+
+      return options.updateStep === 'glide' ? glide : update
+    }) satisfies ChartMotionDefinition<Datum>
+  }
+
+const revealMotion: (options: MotionOptions) => ChartMotionTiming | false = function revealMotion(
+  options: MotionOptions,
+) {
+  if (options.physicalReveal === true || options.wipe?.duration === 0) {
+    return false
+  }
+
+  return wipeMotion(
+    options.wipe?.duration ?? options.animationDuration ?? 1100,
+    options.wipeArmedAt === undefined ? undefined : { current: options.wipeArmedAt },
+    options.clock?.() ?? 0,
+  )
+}
+
 type MotionOptions = Pick<
   CartesianCompilationOptions<never>,
   | 'wipe'
@@ -34,11 +82,11 @@ export function createTimeSeriesWrap(
 ) {
   let sequence = 0
 
-  return <Datum>(mark: SeriesMark<Datum>, prefix: string): SeriesMark<Datum> => {
+  return <Datum>(mark: SeriesMark<Datum>, prefix: string) => {
     const { wipe } = options
 
     if (wipe === undefined) {
-      return mark
+      return mark satisfies SeriesMark<Datum>
     }
 
     let config: WipeConfig = {
@@ -67,51 +115,6 @@ export function createTimeSeriesWrap(
 
     sequence += 1
 
-    return wipeWrap(mark, tag, config, margin)
-  }
-}
-
-function revealMotion(options: MotionOptions): ChartMotionTiming | false {
-  if (options.physicalReveal === true || options.wipe?.duration === 0) {
-    return false
-  }
-
-  return wipeMotion(
-    options.wipe?.duration ?? options.animationDuration ?? 1100,
-    options.wipeArmedAt === undefined ? undefined : { current: options.wipeArmedAt },
-    options.clock?.() ?? 0,
-  )
-}
-
-export function timeSeriesMotion<Datum>(options: MotionOptions): ChartMotionDefinition<Datum> {
-  return (context) => {
-    if (context.key.startsWith(WIPE_KEY)) {
-      return revealMotion(options)
-    }
-
-    if (options.domainFrame !== undefined) {
-      return false
-    }
-
-    if (options.updateStep === 'window') {
-      const moves =
-        context.axis === 'y' ||
-        context.role === 'line' ||
-        context.role === 'area' ||
-        context.markId === 'grid-rows' ||
-        context.markId === 'grid-highlight-rows'
-
-      return context.phase === 'update' && moves ? glide : false
-    }
-
-    if (context.phase === 'enter') {
-      return instant
-    }
-
-    if (options.updateStep === 'snap') {
-      return false
-    }
-
-    return options.updateStep === 'glide' ? glide : update
+    return wipeWrap(mark, tag, config, margin) satisfies SeriesMark<Datum>
   }
 }

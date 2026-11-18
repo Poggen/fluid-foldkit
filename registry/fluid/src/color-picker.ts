@@ -1,5 +1,5 @@
 import { layer as hoverLayer } from './hover.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { childAttributes, createLazy } from 'foldkit/html'
 import { Effect, Option, Layer } from 'effect'
 import { colorScrubCursor } from './color-picker-cursor.js'

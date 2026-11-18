@@ -24,7 +24,10 @@ export const Details = ThinkingDemoBlock.makeRecordBinding(ThinkingStepDetailsBl
   }),
 })
 
-export const statusAt = (model: Model, index: number): ThinkingStepStatus => {
+export const statusAt: (model: Model, index: number) => ThinkingStepStatus = (
+  model: Model,
+  index: number,
+) => {
   if (
     getDemo(model.id).delays.length === 0 ||
     model.playback === 'finished' ||

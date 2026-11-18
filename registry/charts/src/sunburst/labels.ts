@@ -1,4 +1,4 @@
-// Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT.
+/* @license Derived from Bklit migration 9bdabac665e6a77d0529dedac2db0267f649e806; MIT. */
 import type { ArcDatum } from './arcs'
 import type { SunburstLabelsProps } from './carriers'
 import { sunburstCssVars } from './colors'
@@ -21,10 +21,13 @@ interface LabelsOption {
 }
 
 /** The mark's label decoration for the `SunburstLabels` carrier, or undefined when the chart has none. */
-export const labelsOption = (
+export const labelsOption: (
   labels: SunburstLabelsProps | null,
   arcById: ReadonlyMap<string, ArcDatum>,
-): LabelsOption | undefined =>
+) => LabelsOption | undefined = (
+  labels: SunburstLabelsProps | null,
+  arcById: ReadonlyMap<string, ArcDatum>,
+) =>
   labels === null
     ? undefined
     : {
@@ -33,7 +36,8 @@ export const labelsOption = (
         fontWeight: LABEL_FONT_WEIGHT,
         stroke: labels.stroke ?? sunburstCssVars.background,
         strokeWidth: labels.strokeWidth ?? DEFAULT_LABEL_HALO,
-        nameOf: (node: SunburstNativeNode): string => arcById.get(node.id)?.name ?? node.name,
-        classOf: (node: SunburstNativeNode): string =>
-          `bk-sb-l-${arcById.get(node.id)?.arcIndex ?? -1}`,
+        nameOf: (node: SunburstNativeNode) =>
+          (arcById.get(node.id)?.name ?? node.name) satisfies string,
+        classOf: (node: SunburstNativeNode) =>
+          `bk-sb-l-${arcById.get(node.id)?.arcIndex ?? -1}` satisfies string,
       }

@@ -6,36 +6,15 @@ import { depthEntry } from './geometry'
 import type { DepthEntry } from './geometry'
 import type { BarDepthProviderProps, BarChartProps } from './options'
 
-export interface BarDepthEntry<Row> extends Omit<DepthEntry, 'index'> {
-  readonly dataIndex: number
-  readonly datum: Row
-  readonly isActive: boolean
-}
-
-export type BarDepthConfig<Row> = Pick<
-  BarDepthProviderProps<Row>,
-  'segmentsAccessor' | 'minBarHeight'
-> &
-  Pick<BarChartProps<Row>, 'missingValues'> & {
-    /** Explicit value-axis domains opt depth into that scale; omitted retains the Source primary projection. */
-    readonly fixedYAxisIds?: ReadonlyArray<string>
-  }
-
-export interface BarViewContext<Row, Action = void> extends ChartViewContext<Row, Action> {
-  readonly depthConfig: BarDepthConfig<Row>
-}
-
-export type BarContextRenderer<Row> = <Message, Mounts>(
-  context: BarViewContext<Row, Message>,
-  h: HtmlBuilder<Message, Mounts>,
-) => Html
-
 /** Project custom-layer geometry from the existing Bar owner and its first depth provider. */
-export function useBarDepthEntries<Row extends Readonly<Record<string, unknown>>, Action>(
+export const useBarDepthEntries: <Row extends Readonly<Record<string, unknown>>, Action>(
   context: BarViewContext<Row, Action>,
   dataKey: string,
   activeIndex?: number,
-): Array<BarDepthEntry<Row>> {
+) => Array<BarDepthEntry<Row>> = function useBarDepthEntries<
+  Row extends Readonly<Record<string, unknown>>,
+  Action,
+>(context: BarViewContext<Row, Action>, dataKey: string, activeIndex?: number) {
   const stable = useChartStable(context)
   const { data, barScale, bandWidth, innerHeight, innerWidth, barXAccessor } = stable
   const axis = stable.lines.find((line) => line.dataKey === dataKey)?.yAxisId ?? 'left'
@@ -51,13 +30,13 @@ export function useBarDepthEntries<Row extends Readonly<Record<string, unknown>>
     bandWidth === 0 ||
     barXAccessor === undefined
   ) {
-    return []
+    return [] satisfies Array<BarDepthEntry<Row>>
   }
 
   const zeroY = yScale(0)
   const step = barScale.step()
 
-  return data.flatMap((datum, dataIndex): Array<BarDepthEntry<Row>> => {
+  return data.flatMap((datum, dataIndex) => {
     const segments = segmentsAccessor?.(datum)?.filter((segment) => segment.value > 0) ?? []
     const segmentTotal = segments.reduce((sum, segment) => sum + segment.value, 0)
     const raw = datum[dataKey]
@@ -65,7 +44,7 @@ export function useBarDepthEntries<Row extends Readonly<Record<string, unknown>>
 
     if (segments.length === 0) {
       if (context.depthConfig.missingValues === 'gap' && (raw === null || raw === undefined))
-        return []
+        return [] satisfies Array<BarDepthEntry<Row>>
 
       value = Predicate.isNumber(raw) ? raw : 0
     }
@@ -93,7 +72,7 @@ export function useBarDepthEntries<Row extends Readonly<Record<string, unknown>>
     )
 
     if (entry === undefined) {
-      return []
+      return [] satisfies Array<BarDepthEntry<Row>>
     }
 
     const { index, ...geometry } = entry
@@ -105,6 +84,30 @@ export function useBarDepthEntries<Row extends Readonly<Record<string, unknown>>
         datum,
         isActive: activeIndex !== undefined && dataIndex === activeIndex,
       },
-    ]
-  })
+    ] satisfies Array<BarDepthEntry<Row>>
+  }) satisfies Array<BarDepthEntry<Row>>
 }
+
+export interface BarDepthEntry<Row> extends Omit<DepthEntry, 'index'> {
+  readonly dataIndex: number
+  readonly datum: Row
+  readonly isActive: boolean
+}
+
+export type BarDepthConfig<Row> = Pick<
+  BarDepthProviderProps<Row>,
+  'segmentsAccessor' | 'minBarHeight'
+> &
+  Pick<BarChartProps<Row>, 'missingValues'> & {
+    /** Explicit value-axis domains opt depth into that scale; omitted retains the Source primary projection. */
+    readonly fixedYAxisIds?: ReadonlyArray<string>
+  }
+
+export interface BarViewContext<Row, Action = void> extends ChartViewContext<Row, Action> {
+  readonly depthConfig: BarDepthConfig<Row>
+}
+
+export type BarContextRenderer<Row> = <Message, Mounts>(
+  context: BarViewContext<Row, Message>,
+  h: HtmlBuilder<Message, Mounts>,
+) => Html

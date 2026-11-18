@@ -2,19 +2,20 @@ import type { RingChartProps, RingProps, RingData } from './options'
 import { defaultRingColors } from './options'
 import type { RingArcRow } from './arc'
 
-export function ringColor(data: ReadonlyArray<RingData>, config: RingProps): string {
-  if (config.color !== undefined && config.color !== '') {
-    return config.color
+export const ringColor: (data: ReadonlyArray<RingData>, config: RingProps) => string =
+  function ringColor(data: ReadonlyArray<RingData>, config: RingProps) {
+    if (config.color !== undefined && config.color !== '') {
+      return config.color
+    }
+
+    const color = data[config.index]?.color
+
+    if (color !== undefined && color !== '') {
+      return color
+    }
+
+    return defaultRingColors[config.index % 5] ?? 'var(--chart-1)'
   }
-
-  const color = data[config.index]?.color
-
-  if (color !== undefined && color !== '') {
-    return color
-  }
-
-  return defaultRingColors[config.index % 5] ?? 'var(--chart-1)'
-}
 
 export function ringGeometry(props: RingChartProps, size: number) {
   const strokeWidth = props.strokeWidth ?? 12
@@ -43,7 +44,7 @@ export function ringGeometry(props: RingChartProps, size: number) {
       : (configByIndex.get(index) ?? { index }),
   )
 
-  const color = (index: number): string => ringColor(props.data, { index })
+  const color: (index: number) => string = (index: number) => ringColor(props.data, { index })
 
   const rows: ReadonlyArray<RingArcRow> = rings.flatMap((config, roleIndex) => {
     const { index } = config

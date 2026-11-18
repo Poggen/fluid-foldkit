@@ -21,7 +21,6 @@ export class SiteEnvironment extends Context.Service<
   }
 >()('SiteEnvironment') {}
 
-// Root publication keeps body-level portals in the same source typography scope.
 export const publishRootPresentation = (
   root: HTMLElement,
   settings: Settings,
@@ -48,7 +47,6 @@ export const publishRootPresentation = (
   }
 }
 
-// DOM guard leases belong to Command lifetimes; selections and revisions stay in the Model.
 export const presentationEffects = (document: Document, window: Window) => {
   const shapeGuards = new Set<symbol>()
   const themeGuards = new Set<HTMLStyleElement>()
@@ -59,7 +57,28 @@ export const presentationEffects = (document: Document, window: Window) => {
     const frame = window.requestAnimationFrame(() => resume(Effect.void))
     return Effect.sync(() => window.cancelAnimationFrame(frame))
   })
+  const acquireThemeGuard = () => {
+    const style = document.createElement('style')
+    style.textContent = themeTransitionStyles + suppressTransitionStyles
+    document.head.appendChild(style)
+    themeGuards.add(style)
+    synchronizeShapeGuard()
+    return () => {
+      style.remove()
+      themeGuards.delete(style)
+      synchronizeShapeGuard()
+    }
+  }
   return {
+    prepareNativeThemeTransition: () => {
+      const release = acquireThemeGuard()
+      queueMicrotask(() => {
+        const transition = document.activeViewTransition
+        if (transition) void transition.finished.then(release, release)
+        else release()
+      })
+      return true
+    },
     transitionShape: Effect.acquireUseRelease(
       Effect.sync(() => {
         const guard = Symbol('shape-transition')
@@ -76,18 +95,11 @@ export const presentationEffects = (document: Document, window: Window) => {
         }),
     ),
     transitionTheme: Effect.acquireUseRelease(
-      Effect.sync(() => {
-        const style = document.createElement('style')
-        style.textContent = themeTransitionStyles + suppressTransitionStyles
-        document.head.appendChild(style)
-        themeGuards.add(style)
-        synchronizeShapeGuard()
-        return style
-      }),
+      Effect.sync(acquireThemeGuard),
       () =>
         Effect.gen(function* () {
           yield* Render.afterCommit
-          // Apply's afterCommit continuation publishes the root theme in this microtask batch.
+
           yield* Effect.yieldNow
           const transition = document.activeViewTransition
           if (transition != null) {
@@ -98,12 +110,7 @@ export const presentationEffects = (document: Document, window: Window) => {
             yield* nextFrame
           }
         }),
-      (style) =>
-        Effect.sync(() => {
-          style.remove()
-          themeGuards.delete(style)
-          synchronizeShapeGuard()
-        }),
+      (release) => Effect.sync(release),
     ),
   }
 }

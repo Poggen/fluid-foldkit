@@ -25,7 +25,6 @@ export const CalendarEnvironmentLayer = Layer.unwrap(
       DateTime.toDateUtc(DateTime.add(now, { days })),
     )
 
-    // Live Calendar commands share one runtime service across gallery and authored examples.
     return makeCalendarEnvironment((id, revision) => {
       if (id.startsWith('authored-'))
         return authoredRules({ id, revision, booked: authoredBooked, today })

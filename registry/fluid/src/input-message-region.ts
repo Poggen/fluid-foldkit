@@ -1,5 +1,6 @@
+import { constant } from 'effect/Function'
 import { modifyFields } from 'foldkit/struct'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Layer, Option, Schema } from 'effect'
 import { Block } from 'foldkit'
 import { childAttributes } from 'foldkit/html'
@@ -126,9 +127,9 @@ export interface InputMessageRegionViewInputs {
 const view = InputMessageRegionComposition.makeView.withInputs<InputMessageRegionViewInputs>(
   (model, inputs, h) => {
     const kind = Payload.match(model.payload, {
-      Suggestions: (): 'suggestions' => 'suggestions',
-      Files: (): 'files' => 'files',
-      Queue: (): 'queue' => 'queue',
+      Suggestions: constant<'suggestions'>('suggestions'),
+      Files: constant<'files'>('files'),
+      Queue: constant<'queue'>('queue'),
     })
 
     const suggestions = kind === 'suggestions'

@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Context, Effect, Function, Layer, Queue, Stream } from 'effect'
 import { Render } from 'foldkit'
 import { createInputMessageQueueNativeLayer } from './input-message-queue-native.js'
@@ -297,7 +297,6 @@ export function createInputMessageLayer(
                             }
 
                             const commit = () => {
-                              // Read the final committed parent acknowledgement, never a proposal captured by a command.
                               const accepted = element.dataset.imAcceptedValue
 
                               if (

@@ -52,11 +52,15 @@ export interface TrailRenderers {
   ) => Html
 }
 
-const playgroundChildren = (
+const playgroundChildren: (
   renderers: TrailRenderers,
   context: BreadcrumbContext & { readonly expanded: boolean; readonly hiddenCount: number },
   key: string,
-): ReadonlyArray<Html> => {
+) => ReadonlyArray<Html> = (
+  renderers: TrailRenderers,
+  context: BreadcrumbContext & { readonly expanded: boolean; readonly hiddenCount: number },
+  key: string,
+) => {
   const { model, h, icon, item, link, page, menu } = renderers
 
   const { settings } = model
@@ -148,11 +152,15 @@ const playgroundChildren = (
   return children
 }
 
-export const trailChildren = (
+export const trailChildren: (
   renderers: TrailRenderers,
   context: BreadcrumbContext & { readonly expanded: boolean; readonly hiddenCount: number },
   key: string,
-): ReadonlyArray<Html> => {
+) => ReadonlyArray<Html> = (
+  renderers: TrailRenderers,
+  context: BreadcrumbContext & { readonly expanded: boolean; readonly hiddenCount: number },
+  key: string,
+) => {
   const { model, h, icon, item, link, page, menu } = renderers
 
   const fileText = () =>

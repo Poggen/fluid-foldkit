@@ -1,5 +1,5 @@
 import { Clock, Context, Effect, Option, Tracer } from 'effect'
-import { expect, it, vi } from 'vitest'
+import { expect, it } from 'vitest'
 import { makeRecorder } from './recorder'
 
 it('does not attribute old or crossing timing entries to a newer capture', () => {
@@ -21,22 +21,18 @@ it('does not attribute old or crossing timing entries to a newer capture', () =>
     root: true,
     sampled: true,
   })
-  const now = vi.spyOn(performance, 'now').mockReturnValue(100)
-  try {
-    const recorder = makeRecorder(tracer, Effect.runSync(Clock.Clock), session, performance)
-    recorder.start('new-window')
-    now.mockReturnValue(120)
-    recorder.span('old-longtask', 90, 5, {})
-    recorder.span('crossing-frame', 95, 10, {})
-    recorder.span('inside', 105, 3, {})
-    recorder.end()
-    expect(spans.map((span) => span.name)).toEqual([
-      'session',
-      'showcase.capture.new-window',
-      'inside',
-    ])
-    expect(recorder.snapshot()).toMatchObject({ count: 1, excludedBeforeCapture: 2, active: false })
-  } finally {
-    now.mockRestore()
-  }
+  const beforeCapture = performance.now()
+  const recorder = makeRecorder(tracer, Effect.runSync(Clock.Clock), session, performance)
+  recorder.start('new-window')
+  const insideCapture = performance.now()
+  recorder.span('old-longtask', beforeCapture - 10, 5, {})
+  recorder.span('crossing-frame', beforeCapture - 5, insideCapture - beforeCapture + 10, {})
+  recorder.span('inside', insideCapture, 3, {})
+  recorder.end()
+  expect(spans.map((span) => span.name)).toEqual([
+    'session',
+    'showcase.capture.new-window',
+    'inside',
+  ])
+  expect(recorder.snapshot()).toMatchObject({ count: 1, excludedBeforeCapture: 2, active: false })
 })

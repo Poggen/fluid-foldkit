@@ -25,7 +25,7 @@ const Manifest = Schema.Struct({
 })
 const InstalledManifest = Schema.Struct({ version: Schema.String })
 
-export const checkedDependencyPatch = (root: string): void => {
+export const checkedDependencyPatch: (root: string) => void = (root: string) => {
   const manifest = Schema.decodeUnknownSync(Manifest)(
     JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')),
   )

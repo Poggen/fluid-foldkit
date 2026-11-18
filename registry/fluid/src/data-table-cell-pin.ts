@@ -7,11 +7,15 @@ import type {
 } from './data-table-definition.js'
 import { dataTableColumns } from './data-table-state.js'
 
-export function dataTablePinStyle(
+export const dataTablePinStyle: (
   model: DataTableModel,
   column: DataTableColumn,
   inputs: DataTableViewInputs,
-): Readonly<Record<string, string>> {
+) => Readonly<Record<string, string>> = function dataTablePinStyle(
+  model: DataTableModel,
+  column: DataTableColumn,
+  inputs: DataTableViewInputs,
+) {
   const left = model.pinnedColumns.left.includes(column.id)
   const right = model.pinnedColumns.right.includes(column.id)
   if (!left && !right) return {}
@@ -34,16 +38,17 @@ export function dataTablePinStyle(
   }
 }
 
-export function dataTablePinLayers(selected: boolean, h: DataTableViewBuilder): Html {
-  return h.div(
-    [h.AriaHidden(true), h.Class('pointer-events-none absolute inset-0 overflow-hidden')],
-    [
-      selected ? h.div([h.Class('absolute inset-0 bg-active')]) : null,
-      h.div([
-        h.DataAttribute('grid-pin-hover', ''),
-        h.Class('absolute left-0 top-0 w-full bg-hover'),
-        h.Style({ opacity: '0' }),
-      ]),
-    ],
-  )
-}
+export const dataTablePinLayers: (selected: boolean, h: DataTableViewBuilder) => Html =
+  function dataTablePinLayers(selected: boolean, h: DataTableViewBuilder) {
+    return h.div(
+      [h.AriaHidden(true), h.Class('pointer-events-none absolute inset-0 overflow-hidden')],
+      [
+        selected ? h.div([h.Class('absolute inset-0 bg-active')]) : null,
+        h.div([
+          h.DataAttribute('grid-pin-hover', ''),
+          h.Class('absolute left-0 top-0 w-full bg-hover'),
+          h.Style({ opacity: '0' }),
+        ]),
+      ],
+    )
+  }

@@ -26,21 +26,28 @@ const ancestors = (node: ChildNode) => {
 }
 const normalized = (selector: string) => selector.replace(/\s+/gu, ' ').trim()
 
-export const inspectTailwindCss = (
+export const inspectTailwindCss: (
+  file: string,
+  text: string,
+  foundations: readonly Foundation[],
+  pinnedStylesheets?: readonly PinnedStylesheet[],
+) => readonly string[] = (
   file: string,
   text: string,
   foundations: readonly Foundation[],
   pinnedStylesheets: readonly PinnedStylesheet[] = [],
-): readonly string[] => {
+) => {
   const pinned = pinnedStylesheets.find((entry) => entry.file === file)
   if (pinned !== undefined)
-    return createHash('sha256').update(text).digest('hex') === pinned.sha256
-      ? []
-      : [
-          pinned.kind === 'upstream'
-            ? `${file}: original stylesheet differs from the pinned source at ${pinned.source}`
-            : `${file}: renderer stylesheet differs from the reviewed ${pinned.owner} adapter in ${pinned.provenance}`,
-        ]
+    return (
+      createHash('sha256').update(text).digest('hex') === pinned.sha256
+        ? []
+        : [
+            pinned.kind === 'upstream'
+              ? `${file}: original stylesheet differs from the pinned source at ${pinned.source}`
+              : `${file}: renderer stylesheet differs from the reviewed ${pinned.owner} adapter in ${pinned.provenance}`,
+          ]
+    ) satisfies readonly string[]
   const failures: string[] = []
   const own = foundations.filter((entry) => entry.file === file)
   const source = postcss.parse(text, { from: file })
@@ -87,5 +94,5 @@ export const inspectTailwindCss = (
       )
     if (!permitted) fail(node, `Move ${selector} { ${node.prop} } to its owner utilities`)
   })
-  return failures
+  return failures satisfies readonly string[]
 }

@@ -1,5 +1,6 @@
 // oxlint-disable no-comments/no-comments -- Vitest needs browser class definitions before importing the native drawing host.
 
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 
 // oxlint-enable no-comments/no-comments -- Resume comment policy after required test metadata.

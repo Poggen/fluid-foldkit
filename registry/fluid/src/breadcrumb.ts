@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { modifyFields } from 'foldkit/struct'
 import { Effect, Layer, Queue, Schema, Stream, Boolean } from 'effect'
 import { Block } from 'foldkit'
@@ -104,9 +104,7 @@ export const BreadcrumbBlock = Block.make('Breadcrumb', {
   effects,
 })
 
-const hoverConfig = (
-  config: BreadcrumbConfig,
-): readonly [
+const hoverConfig: (config: BreadcrumbConfig) => readonly [
   {
     readonly id: string
     readonly axis: 'xy'
@@ -114,7 +112,7 @@ const hoverConfig = (
     readonly gapClick: false
     readonly mode: HoverMode
   },
-] => [
+] = (config: BreadcrumbConfig) => [
   {
     id: `${config.id}-hover`,
     axis: 'xy',

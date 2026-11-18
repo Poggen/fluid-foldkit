@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { it } from '@effect/vitest'
 import { Context, Effect, Exit, Fiber, Layer, Schema } from 'effect'
@@ -5,6 +6,7 @@ import { Block, Program, Runtime, Story } from 'foldkit'
 import { modifyFields } from 'foldkit/struct'
 import { afterEach, expect, vi } from 'vitest'
 import { defineMessageUnion } from 'foldkit/message'
+import { Permissions } from 'happy-dom'
 import { InputCopyBlock, InputCopyEvent, InMessage, layer } from '../src/input-copy.js'
 import type { InputCopyConfig } from '../src/input-copy.js'
 import { Copy, Expire } from '../src/input-copy-effects.js'
@@ -34,9 +36,10 @@ const InputCopyLifetimeBlock = Block.make('InputCopyLifetime', {
 const CopyBinding = InputCopyLifetimeBlock.makeRequiredFieldBinding(InputCopyBlock, {
   field: 'copy',
   init: {
-    contextToArgs: (): [InputCopyConfig] => [
-      { id: 'physical-copy', value: 'physical value', variant: 'button' },
-    ],
+    contextToArgs: () =>
+      [{ id: 'physical-copy', value: 'physical value', variant: 'button' }] satisfies [
+        InputCopyConfig,
+      ],
   },
 }).withOutMessagePolicy({
   fold: InputCopyLifetimeBlock.makeOutMessageFold(InputCopyBlock, {
@@ -317,33 +320,20 @@ it.effect(
 )
 
 it.effect(
-  'handler construction is passive and denied clipboard writes use and remove the exact fallback textarea',
+  'handler construction is passive and denied clipboard without a legacy API cleans up its textarea',
   () =>
     Effect.scoped(
       Effect.gen(function* clipboardFallback() {
-        const denied = vi
-          .spyOn(navigator.clipboard, 'writeText')
-          .mockRejectedValue(new Error('clipboard denied'))
-
+        const permissions = navigator.permissions
+        if (!(permissions instanceof Permissions)) throw new Error('HappyDOM permissions required')
+        const permission = yield* Effect.promise(() =>
+          permissions.query({ name: 'clipboard-write' }),
+        )
+        const previous = permission.state
+        permission.state = 'denied'
+        const denied = vi.spyOn(navigator.clipboard, 'writeText')
         const created = vi.spyOn(document, 'createElement')
-        const original = Object.getOwnPropertyDescriptor(document, 'execCommand')
-        const selected: Array<string> = []
-        const fallbackNodes: Array<HTMLTextAreaElement> = []
-        Object.defineProperty(document, 'execCommand', {
-          configurable: true,
-          value: (name: string) => {
-            const textarea = document.querySelector('textarea')
-            if (textarea === null) throw new Error('Missing live fallback textarea')
-            expect(name).toBe('copy')
-            expect(textarea.readOnly).toBe(true)
-            expect(textarea.selectionStart).toBe(0)
-            expect(textarea.selectionEnd).toBe(textarea.value.length)
-            selected.push(textarea.value)
-            fallbackNodes.push(textarea)
-
-            return true
-          },
-        })
+        const selected = vi.spyOn(HTMLTextAreaElement.prototype, 'select')
 
         try {
           yield* Story.withBlock(subject, (copy) =>
@@ -358,20 +348,21 @@ it.effect(
           expect(created).not.toHaveBeenCalled()
           const context = yield* Layer.build(createInputCopyLayer(document, navigator, window))
           const resources = Context.get(context, InputCopyResources)
-          expect(yield* resources.copy('fallback value')).toBe(true)
+          expect('execCommand' in document).toBe(false)
+          expect(yield* resources.copy('fallback value')).toBe(false)
           expect(denied).toHaveBeenCalledWith('fallback value')
-          expect(selected).toEqual(['fallback value'])
-          expect(fallbackNodes).toHaveLength(1)
-          expect(fallbackNodes[0]?.isConnected).toBe(false)
-          expect(created).toHaveBeenCalledOnce()
-          expect(created.mock.results[0]?.value).toBe(fallbackNodes[0])
+          expect(created).toHaveBeenCalledExactlyOnceWith('textarea')
+          const textarea = created.mock.results[0]?.value
+          if (!(textarea instanceof HTMLTextAreaElement)) throw new Error('Real textarea required')
+          expect(selected).toHaveBeenCalledOnce()
+          expect(textarea.value).toBe('fallback value')
+          expect(textarea.readOnly).toBe(true)
+          expect(textarea.selectionStart).toBe(0)
+          expect(textarea.selectionEnd).toBe(textarea.value.length)
+          expect(textarea.isConnected).toBe(false)
           expect(document.querySelector('textarea')).toBeNull()
         } finally {
-          if (original === undefined) {
-            Reflect.deleteProperty(document, 'execCommand')
-          } else {
-            Object.defineProperty(document, 'execCommand', original)
-          }
+          permission.state = previous
         }
       }),
     ),

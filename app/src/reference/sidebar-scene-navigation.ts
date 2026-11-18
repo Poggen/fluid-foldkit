@@ -57,7 +57,7 @@ export const sidebarBranchRows = (
     }),
   )
 
-export const sidebarThreadActions = (
+export const sidebarThreadActions: (
   index: number,
   menu: SceneMenu,
   isRevealed: boolean,
@@ -65,7 +65,15 @@ export const sidebarThreadActions = (
   context: ScenePresentation,
   tip: (key: string, label: string, icon: IconName) => Html,
   h: SceneViewBuilder,
-): SidebarMenuActionRun => ({
+) => SidebarMenuActionRun = (
+  index: number,
+  menu: SceneMenu,
+  isRevealed: boolean,
+  actionContext: SidebarMenuActionContext,
+  context: ScenePresentation,
+  tip: (key: string, label: string, icon: IconName) => Html,
+  h: SceneViewBuilder,
+) => ({
   visibility: isRevealed ? 'always' : 'hover',
   entries: [
     tip(`thread-${index}-branch`, 'Branch thread', 'corner-down-right'),

@@ -13,7 +13,7 @@ import {
   previewCodeTabId,
   previewCodeTabsViewInputs,
 } from '../../../components/docs/preview-code-tabs'
-// Derived from Fluid Functionalism cc276ca0 docs. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0 docs. MIT, copyright 2026 Micka Touillaud. */
 import { Layer, Schema, Struct } from 'effect'
 import { Block, Update } from 'foldkit'
 import { initAndInsert } from 'foldkit/binding'

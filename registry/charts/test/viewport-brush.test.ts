@@ -1,4 +1,5 @@
 import { it } from '@effect/vitest'
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom -- mounted Brush owner and its actual responsive strip resource
 import { DateTime, Effect, Layer, Option, Schedule, Schema } from 'effect'
 import { Block, Program, Runtime } from 'foldkit'

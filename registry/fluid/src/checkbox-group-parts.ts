@@ -1,7 +1,7 @@
 import { selectionBorder, selectionMarker } from './selection-group-style.js'
 import { checkboxRowLabelId } from './checkbox-group-control.js'
 import type { RenderCheckboxRow } from './checkbox-group-control.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { Attribute, ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
 import { fontWeights } from './lib/font-weight.js'
 import { hoverItemAttributes } from './hover.js'
@@ -13,38 +13,15 @@ import { keepSwitchInputDefault } from './switch-input.js'
 import type { CheckboxValue, CheckboxMark } from './checkbox-group-state.js'
 import type { TargetMotionOptions } from './motion-target.js'
 
-type RowMountAttribute<Message, Requirements> = Extract<
-  NonNullable<Parameters<HtmlBuilder<Message, Requirements>['div']>[0]>[number],
-  { readonly __childAttribute: true }
->
-
-export interface CheckboxContext<MountAttribute = ChildAttribute> extends Presentation {
-  readonly checkbox: RenderCheckboxRow
-  readonly id: string
-  readonly checkedIndices: ReadonlyArray<number>
-  readonly checkedItems: ReadonlyArray<CheckboxValue>
-  readonly initialChecked: ReadonlyArray<CheckboxValue>
-  readonly hasForm: boolean
-  readonly marks: ReadonlyArray<
-    CheckboxMark & { readonly completion: ReadonlyArray<ChildAttribute> }
-  >
-  readonly activeIndex: number | null
-  readonly itemMount: ReadonlyArray<MountAttribute>
-  readonly animate: (node: Html, options: TargetMotionOptions) => Html
-}
-
-export interface CheckboxItemProps<Message, Requirements = never> {
-  readonly label: string
-  readonly index: number
-  readonly className?: string
-  readonly attributes?: ReadonlyArray<Attribute<Message, Requirements>>
-}
-
-export function CheckboxItem<Message, Requirements>(
+export const CheckboxItem: <Message, Requirements>(
   props: NoInfer<CheckboxItemProps<Message, Requirements>>,
   context: NoInfer<CheckboxContext<RowMountAttribute<Message, Requirements>>>,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function CheckboxItem<Message, Requirements>(
+  props: NoInfer<CheckboxItemProps<Message, Requirements>>,
+  context: NoInfer<CheckboxContext<RowMountAttribute<Message, Requirements>>>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   const { size, shape, reducedMotion } = resolvePresentation(context)
   const compact = size.variant === 'compact'
   const active = context.activeIndex === props.index
@@ -177,5 +154,32 @@ export function CheckboxItem<Message, Requirements>(
         ),
       ],
     ),
-  )
+  ) satisfies Html
+}
+
+type RowMountAttribute<Message, Requirements> = Extract<
+  NonNullable<Parameters<HtmlBuilder<Message, Requirements>['div']>[0]>[number],
+  { readonly __childAttribute: true }
+>
+
+export interface CheckboxContext<MountAttribute = ChildAttribute> extends Presentation {
+  readonly checkbox: RenderCheckboxRow
+  readonly id: string
+  readonly checkedIndices: ReadonlyArray<number>
+  readonly checkedItems: ReadonlyArray<CheckboxValue>
+  readonly initialChecked: ReadonlyArray<CheckboxValue>
+  readonly hasForm: boolean
+  readonly marks: ReadonlyArray<
+    CheckboxMark & { readonly completion: ReadonlyArray<ChildAttribute> }
+  >
+  readonly activeIndex: number | null
+  readonly itemMount: ReadonlyArray<MountAttribute>
+  readonly animate: (node: Html, options: TargetMotionOptions) => Html
+}
+
+export interface CheckboxItemProps<Message, Requirements = never> {
+  readonly label: string
+  readonly index: number
+  readonly className?: string
+  readonly attributes?: ReadonlyArray<Attribute<Message, Requirements>>
 }

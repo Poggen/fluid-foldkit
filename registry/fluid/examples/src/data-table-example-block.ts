@@ -1,6 +1,6 @@
 import { applyTeamAction } from './data-table-example-actions.js'
 import { formatCell } from './data-table-example-format.js'
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
 import { Layer, Option, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { defineInMessageUnion, defineMessageUnion } from 'foldkit/message'

@@ -1,7 +1,7 @@
 import { Observation } from './observation.js'
 import type { TriggerObservation } from './observation.js'
 
-const activeElement = (document: Document): Element | null => {
+const activeElement: (document: Document) => Element | null = (document: Document) => {
   let element = document.activeElement
   while (element?.shadowRoot?.activeElement) element = element.shadowRoot.activeElement
   return element

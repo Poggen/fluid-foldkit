@@ -204,9 +204,10 @@ const PresentationServerBlock = Block.make('PresentationServer', {
 const Provider = PresentationServerBlock.makeRequiredFieldBinding(PresentationProviderBlock, {
   field: 'provider',
   init: {
-    contextToArgs: (): [PresentationProviderConfig] => [
-      { id: 'server-provider', defaultShape: 'pill', defaultSize: 'compact' },
-    ],
+    contextToArgs: () =>
+      [{ id: 'server-provider', defaultShape: 'pill', defaultSize: 'compact' }] satisfies [
+        PresentationProviderConfig,
+      ],
   },
 })
 

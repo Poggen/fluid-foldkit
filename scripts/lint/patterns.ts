@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
 // @effect-diagnostics nodeBuiltinImport:off -- This Oxlint plugin runs as Node tooling and reads repository files directly.
 import path from 'node:path'
 
@@ -22,7 +23,9 @@ const workspacePath = (filename: string) =>
 const isRuntimeSource = (filename: string) =>
   /^(?:app\/src|registry\/(?:fluid|charts)\/src|lib)\//u.test(filename)
 
-const unwrapExpression = (node: ESTree.Expression): ESTree.Expression => {
+const unwrapExpression: (node: ESTree.Expression) => ESTree.Expression = (
+  node: ESTree.Expression,
+) => {
   if (
     node.type === 'ParenthesizedExpression' ||
     node.type === 'ChainExpression' ||
@@ -38,7 +41,9 @@ const unwrapExpression = (node: ESTree.Expression): ESTree.Expression => {
   return node
 }
 
-const staticPropertyName = (node: ESTree.MemberExpression): string | null => {
+const staticPropertyName: (node: ESTree.MemberExpression) => string | null = (
+  node: ESTree.MemberExpression,
+) => {
   if (!node.computed) {
     return node.property.type === 'Identifier' ? node.property.name : null
   }
@@ -56,9 +61,9 @@ const staticPropertyName = (node: ESTree.MemberExpression): string | null => {
   return null
 }
 
-const staticPropertyKeyName = (
+const staticPropertyKeyName: (
   node: ESTree.ObjectProperty | ESTree.BindingProperty,
-): string | null => {
+) => string | null = (node: ESTree.ObjectProperty | ESTree.BindingProperty) => {
   if (!node.computed && node.key.type === 'Identifier') {
     return node.key.name
   }
@@ -76,7 +81,7 @@ const staticPropertyKeyName = (
   return null
 }
 
-const stringValue = (node: ESTree.Expression): string | null => {
+const stringValue: (node: ESTree.Expression) => string | null = (node: ESTree.Expression) => {
   const expression = unwrapExpression(node)
 
   if (expression.type === 'Literal' && typeof expression.value === 'string') {
@@ -90,11 +95,15 @@ const stringValue = (node: ESTree.Expression): string | null => {
   return null
 }
 
-const variableOf = (name: string, scope: Scope | null): Variable | undefined =>
-  scope === null ? undefined : (scope.set.get(name) ?? variableOf(name, scope.upper))
+const variableOf: (name: string, scope: Scope | null) => Variable | undefined = (
+  name: string,
+  scope: Scope | null,
+) => (scope === null ? undefined : (scope.set.get(name) ?? variableOf(name, scope.upper)))
 
-const declarationOf = (name: string, scope: Scope | null): Definition | undefined =>
-  variableOf(name, scope)?.defs[0]
+const declarationOf: (name: string, scope: Scope | null) => Definition | undefined = (
+  name: string,
+  scope: Scope | null,
+) => variableOf(name, scope)?.defs[0]
 
 const isStableVariable = (variable: Variable) =>
   variable.references.every((reference) => !reference.isWrite() || reference.init)
@@ -107,7 +116,9 @@ interface ImportIdentity {
   readonly name: string | null
 }
 
-const importBindingIdentity = (definition: Definition): ImportIdentity | null => {
+const importBindingIdentity: (definition: Definition) => ImportIdentity | null = (
+  definition: Definition,
+) => {
   const { parent } = definition.node
 
   if (definition.type !== 'ImportBinding' || parent?.type !== 'ImportDeclaration') {
@@ -126,17 +137,26 @@ const importBindingIdentity = (definition: Definition): ImportIdentity | null =>
   }
 }
 
-const importIdentity = (
+const importIdentity: (
+  expression: ESTree.Expression,
+  scope: Scope | null,
+  context: RuleContext,
+  seen?: Set<ESTree.Node>,
+) => ImportIdentity | null = (
   expression: ESTree.Expression,
   scope: Scope | null,
   context: RuleContext,
   seen = new Set<Definition['node']>(),
-): ImportIdentity | null => {
-  const requireFunction = (
+) => {
+  const requireFunction: (
+    candidate: ESTree.Expression,
+    candidateScope: Scope | null,
+    visited?: Set<ESTree.Node>,
+  ) => boolean = (
     candidate: ESTree.Expression,
     candidateScope: Scope | null,
     visited = new Set<Definition['node']>(),
-  ): boolean => {
+  ) => {
     const requireBinding = (name: string, bindingScope: Scope | null) => {
       const variable = variableOf(name, bindingScope)
 
@@ -187,34 +207,30 @@ const importIdentity = (
     const target = unwrapExpression(candidate)
 
     if (target.type === 'Identifier') {
-      return requireBinding(target.name, candidateScope)
+      return requireBinding(target.name, candidateScope) satisfies boolean
     }
 
     if (target.type === 'MemberExpression') {
-      return (
-        staticPropertyName(target) === 'require' &&
+      return (staticPropertyName(target) === 'require' &&
         target.object.type === 'Identifier' &&
         target.object.name === 'module' &&
-        variableOf('module', candidateScope) === undefined
-      )
+        variableOf('module', candidateScope) === undefined) satisfies boolean
     }
 
     if (target.type === 'CallExpression') {
       const identity = importIdentity(target.callee, candidateScope, context, visited)
 
-      return (
-        identity?.name === 'createRequire' &&
-        (identity.module === 'module' || identity.module === 'node:module')
-      )
+      return (identity?.name === 'createRequire' &&
+        (identity.module === 'module' || identity.module === 'node:module')) satisfies boolean
     }
 
-    return false
+    return false satisfies boolean
   }
 
-  const loadedModuleIdentity = (
+  const loadedModuleIdentity: (
     candidate: ESTree.Expression,
     candidateScope: Scope | null,
-  ): ImportIdentity | null => {
+  ) => ImportIdentity | null = (candidate: ESTree.Expression, candidateScope: Scope | null) => {
     const target = unwrapExpression(candidate)
 
     if (target.type === 'AwaitExpression') {
@@ -246,12 +262,17 @@ const importIdentity = (
     return module === null ? null : { module, name: null }
   }
 
-  const importIdentityForPattern = (
+  const importIdentityForPattern: (
     name: string,
     pattern: ESTree.ObjectPattern,
     initializer: ESTree.Expression,
     patternScope: Scope | null,
-  ): ImportIdentity | null => {
+  ) => ImportIdentity | null = (
+    name: string,
+    pattern: ESTree.ObjectPattern,
+    initializer: ESTree.Expression,
+    patternScope: Scope | null,
+  ) => {
     const property = pattern.properties.find(
       (item) =>
         item.type === 'Property' && item.value.type === 'Identifier' && item.value.name === name,
@@ -278,7 +299,10 @@ const importIdentity = (
     }
   }
 
-  const importIdentityForVariable = (name: string, variable: Variable): ImportIdentity | null => {
+  const importIdentityForVariable: (name: string, variable: Variable) => ImportIdentity | null = (
+    name: string,
+    variable: Variable,
+  ) => {
     const [definition] = variable.defs
 
     if (definition === undefined || seen.has(definition.node)) {
@@ -315,7 +339,7 @@ const importIdentity = (
   const loadedModule = loadedModuleIdentity(expression, scope)
 
   if (loadedModule !== null) {
-    return loadedModule
+    return loadedModule satisfies ImportIdentity | null
   }
 
   const value = unwrapExpression(expression)
@@ -323,7 +347,9 @@ const importIdentity = (
   if (value.type === 'Identifier') {
     const variable = variableOf(value.name, scope)
 
-    return variable === undefined ? null : importIdentityForVariable(value.name, variable)
+    return (
+      variable === undefined ? null : importIdentityForVariable(value.name, variable)
+    ) satisfies ImportIdentity | null
   }
 
   if (value.type === 'MemberExpression') {
@@ -331,13 +357,13 @@ const importIdentity = (
     const name = staticPropertyName(value)
 
     if (object === null || (object.name !== null && object.name !== 'Effect') || name === null) {
-      return null
+      return null satisfies ImportIdentity | null
     }
 
-    return { module: object.module, name }
+    return { module: object.module, name } satisfies ImportIdentity | null
   }
 
-  return null
+  return null satisfies ImportIdentity | null
 }
 
 const isEffectCall = (node: ESTree.Node, member: string, context: RuleContext) => {
@@ -519,35 +545,42 @@ const isNodeWithin = (node: ESTree.Node, ancestor: ESTree.Node) => {
   return false
 }
 
-const isCapturedValue = (
+const isCapturedValue: (
+  expression: ESTree.Expression,
+  thunk: FunctionThunk,
+  context: RuleContext,
+  seen?: Set<ESTree.Node>,
+) => boolean = (
   expression: ESTree.Expression,
   thunk: FunctionThunk,
   context: RuleContext,
   seen = new Set<Definition['node']>(),
-): boolean => {
+) => {
   const value = unwrapExpression(expression)
 
   if (value.type === 'Identifier') {
     const definition = declarationOf(value.name, context.sourceCode.getScope(value))
 
     if (definition === undefined) {
-      return true
+      return true satisfies boolean
     }
 
     if (seen.has(definition.node)) {
-      return false
+      return false satisfies boolean
     }
 
     seen.add(definition.node)
 
     if (!isNodeWithin(definition.node, thunk)) {
-      return true
+      return true satisfies boolean
     }
 
     if (definition.node.type === 'VariableDeclarator') {
-      return definition.node.init === null
-        ? false
-        : isCapturedValue(definition.node.init, thunk, context, seen)
+      return (
+        definition.node.init === null
+          ? false
+          : isCapturedValue(definition.node.init, thunk, context, seen)
+      ) satisfies boolean
     }
 
     const defaultedParameter = thunk.params.find(
@@ -557,24 +590,26 @@ const isCapturedValue = (
         parameter.left.name === value.name,
     )
 
-    return defaultedParameter === undefined
-      ? false
-      : isCapturedValue(defaultedParameter.right, thunk, context, seen)
+    return (
+      defaultedParameter === undefined
+        ? false
+        : isCapturedValue(defaultedParameter.right, thunk, context, seen)
+    ) satisfies boolean
   }
 
   if (value.type === 'ThisExpression') {
-    return true
+    return true satisfies boolean
   }
 
   if (value.type === 'MemberExpression') {
     if (value.object.type === 'ThisExpression') {
-      return true
+      return true satisfies boolean
     }
 
-    return isCapturedValue(value.object, thunk, context, seen)
+    return isCapturedValue(value.object, thunk, context, seen) satisfies boolean
   }
 
-  return false
+  return false satisfies boolean
 }
 
 const returnsCapturedHandle = (node: ESTree.Node, context: RuleContext) => {
@@ -805,7 +840,10 @@ const isDurableObjectInstanceField = (field: ESTree.PropertyDefinition, context:
   )
 }
 
-const sharedWaiterOwner = (node: ESTree.Node, context: RuleContext): ESTree.Node | null => {
+const sharedWaiterOwner: (node: ESTree.Node, context: RuleContext) => ESTree.Node | null = (
+  node: ESTree.Node,
+  context: RuleContext,
+) => {
   let current = node.parent
 
   while (current !== null) {

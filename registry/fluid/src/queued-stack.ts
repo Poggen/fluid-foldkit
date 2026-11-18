@@ -1,5 +1,5 @@
 import { makeInitIfMissingStep } from 'foldkit/binding'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { modifyFields } from 'foldkit/struct'
 import { Data, Effect, Layer, Option, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
@@ -100,7 +100,6 @@ const Observe = QueuedStackBlock.makeMountStream('ObserveQueuedStack', {
   },
 })
 
-// A zero-duration reset followed by the next paint reproduces controls.set(-7), then start(0).
 const QueuedStackBumpFrame = QueuedStackBlock.makeCommand('QueuedStackBumpFrame', {
   args: { generation: Schema.Natural },
   messages: [Message.CompletedBumpFrame],
@@ -359,10 +358,10 @@ const inMessageUpdate = QueuedStackComposition.makeInMessageUpdate({
 
 const view = QueuedStackComposition.makeView.withInputs<QueuedStackViewInputs>(
   (model, inputs, h) => {
-    const completion = (
+    const completion: (
       name: string,
       message: typeof Message.Type,
-    ): TaggedAttribute<typeof Message.Type> =>
+    ) => TaggedAttribute<typeof Message.Type> = (name: string, message: typeof Message.Type) =>
       OnCustomEvent({
         name,
         f: (event) => (event.target === event.currentTarget ? Option.some(message) : Option.none()),

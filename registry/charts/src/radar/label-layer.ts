@@ -5,7 +5,9 @@ import type { RadarLabelPosition } from './label-visual'
 import type { RadarChartProps } from './options'
 import type { RadarRow } from './rows'
 
-const labelGroup = (nodes: ReadonlyArray<SceneNode>): SceneGroup | undefined => {
+const labelGroup: (nodes: ReadonlyArray<SceneNode>) => SceneGroup | undefined = (
+  nodes: ReadonlyArray<SceneNode>,
+) => {
   for (const node of nodes) {
     if (node.kind !== 'group') {
       continue

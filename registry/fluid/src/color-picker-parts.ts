@@ -5,7 +5,7 @@ import { displayColorNumber } from './color-number-locale.js'
 import type { SliderViewInputs } from './slider-parts.js'
 import type { HoverHighlightViewInputs } from './hover-highlight.js'
 import type { MotionOptions } from './motion.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Option } from 'effect'
 import type { ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
 import { cn } from './lib/utils.js'
@@ -16,51 +16,34 @@ import type { Presentation } from './presentation.js'
 import { channelSpecs, colorParsed, currentFormat } from './color-picker-state.js'
 import type { ColorState } from './color-picker-state.js'
 
-export const CHECKER_BG = {
-  backgroundImage:
-    'conic-gradient(var(--checker-a) 0 25%, var(--checker-b) 0 50%, var(--checker-a) 0 75%, var(--checker-b) 0)',
-  backgroundSize: '8px 8px',
-}
+export const ColorTile: <Message, R>(props: ColorTileProps, h: HtmlBuilder<Message, R>) => Html =
+  function ColorTile<Message, R>(props: ColorTileProps, h: HtmlBuilder<Message, R>) {
+    const context = props.context === undefined ? {} : { context: props.context }
 
-export const swatchHairline = 'inset 0 0 0 1px rgba(127,127,127,0.25)'
+    const { shape } = resolvePresentation(
+      props.shape === undefined ? context : { ...context, shape: props.shape },
+    )
 
-export interface ColorTileProps extends Omit<Presentation, 'size'> {
-  readonly color: string
-  readonly size?: number
-  readonly className?: string
-  readonly style?: Readonly<Record<string, string | number>>
-}
+    return h.span(
+      [
+        h.Class(cn('inline-block relative shrink-0 overflow-hidden', shape.bg, props.className)),
+        h.Style({
+          width: `${props.size ?? 24}px`,
+          height: `${props.size ?? 24}px`,
 
-export function ColorTile<Message, R>(props: ColorTileProps, h: HtmlBuilder<Message, R>): Html {
-  const context = props.context === undefined ? {} : { context: props.context }
+          ...CHECKER_BG,
+          boxShadow: swatchHairline,
+          ...cssStyle(props.style),
+        }),
+      ],
+      [h.span([h.Class('absolute inset-0'), h.Style({ backgroundColor: props.color })])],
+    ) satisfies Html
+  }
 
-  const { shape } = resolvePresentation(
-    props.shape === undefined ? context : { ...context, shape: props.shape },
-  )
-
-  return h.span(
-    [
-      h.Class(cn('inline-block relative shrink-0 overflow-hidden', shape.bg, props.className)),
-      h.Style({
-        width: `${props.size ?? 24}px`,
-        height: `${props.size ?? 24}px`,
-
-        ...CHECKER_BG,
-        boxShadow: swatchHairline,
-        ...cssStyle(props.style),
-      }),
-    ],
-    [h.span([h.Class('absolute inset-0'), h.Style({ backgroundColor: props.color })])],
-  )
-}
-
-export interface ColorSwatchProps extends ColorTileProps {
-  readonly selected?: boolean
-  readonly hovered?: boolean
-  readonly attributes?: ReadonlyArray<ChildAttribute>
-}
-
-export function ColorSwatch<Message, R>(props: ColorSwatchProps, h: HtmlBuilder<Message, R>): Html {
+export const ColorSwatch: <Message, R>(
+  props: ColorSwatchProps,
+  h: HtmlBuilder<Message, R>,
+) => Html = function ColorSwatch<Message, R>(props: ColorSwatchProps, h: HtmlBuilder<Message, R>) {
   const context = props.context === undefined ? {} : { context: props.context }
 
   const { shape } = resolvePresentation(
@@ -101,14 +84,18 @@ export function ColorSwatch<Message, R>(props: ColorSwatchProps, h: HtmlBuilder<
       ],
     ),
     [h.span([h.Class('absolute inset-0'), h.Style({ backgroundColor: props.color })])],
-  )
+  ) satisfies Html
 }
 
-export function saturationSquare<Message, R>(
+export const saturationSquare: <Message, R>(
   state: ColorState,
   props: Presentation,
   h: HtmlBuilder<Message, R>,
-): Html {
+) => Html = function saturationSquare<Message, R>(
+  state: ColorState,
+  props: Presentation,
+  h: HtmlBuilder<Message, R>,
+) {
   const context = props.context === undefined ? {} : { context: props.context }
 
   const { shape } = resolvePresentation(
@@ -177,15 +164,20 @@ export function saturationSquare<Message, R>(
           ]
         : []),
     ],
-  )
+  ) satisfies Html
 }
 
-export function colorFields<Message, R>(
+export const colorFields: <Message, R>(
   state: ColorState,
   props: Presentation,
   h: HtmlBuilder<Message, R>,
   tooltip: ColorTooltipRenderer,
-): Html {
+) => Html = function colorFields<Message, R>(
+  state: ColorState,
+  props: Presentation,
+  h: HtmlBuilder<Message, R>,
+  tooltip: ColorTooltipRenderer,
+) {
   const { shape, size } = resolvePresentation(props)
 
   return h.div(
@@ -290,7 +282,28 @@ export function colorFields<Message, R>(
           ),
       )
     }),
-  )
+  ) satisfies Html
+}
+
+export const CHECKER_BG = {
+  backgroundImage:
+    'conic-gradient(var(--checker-a) 0 25%, var(--checker-b) 0 50%, var(--checker-a) 0 75%, var(--checker-b) 0)',
+  backgroundSize: '8px 8px',
+}
+
+export const swatchHairline = 'inset 0 0 0 1px rgba(127,127,127,0.25)'
+
+export interface ColorTileProps extends Omit<Presentation, 'size'> {
+  readonly color: string
+  readonly size?: number
+  readonly className?: string
+  readonly style?: Readonly<Record<string, string | number>>
+}
+
+export interface ColorSwatchProps extends ColorTileProps {
+  readonly selected?: boolean
+  readonly hovered?: boolean
+  readonly attributes?: ReadonlyArray<ChildAttribute>
 }
 
 export interface ColorPickerProps extends Presentation {

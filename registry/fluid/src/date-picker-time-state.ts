@@ -135,8 +135,7 @@ export function transitionTimeField(input: TimeFieldState, action: TimeFieldActi
     KeyDown: (action) => {
       if (action.key === 'ArrowDown' || action.key === 'ArrowUp') {
         preventDefault = true
-        // Explicit frozen-source defect correction approved by Root: an empty
-        // list has no navigation target; retain open/draft/value/focus state.
+
         if (slots.length === 0) return
         if (!state.open) {
           open()

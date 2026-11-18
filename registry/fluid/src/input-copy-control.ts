@@ -150,8 +150,8 @@ export const controlLayer = InputCopyControlBlock.makeLayer(
                   if (trigger === undefined) throw new Error('Missing InputCopy Tooltip trigger')
                   return trigger(context)
                 },
-                renderDocument: (content, popups): Html =>
-                  h.div([h.Class('contents')], [content, ...popups]),
+                renderDocument: (content, popups) =>
+                  h.div([h.Class('contents')], [content, ...popups]) satisfies Html,
                 render: ({ tooltip }) =>
                   h.block(
                     CopyBinding.embedView({

@@ -1,5 +1,5 @@
 import { modifyFields } from 'foldkit/struct'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Array, Match, Option } from 'effect'
 import { inputMessageValues, measuredHeight } from './input-message-state.js'
 import type { InputMessageObservation } from './input-message-state.js'

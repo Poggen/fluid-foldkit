@@ -108,7 +108,9 @@ export const controls = [
   },
 ] satisfies ReadonlyArray<Control<keyof Configuration>>
 
-export const visibleItems = (configuration: Configuration): ReadonlyArray<Item> => {
+export const visibleItems: (configuration: Configuration) => ReadonlyArray<Item> = (
+  configuration: Configuration,
+) => {
   const links = configuration.items.slice(0, configuration.steps - 1)
   const page = configuration.items.at(-1) ?? defaults.items[defaults.items.length - 1]
   return [
@@ -130,7 +132,9 @@ export const dropdownIndex = (configuration: Configuration) => {
       : lastLink
 }
 
-export const itemControls = (configuration: Configuration): ReadonlyArray<Control> =>
+export const itemControls: (configuration: Configuration) => ReadonlyArray<Control> = (
+  configuration: Configuration,
+) =>
   configuration.items.flatMap((item, index) => [
     {
       kind: 'text',
@@ -154,11 +158,15 @@ export const itemControls = (configuration: Configuration): ReadonlyArray<Contro
     },
   ])
 
-export const updateItem = (
+export const updateItem: (
   configuration: Configuration,
   property: string,
   value: string | number | boolean,
-): Configuration => {
+) => Configuration = (
+  configuration: Configuration,
+  property: string,
+  value: string | number | boolean,
+) => {
   const [prefix, id, field] = property.split('.')
   if (prefix !== 'item' || typeof value !== 'string' || (field !== 'label' && field !== 'icon'))
     return configuration
@@ -172,7 +180,9 @@ export const updateItem = (
   }
 }
 
-export const controlsFor = (configuration: Configuration): ReadonlyArray<Control> => [
+export const controlsFor: (configuration: Configuration) => ReadonlyArray<Control> = (
+  configuration: Configuration,
+) => [
   ...controls.map((control) => ({
     ...control,
     enabled:

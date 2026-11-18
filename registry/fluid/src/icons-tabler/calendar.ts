@@ -1,4 +1,4 @@
-// Exact @tabler/icons-react 3.41.1 SVG. MIT; see NOTICE
+/* @license Exact @tabler/icons-react 3.41.1 SVG. MIT; see NOTICE */
 import type { Icon } from '../presentation.js'
 
 export const icon: Icon = (options, h) =>

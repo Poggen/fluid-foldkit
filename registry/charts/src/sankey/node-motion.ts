@@ -6,29 +6,15 @@ import { sankeyHoverSets } from './hover-css'
 import { mountProgressOptions } from '../kit/motion/transition-options'
 import { mountElementMotion } from './element-motion'
 
-type Apply = (
-  element: SVGElement,
-  key: string,
-  initial: Record<string, number>,
-  next: MotionNodeOptions & { readonly style?: { readonly originY: number } },
-) => void
-
-interface NodePose {
-  readonly name: string
-  readonly index: number
-  readonly occurrence: number
-  readonly x: number
-  readonly y: number
-  readonly width: number
-  readonly height: number
-  readonly left: boolean
-  readonly rect: SVGRectElement
-  readonly role: SankeyNodeProps
-}
-
-const numberAttr = (element: Element, name: string) => Number(element.getAttribute(name) ?? 0)
-
-function readNode(group: SVGGElement, root: HTMLElement, props: SankeyChartProps): NodePose | null {
+const readNode: (
+  group: SVGGElement,
+  root: HTMLElement,
+  props: SankeyChartProps,
+) => NodePose | null = function readNode(
+  group: SVGGElement,
+  root: HTMLElement,
+  props: SankeyChartProps,
+) {
   const match = /^sankey:sankey-node-(?<index>\d+)-role-(?<occurrence>\d+)$/u.exec(
     group.dataset.tsKey ?? '',
   )
@@ -61,6 +47,28 @@ function readNode(group: SVGGElement, root: HTMLElement, props: SankeyChartProps
     role: role.props,
   }
 }
+
+type Apply = (
+  element: SVGElement,
+  key: string,
+  initial: Record<string, number>,
+  next: MotionNodeOptions & { readonly style?: { readonly originY: number } },
+) => void
+
+interface NodePose {
+  readonly name: string
+  readonly index: number
+  readonly occurrence: number
+  readonly x: number
+  readonly y: number
+  readonly width: number
+  readonly height: number
+  readonly left: boolean
+  readonly rect: SVGRectElement
+  readonly role: SankeyNodeProps
+}
+
+const numberAttr = (element: Element, name: string) => Number(element.getAttribute(name) ?? 0)
 
 function labelLayout(node: NodePose, value: boolean) {
   const vertical = node.role.labelOrientation === 'vertical'
@@ -181,7 +189,6 @@ export function createNodeMotion(publish: () => void) {
       seen.add(key)
       const owner = owners.get(element)
 
-      // React's node-name key remounts its rect and labels together after a rename.
       if (owner !== undefined && owner !== key) {
         visuals.get(owner)?.destroy()
         visuals.delete(owner)

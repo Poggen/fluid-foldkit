@@ -8,28 +8,28 @@ import type { DatePickerPreparedConfig } from './date-picker-config.js'
 export const SegmentHighlight = DatePickerBlock.makeRequiredFieldBinding(HoverHighlightBlock, {
   field: 'segmentHighlight',
   init: {
-    contextToArgs: (
-      config: DatePickerPreparedConfig,
-    ): [{ readonly id: string; readonly mode: HoverMode }] => [
-      {
-        id: `${config.initial.id}-segment-highlight`,
-        mode: config.presentation.hoverMode ?? 'fluid',
-      },
-    ],
+    contextToArgs: (config: DatePickerPreparedConfig) =>
+      [
+        {
+          id: `${config.initial.id}-segment-highlight`,
+          mode: config.presentation.hoverMode ?? 'fluid',
+        },
+      ] satisfies [{ readonly id: string; readonly mode: HoverMode }],
   },
 })
 
 export const Segments = DatePickerBlock.makeRequiredFieldBinding(HoverBlock, {
   field: 'segments',
   init: {
-    contextToArgs: (config: DatePickerPreparedConfig): [HoverConfig] => [
-      {
-        id: `${config.initial.id}-segments`,
-        axis: 'x',
-        gapClick: false,
-        mode: config.presentation.hoverMode ?? 'fluid',
-      },
-    ],
+    contextToArgs: (config: DatePickerPreparedConfig) =>
+      [
+        {
+          id: `${config.initial.id}-segments`,
+          axis: 'x',
+          gapClick: false,
+          mode: config.presentation.hoverMode ?? 'fluid',
+        },
+      ] satisfies [HoverConfig],
   },
 }).withOutMessagePolicy({
   fold: DatePickerBlock.makeOutMessageFold(HoverBlock, {
@@ -43,27 +43,27 @@ export const Segments = DatePickerBlock.makeRequiredFieldBinding(HoverBlock, {
 export const PresetHighlight = DatePickerBlock.makeRequiredFieldBinding(HoverHighlightBlock, {
   field: 'presetHighlight',
   init: {
-    contextToArgs: (
-      config: DatePickerPreparedConfig,
-    ): [{ readonly id: string; readonly mode: HoverMode }] => [
-      {
-        id: `${config.initial.id}-preset-highlight`,
-        mode: config.presentation.hoverMode ?? 'fluid',
-      },
-    ],
+    contextToArgs: (config: DatePickerPreparedConfig) =>
+      [
+        {
+          id: `${config.initial.id}-preset-highlight`,
+          mode: config.presentation.hoverMode ?? 'fluid',
+        },
+      ] satisfies [{ readonly id: string; readonly mode: HoverMode }],
   },
 })
 
 export const Presets = DatePickerBlock.makeRequiredFieldBinding(HoverBlock, {
   field: 'presets',
   init: {
-    contextToArgs: (config: DatePickerPreparedConfig): [HoverConfig] => [
-      {
-        id: `${config.initial.id}-presets`,
-        axis: 'xy',
-        mode: config.presentation.hoverMode ?? 'fluid',
-      },
-    ],
+    contextToArgs: (config: DatePickerPreparedConfig) =>
+      [
+        {
+          id: `${config.initial.id}-presets`,
+          axis: 'xy',
+          mode: config.presentation.hoverMode ?? 'fluid',
+        },
+      ] satisfies [HoverConfig],
   },
 }).withOutMessagePolicy({
   fold: DatePickerBlock.makeOutMessageFold(HoverBlock, {

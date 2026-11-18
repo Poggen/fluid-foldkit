@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom -- caller Mounts must acquire through the real child boundary
 import { it } from '@effect/vitest'
 import { Effect, Schedule } from 'effect'

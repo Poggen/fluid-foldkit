@@ -2,6 +2,30 @@ import { Predicate, Schema } from 'effect'
 import type { Transition as MotionTransition } from 'motion-dom'
 import type { EnterTransition } from '../kit/motion/phase'
 
+/** Source clipRevealTransition forces SVG width to tween, but preserves an explicit tween's delay/ease/default duration. */
+export const revealTransition: (
+  supplied: EnterTransition | undefined,
+  logicalDuration: number,
+) => MotionTransition<number> = function revealTransition(
+  supplied: EnterTransition | undefined,
+  logicalDuration: number,
+) {
+  const transition = supplied ?? { type: 'tween', duration: logicalDuration / 1000 }
+
+  if (transition.type !== 'tween') {
+    return { type: 'tween', duration: transition.duration ?? 1.1, ease: [...EASE] }
+  }
+
+  const { ease: authoredEase, ...options } = transition
+  const ease = authoredEase ?? [...EASE]
+
+  if (!isMotionEase(ease)) {
+    throw new TypeError('Invalid clip reveal easing')
+  }
+
+  return { ...options, type: 'tween', ease }
+}
+
 const EASE = [0.85, 0, 0.15, 1] as const
 
 const NamedEase = Schema.Literals([
@@ -20,10 +44,10 @@ const NamedEase = Schema.Literals([
 
 type Ease = NonNullable<MotionTransition<number>['ease']>
 
-export const markerRevealDuration = (
+export const markerRevealDuration: (
   supplied: EnterTransition | undefined,
   logicalDuration: number,
-): number =>
+) => number = (supplied: EnterTransition | undefined, logicalDuration: number) =>
   (supplied?.type === 'tween'
     ? (supplied.duration ?? logicalDuration / 1000)
     : (supplied?.duration ?? 1.1)) * 1000
@@ -38,25 +62,4 @@ const isMotionEase = (value: EnterTransition['ease']): value is Ease => {
   }
 
   return value.every(Predicate.isNumber) ? value.length === 4 : value.every(isMotionEase)
-}
-
-/** Source clipRevealTransition forces SVG width to tween, but preserves an explicit tween's delay/ease/default duration. */
-export function revealTransition(
-  supplied: EnterTransition | undefined,
-  logicalDuration: number,
-): MotionTransition<number> {
-  const transition = supplied ?? { type: 'tween', duration: logicalDuration / 1000 }
-
-  if (transition.type !== 'tween') {
-    return { type: 'tween', duration: transition.duration ?? 1.1, ease: [...EASE] }
-  }
-
-  const { ease: authoredEase, ...options } = transition
-  const ease = authoredEase ?? [...EASE]
-
-  if (!isMotionEase(ease)) {
-    throw new TypeError('Invalid clip reveal easing')
-  }
-
-  return { ...options, type: 'tween', ease }
 }

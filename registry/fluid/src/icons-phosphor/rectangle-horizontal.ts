@@ -1,4 +1,4 @@
-// Exact @phosphor-icons/react 2.1.10 SVG. MIT; see NOTICE
+/* @license Exact @phosphor-icons/react 2.1.10 SVG. MIT; see NOTICE */
 import { Predicate } from 'effect'
 import type { Icon } from '../presentation.js'
 

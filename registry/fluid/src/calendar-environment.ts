@@ -9,8 +9,6 @@ import { CalendarState, dateValue, selectionValue } from './calendar-state.js'
 import type { CalendarPresentation } from './calendar-state.js'
 import { projectCalendar } from './calendar-project.js'
 
-// Providers belong to application Layer construction. Only their prepared data
-// crosses the Block initialization/operation boundary.
 export class CalendarEnvironment extends Context.Service<
   CalendarEnvironment,
   {
@@ -93,8 +91,6 @@ export interface CalendarPreparedConfig {
   readonly initial: CalendarState
 }
 
-// Preparing before rendering gives SSR and the first browser render their full
-// grid; there is no placeholder calendar waiting for a mount effect to read time.
 export const prepareCalendar = Effect.fn('FluidCalendar.prepare')(function* (
   config: CalendarPrepareOptions,
 ) {

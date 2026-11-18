@@ -48,7 +48,6 @@ export function createPieEntranceRenderer() {
           return
         }
 
-        // The frozen Source SVG renderer retains raw filter style from this visual's first render.
         state.path.style.filter = state.initialFilter
         const hot = hovered === state.row.sliceIndex
         const targetRadius = current.outerRadius + (hot ? state.row.offset : 0)
@@ -83,7 +82,6 @@ export function createPieEntranceRenderer() {
 
     const release = progress.on('change', (value) => {
       if (value >= 1 && !state.complete) {
-        // Source replaces the keyed entrance path with its unkeyed completed path.
         state.initialFilter = filterOf(state.row)
         state.complete = true
       }

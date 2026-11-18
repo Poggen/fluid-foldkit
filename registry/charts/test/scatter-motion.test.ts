@@ -1,4 +1,5 @@
 // oxlint-disable no-comments/no-comments -- The actual renderer and Motion require browser classes before module acquisition.
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 // oxlint-enable no-comments/no-comments -- Resume the source comment policy.
 
@@ -35,8 +36,9 @@ const props = {
   children: [Scatter({ dataKey: 'value', outlineWidth: 2 }), ChartTooltip()],
 }
 const state = { ...initialInteraction(recipe.configuration(props)), phaseClockReady: true }
-const allNodes = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<SceneNode> =>
-  nodes.flatMap((node) => (node.kind === 'group' ? [node, ...allNodes(node.children)] : [node]))
+const allNodes: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<SceneNode> = (
+  nodes: ReadonlyArray<SceneNode>,
+) => nodes.flatMap((node) => (node.kind === 'group' ? [node, ...allNodes(node.children)] : [node]))
 
 function drawing(
   ready: boolean,

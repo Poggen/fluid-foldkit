@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Layer, Option } from 'effect'
 import { Update } from 'foldkit'
 import {
@@ -19,6 +19,88 @@ import type {
   Message,
 } from './dropdown-composition.js'
 import { dropdownView } from './dropdown-view.js'
+
+const dropdownUpdate: <const Key extends symbol, ConfigSchema extends DropdownConfigSchema>(
+  runtime: DropdownRuntime<Key, ConfigSchema>,
+  handlers: DropdownHandlers<Key, ConfigSchema>,
+) => ReturnType<typeof runtime.Composition.makeUpdate<DropdownOutputs<Key, ConfigSchema>>> =
+  function dropdownUpdate<const Key extends symbol, ConfigSchema extends DropdownConfigSchema>(
+    runtime: DropdownRuntime<Key, ConfigSchema>,
+    handlers: DropdownHandlers<Key, ConfigSchema>,
+  ) {
+    return runtime.Composition.makeUpdate<DropdownOutputs<Key, ConfigSchema>>(
+      handlers,
+    ) satisfies ReturnType<
+      typeof runtime.Composition.makeUpdate<DropdownOutputs<Key, ConfigSchema>>
+    >
+  }
+
+const dropdownInMessageUpdate: <
+  const Key extends symbol,
+  ConfigSchema extends DropdownConfigSchema,
+>(
+  runtime: DropdownRuntime<Key, ConfigSchema>,
+  handlers: DropdownHandlers<Key, ConfigSchema>,
+) => ReturnType<
+  typeof runtime.Composition.makeInMessageUpdate<DropdownInMessageOutputs<Key, ConfigSchema>>
+> = function dropdownInMessageUpdate<
+  const Key extends symbol,
+  ConfigSchema extends DropdownConfigSchema,
+>(runtime: DropdownRuntime<Key, ConfigSchema>, handlers: DropdownHandlers<Key, ConfigSchema>) {
+  return runtime.Composition.makeInMessageUpdate<DropdownInMessageOutputs<Key, ConfigSchema>>(
+    dropdownInMessageHandlers(runtime, handlers),
+  ) satisfies ReturnType<
+    typeof runtime.Composition.makeInMessageUpdate<DropdownInMessageOutputs<Key, ConfigSchema>>
+  >
+}
+
+const dropdownBehaviorPlans: <const Key extends symbol, ConfigSchema extends DropdownConfigSchema>(
+  runtime: DropdownRuntime<Key, ConfigSchema>,
+) => BehaviorChannels<Key, ConfigSchema> = function dropdownBehaviorPlans<
+  const Key extends symbol,
+  ConfigSchema extends DropdownConfigSchema,
+>(runtime: DropdownRuntime<Key, ConfigSchema>) {
+  const handlers = dropdownHandlers(runtime)
+
+  return {
+    update: dropdownUpdate(runtime, handlers),
+    inMessageUpdate: dropdownInMessageUpdate(runtime, handlers),
+    view: dropdownView<Key, ConfigSchema>(runtime),
+    EffectsLayer: dropdownEffectsLayer(),
+  } satisfies BehaviorChannels<Key, ConfigSchema>
+}
+
+/** Root initialization is authored against its concrete required Config schema. */
+export const dropdownPlans: <const Key extends symbol>(
+  block: DropdownDeclared<Key>,
+  inline: boolean,
+) => DropdownPlans<Key> = function dropdownPlans<const Key extends symbol>(
+  block: DropdownDeclared<Key>,
+  inline: boolean,
+) {
+  const runtime = createDropdownComposition<Key, typeof Config>(block)
+  const init = dropdownRootInit(runtime, inline)
+
+  return {
+    init,
+    ...dropdownBehaviorPlans<Key, typeof Config>(runtime),
+  } satisfies DropdownPlans<Key>
+}
+
+/** Submenu initialization retains required rootId and parentId at the public boundary. */
+export const dropdownSubPlans: <const Key extends symbol>(
+  block: DropdownDeclared<Key, typeof SubConfigSchema>,
+) => DropdownSubPlans<Key> = function dropdownSubPlans<const Key extends symbol>(
+  block: DropdownDeclared<Key, typeof SubConfigSchema>,
+) {
+  const runtime = createDropdownComposition<Key, typeof SubConfigSchema>(block)
+  const init = dropdownSubInit(runtime)
+
+  return {
+    init,
+    ...dropdownBehaviorPlans<Key, typeof SubConfigSchema>(runtime),
+  } satisfies DropdownSubPlans<Key>
+}
 
 type DropdownRuntime<Key extends symbol, ConfigSchema extends DropdownConfigSchema> = ReturnType<
   typeof createDropdownComposition<Key, ConfigSchema>
@@ -187,13 +269,6 @@ type DropdownOutputs<Key extends symbol, ConfigSchema extends DropdownConfigSche
   >
 }
 
-function dropdownUpdate<const Key extends symbol, ConfigSchema extends DropdownConfigSchema>(
-  runtime: DropdownRuntime<Key, ConfigSchema>,
-  handlers: DropdownHandlers<Key, ConfigSchema>,
-): ReturnType<typeof runtime.Composition.makeUpdate<DropdownOutputs<Key, ConfigSchema>>> {
-  return runtime.Composition.makeUpdate<DropdownOutputs<Key, ConfigSchema>>(handlers)
-}
-
 function dropdownInMessageHandlers<
   const Key extends symbol,
   ConfigSchema extends DropdownConfigSchema,
@@ -232,20 +307,6 @@ type DropdownInMessageOutputs<Key extends symbol, ConfigSchema extends DropdownC
   >
 }
 
-function dropdownInMessageUpdate<
-  const Key extends symbol,
-  ConfigSchema extends DropdownConfigSchema,
->(
-  runtime: DropdownRuntime<Key, ConfigSchema>,
-  handlers: DropdownHandlers<Key, ConfigSchema>,
-): ReturnType<
-  typeof runtime.Composition.makeInMessageUpdate<DropdownInMessageOutputs<Key, ConfigSchema>>
-> {
-  return runtime.Composition.makeInMessageUpdate<DropdownInMessageOutputs<Key, ConfigSchema>>(
-    dropdownInMessageHandlers(runtime, handlers),
-  )
-}
-
 function dropdownEffectsLayer() {
   return Layer.mergeAll(
     Observe.layer,
@@ -262,19 +323,6 @@ interface BehaviorChannels<Key extends symbol, ConfigSchema extends DropdownConf
   readonly inMessageUpdate: ReturnType<typeof dropdownInMessageUpdate<Key, ConfigSchema>>
   readonly view: ReturnType<typeof dropdownView<Key, ConfigSchema>>
   readonly EffectsLayer: ReturnType<typeof dropdownEffectsLayer>
-}
-
-function dropdownBehaviorPlans<const Key extends symbol, ConfigSchema extends DropdownConfigSchema>(
-  runtime: DropdownRuntime<Key, ConfigSchema>,
-): BehaviorChannels<Key, ConfigSchema> {
-  const handlers = dropdownHandlers(runtime)
-
-  return {
-    update: dropdownUpdate(runtime, handlers),
-    inMessageUpdate: dropdownInMessageUpdate(runtime, handlers),
-    view: dropdownView<Key, ConfigSchema>(runtime),
-    EffectsLayer: dropdownEffectsLayer(),
-  }
 }
 
 function dropdownRootInit<const Key extends symbol>(
@@ -306,25 +354,4 @@ export interface DropdownSubPlans<Key extends symbol> extends BehaviorChannels<
   typeof SubConfigSchema
 > {
   readonly init: ReturnType<typeof dropdownSubInit<Key>>
-}
-
-/** Root initialization is authored against its concrete required Config schema. */
-export function dropdownPlans<const Key extends symbol>(
-  block: DropdownDeclared<Key>,
-  inline: boolean,
-): DropdownPlans<Key> {
-  const runtime = createDropdownComposition<Key, typeof Config>(block)
-  const init = dropdownRootInit(runtime, inline)
-
-  return { init, ...dropdownBehaviorPlans<Key, typeof Config>(runtime) }
-}
-
-/** Submenu initialization retains required rootId and parentId at the public boundary. */
-export function dropdownSubPlans<const Key extends symbol>(
-  block: DropdownDeclared<Key, typeof SubConfigSchema>,
-): DropdownSubPlans<Key> {
-  const runtime = createDropdownComposition<Key, typeof SubConfigSchema>(block)
-  const init = dropdownSubInit(runtime)
-
-  return { init, ...dropdownBehaviorPlans<Key, typeof SubConfigSchema>(runtime) }
 }

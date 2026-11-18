@@ -1,4 +1,4 @@
-// Derived from Motion 14.1.0 Reorder auto-scroll. MIT, copyright Framer B.V.
+/* @license Derived from Motion 14.1.0 Reorder auto-scroll. MIT, copyright Framer B.V. */
 import type { ReorderAxis } from './reorder-order.js'
 
 export function createReorderScroll() {

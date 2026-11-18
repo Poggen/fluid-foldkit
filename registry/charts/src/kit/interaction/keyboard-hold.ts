@@ -21,7 +21,10 @@ export function createKeyboardHold<
     'End',
   ])
 
-  const samePoint = (a: Point | null, b: Point | null): boolean =>
+  const samePoint: (a: Point | null, b: Point | null) => boolean = (
+    a: Point | null,
+    b: Point | null,
+  ) =>
     a === b ||
     (a !== null &&
       b !== null &&
@@ -29,7 +32,7 @@ export function createKeyboardHold<
       a.markId === b.markId &&
       a.datumIndex === b.datumIndex)
 
-  const onFocus = (point: Point | null): void => {
+  const onFocus: (point: Point | null) => void = (point: Point | null) => {
     current = point
 
     if (point !== null && keyboardInput) {
@@ -38,15 +41,13 @@ export function createKeyboardHold<
     }
   }
 
-  // A pointer move reached the renderer since the hold was last put back, so the renderer counts the focus as pointer-owned.
   let pointerTook = false
-  // The resting pointer (client coordinates; null once it leaves or for touch), whether a key press owns the focus since the last
-  // move that resolved a point, and whether the focus is the one a blur handed to the pointer.
+
   let pointer: { x: number; y: number } | null = null
   let keyboardOwns = false
   let handedToPointer = false
 
-  const restore = (): void => {
+  const restore: () => void = () => {
     const point = held
 
     if (point === null || (samePoint(current, point) && !pointerTook)) {
@@ -55,17 +56,16 @@ export function createKeyboardHold<
 
     pointerTook = false
     restoredByUs = true
-    // TanStack's controller types only 'pointer' | 'programmatic'; the renderer takes any ChartFocusSource (renderer.ts:641).
-    // Also hands ownership over (focusOwner 'controlled'), so the renderer's pointer-owned leave clear (renderer.ts:718-728) skips it.
+
     getInteraction()?.setControlledFocus(point, { source: 'programmatic' })
   }
 
-  const key = (event: KeyboardEvent): void => {
+  const key: (event: KeyboardEvent) => void = (event: KeyboardEvent) => {
     keyboardInput = NAVIGATION_KEYS.has(event.key)
     keyboardOwns ||= keyboardInput
   }
 
-  const move = (event: PointerEvent): void => {
+  const move: (event: PointerEvent) => void = (event: PointerEvent) => {
     keyboardInput = false
 
     if (event.pointerType === 'touch') {
@@ -91,7 +91,6 @@ export function createKeyboardHold<
     }
 
     if (interaction && resolved === null) {
-      // Nothing under the pointer: the renderer would empty the focus; keep it, and put the held point back if a point had taken over.
       event.stopPropagation()
       restore()
 
@@ -101,7 +100,7 @@ export function createKeyboardHold<
     pointerTook = true
   }
 
-  const down = (event: PointerEvent): void => {
+  const down: (event: PointerEvent) => void = (event: PointerEvent) => {
     keyboardInput = false
 
     if (event.pointerType !== 'touch') {
@@ -111,9 +110,7 @@ export function createKeyboardHold<
     }
   }
 
-  // The renderer clears a pointer-owned focus on the surface's mouseleave (renderer.ts:718-728, bound on the container at :919); pointerleave fires before mouseleave and this host
-  // capture listener runs first, so the held point takes over: the clear finds it controller-owned, skips, and no onFocusChange(null) fires.
-  const leave = (event: PointerEvent | MouseEvent): void => {
+  const leave: (event: PointerEvent | MouseEvent) => void = (event: PointerEvent | MouseEvent) => {
     const { target } = event
 
     if (target === el && !('pointerType' in event && event.pointerType === 'touch')) {
@@ -133,30 +130,28 @@ export function createKeyboardHold<
       return
     }
 
-    // `ts-chart-surface` is the core surface class, with no public handle for it (UPSTREAM-GAPS #36, #42).
     if (target === el || target.classList.contains('ts-chart-surface')) {
       restore()
     }
   }
 
-  const enter = (event: PointerEvent): void => {
+  const enter: (event: PointerEvent) => void = (event: PointerEvent) => {
     if (event.pointerType !== 'touch') {
       pointer = { x: event.clientX, y: event.clientY }
     }
   }
 
-  const blur = (event: FocusEvent): void => {
+  const blur: (event: FocusEvent) => void = (event: FocusEvent) => {
     if (event.relatedTarget instanceof Node && el.contains(event.relatedTarget)) {
       return
     }
 
     const wasHeld = held !== null
     held = null
-    // Focus left: no later focus change comes from a key, so none is recorded as the held point.
+
     keyboardInput = false
 
     if (restoredByUs) {
-      // A controller-set focus is not keyboard-owned, so the renderer's blur clear skips it (renderer.ts:738).
       restoredByUs = false
       getInteraction()?.setControlledFocus(null, { source: 'pointer' })
     }
@@ -183,7 +178,7 @@ export function createKeyboardHold<
   el.addEventListener('mouseleave', leave, true)
   el.addEventListener('focusout', blur)
 
-  const destroy = (): void => {
+  const destroy: () => void = () => {
     el.removeEventListener('keydown', key, true)
     el.removeEventListener('pointermove', move, true)
     el.removeEventListener('pointerdown', down, true)

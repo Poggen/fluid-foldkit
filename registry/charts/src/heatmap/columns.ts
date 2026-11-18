@@ -29,33 +29,32 @@ export interface HeatmapColumn {
 
 /** Rotates Sun-first column bins so display row 0 starts on `weekStartDay`; `0` returns `columns` unchanged.
  * `columns` stays mutable: a `readonly` param would make that unchanged-return path a type error or force a copy on a hot render path. */
-export const rotateHeatmapColumnBins = (
+export const rotateHeatmapColumnBins: (
+  columns: Array<HeatmapColumn>,
+  weekStartDay?: HeatmapWeekStartDay,
+) => Array<HeatmapColumn> = (
   columns: Array<HeatmapColumn>,
   weekStartDay: HeatmapWeekStartDay = 0,
-): Array<HeatmapColumn> => {
+) => {
   if (weekStartDay === 0) {
-    return columns
+    return columns satisfies Array<HeatmapColumn>
   }
 
   return columns.map((column: Readonly<HeatmapColumn>) => ({
     ...column,
     bins: [...column.bins.slice(weekStartDay), ...column.bins.slice(0, weekStartDay)],
-  }))
+  })) satisfies Array<HeatmapColumn>
 }
 
-/**
- * Month label anchor for a week column: the 1st, else the 1st of the first bin's month; `undefined` when `column.bins` is empty.
- * @internal
- */
-export const getHeatmapColumnMonthAnchor = (column: HeatmapColumn): Date | null => {
+export const getHeatmapColumnMonthAnchor: (column: HeatmapColumn) => Date | null = (
+  column: HeatmapColumn,
+) => {
   for (const bin of column.bins) {
     if (bin.date.getDate() === 1) {
       return bin.date
     }
   }
 
-  // First bin via array destructuring; the empty-bins guard below stays load-bearing.
-  // Empty bins arrays are a real runtime case this function must handle.
   const [firstBin] = column.bins
 
   if (firstBin === undefined) return null
@@ -65,19 +64,22 @@ export const getHeatmapColumnMonthAnchor = (column: HeatmapColumn): Date | null 
 }
 
 /** Internal (not re-exported from the barrel), so it returns `undefined` rather than `null`: the first bin's date, or `undefined` when `column.bins` is empty. */
-export const getHeatmapColumnStartDate = (column: Readonly<HeatmapColumn>): Date | undefined =>
-  column.bins[0]?.date
+export const getHeatmapColumnStartDate: (column: Readonly<HeatmapColumn>) => Date | undefined = (
+  column: Readonly<HeatmapColumn>,
+) => column.bins[0]?.date
 
 /** Internal like `getHeatmapColumnStartDate` (returns `undefined`, not `null`): the last bin's date, or `undefined` when `column.bins` is empty. */
-export const getHeatmapColumnEndDate = (column: Readonly<HeatmapColumn>): Date | undefined => {
+export const getHeatmapColumnEndDate: (column: Readonly<HeatmapColumn>) => Date | undefined = (
+  column: Readonly<HeatmapColumn>,
+) => {
   const lastBin = column.bins.at(-1)
 
   return lastBin?.date
 }
 
-/** The last column's end date, or `undefined` when `columns` is empty or dates are unavailable. */
-// Last bin date across all columns; undefined when no column has bins.
-const readHeatmapLastColumnEnd = (columns: ReadonlyArray<HeatmapColumn>): Date | undefined => {
+const readHeatmapLastColumnEnd: (columns: ReadonlyArray<HeatmapColumn>) => Date | undefined = (
+  columns: ReadonlyArray<HeatmapColumn>,
+) => {
   const lastColumn = columns.at(-1)
 
   if (!lastColumn) {
@@ -87,13 +89,13 @@ const readHeatmapLastColumnEnd = (columns: ReadonlyArray<HeatmapColumn>): Date |
   return getHeatmapColumnEndDate(lastColumn)
 }
 
-/** @internal */
-export const getHeatmapTimeExtent = (columns: Array<HeatmapColumn>): [Date, Date] | null => {
+export const getHeatmapTimeExtent: (columns: Array<HeatmapColumn>) => [Date, Date] | null = (
+  columns: Array<HeatmapColumn>,
+) => {
   if (columns.length === 0) {
     return null
   }
 
-  // Non-empty per the length check above, so destructuring always yields a column.
   const [firstColumn] = columns
 
   if (firstColumn === undefined) return null
@@ -109,10 +111,10 @@ export const getHeatmapTimeExtent = (columns: Array<HeatmapColumn>): [Date, Date
 
 /** Week columns overlapping `xDomain` (all when omitted). `columns` stays mutable: it is public barrel API and the no-domain path returns it unchanged,
  * so `readonly` would change the signature or copy on a hot render path. */
-export const filterHeatmapColumns = (
+export const filterHeatmapColumns: (
   columns: Array<HeatmapColumn>,
   xDomain?: [Date, Date],
-): Array<HeatmapColumn> => {
+) => Array<HeatmapColumn> = (columns: Array<HeatmapColumn>, xDomain?: [Date, Date]) => {
   if (!xDomain) {
     return columns
   }
@@ -141,10 +143,10 @@ export interface HeatmapDisplayRange {
 }
 
 /** Whether a bin falls outside the contribution display window (not merely inactive). */
-export const isHeatmapGhostBin = (
+export const isHeatmapGhostBin: (
   bin: Readonly<HeatmapBin>,
   range: Readonly<HeatmapDisplayRange>,
-): boolean => {
+) => boolean = (bin: Readonly<HeatmapBin>, range: Readonly<HeatmapDisplayRange>) => {
   const time = bin.date.getTime()
 
   if (range.end && time > range.end.getTime()) {
@@ -158,12 +160,10 @@ export const isHeatmapGhostBin = (
   return false
 }
 
-/** Resolves the calendar range start whose aligned week start matches `gridStart`; `undefined` when the grid shape isn't recognized. */
-// Scans the recognized calendar shapes for one whose aligned start matches the grid.
-const matchHeatmapCalendarRangeStart = (
+const matchHeatmapCalendarRangeStart: (
   gridStart: Readonly<Date>,
   today: Readonly<Date>,
-): Date | undefined => {
+) => Date | undefined = (gridStart: Readonly<Date>, today: Readonly<Date>) => {
   for (const months of [HEATMAP_MONTHS_SIX, HEATMAP_MONTHS_ONE_YEAR]) {
     const rangeStart = getHeatmapCalendarRangeStart(today, months)
     const alignedStart = getHeatmapWeekStartAlignedToRange(rangeStart)
@@ -176,13 +176,10 @@ const matchHeatmapCalendarRangeStart = (
   return undefined
 }
 
-// Destructuring types `firstColumn` as always-defined without `noUncheckedIndexedAccess`.
-// Exported callers give no guarantee `columns` is non-empty, so the guard stays.
-/** @internal */
-export const inferHeatmapCalendarRangeStart = (
+export const inferHeatmapCalendarRangeStart: (
   columns: Array<HeatmapColumn>,
   currentDate: Readonly<Date>,
-): Date | null => {
+) => Date | null = (columns: Array<HeatmapColumn>, currentDate: Readonly<Date>) => {
   if (columns.length === 0) {
     return null
   }
@@ -201,12 +198,13 @@ export const inferHeatmapCalendarRangeStart = (
   return matchHeatmapCalendarRangeStart(gridStart, today) ?? null
 }
 
-/** Grid base values shared by display-range resolution; `undefined` when the grid has no usable dates. */
-// Grid base values shared by display-range resolution; undefined when the grid has no usable dates.
-const readHeatmapDisplayGridBase = (
+const readHeatmapDisplayGridBase: (
   columns: Array<HeatmapColumn>,
   currentDate: Readonly<Date>,
-): { extent: [Date, Date]; today: Date; gridStart: Date } | undefined => {
+) => { extent: [Date, Date]; today: Date; gridStart: Date } | undefined = (
+  columns: Array<HeatmapColumn>,
+  currentDate: Readonly<Date>,
+) => {
   const extent = getHeatmapTimeExtent(columns)
 
   if (!extent) {
@@ -216,7 +214,6 @@ const readHeatmapDisplayGridBase = (
   const today = copyCalendarDate(currentDate)
   today.setHours(0, 0, 0, 0)
 
-  // Non-empty per the `columns.length === 0` check above.
   const [firstColumn] = columns
 
   const gridStart = firstColumn === undefined ? undefined : getHeatmapColumnStartDate(firstColumn)
@@ -228,12 +225,15 @@ const readHeatmapDisplayGridBase = (
   return { extent, gridStart, today }
 }
 
-// GitHub-style window for a recognized calendar grid; undefined bounds (show all) otherwise.
-const resolveInferredHeatmapDisplayRange = (
+const resolveInferredHeatmapDisplayRange: (
   inferredStart: Readonly<Date> | undefined,
   extentEnd: Readonly<Date>,
   today: Readonly<Date>,
-): HeatmapDisplayRange => {
+) => HeatmapDisplayRange = (
+  inferredStart: Readonly<Date> | undefined,
+  extentEnd: Readonly<Date>,
+  today: Readonly<Date>,
+) => {
   if (inferredStart && extentEnd.getTime() >= today.getTime()) {
     return { end: today, start: inferredStart }
   }
@@ -241,10 +241,10 @@ const resolveInferredHeatmapDisplayRange = (
   return { end: null, start: null }
 }
 
-export const resolveHeatmapDisplayRange = (
+export const resolveHeatmapDisplayRange: (
   columns: Array<HeatmapColumn>,
   currentDate: Readonly<Date>,
-): HeatmapDisplayRange => {
+) => HeatmapDisplayRange = (columns: Array<HeatmapColumn>, currentDate: Readonly<Date>) => {
   if (columns.length === 0) {
     return { end: null, start: null }
   }

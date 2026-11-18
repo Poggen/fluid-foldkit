@@ -37,7 +37,7 @@ const componentItems = [
   label,
   value: label.replaceAll(/(?<lower>[a-z])(?<upper>[A-Z])/gu, '$<lower>-$<upper>').toLowerCase(),
 }))
-const selectionItems = (): ReadonlyArray<SelectOption> => {
+const selectionItems: () => ReadonlyArray<SelectOption> = () => {
   if (fruitPreset) {
     return ['Apple', 'Banana', 'Cherry', 'Mango'].map((label) => ({
       label,

@@ -1,13 +1,15 @@
 import type { CartesianLayer } from './layers'
 import type { ChartTooltipProps } from './tooltip-options'
 
-export function mergeTooltipCarriers<Row>(
+export const mergeTooltipCarriers: <Row>(
   children: ReadonlyArray<CartesianLayer<Row>>,
-): ChartTooltipProps<Row> | undefined {
+) => ChartTooltipProps<Row> | undefined = function mergeTooltipCarriers<Row>(
+  children: ReadonlyArray<CartesianLayer<Row>>,
+) {
   const tooltip = children.find((child) => child.kind === 'tooltip')?.props
 
   if (tooltip === undefined) {
-    return undefined
+    return undefined satisfies ChartTooltipProps<Row> | undefined
   }
 
   const dot = children.find((child) => child.kind === 'tooltipDot')?.props
@@ -42,5 +44,5 @@ export function mergeTooltipCarriers<Row>(
             : { indicatorFadeLength: indicator.fadeLength }),
         }),
     ...tooltip,
-  }
+  } satisfies ChartTooltipProps<Row> | undefined
 }

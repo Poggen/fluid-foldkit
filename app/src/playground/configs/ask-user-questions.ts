@@ -99,7 +99,9 @@ export const controls = [
   },
 ] satisfies ReadonlyArray<Control<keyof Configuration>>
 
-export const controlsFor = (configuration: Configuration): ReadonlyArray<Control> =>
+export const controlsFor: (configuration: Configuration) => ReadonlyArray<Control> = (
+  configuration: Configuration,
+) =>
   controls.map((control) => ({
     ...control,
     enabled:
@@ -110,7 +112,7 @@ export const controlsFor = (configuration: Configuration): ReadonlyArray<Control
           : true,
   }))
 
-// Question fixtures derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Question fixtures derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 export const AUQ_OPTION_QUESTIONS = [
   {
     id: 'role',

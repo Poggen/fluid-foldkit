@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
 import { Badge } from './badge.js'
 import type { BadgeColor } from './badge.js'

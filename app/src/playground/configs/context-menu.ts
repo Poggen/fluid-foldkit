@@ -27,4 +27,6 @@ export const controls = [
   { kind: 'toggle', prop: 'disabled', group: 'Properties', initial: defaults.disabled },
   { kind: 'toggle', prop: 'showShortcuts', group: 'Properties', initial: defaults.showShortcuts },
 ] satisfies ReadonlyArray<Control<keyof Configuration>>
-export const controlsFor = (_configuration: Configuration): ReadonlyArray<Control> => controls
+export const controlsFor: (_configuration: Configuration) => ReadonlyArray<Control> = (
+  _configuration: Configuration,
+) => controls

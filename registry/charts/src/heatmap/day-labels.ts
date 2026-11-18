@@ -9,7 +9,6 @@ export const HEATMAP_DAY_LABELS: readonly ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'F
   'Sat',
 ]
 
-/** First row of the grid — `0` = Sunday (GitHub default). */
 const WEEKDAY_SUNDAY = 0
 
 const WEEKDAY_MONDAY = 1
@@ -34,37 +33,35 @@ export type HeatmapWeekStartDay =
   | typeof WEEKDAY_FRIDAY
   | typeof WEEKDAY_SATURDAY
 
-/**
- * Day labels with row 0 aligned to `weekStartDay`.
- * @internal
- */
-export const getHeatmapDayLabels = (
+export const getHeatmapDayLabels: (weekStartDay?: HeatmapWeekStartDay) => ReadonlyArray<string> = (
   weekStartDay: HeatmapWeekStartDay = 0,
-): ReadonlyArray<string> => {
+) => {
   if (weekStartDay === 0) {
-    return HEATMAP_DAY_LABELS
+    return HEATMAP_DAY_LABELS satisfies ReadonlyArray<string>
   }
 
-  return [...HEATMAP_DAY_LABELS.slice(weekStartDay), ...HEATMAP_DAY_LABELS.slice(0, weekStartDay)]
+  return [
+    ...HEATMAP_DAY_LABELS.slice(weekStartDay),
+    ...HEATMAP_DAY_LABELS.slice(0, weekStartDay),
+  ] satisfies ReadonlyArray<string>
 }
 
 /** Weekday label format: `"full"` shows the abbreviation (Mon), `"initial"` its first letter (M). */
 export type HeatmapYAxisLabelFormat = 'full' | 'initial'
 
-/** @internal */
-export const formatHeatmapYAxisLabel = (
+export const formatHeatmapYAxisLabel: (
   label: string,
   labelFormat: HeatmapYAxisLabelFormat,
-): string => (labelFormat === 'initial' ? label.charAt(0) : label)
+) => string = (label: string, labelFormat: HeatmapYAxisLabelFormat) =>
+  labelFormat === 'initial' ? label.charAt(0) : label
 
 /** Which rows get a weekday label: `"all"`, `"odd"` rows or `"even"` rows. */
 export type HeatmapYAxisTickFilter = 'all' | 'odd' | 'even'
 
-/** @internal */
-export const shouldShowHeatmapYAxisTick = (
+export const shouldShowHeatmapYAxisTick: (
   row: number,
   tickFilter: HeatmapYAxisTickFilter,
-): boolean => {
+) => boolean = (row: number, tickFilter: HeatmapYAxisTickFilter) => {
   switch (tickFilter) {
     case 'all': {
       return true

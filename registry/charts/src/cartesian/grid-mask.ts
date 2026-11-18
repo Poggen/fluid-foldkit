@@ -3,26 +3,19 @@ import { inertHtml } from 'foldkit/html'
 import type { Margin } from './context-types'
 import type { GridGuideProps } from './grid-guides'
 
-type GridDirection = 'rows' | 'columns'
-
-export interface SourceGridMask {
-  readonly id: string
-  readonly className: string
-  readonly direction: GridDirection
-  readonly bounds: ChartBounds
-}
-
-// Encode each Unicode scalar or lone surrogate: unlike sanitizing, distinct caller IDs cannot collide.
-export const sourceGridClass = (id: string, direction: GridDirection): string =>
-  `bkm-grid-${Array.from(id, (unit) => unit.codePointAt(0)?.toString(16)).join('-')}-${direction}`
-
-export function sourceGridMasks(
+export const sourceGridMasks: (
   id: string,
   width: number,
   height: number,
   margin: Margin,
   grid: GridGuideProps | undefined,
-): ReadonlyArray<SourceGridMask> {
+) => ReadonlyArray<SourceGridMask> = function sourceGridMasks(
+  id: string,
+  width: number,
+  height: number,
+  margin: Margin,
+  grid: GridGuideProps | undefined,
+) {
   const bounds = {
     x: margin.left,
     y: margin.top,
@@ -47,11 +40,25 @@ export function sourceGridMasks(
   })
 }
 
-export const sourceGridCss = (masks: ReadonlyArray<SourceGridMask>): string =>
-  masks.map((mask) => `.${mask.className}{--bkm-grid-mask:url(#${mask.id})}`).join('')
+type GridDirection = 'rows' | 'columns'
 
-// Literal f7 packages/ui/src/charts/grid.tsx:180–201. The mask covers the plot,
-// including space beyond the last tick; a CSS fill-box mask clips that tick's stroke.
+export interface SourceGridMask {
+  readonly id: string
+  readonly className: string
+  readonly direction: GridDirection
+  readonly bounds: ChartBounds
+}
+
+export const sourceGridClass: (id: string, direction: GridDirection) => string = (
+  id: string,
+  direction: GridDirection,
+) =>
+  `bkm-grid-${Array.from(id, (unit) => unit.codePointAt(0)?.toString(16)).join('-')}-${direction}`
+
+export const sourceGridCss: (masks: ReadonlyArray<SourceGridMask>) => string = (
+  masks: ReadonlyArray<SourceGridMask>,
+) => masks.map((mask) => `.${mask.className}{--bkm-grid-mask:url(#${mask.id})}`).join('')
+
 const stops = [
   { offset: '0%', opacity: '0' },
   { offset: '10%', opacity: '1' },

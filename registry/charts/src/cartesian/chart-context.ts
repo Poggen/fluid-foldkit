@@ -6,6 +6,78 @@ import type { ChartSelection } from './tooltip-options'
 import type { Margin, RegisteredLineConfig, ReferenceAreaConfig } from './context-types'
 import { DEFAULT_Y_AXIS_ID } from './series'
 
+/** The registered parent supplies both slices and public-operation capabilities; no ambient owner is created. */
+export const ChartProvider: <Row, Action, Result>(props: {
+  readonly value: ChartViewContext<Row, Action>
+  readonly children: (context: ChartViewContext<Row, Action>) => Result
+}) => Result = function ChartProvider<Row, Action, Result>(props: {
+  readonly value: ChartViewContext<Row, Action>
+  readonly children: (context: ChartViewContext<Row, Action>) => Result
+}) {
+  return props.children(props.value) satisfies Result
+}
+
+export const useChartStable: <Row = object, Action = void>(
+  context?: ChartViewContext<Row, Action>,
+) => ChartStableContextValue<Row> = function useChartStable<Row = object, Action = void>(
+  context?: ChartViewContext<Row, Action>,
+) {
+  if (context === undefined) {
+    throw new Error(`useChartStable${missing}`)
+  }
+
+  return context.stable satisfies ChartStableContextValue<Row>
+}
+
+export const useChartHover: <Row = object, Action = void>(
+  context?: ChartViewContext<Row, Action>,
+) => ChartHoverContextValue<Row, Action> = function useChartHover<Row = object, Action = void>(
+  context?: ChartViewContext<Row, Action>,
+) {
+  if (context === undefined) {
+    throw new Error(`useChartHover${missing}`)
+  }
+
+  return context.hover satisfies ChartHoverContextValue<Row, Action>
+}
+
+export const useChart: <Row = object, Action = void>(
+  context?: ChartViewContext<Row, Action>,
+) => ChartContextValue<Row, Action> = function useChart<Row = object, Action = void>(
+  context?: ChartViewContext<Row, Action>,
+) {
+  return { ...useChartStable(context), ...useChartHover(context) } satisfies ChartContextValue<
+    Row,
+    Action
+  >
+}
+
+export const useYScale: <Row, Action>(
+  context: ChartViewContext<Row, Action>,
+  yAxisId?: string | number,
+) => ScaleLinear<number, number> = function useYScale<Row, Action>(
+  context: ChartViewContext<Row, Action>,
+  yAxisId?: string | number,
+) {
+  const { yScales, yScale } = useChartStable(context)
+  const id = yAxisId === undefined || yAxisId === '' ? DEFAULT_Y_AXIS_ID : String(yAxisId)
+
+  return (yScales[id] ?? yScale) satisfies ScaleLinear<number, number>
+}
+
+/** Source updater semantics: the renderer owns focus, so updater functions receive null. */
+export const tooltipSetter: <Row, Action>(
+  focusRow: (index: number | null) => Action,
+) => (next: TooltipUpdate<Row>) => Action = function tooltipSetter<Row, Action>(
+  focusRow: (index: number | null) => Action,
+) {
+  return ((update) => {
+    const value = Predicate.isFunction(update) ? update(null) : update
+
+    return focusRow(value === null ? null : value.index)
+  }) satisfies (next: TooltipUpdate<Row>) => Action
+}
+
 export const chartCssVars = {
   background: 'var(--chart-background)',
   foreground: 'var(--chart-foreground)',
@@ -110,63 +182,8 @@ export interface ChartViewContext<Row = object, Action = void> {
   readonly hover: ChartHoverContextValue<Row, Action>
 }
 
-/** The registered parent supplies both slices and public-operation capabilities; no ambient owner is created. */
-export function ChartProvider<Row, Action, Result>(props: {
-  readonly value: ChartViewContext<Row, Action>
-  readonly children: (context: ChartViewContext<Row, Action>) => Result
-}): Result {
-  return props.children(props.value)
-}
-
 const missing =
   ' must be used within a ChartProvider. Make sure your component is rendered inside the tooltip content or children of <LineChart> or <AreaChart>.'
-
-export function useChartStable<Row = object, Action = void>(
-  context?: ChartViewContext<Row, Action>,
-): ChartStableContextValue<Row> {
-  if (context === undefined) {
-    throw new Error(`useChartStable${missing}`)
-  }
-
-  return context.stable
-}
-
-export function useChartHover<Row = object, Action = void>(
-  context?: ChartViewContext<Row, Action>,
-): ChartHoverContextValue<Row, Action> {
-  if (context === undefined) {
-    throw new Error(`useChartHover${missing}`)
-  }
-
-  return context.hover
-}
-
-export function useChart<Row = object, Action = void>(
-  context?: ChartViewContext<Row, Action>,
-): ChartContextValue<Row, Action> {
-  return { ...useChartStable(context), ...useChartHover(context) }
-}
-
-export function useYScale<Row, Action>(
-  context: ChartViewContext<Row, Action>,
-  yAxisId?: string | number,
-): ScaleLinear<number, number> {
-  const { yScales, yScale } = useChartStable(context)
-  const id = yAxisId === undefined || yAxisId === '' ? DEFAULT_Y_AXIS_ID : String(yAxisId)
-
-  return yScales[id] ?? yScale
-}
-
-/** Source updater semantics: the renderer owns focus, so updater functions receive null. */
-export function tooltipSetter<Row, Action>(
-  focusRow: (index: number | null) => Action,
-): (next: TooltipUpdate<Row>) => Action {
-  return (update) => {
-    const value = Predicate.isFunction(update) ? update(null) : update
-
-    return focusRow(value === null ? null : value.index)
-  }
-}
 
 export interface ChartContextCapabilities<Row, Message> {
   readonly focusRow: (index: number | null) => Message

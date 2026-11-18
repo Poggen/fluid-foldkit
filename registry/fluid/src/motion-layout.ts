@@ -28,6 +28,37 @@ export function createLayoutMotionScope(id: string) {
     transactions.clear()
     adapter.dispose()
   }
+  const rootCallback: (vnode: Html) => Html = (vnode: Html) => {
+    if (vnode === null) {
+      return null satisfies Html
+    }
+
+    const previous = vnode.data?.hook
+
+    return {
+      ...vnode,
+      data: {
+        ...vnode.data,
+        hook: {
+          ...previous,
+          insert(node) {
+            previous?.insert?.(node)
+
+            if (!(node.elm instanceof HTMLElement)) {
+              throw new Error('Layout root requires an HTMLElement')
+            }
+
+            root = node.elm
+          },
+          destroy(node) {
+            dispose()
+            root = undefined
+            previous?.destroy?.(node)
+          },
+        },
+      },
+    } satisfies Html
+  }
 
   return {
     node: engine.node,
@@ -58,8 +89,6 @@ export function createLayoutMotionScope(id: string) {
         }
 
         adapter.flush()
-        // Physical presence retires through onExitComplete, not a group Promise:
-        // Motion's interrupted animations are not required to resolve finished.
       }),
     cancel: (revision: number) =>
       Effect.sync(() => {
@@ -69,36 +98,6 @@ export function createLayoutMotionScope(id: string) {
 
         adapter.flush()
       }),
-    root(vnode: Html): Html {
-      if (vnode === null) {
-        return null
-      }
-
-      const previous = vnode.data?.hook
-
-      return {
-        ...vnode,
-        data: {
-          ...vnode.data,
-          hook: {
-            ...previous,
-            insert(node) {
-              previous?.insert?.(node)
-
-              if (!(node.elm instanceof HTMLElement)) {
-                throw new Error('Layout root requires an HTMLElement')
-              }
-
-              root = node.elm
-            },
-            destroy(node) {
-              dispose()
-              root = undefined
-              previous?.destroy?.(node)
-            },
-          },
-        },
-      }
-    },
+    root: rootCallback,
   }
 }

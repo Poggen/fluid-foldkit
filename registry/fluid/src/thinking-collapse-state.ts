@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { modifyFields } from 'foldkit/struct'
 import { Option, Schema, Number } from 'effect'
 import { defineInMessageUnion, defineMessageUnion } from 'foldkit/message'

@@ -5,10 +5,10 @@ import type { EffectiveChange } from './domain.js'
 import { GroupVisual, visualOwner } from './group-visual.js'
 import type { PresentationModel } from './state.js'
 
-export const reconcileGroupVisuals = (
+export const reconcileGroupVisuals: (
   model: PresentationModel,
   changes: ReadonlyArray<EffectiveChange>,
-): PresentationModel => {
+) => PresentationModel = (model: PresentationModel, changes: ReadonlyArray<EffectiveChange>) => {
   let updated = model
   for (const { key, open } of changes) {
     const row = updated.rows[key]

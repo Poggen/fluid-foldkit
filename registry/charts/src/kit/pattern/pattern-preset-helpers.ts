@@ -1,5 +1,3 @@
-// Pattern-preset data: ids, options, tile math, and circle/line predicates.
-// Split from the pattern-preset barrel so that barrel re-exports components only.
 import { DEFAULT_PATTERN_SCALE } from './pattern-geometry'
 
 const PATTERN_PRESET_IDS: readonly [
@@ -43,12 +41,11 @@ interface PatternPresetOptions {
   readonly tileBackground?: string
 }
 
-/** @internal */
-const isCirclePattern = (preset: PatternPresetId): boolean =>
+const isCirclePattern: (preset: PatternPresetId) => boolean = (preset: PatternPresetId) =>
   preset === 'circles' || preset === 'dots'
 
-/** @internal */
-const isCirclesPattern = (preset: PatternPresetId): boolean => isCirclePattern(preset)
+const isCirclesPattern: (preset: PatternPresetId) => boolean = (preset: PatternPresetId) =>
+  isCirclePattern(preset)
 
 interface PatternTileSize {
   readonly width: number
@@ -56,11 +53,10 @@ interface PatternTileSize {
   readonly strokeWidth: number
 }
 
-/** @internal */
-const patternPresetTileSize = (
+const patternPresetTileSize: (preset: PatternPresetId, scale?: number) => PatternTileSize = (
   preset: PatternPresetId,
   scale = DEFAULT_PATTERN_SCALE,
-): PatternTileSize => {
+) => {
   let base = { height: 6, strokeWidth: 1, width: 6 }
 
   if (preset === 'dots') {
@@ -70,14 +66,13 @@ const patternPresetTileSize = (
   } else if (preset === 'circles') {
     base = { height: 6, strokeWidth: 1, width: 6 }
   } else {
-    // Remaining presets reuse the default 6x6 tile.
   }
 
   return {
     height: base.height * scale,
     strokeWidth: base.strokeWidth * scale,
     width: base.width * scale,
-  }
+  } satisfies PatternTileSize
 }
 
 interface PatternTileCommon {

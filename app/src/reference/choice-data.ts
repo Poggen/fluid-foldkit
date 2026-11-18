@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 export const FRAMEWORKS = [
   { value: 'next', label: 'Next.js' },
   { value: 'sveltekit', label: 'SvelteKit' },

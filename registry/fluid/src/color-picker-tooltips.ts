@@ -30,10 +30,10 @@ export interface ColorPickerSwatch {
   readonly label: string | undefined
 }
 
-export const colorPickerSwatches = (
+export const colorPickerSwatches: (
   id: string,
   swatches: ReadonlyArray<ColorSwatchItem>,
-): ReadonlyArray<ColorPickerSwatch> =>
+) => ReadonlyArray<ColorPickerSwatch> = (id: string, swatches: ReadonlyArray<ColorSwatchItem>) =>
   swatches.map((swatch, index) => ({
     index,
     key: `${id}-tooltip-swatch-${index}`,

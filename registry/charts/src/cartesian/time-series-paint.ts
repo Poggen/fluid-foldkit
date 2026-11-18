@@ -16,13 +16,19 @@ import type { bandSpring } from './band-spring'
 import { toDate } from './series'
 import { markerRevealDuration } from './reveal-transition'
 
-export function timeSeriesResourceCss<Row>(
+export const timeSeriesResourceCss: <Row>(
+  id: string,
+  next: CartesianSnapshot<Row>,
+  props: TimeSeriesProps<Row>,
+  tooltip: Pick<ChartTooltipProps, 'showDatePill'> | undefined,
+  focusTicks?: boolean,
+) => string = function <Row>(
   id: string,
   next: CartesianSnapshot<Row>,
   props: TimeSeriesProps<Row>,
   tooltip: Pick<ChartTooltipProps, 'showDatePill'> | undefined,
   focusTicks = false,
-): string {
+) {
   const scope = cartesianCssScope(id).selector
 
   const [first, last] = next.domains.x
@@ -54,10 +60,9 @@ export function timeSeriesResourceCss<Row>(
     })
     .join('')
 
-  return (
-    (focusTicks
-      ? `${scope}{--bkm-marker-stagger-ms:${markerRevealDuration(props.enterTransition, props.animationDuration ?? 1100)}ms}`
-      : '') +
+  return ((focusTicks
+    ? `${scope}{--bkm-marker-stagger-ms:${markerRevealDuration(props.enterTransition, props.animationDuration ?? 1100)}ms}`
+    : '') +
     (next.resourceCss ?? '') +
     hoverStaticCss(scope, next.hover) +
     (focusTicks ? '' : loadingCss(scope, next.series)) +
@@ -68,18 +73,120 @@ export function timeSeriesResourceCss<Row>(
           propsFor(props.children, 'xAxis')[0]?.tickerHalfWidth ?? 50,
           focusTicks ? 'focus' : 'pill',
         )
-      : '')
-  )
+      : '')) satisfies string
 }
 
-export function paintTimeSeriesGeometry(
+const writeFocusCenter: <Row>(
+  element: HTMLElement,
+  snapshot: CartesianSnapshot<Row>,
+  activeRow: Row | undefined,
+  fallback: number,
+) => void = function writeFocusCenter<Row>(
+  element: HTMLElement,
+  snapshot: CartesianSnapshot<Row>,
+  activeRow: Row | undefined,
+  fallback: number,
+) {
+  const candle = snapshot.candleGeometry
+
+  if (candle === undefined) {
+    element.style.setProperty('--bkm-hx', fallback.toFixed(2))
+  } else {
+    const center =
+      activeRow === undefined ? undefined : candle.centers[snapshot.rows.indexOf(activeRow)]
+
+    if (center === undefined) {
+      element.style.removeProperty('--bkm-hx')
+    } else {
+      element.style.setProperty('--bkm-hx', String(center))
+    }
+  }
+}
+
+export const paintTimeSeriesFocus: <Row extends Readonly<Record<string, unknown>>>(
+  argument0: TimeSeriesFocusPaint<Row>,
+) => boolean = function paintTimeSeriesFocus<Row extends Readonly<Record<string, unknown>>>({
+  element,
+  state,
+  data,
+  focusedIndex,
+  props,
+  snapshot,
+  overlay,
+  band,
+  bandActive,
+}: TimeSeriesFocusPaint<Row>) {
+  const row = focusedIndex === null ? undefined : data[focusedIndex]
+  const active = row !== undefined && state.revealReady && state.phase === 'ready'
+  const activeRow = active ? row : undefined
+  const x = props.x ?? ((item: Row) => toDate(item[props.xDataKey ?? 'date']))
+
+  overlay.focus(activeRow === undefined ? null : x(activeRow).getTime(), activeRow ?? null)
+
+  if (active && snapshot?.hoverEnabled !== false) {
+    element.dataset.bkmHover = ''
+  } else {
+    delete element.dataset.bkmHover
+  }
+
+  const dragging = Option.getOrNull(state.selection)?.active === true
+
+  if (dragging) {
+    element.dataset.bkmDrag = ''
+  } else {
+    delete element.dataset.bkmDrag
+  }
+
+  if (snapshot === undefined) {
+    delete element.dataset.bkmSegon
+
+    return bandActive satisfies boolean
+  }
+
+  const range = focusBandRange(snapshot, state.selection, activeRow, x)
+
+  if (range.dragging) {
+    const lo = Math.min(range.a, range.b)
+    const hi = Math.max(range.a, range.b)
+
+    element.style.setProperty('--bkm-hl0', lo.toFixed(2))
+    element.style.setProperty('--bkm-hl1', hi.toFixed(2))
+
+    if (hi - lo > 5) {
+      element.dataset.bkmSegon = ''
+    } else {
+      delete element.dataset.bkmSegon
+    }
+  } else {
+    delete element.dataset.bkmSegon
+  }
+
+  band.set(Math.min(range.a, range.b), Math.max(range.a, range.b), !bandActive)
+
+  if (active) {
+    writeFocusCenter(element, snapshot, activeRow, range.px(range.time))
+
+    writePillSameLabel(element, snapshot.tickTimes, range.time, range.px)
+  }
+
+  return (active || range.dragging) satisfies boolean
+}
+
+export const paintTimeSeriesGeometry: (
   element: HTMLElement,
   next: Pick<
     CartesianSnapshot<never>,
     'resourceAttrs' | 'resourceStyle' | 'innerWidth' | 'margin' | 'gridAttrs'
   >,
   duration: number,
-): Margin {
+) => Margin = function paintTimeSeriesGeometry(
+  element: HTMLElement,
+  next: Pick<
+    CartesianSnapshot<never>,
+    'resourceAttrs' | 'resourceStyle' | 'innerWidth' | 'margin' | 'gridAttrs'
+  >,
+  duration: number,
+) {
   for (const [name, value] of Object.entries(next.resourceAttrs ?? {})) {
     element.setAttribute(name, value)
   }
@@ -161,94 +268,4 @@ interface TimeSeriesFocusPaint<Row> {
   readonly overlay: Pick<HoverOverlay<Row>, 'focus'>
   readonly band: Pick<ReturnType<typeof bandSpring>, 'set'>
   readonly bandActive: boolean
-}
-
-function writeFocusCenter<Row>(
-  element: HTMLElement,
-  snapshot: CartesianSnapshot<Row>,
-  activeRow: Row | undefined,
-  fallback: number,
-): void {
-  const candle = snapshot.candleGeometry
-
-  if (candle === undefined) {
-    element.style.setProperty('--bkm-hx', fallback.toFixed(2))
-  } else {
-    const center =
-      activeRow === undefined ? undefined : candle.centers[snapshot.rows.indexOf(activeRow)]
-
-    if (center === undefined) {
-      element.style.removeProperty('--bkm-hx')
-    } else {
-      element.style.setProperty('--bkm-hx', String(center))
-    }
-  }
-}
-
-export function paintTimeSeriesFocus<Row extends Readonly<Record<string, unknown>>>({
-  element,
-  state,
-  data,
-  focusedIndex,
-  props,
-  snapshot,
-  overlay,
-  band,
-  bandActive,
-}: TimeSeriesFocusPaint<Row>): boolean {
-  const row = focusedIndex === null ? undefined : data[focusedIndex]
-  const active = row !== undefined && state.revealReady && state.phase === 'ready'
-  const activeRow = active ? row : undefined
-  const x = props.x ?? ((item: Row) => toDate(item[props.xDataKey ?? 'date']))
-
-  overlay.focus(activeRow === undefined ? null : x(activeRow).getTime(), activeRow ?? null)
-
-  if (active && snapshot?.hoverEnabled !== false) {
-    element.dataset.bkmHover = ''
-  } else {
-    delete element.dataset.bkmHover
-  }
-
-  const dragging = Option.getOrNull(state.selection)?.active === true
-
-  if (dragging) {
-    element.dataset.bkmDrag = ''
-  } else {
-    delete element.dataset.bkmDrag
-  }
-
-  if (snapshot === undefined) {
-    delete element.dataset.bkmSegon
-
-    return bandActive
-  }
-
-  const range = focusBandRange(snapshot, state.selection, activeRow, x)
-
-  // Physical projection of the existing accepted selection, never another drag owner.
-  if (range.dragging) {
-    const lo = Math.min(range.a, range.b)
-    const hi = Math.max(range.a, range.b)
-
-    element.style.setProperty('--bkm-hl0', lo.toFixed(2))
-    element.style.setProperty('--bkm-hl1', hi.toFixed(2))
-
-    if (hi - lo > 5) {
-      element.dataset.bkmSegon = ''
-    } else {
-      delete element.dataset.bkmSegon
-    }
-  } else {
-    delete element.dataset.bkmSegon
-  }
-
-  band.set(Math.min(range.a, range.b), Math.max(range.a, range.b), !bandActive)
-
-  if (active) {
-    writeFocusCenter(element, snapshot, activeRow, range.px(range.time))
-
-    writePillSameLabel(element, snapshot.tickTimes, range.time, range.px)
-  }
-
-  return active || range.dragging
 }

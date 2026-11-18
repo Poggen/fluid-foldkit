@@ -1,6 +1,207 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { modifyFields } from 'foldkit/struct'
 import { Option, Predicate, Schema } from 'effect'
+
+const sliderAppearance: (config: SliderConfig) => typeof SliderAppearance.Type =
+  function sliderAppearance(config: SliderConfig) {
+    return {
+      showSteps: config.showSteps ?? false,
+      showValue: config.showValue ?? true,
+      valuePosition: config.valuePosition ?? 'left',
+      trackClassName: config.trackClassName ?? '',
+      trackStyle: config.trackStyle ?? {},
+      fillClassName: config.fillClassName ?? '',
+      fillStyle: config.fillStyle ?? {},
+      hideFill: config.hideFill ?? false,
+      thumbColor: config.thumbColor ?? 'white',
+      thumbBorderColor: config.thumbBorderColor ?? '',
+    }
+  }
+
+export const sliderSettings: (config: SliderConfig) => typeof SliderSettings.Type =
+  function sliderSettings(config: SliderConfig) {
+    const list = [...new Set(config.steps)].toSorted((a, b) => a - b)
+    const steps = list.length > 1 ? list : []
+
+    const compact =
+      config.size === 'compact' ||
+      Array.isArray(config.value) ||
+      [
+        config.steps,
+        config.showSteps,
+        config.showValue,
+        config.valuePosition,
+        config.trackClassName,
+        config.trackStyle,
+        config.fillClassName,
+        config.fillStyle,
+        config.hideFill,
+        config.thumbColor,
+        config.thumbBorderColor,
+      ].some((value) => value !== undefined)
+
+    return {
+      value: config.value,
+      min: steps[0] ?? config.min ?? 0,
+      max: steps.at(-1) ?? config.max ?? 100,
+      step: config.step ?? 1,
+      steps,
+      compact,
+      variant: config.variant ?? 'pips',
+      disabled: config.disabled ?? false,
+      appearance: sliderAppearance(config),
+    }
+  }
+
+export const sliderValues: (value: SliderValue) => ReadonlyArray<number> = function sliderValues(
+  value: SliderValue,
+) {
+  return Predicate.isNumber(value) ? [value] : value
+}
+
+export const nearestSliderStep: (value: number, steps: ReadonlyArray<number>) => number =
+  function nearestSliderStep(value: number, steps: ReadonlyArray<number>) {
+    let index = 0
+
+    for (let i = 1; i < steps.length; i += 1) {
+      const candidate = steps[i]
+      const current = steps[index]
+
+      if (
+        candidate !== undefined &&
+        current !== undefined &&
+        Math.abs(candidate - value) < Math.abs(current - value)
+      ) {
+        index = i
+      }
+    }
+
+    return index
+  }
+
+export const sliderSnap: (value: number, settings: typeof SliderSettings.Type) => number =
+  function sliderSnap(value: number, settings: typeof SliderSettings.Type) {
+    if (settings.steps.length > 1) {
+      return settings.steps[nearestSliderStep(value, settings.steps)] ?? settings.min
+    }
+
+    return Math.max(
+      settings.min,
+      Math.min(
+        settings.max,
+        Math.round((value - settings.min) / settings.step) * settings.step + settings.min,
+      ),
+    )
+  }
+
+export const sliderPixel: (
+  value: number,
+  settings: typeof SliderSettings.Type,
+  width: number,
+) => number = function sliderPixel(
+  value: number,
+  settings: typeof SliderSettings.Type,
+  width: number,
+) {
+  return settings.max === settings.min
+    ? 0
+    : ((value - settings.min) / (settings.max - settings.min)) * (width - 20)
+}
+
+export const sliderFromPixel: (
+  pixel: number,
+  settings: typeof SliderSettings.Type,
+  width: number,
+) => number = function sliderFromPixel(
+  pixel: number,
+  settings: typeof SliderSettings.Type,
+  width: number,
+) {
+  return width <= 20
+    ? settings.min
+    : sliderSnap((pixel / (width - 20)) * (settings.max - settings.min) + settings.min, settings)
+}
+
+export const sliderReplace: (value: SliderValue, index: number, next: number) => SliderValue =
+  function sliderReplace(value: SliderValue, index: number, next: number) {
+    if (Predicate.isNumber(value)) {
+      return next
+    }
+
+    return index === 0 ? [next, value[1]] : [value[0], next]
+  }
+
+export const sliderRangeClamp: (
+  pixel: number,
+  index: number,
+  range: boolean,
+  x0: number,
+  x1: number,
+) => number = function sliderRangeClamp(
+  pixel: number,
+  index: number,
+  range: boolean,
+  x0: number,
+  x1: number,
+) {
+  if (!range) {
+    return pixel
+  }
+
+  return index === 0 ? Math.min(pixel, x1 - 10) : Math.max(pixel, x0 + 10)
+}
+
+export const sliderTargets: (model: SliderModel) => SliderModel = function sliderTargets(
+  model: SliderModel,
+) {
+  const { settings } = model
+  const values = sliderValues(settings.value)
+
+  const minimumOffset = settings.variant === 'pips' ? 8 : 17
+
+  return modifyFields(model, {
+    x0: () => sliderPixel(values[0] ?? settings.min, settings, model.width),
+    x1: () => sliderPixel(values[1] ?? settings.min, settings, model.width),
+    fill: () =>
+      settings.max === settings.min
+        ? 0
+        : Math.max(
+            0,
+            Math.min(
+              1,
+              ((values[0] ?? settings.min) - settings.min) / (settings.max - settings.min),
+            ),
+          ),
+    zero: () => (values[0] === settings.min ? minimumOffset : 0),
+  })
+}
+
+export const sliderInitial: (config: SliderConfig) => SliderModel = function sliderInitial(
+  config: SliderConfig,
+) {
+  return sliderTargets({
+    id: config.id,
+    settings: sliderSettings(config),
+    width: 0,
+    ready: false,
+    hovered: false,
+    hoverDelayDone: false,
+    generation: 0,
+    drag: 'idle',
+    activeThumb: 0,
+    dragTargetValue: sliderValues(config.value)[0] ?? 0,
+    focusedThumb: Option.none(),
+    editingIndex: Option.none(),
+    draft: '',
+    preview: Option.none(),
+    x0: 0,
+    x1: 0,
+    fill: 0,
+    zero: 0,
+    immediate: true,
+    revision: 0,
+  })
+}
 
 export const SliderValue = Schema.Union([
   Schema.Number,
@@ -60,134 +261,6 @@ export const SliderConfig = Schema.Struct({
 
 export type SliderConfig = typeof SliderConfig.Type
 
-function sliderAppearance(config: SliderConfig): typeof SliderAppearance.Type {
-  return {
-    showSteps: config.showSteps ?? false,
-    showValue: config.showValue ?? true,
-    valuePosition: config.valuePosition ?? 'left',
-    trackClassName: config.trackClassName ?? '',
-    trackStyle: config.trackStyle ?? {},
-    fillClassName: config.fillClassName ?? '',
-    fillStyle: config.fillStyle ?? {},
-    hideFill: config.hideFill ?? false,
-    thumbColor: config.thumbColor ?? 'white',
-    thumbBorderColor: config.thumbBorderColor ?? '',
-  }
-}
-
-export function sliderSettings(config: SliderConfig): typeof SliderSettings.Type {
-  const list = [...new Set(config.steps)].toSorted((a, b) => a - b)
-  const steps = list.length > 1 ? list : []
-
-  const compact =
-    config.size === 'compact' ||
-    Array.isArray(config.value) ||
-    [
-      config.steps,
-      config.showSteps,
-      config.showValue,
-      config.valuePosition,
-      config.trackClassName,
-      config.trackStyle,
-      config.fillClassName,
-      config.fillStyle,
-      config.hideFill,
-      config.thumbColor,
-      config.thumbBorderColor,
-    ].some((value) => value !== undefined)
-
-  return {
-    value: config.value,
-    min: steps[0] ?? config.min ?? 0,
-    max: steps.at(-1) ?? config.max ?? 100,
-    step: config.step ?? 1,
-    steps,
-    compact,
-    variant: config.variant ?? 'pips',
-    disabled: config.disabled ?? false,
-    appearance: sliderAppearance(config),
-  }
-}
-
-export function sliderValues(value: SliderValue): ReadonlyArray<number> {
-  return Predicate.isNumber(value) ? [value] : value
-}
-
-export function nearestSliderStep(value: number, steps: ReadonlyArray<number>): number {
-  let index = 0
-
-  for (let i = 1; i < steps.length; i += 1) {
-    const candidate = steps[i]
-    const current = steps[index]
-
-    if (
-      candidate !== undefined &&
-      current !== undefined &&
-      Math.abs(candidate - value) < Math.abs(current - value)
-    ) {
-      index = i
-    }
-  }
-
-  return index
-}
-
-export function sliderSnap(value: number, settings: typeof SliderSettings.Type): number {
-  if (settings.steps.length > 1) {
-    return settings.steps[nearestSliderStep(value, settings.steps)] ?? settings.min
-  }
-
-  return Math.max(
-    settings.min,
-    Math.min(
-      settings.max,
-      Math.round((value - settings.min) / settings.step) * settings.step + settings.min,
-    ),
-  )
-}
-
-export function sliderPixel(
-  value: number,
-  settings: typeof SliderSettings.Type,
-  width: number,
-): number {
-  return settings.max === settings.min
-    ? 0
-    : ((value - settings.min) / (settings.max - settings.min)) * (width - 20)
-}
-
-export function sliderFromPixel(
-  pixel: number,
-  settings: typeof SliderSettings.Type,
-  width: number,
-): number {
-  return width <= 20
-    ? settings.min
-    : sliderSnap((pixel / (width - 20)) * (settings.max - settings.min) + settings.min, settings)
-}
-
-export function sliderReplace(value: SliderValue, index: number, next: number): SliderValue {
-  if (Predicate.isNumber(value)) {
-    return next
-  }
-
-  return index === 0 ? [next, value[1]] : [value[0], next]
-}
-
-export function sliderRangeClamp(
-  pixel: number,
-  index: number,
-  range: boolean,
-  x0: number,
-  x1: number,
-): number {
-  if (!range) {
-    return pixel
-  }
-
-  return index === 0 ? Math.min(pixel, x1 - 10) : Math.max(pixel, x0 + 10)
-}
-
 export const SliderPreview = Schema.Struct({
   left: Schema.Number,
   width: Schema.Number,
@@ -219,51 +292,3 @@ export const SliderModel = Schema.Struct({
 })
 
 export type SliderModel = typeof SliderModel.Type
-
-export function sliderTargets(model: SliderModel): SliderModel {
-  const { settings } = model
-  const values = sliderValues(settings.value)
-
-  const minimumOffset = settings.variant === 'pips' ? 8 : 17
-
-  return modifyFields(model, {
-    x0: () => sliderPixel(values[0] ?? settings.min, settings, model.width),
-    x1: () => sliderPixel(values[1] ?? settings.min, settings, model.width),
-    fill: () =>
-      settings.max === settings.min
-        ? 0
-        : Math.max(
-            0,
-            Math.min(
-              1,
-              ((values[0] ?? settings.min) - settings.min) / (settings.max - settings.min),
-            ),
-          ),
-    zero: () => (values[0] === settings.min ? minimumOffset : 0),
-  })
-}
-
-export function sliderInitial(config: SliderConfig): SliderModel {
-  return sliderTargets({
-    id: config.id,
-    settings: sliderSettings(config),
-    width: 0,
-    ready: false,
-    hovered: false,
-    hoverDelayDone: false,
-    generation: 0,
-    drag: 'idle',
-    activeThumb: 0,
-    dragTargetValue: sliderValues(config.value)[0] ?? 0,
-    focusedThumb: Option.none(),
-    editingIndex: Option.none(),
-    draft: '',
-    preview: Option.none(),
-    x0: 0,
-    x1: 0,
-    fill: 0,
-    zero: 0,
-    immediate: true,
-    revision: 0,
-  })
-}

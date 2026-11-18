@@ -20,7 +20,7 @@ export function pillFontMeasurement(element: HTMLElement, limit = 256) {
     commit: () => {
       unknown = context === null || overflow
     },
-    measure: (text: string): number | null => {
+    measure: (text: string) => {
       if (context === null) {
         return null
       }

@@ -1,5 +1,5 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import {
   SELECTION_SNAP_EVENT,
   SelectionSnapGeometry,
@@ -81,7 +81,7 @@ export const SelectionBackgroundsBlock = Block.make('SelectionBackgrounds', {
 const Events =
   Data.taggedEnum<Extract<Attribute<typeof Message.Type>, { readonly _tag: 'OnCustomEvent' }>>()
 
-const clockPlan = (model: Model): SelectionClockPlan => ({
+const clockPlan: (model: Model) => SelectionClockPlan = (model: Model) => ({
   deadlines: model.boundaries
     .filter((boundary) => boundary.phase !== 'commit')
     .map((boundary) => ({
@@ -345,12 +345,17 @@ export interface SelectionBackgroundsViewInputs {
   ) => Html
 }
 
-const presentationShape = (
+const presentationShape: (
   shape: typeof SelectionShape.Type,
   radius: number | undefined,
-): typeof SelectionShape.Type => {
+) => typeof SelectionShape.Type = (
+  shape: typeof SelectionShape.Type,
+  radius: number | undefined,
+) => {
   if (radius === undefined) return shape
-  const corners = (radii: SelectionShape['radii']): SelectionShape['radii'] => [
+  const corners: (radii: SelectionShape['radii']) => SelectionShape['radii'] = (
+    radii: SelectionShape['radii'],
+  ) => [
     radii[0] === 0 ? 0 : radius,
     radii[1] === 0 ? 0 : radius,
     radii[2] === 0 ? 0 : radius,
@@ -448,9 +453,10 @@ const corners = (radii: SelectionShape['radii']) => ({
   borderBottomLeftRadius: radii[3],
 })
 
-export const selectionBackgroundAnimation =
-  (motion: TargetMotionScope): SelectionBackgroundsViewInputs['animate'] =>
-  (node, shape, present) => {
+export const selectionBackgroundAnimation: (
+  motion: TargetMotionScope,
+) => SelectionBackgroundsViewInputs['animate'] =
+  (motion: TargetMotionScope) => (node, shape, present) => {
     const corner = shape.delayCorners
       ? { ...mergeSpring, delay: shape.cornerDelay ?? cornerDelay }
       : mergeSpring
@@ -458,7 +464,6 @@ export const selectionBackgroundAnimation =
     const opacity = shape.opacity ?? 1
 
     return motion.node(node, {
-      // Mirrored frames need committed values; compositor-only interpolation has no DOM writes.
       ...(shape.fluidPresentation?.mirrored ? { onUpdate: () => {} } : {}),
       present,
       ...(shape.snap === undefined ? {} : { resource: selectionSnapResource(shape.snap) }),

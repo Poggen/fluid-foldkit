@@ -70,7 +70,9 @@ it('toolbar loading keeps the compact spinner and native busy control semantics'
   expect(button?.sel).toBe('button')
   expect(button?.data?.props).toMatchObject({ type: 'button', disabled: true })
   expect(button?.data?.attrs).toMatchObject({ 'aria-label': 'New', 'aria-busy': 'true' })
-  const descendants = (node: typeof button): ReadonlyArray<NonNullable<typeof button>> =>
+  const descendants: (node: typeof button) => ReadonlyArray<NonNullable<typeof button>> = (
+    node: typeof button,
+  ) =>
     node === null
       ? []
       : [

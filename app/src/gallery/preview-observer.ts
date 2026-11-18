@@ -47,7 +47,6 @@ export const observePreviews = (
               ? measurement.height
               : undefined
           if (card.dataset.deferred === 'true' && height !== undefined) {
-            // Match the preceding visit without retaining the retired component's state.
             stage.style.minHeight = `${height}px`
             content.style.minHeight = '0px'
             projected.set(stage, { width: card.offsetWidth, content })

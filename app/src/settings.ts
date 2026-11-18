@@ -21,21 +21,31 @@ export type Settings = typeof Settings.Type
 export const ResolvedTheme = Schema.Literals(['light', 'dark'])
 export type ResolvedTheme = typeof ResolvedTheme.Type
 export type ResolvedSettings = Omit<Settings, 'theme'> & { readonly theme: ResolvedTheme }
-const lightSettings = memoizeObject((settings: Settings): ResolvedSettings => ({
-  ...settings,
-  theme: 'light',
-}))
-const darkSettings = memoizeObject((settings: Settings): ResolvedSettings => ({
-  ...settings,
-  theme: 'dark',
-}))
-export const resolveTheme = (settings: Settings, systemTheme: ResolvedTheme): ResolvedTheme =>
-  settings.theme === 'system' ? systemTheme : settings.theme
-export const resolveSettings = (
+const lightSettings = memoizeObject(
+  (settings: Settings) =>
+    ({
+      ...settings,
+      theme: 'light',
+    }) satisfies ResolvedSettings,
+)
+const darkSettings = memoizeObject(
+  (settings: Settings) =>
+    ({
+      ...settings,
+      theme: 'dark',
+    }) satisfies ResolvedSettings,
+)
+export const resolveTheme: (settings: Settings, systemTheme: ResolvedTheme) => ResolvedTheme = (
   settings: Settings,
-  systemTheme: ResolvedTheme = 'light',
-): ResolvedSettings =>
-  resolveTheme(settings, systemTheme) === 'dark' ? darkSettings(settings) : lightSettings(settings)
+  systemTheme: ResolvedTheme,
+) => (settings.theme === 'system' ? systemTheme : settings.theme)
+export const resolveSettings: (
+  settings: Settings,
+  systemTheme?: ResolvedTheme,
+) => ResolvedSettings = (settings: Settings, systemTheme: ResolvedTheme = 'light') =>
+  (resolveTheme(settings, systemTheme) === 'dark'
+    ? darkSettings(settings)
+    : lightSettings(settings)) satisfies ResolvedSettings
 export const ComponentPresentation = Schema.Struct({
   theme: ResolvedTheme,
   accent: Settings.fields.accent,
@@ -44,16 +54,17 @@ export const ComponentPresentation = Schema.Struct({
   hover: Settings.fields.hover,
 })
 export type ComponentPresentation = typeof ComponentPresentation.Type
-export const componentPresentation = (
+export const componentPresentation: (
   settings: Settings,
-  systemTheme: ResolvedTheme = 'light',
-): ComponentPresentation => ({
-  theme: resolveTheme(settings, systemTheme),
-  accent: settings.accent,
-  shape: settings.shape,
-  size: settings.size,
-  hover: settings.hover,
-})
+  systemTheme?: ResolvedTheme,
+) => ComponentPresentation = (settings: Settings, systemTheme: ResolvedTheme = 'light') =>
+  ({
+    theme: resolveTheme(settings, systemTheme),
+    accent: settings.accent,
+    shape: settings.shape,
+    size: settings.size,
+    hover: settings.hover,
+  }) satisfies ComponentPresentation
 export const SettingSelection = Schema.Union([
   Schema.TaggedStruct('Theme', { value: Settings.fields.theme }),
   Schema.TaggedStruct('Accent', { value: Settings.fields.accent }),
@@ -65,7 +76,10 @@ export const SettingSelection = Schema.Union([
   Schema.TaggedStruct('Hover', { value: Settings.fields.hover }),
 ])
 export type SettingSelection = typeof SettingSelection.Type
-export const applySelection = (settings: Settings, selection: SettingSelection): Settings =>
+export const applySelection: (settings: Settings, selection: SettingSelection) => Settings = (
+  settings: Settings,
+  selection: SettingSelection,
+) =>
   Match.value(selection).pipe(
     Match.withReturnType<Settings>(),
     Match.tag('Theme', ({ value }) => ({ ...settings, theme: value })),
@@ -104,11 +118,15 @@ export const accentName = (color: string, theme: Settings['theme']) =>
   accentPresets.find(
     (preset) => accentColor(preset.value, theme).toLowerCase() === color.toLowerCase(),
   )?.value ?? color
-export const settingsFromUrl = (url: string): Settings => {
+export const settingsFromUrl: (url: string) => Settings = (url: string) => {
   const query = new URL(url).searchParams
-  const read = <A>(key: string, schema: Schema.Schema<A>, fallback: A): A => {
+  const read: <A>(key: string, schema: Schema.Schema<A>, fallback: A) => A = <A>(
+    key: string,
+    schema: Schema.Schema<A>,
+    fallback: A,
+  ) => {
     const value = query.get(key)
-    return Schema.is(schema)(value) ? value : fallback
+    return (Schema.is(schema)(value) ? value : fallback) satisfies A
   }
   const family = query.get('family')
   const weight = Number(query.get('weight'))
@@ -127,7 +145,7 @@ export const settingsFromUrl = (url: string): Settings => {
     hover: read('hover', Settings.fields.hover, defaults.hover),
   }
 }
-export const settingsFromLocation = (url: string): Settings => {
+export const settingsFromLocation: (url: string) => Settings = (url: string) => {
   const settings = settingsFromUrl(url)
   const preview = previewOptionsFromUrl(url)
   return {
@@ -157,7 +175,7 @@ export const presentation = (settings: Pick<Settings, 'shape' | 'size' | 'hover'
     reducedMotion: 'user',
   })
 
-export const currentFontFamily = (settings: Settings): string =>
+export const currentFontFamily: (settings: Settings) => string = (settings: Settings) =>
   settings.font === 'custom' && settings.customFont !== undefined
     ? settings.customFont.family
     : settings.font === 'serif'

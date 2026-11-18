@@ -20,7 +20,7 @@ import {
 import { docSection } from './doc-section.js'
 import source from './chat-message-example-block.ts?raw'
 import { homeRouter } from './input-family-routes'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { examplePresentation } from './example-presentation.js'
 import { Effect, Layer, Schema } from 'effect'
 import { Block, Update } from 'foldkit'

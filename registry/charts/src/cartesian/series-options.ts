@@ -1,4 +1,3 @@
-// Native typed options transposed from the pinned Bklit public contracts.
 import type { CurveFactory } from 'd3-shape'
 import type { PatternPresetId } from '../kit/pattern/pattern-preset-helpers'
 import type { LineLoadingPulseMode, LoadingStyle } from '../kit/motion/phase'

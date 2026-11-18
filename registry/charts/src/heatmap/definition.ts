@@ -33,9 +33,11 @@ const HEATMAP_HOLD_MOTION = {
   easing: 'linear',
 } satisfies import('@tanstack/charts').ChartMotionTransition
 
-const buildHeatmapDefinition = (
+const buildHeatmapDefinition: (
   params: Readonly<BuildHeatmapDefinitionParams>,
-): DomChartDefinition<Readonly<CellDatum>, number | string, string> => {
+) => DomChartDefinition<Readonly<CellDatum>, number | string, string> = (
+  params: Readonly<BuildHeatmapDefinitionParams>,
+) => {
   const {
     status,
     columns,
@@ -65,10 +67,8 @@ const buildHeatmapDefinition = (
     getScene,
   } = params
 
-  // Separator gutters make the column grid non-uniform, which a band scale cannot express:
-  // that case alone uses a linear pixel x scale with `rect` (x1/x2); otherwise a band scale with `cell`.
   const linearX = layout !== null && layout.spacing > 0
-  // Native cells inset by gap/2 on every side, so the plot shifts by it and the svg is gap/2 taller than bklit's (UPSTREAM-GAPS #65).
+
   const baseInset = gap / 2
   const loading = status === 'loading'
 
@@ -93,10 +93,11 @@ const buildHeatmapDefinition = (
 
   const makeCells = createCellMaker(linearX, baseInset, cornerRadius)
 
-  // bklit anchors on the centre of the cell's full bin; the box top/flip rules live in the position-only tooltip portal.
-  const tooltipAnchor = (
+  const tooltipAnchor: (
     points: ReadonlyArray<{ readonly x: number; readonly y: number }>,
-  ): { readonly x: number; readonly y: number } | null => {
+  ) => { readonly x: number; readonly y: number } | null = (
+    points: ReadonlyArray<{ readonly x: number; readonly y: number }>,
+  ) => {
     const point = points.at(0)
 
     return point === undefined ? null : { x: point.x + baseInset, y: point.y + baseInset }
@@ -134,8 +135,7 @@ const buildHeatmapDefinition = (
     },
     focus: createHeatmapFocus(getScene),
     focusRing: false,
-    // bklit's cells start at the plot's left edge and sit `gap` below its top; the native cell is inset by gap/2 on every side, so the plot moves gap/2 left and down
-    // (right and height grow back, stride unchanged) and the axis tick padding absorbs the shift.
+
     margin: {
       bottom: margin.bottom,
       left: margin.left - baseInset,
@@ -155,18 +155,19 @@ const buildHeatmapDefinition = (
         : {
             axis: {
               line: false,
-              // Keep all month labels when they fit; narrow contribution grids need a readable gap.
+
               tickLabels: {
                 anchor: 'start' satisfies 'start',
-                dx: ({ bandwidth }: Readonly<{ bandwidth: number }>): number =>
-                  (linearX ? 0 : -bandwidth / 2) + baseInset,
+                dx: ({ bandwidth }: Readonly<{ bandwidth: number }>) =>
+                  ((linearX ? 0 : -bandwidth / 2) + baseInset) satisfies number,
                 dy: -2.4,
                 fontSize: 12,
                 opacity: 1,
                 thin: { minGap: 8, priority: 'ends' },
               },
               ticks: {
-                format: (value: number | string): string => xLabelByTick.get(value) ?? '',
+                format: (value: number | string) =>
+                  (xLabelByTick.get(value) ?? '') satisfies string,
                 padding: 4 + baseInset,
                 size: 0,
                 values: xTickValues,
@@ -181,23 +182,26 @@ const buildHeatmapDefinition = (
         : {
             axis: {
               line: false,
-              // bklit heatmap-y-axis.tsx:44-49 draws every filtered label, no collision test.
+
               tickLabels: {
                 dy: -1.2,
                 fontSize: 12,
                 opacity:
                   yOpacity === undefined
                     ? 1
-                    : ({ value, index }: Readonly<{ value: string; index: number }>): number => {
+                    : ({ value, index }: Readonly<{ value: string; index: number }>) => {
                         const row = dayLabels.indexOf(value)
 
-                        return resolveHeatmapRowOpacity(row === -1 ? index : row, yOpacity)
+                        return resolveHeatmapRowOpacity(
+                          row === -1 ? index : row,
+                          yOpacity,
+                        ) satisfies number
                       },
                 thin: false,
               },
               ticks: {
-                format: (value: string): string =>
-                  formatHeatmapYAxisLabel(value, yAxis.labelFormat),
+                format: (value: string) =>
+                  formatHeatmapYAxisLabel(value, yAxis.labelFormat) satisfies string,
                 padding: 7,
                 size: 0,
                 values: yTickValues,

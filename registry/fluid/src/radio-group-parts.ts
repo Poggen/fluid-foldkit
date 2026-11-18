@@ -1,6 +1,6 @@
 import { radioGroupInput } from './radio-group-input.js'
 import { selectionBorder } from './selection-group-style.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { Attribute, ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
 import { fontWeights } from './lib/font-weight.js'
 import { spring } from './lib/springs.js'
@@ -13,37 +13,15 @@ import type { CheckboxMark } from './checkbox-group-state.js'
 import { radioItemSelected } from './radio-group-state.js'
 import type { RadioSelection } from './radio-group-state.js'
 
-type RowMountAttribute<Message, Requirements> = Extract<
-  NonNullable<Parameters<HtmlBuilder<Message, Requirements>['div']>[0]>[number],
-  { readonly __childAttribute: true }
->
-
-export interface RadioContext<MountAttribute = ChildAttribute>
-  extends Presentation, RadioSelection {
-  readonly id: string
-  readonly activeIndex: number | null
-  readonly hasSelection: boolean
-  readonly hasForm: boolean
-  readonly initialChecked: ReadonlyArray<{ readonly index: number; readonly checked: boolean }>
-  readonly itemMount: ReadonlyArray<MountAttribute>
-  readonly marks: ReadonlyArray<
-    CheckboxMark & { readonly completion: ReadonlyArray<ChildAttribute> }
-  >
-  readonly animate: (node: Html, options: TargetMotionOptions) => Html
-}
-
-export interface RadioItemProps<Message, Requirements = never> {
-  readonly index: number
-  readonly label: string
-  readonly className?: string
-  readonly attributes?: ReadonlyArray<Attribute<Message, Requirements>>
-}
-
-export function RadioItem<Message, Requirements>(
+export const RadioItem: <Message, Requirements>(
   props: NoInfer<RadioItemProps<Message, Requirements>>,
   context: NoInfer<RadioContext<RowMountAttribute<Message, Requirements>>>,
   h: HtmlBuilder<Message, Requirements>,
-): Html {
+) => Html = function RadioItem<Message, Requirements>(
+  props: NoInfer<RadioItemProps<Message, Requirements>>,
+  context: NoInfer<RadioContext<RowMountAttribute<Message, Requirements>>>,
+  h: HtmlBuilder<Message, Requirements>,
+) {
   const { shape, size, reducedMotion } = resolvePresentation(context)
   const compact = size.variant === 'compact'
   const item = context.values.find((candidate) => candidate.index === props.index)
@@ -139,5 +117,31 @@ export function RadioItem<Message, Requirements>(
       ),
       ...radioGroupInput(item, selected, context, h),
     ],
-  )
+  ) satisfies Html
+}
+
+type RowMountAttribute<Message, Requirements> = Extract<
+  NonNullable<Parameters<HtmlBuilder<Message, Requirements>['div']>[0]>[number],
+  { readonly __childAttribute: true }
+>
+
+export interface RadioContext<MountAttribute = ChildAttribute>
+  extends Presentation, RadioSelection {
+  readonly id: string
+  readonly activeIndex: number | null
+  readonly hasSelection: boolean
+  readonly hasForm: boolean
+  readonly initialChecked: ReadonlyArray<{ readonly index: number; readonly checked: boolean }>
+  readonly itemMount: ReadonlyArray<MountAttribute>
+  readonly marks: ReadonlyArray<
+    CheckboxMark & { readonly completion: ReadonlyArray<ChildAttribute> }
+  >
+  readonly animate: (node: Html, options: TargetMotionOptions) => Html
+}
+
+export interface RadioItemProps<Message, Requirements = never> {
+  readonly index: number
+  readonly label: string
+  readonly className?: string
+  readonly attributes?: ReadonlyArray<Attribute<Message, Requirements>>
 }

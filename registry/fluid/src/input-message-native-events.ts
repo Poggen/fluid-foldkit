@@ -72,7 +72,7 @@ export function observeInputMessageNativeEvents(
           selectionStart: element.selectionStart,
           selectionEnd: element.selectionEnd,
         }
-        // Read committed view intent at dispatch time; caret comes from the live DOM.
+
         if (messageKeyIntent(state.value, key).kind !== 'Native') event.preventDefault()
         emit(InputMessageObservation.CapturedKey(key))
       }
@@ -96,7 +96,7 @@ export function observeInputMessageNativeEvents(
           input.accept = override
           overriddenInputs.add(input)
         }
-        // Deliberately synchronous: keep the original trusted activation stack.
+
         input.click()
         if (overridden) {
           window.queueMicrotask(() => {

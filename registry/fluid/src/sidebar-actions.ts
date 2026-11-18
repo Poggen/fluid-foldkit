@@ -1,62 +1,16 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import type { Html, HtmlBuilder } from 'foldkit/html'
 import { resolvePresentation } from './presentation.js'
 import type { Presentation } from './presentation.js'
 import { cn } from './lib/utils.js'
 
-const actionTop = 'top-[calc((var(--row-h,32px)_-_24px)/2)]'
-const iconClasses =
-  '[&_svg]:size-[var(--icon-size)] [&_svg]:shrink-0 [&_svg]:stroke-[1.5] [&_svg]:transition-[stroke-width] [&_svg]:duration-80 hover:[&_svg]:stroke-[2]'
-const badgeOffset = (subRow: boolean) =>
-  subRow
-    ? 'group-has-[>[data-sidebar=menu-badge]]/menu-sub-item:right-8.5'
-    : 'group-has-[>[data-sidebar=menu-badge]]/menu-item:right-8.5'
-
-interface SidebarActionPresentation {
-  readonly shape: NonNullable<Presentation['shape']>
-  readonly size: NonNullable<Presentation['size']>
-}
-
-export type SidebarActionContext = SidebarActionPresentation &
-  (
-    | {
-        readonly kind: 'menu'
-        readonly placement: 'standalone' | 'cluster'
-        readonly subRow: boolean
-        readonly active: boolean
-        readonly hasBadge: boolean
-        readonly visibility?: 'always' | 'hover'
-      }
-    | { readonly kind: 'group'; readonly placement: 'standalone' | 'cluster' }
-  )
-
-export type SidebarMenuActionContext = Extract<SidebarActionContext, { readonly kind: 'menu' }>
-export type SidebarGroupActionContext = Extract<SidebarActionContext, { readonly kind: 'group' }>
-
-export interface SidebarActionRun {
-  readonly entries: ReadonlyArray<Html>
-}
-
-export interface SidebarMenuActionRun extends SidebarActionRun {
-  readonly visibility?: 'always' | 'hover'
-}
-
-export interface SidebarActionProps<Message> extends Presentation {
-  readonly label: string
-  readonly attributes?: Parameters<HtmlBuilder<Message>['button']>[0]
-  readonly children: ReadonlyArray<Html>
-  readonly actionContext?: SidebarActionContext
-  readonly className?: string
-  readonly render?: (
-    attributes: Parameters<HtmlBuilder<Message>['button']>[0],
-    children: ReadonlyArray<Html>,
-  ) => Html
-}
-
-export function SidebarAction<Message>(
+export const SidebarAction: <Message>(
   props: SidebarActionProps<Message>,
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function SidebarAction<Message>(
+  props: SidebarActionProps<Message>,
+  h: HtmlBuilder<Message>,
+) {
   const inherited = resolvePresentation(props)
   const scope: SidebarActionContext = props.actionContext ?? {
     kind: 'menu',
@@ -110,16 +64,22 @@ export function SidebarAction<Message>(
       ),
     ],
     props.children,
-  )
+  ) satisfies Html
 }
 
-export function SidebarMenuAction<Message>(
+export const SidebarMenuAction: <Message>(
   props: Omit<SidebarActionProps<Message>, 'actionContext'> & {
     readonly actionContext?: SidebarMenuActionContext
     readonly showOnHover?: boolean
   },
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function SidebarMenuAction<Message>(
+  props: Omit<SidebarActionProps<Message>, 'actionContext'> & {
+    readonly actionContext?: SidebarMenuActionContext
+    readonly showOnHover?: boolean
+  },
+  h: HtmlBuilder<Message>,
+) {
   const { shape, size } = resolvePresentation(props)
   return SidebarAction(
     {
@@ -136,15 +96,20 @@ export function SidebarMenuAction<Message>(
       },
     },
     h,
-  )
+  ) satisfies Html
 }
 
-export function SidebarGroupAction<Message>(
+export const SidebarGroupAction: <Message>(
   props: Omit<SidebarActionProps<Message>, 'actionContext'> & {
     readonly actionContext?: SidebarGroupActionContext
   },
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function SidebarGroupAction<Message>(
+  props: Omit<SidebarActionProps<Message>, 'actionContext'> & {
+    readonly actionContext?: SidebarGroupActionContext
+  },
+  h: HtmlBuilder<Message>,
+) {
   const { shape, size } = resolvePresentation(props)
   return SidebarAction(
     {
@@ -157,17 +122,24 @@ export function SidebarGroupAction<Message>(
       },
     },
     h,
-  )
+  ) satisfies Html
 }
 
-export function SidebarMenuActions<Message>(
+export const SidebarMenuActions: <Message>(
   props: {
     readonly actionContext: SidebarMenuActionContext
     readonly actions: (context: SidebarMenuActionContext) => SidebarMenuActionRun
     readonly className?: string
   },
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function SidebarMenuActions<Message>(
+  props: {
+    readonly actionContext: SidebarMenuActionContext
+    readonly actions: (context: SidebarMenuActionContext) => SidebarMenuActionRun
+    readonly className?: string
+  },
+  h: HtmlBuilder<Message>,
+) {
   const context: SidebarMenuActionContext = {
     kind: 'menu',
     placement: 'cluster',
@@ -195,16 +167,22 @@ export function SidebarMenuActions<Message>(
       ),
     ],
     run.entries,
-  )
+  ) satisfies Html
 }
 
-export function SidebarGroupActions<Message>(
+export const SidebarGroupActions: <Message>(
   props: Presentation & {
     readonly actions: (context: SidebarGroupActionContext) => SidebarActionRun
     readonly className?: string
   },
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function SidebarGroupActions<Message>(
+  props: Presentation & {
+    readonly actions: (context: SidebarGroupActionContext) => SidebarActionRun
+    readonly className?: string
+  },
+  h: HtmlBuilder<Message>,
+) {
   const { shape, size } = resolvePresentation(props)
   const run = props.actions({
     kind: 'group',
@@ -218,5 +196,54 @@ export function SidebarGroupActions<Message>(
       h.Class(cn('absolute right-3.5 top-2 z-10 flex h-8 items-center gap-1', props.className)),
     ],
     run.entries,
+  ) satisfies Html
+}
+
+const actionTop = 'top-[calc((var(--row-h,32px)_-_24px)/2)]'
+const iconClasses =
+  '[&_svg]:size-[var(--icon-size)] [&_svg]:shrink-0 [&_svg]:stroke-[1.5] [&_svg]:transition-[stroke-width] [&_svg]:duration-80 hover:[&_svg]:stroke-[2]'
+const badgeOffset = (subRow: boolean) =>
+  subRow
+    ? 'group-has-[>[data-sidebar=menu-badge]]/menu-sub-item:right-8.5'
+    : 'group-has-[>[data-sidebar=menu-badge]]/menu-item:right-8.5'
+
+interface SidebarActionPresentation {
+  readonly shape: NonNullable<Presentation['shape']>
+  readonly size: NonNullable<Presentation['size']>
+}
+
+export type SidebarActionContext = SidebarActionPresentation &
+  (
+    | {
+        readonly kind: 'menu'
+        readonly placement: 'standalone' | 'cluster'
+        readonly subRow: boolean
+        readonly active: boolean
+        readonly hasBadge: boolean
+        readonly visibility?: 'always' | 'hover'
+      }
+    | { readonly kind: 'group'; readonly placement: 'standalone' | 'cluster' }
   )
+
+export type SidebarMenuActionContext = Extract<SidebarActionContext, { readonly kind: 'menu' }>
+export type SidebarGroupActionContext = Extract<SidebarActionContext, { readonly kind: 'group' }>
+
+export interface SidebarActionRun {
+  readonly entries: ReadonlyArray<Html>
+}
+
+export interface SidebarMenuActionRun extends SidebarActionRun {
+  readonly visibility?: 'always' | 'hover'
+}
+
+export interface SidebarActionProps<Message> extends Presentation {
+  readonly label: string
+  readonly attributes?: Parameters<HtmlBuilder<Message>['button']>[0]
+  readonly children: ReadonlyArray<Html>
+  readonly actionContext?: SidebarActionContext
+  readonly className?: string
+  readonly render?: (
+    attributes: Parameters<HtmlBuilder<Message>['button']>[0],
+    children: ReadonlyArray<Html>,
+  ) => Html
 }

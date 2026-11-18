@@ -1,6 +1,6 @@
 import { fontWeights } from './lib/font-weight.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import { modifyFields } from 'foldkit/struct'
 import { Data, Effect, Option, Queue, Schema, Stream } from 'effect'
 import { Block } from 'foldkit'
@@ -268,9 +268,11 @@ export const layer = ThinkingIndicatorBlock.makeLayer({
   EffectsLayer: ObserveThinking.layer,
 })
 
-export const thinkingIndicatorAnimations = (
+export const thinkingIndicatorAnimations: (
   motion: TargetMotionScope,
-): Pick<ThinkingIndicatorViewInputs, 'labelAnimation' | 'glyphAnimation'> => ({
+) => Pick<ThinkingIndicatorViewInputs, 'labelAnimation' | 'glyphAnimation'> = (
+  motion: TargetMotionScope,
+) => ({
   labelAnimation: (node, present, initial) =>
     motion.node(node, {
       initial: initial ? { y: '80%', opacity: 0 } : false,

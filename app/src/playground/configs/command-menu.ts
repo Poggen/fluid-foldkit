@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { commandItems } from '../../gallery/fluid/command-data'
 import { Schema } from 'effect'
 import type { Control } from '../control-definition'
@@ -53,7 +53,9 @@ export const controls = [
   { kind: 'toggle', prop: 'footer', label: 'Footer hints', group: 'Menu', initial: true },
 ] satisfies ReadonlyArray<Control<keyof Configuration>>
 
-export const controlsFor = (_config: Configuration): ReadonlyArray<Control> => controls
+export const controlsFor: (_config: Configuration) => ReadonlyArray<Control> = (
+  _config: Configuration,
+) => controls
 
 export const commandRows = (
   config: Configuration,

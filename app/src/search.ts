@@ -90,8 +90,9 @@ const TabsRequests = SearchBlock.makeRequiredFieldBinding(CommandMenuTabsBlock, 
     ],
   },
 })
-const categoryOf = (model: typeof SearchBlock.Model.Type): SearchCategory =>
-  Schema.is(SearchCategory)(model.tabs.value) ? model.tabs.value : 'all'
+const categoryOf: (model: typeof SearchBlock.Model.Type) => SearchCategory = (
+  model: typeof SearchBlock.Model.Type,
+) => (Schema.is(SearchCategory)(model.tabs.value) ? model.tabs.value : 'all')
 const refresh = SearchBlock.makeStep((model) => {
   const items = searchItems(model.path, categoryOf(model))
   return model.palette.menu.items.length === items.length &&

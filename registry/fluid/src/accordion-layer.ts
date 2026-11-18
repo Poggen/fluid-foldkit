@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { modifyFields } from 'foldkit/struct'
 import { Data, Layer, Option, Predicate, Struct } from 'effect'
 import type { Block } from 'foldkit'
@@ -32,9 +32,9 @@ const { Message, InMessage } = accordionContract
 const Events =
   Data.taggedEnum<Extract<Attribute<typeof Message.Type>, { readonly _tag: 'OnCustomEvent' }>>()
 
-const publishDisclosureAttributes = <Message>(
+const publishDisclosureAttributes: <Message>(
   attributes: ReadonlyArray<Attribute<Message>>,
-): ReadonlyArray<ChildAttribute> => {
+) => ReadonlyArray<ChildAttribute> = <Message>(attributes: ReadonlyArray<Attribute<Message>>) => {
   const published: Array<ChildAttribute> = []
 
   for (const attribute of attributes) {
@@ -45,7 +45,7 @@ const publishDisclosureAttributes = <Message>(
     }
   }
 
-  return published
+  return published satisfies ReadonlyArray<ChildAttribute>
 }
 
 const tintAttributes = (value: string, generation: number, hover: boolean) =>
@@ -301,7 +301,6 @@ function accordionPlans<const Key extends symbol>(
             isDisabled: disabled,
             onToggle: () => Message.ActivatedDisclosure({ value }),
             toView: ({ button, panel }) => {
-              // Source uses native button activation with Space on keyup.
               const attributes = button.filter(
                 (attribute) => !Predicate.isTagged('OnKeyDownPreventDefault')(attribute),
               )

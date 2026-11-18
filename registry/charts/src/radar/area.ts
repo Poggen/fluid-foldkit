@@ -37,21 +37,23 @@ export interface RadarAreaProps {
   readonly className?: string
 }
 
-// Role marker: a declarative config carrier, read once by RadarChart and never rendered.
 /**
  * Draws one series of the chart as a filled polygon. Render one `RadarArea` per item of `data`, with `index` pointing at that item. It renders nothing by itself outside a `RadarChart`.
  */
-export const RadarArea = (props: RadarAreaProps): RadarChild => ({ kind: 'area', props })
+export const RadarArea: (props: RadarAreaProps) => RadarChild = (props: RadarAreaProps) => ({
+  kind: 'area',
+  props,
+})
 
 /**
  * Default series colours, applied by index and repeated: `--chart-1` to `--chart-5`. Exported as `defaultRadarColors`.
  */
 export const DEFAULT_RADAR_COLORS: Array<string> = [...CHART_PALETTE]
 
-export const radarAreaColor = (
+export const radarAreaColor: (
   a: RadarAreaProps,
   data: ReadonlyArray<{ readonly color?: string }>,
-): string =>
+) => string = (a: RadarAreaProps, data: ReadonlyArray<{ readonly color?: string }>) =>
   a.color ??
   data.at(a.index)?.color ??
   DEFAULT_RADAR_COLORS.at(a.index % DEFAULT_RADAR_COLORS.length) ??

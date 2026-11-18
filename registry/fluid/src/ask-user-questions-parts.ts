@@ -15,38 +15,23 @@ import type { AskFlow } from './ask-user-questions-state.js'
 import type { HoverHighlightViewInputs } from './hover-highlight.js'
 import type { SelectionBackgroundsViewInputs } from './selection-backgrounds.js'
 
-export interface AskUserQuestionsViewInputs extends Presentation {
-  readonly className?: string
-  readonly skipLabel?: string
-  readonly attributes?: ReadonlyArray<ChildAttribute>
-  readonly animate: (node: Html, options: MotionOptions) => Html
-  readonly animateHighlight: HoverHighlightViewInputs['animate']
-  readonly animateSelection: SelectionBackgroundsViewInputs['animate']
-}
-
-export { askTextarea } from './ask-user-questions-textarea.js'
-
-export { askRow } from './ask-user-questions-row.js'
-
-function footerButtonPadding(action: string, primary: boolean) {
-  if (action === 'back') {
-    return 'pl-3 sm:pl-2'
-  }
-
-  return primary ? 'pr-3 sm:pr-2' : ''
-}
-
-export function askFooter<M>(
+export const askFooter: <M>(
   flow: AskFlow,
   inputs: AskUserQuestionsViewInputs,
   id: string,
   chrome: ReadonlyArray<AskChromeSlot & { readonly completion: ReadonlyArray<ChildAttribute> }>,
   h: HtmlBuilder<M>,
-): Html {
+) => Html = function askFooter<M>(
+  flow: AskFlow,
+  inputs: AskUserQuestionsViewInputs,
+  id: string,
+  chrome: ReadonlyArray<AskChromeSlot & { readonly completion: ReadonlyArray<ChildAttribute> }>,
+  h: HtmlBuilder<M>,
+) {
   const question = askCurrent(flow)
 
   if (!question) {
-    return null
+    return null satisfies Html
   }
 
   const { size, icons, reducedMotion } = resolvePresentation(inputs)
@@ -59,7 +44,7 @@ export function askFooter<M>(
   const showSubmit = submitSlot !== undefined
 
   if (!showBack && !showSkip && !showSubmit) {
-    return null
+    return null satisfies Html
   }
 
   const answer = flow.answers[question.id]
@@ -68,10 +53,8 @@ export function askFooter<M>(
   const chip = (keys: string, inverted = false) =>
     KeyCaps({ keys, tone: inverted ? 'inverted' : 'default', attributes: [h.AriaHidden(true)] }, h)
 
-  const keyboardIcon =
-    (icon: Icon): Icon =>
-    (options, builder) =>
-      icon({ ...options, className: cn(options.className, 'hidden sm:block') }, builder)
+  const keyboardIcon: (icon: Icon) => Icon = (icon: Icon) => (options, builder) =>
+    icon({ ...options, className: cn(options.className, 'hidden sm:block') }, builder)
 
   const button = (
     action: string,
@@ -171,5 +154,26 @@ export function askFooter<M>(
         ],
       ),
     ],
-  )
+  ) satisfies Html
+}
+
+export interface AskUserQuestionsViewInputs extends Presentation {
+  readonly className?: string
+  readonly skipLabel?: string
+  readonly attributes?: ReadonlyArray<ChildAttribute>
+  readonly animate: (node: Html, options: MotionOptions) => Html
+  readonly animateHighlight: HoverHighlightViewInputs['animate']
+  readonly animateSelection: SelectionBackgroundsViewInputs['animate']
+}
+
+export { askTextarea } from './ask-user-questions-textarea.js'
+
+export { askRow } from './ask-user-questions-row.js'
+
+function footerButtonPadding(action: string, primary: boolean) {
+  if (action === 'back') {
+    return 'pl-3 sm:pl-2'
+  }
+
+  return primary ? 'pr-3 sm:pr-2' : ''
 }

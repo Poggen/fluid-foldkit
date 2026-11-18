@@ -16,7 +16,7 @@ export function mountBarFade(node: SVGRectElement, transition: ValueAnimationTra
   })
 
   visual.mount(node)
-  // Values created by the element retain Motion's owner and accelerated-animation eligibility.
+
   const opacity = visual.getValue('opacity', 0)
   const filter = visual.getValue('filter', 'blur(2px)')
   visual.render()

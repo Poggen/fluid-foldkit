@@ -3,7 +3,7 @@ import type { Spring } from '../kit/motion/springs'
 
 interface Axis {
   target: number
-  /** Displacement from `target` and velocity (px/s) at `t0`. */
+
   x0: number
   v0: number
   t0: number
@@ -14,7 +14,7 @@ export class Ticker {
   private readonly active = new Set<Glide>()
   private frame = 0
 
-  start(glide: Glide): void {
+  start(glide: Glide) {
     this.active.add(glide)
 
     if (this.frame === 0) {
@@ -22,17 +22,17 @@ export class Ticker {
     }
   }
 
-  stop(glide: Glide): void {
+  stop(glide: Glide) {
     this.active.delete(glide)
   }
 
-  clear(): void {
+  clear() {
     this.active.clear()
     cancelAnimationFrame(this.frame)
     this.frame = 0
   }
 
-  private readonly tick = (now: number): void => {
+  private readonly tick = (now: number) => {
     this.frame = 0
 
     for (const glide of this.active) {
@@ -77,23 +77,21 @@ export class Glide {
     this.sinks.push({ css, el, last: '' })
   }
 
-  private write(values: ReadonlyArray<number>): void {
+  private write(values: ReadonlyArray<number>) {
     for (const sink of this.sinks) {
       const next = sink.css(values)
 
-      // A spring settling on its target repeats the last value; an identical write still dirties the element's style.
       if (next !== sink.last) {
         sink.last = next
         sink.el.style.transform = next
       }
     }
 
-    // Outside the dedupe: a device-px-rounded transform can stop changing before the value lands on its target.
     this.onMove?.(values)
   }
 
   /** Places the element at `values` with no motion. */
-  jump(values: ReadonlyArray<number>): void {
+  jump(values: ReadonlyArray<number>) {
     this.ticker.stop(this)
     this.axes.forEach((axis, i) => {
       axis.target = values[i] ?? 0
@@ -104,7 +102,7 @@ export class Glide {
   }
 
   /** Springs from wherever the element is (and however fast it moves) to `values`. */
-  glide(values: ReadonlyArray<number>): void {
+  glide(values: ReadonlyArray<number>) {
     const now = this.clock()
     const motion = springOf(this.spring, REST_PX)
     this.axes.forEach((axis, i) => {
@@ -119,7 +117,7 @@ export class Glide {
   }
 
   /** Writes the position at frame time `now`; true once every axis is at rest. */
-  step(now: number): boolean {
+  step(now: number) {
     const motion = springOf(this.spring, REST_PX)
     let rest = true
 
@@ -137,6 +135,6 @@ export class Glide {
 
     this.write(rest ? this.axes.map((axis) => axis.target) : at)
 
-    return rest
+    return rest satisfies boolean
   }
 }

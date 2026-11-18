@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { settingsSections } from './sidebar-settings-data.js'
 
 export const settingsNavItems = settingsSections.map(({ id, label }) => ({

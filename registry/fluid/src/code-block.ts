@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
 import { childAttributes } from 'foldkit/html'
 import { createPresentationContext } from './presentation.js'
 import type { ScrollAreaConfig } from './scroll-area.js'

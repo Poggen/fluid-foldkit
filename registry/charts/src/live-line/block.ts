@@ -65,7 +65,7 @@ export interface LiveInputs<Row> {
   readonly serverContent?: (data: ReadonlyArray<Row>) => Html
 }
 
-const initialControl = (): LiveControl => ({ controlled: false, index: Option.none() })
+const initialControl: () => LiveControl = () => ({ controlled: false, index: Option.none() })
 
 export function defineLiveLineRecipe(name: string) {
   const Row = PlannerRow
@@ -372,7 +372,7 @@ export function defineLiveLineRecipe(name: string) {
               ),
             ),
             h.OnMount(Prepare()),
-            // The pinned server renderer has no nested occurrence for a physical unmount hook.
+
             ...(Predicate.isUndefined(globalThis.window) ? [] : [h.OnUnmount(Message.Unmounted())]),
           ],
           [
@@ -416,7 +416,6 @@ export function defineLiveLineRecipe(name: string) {
           Layer.effect(
             LiveRegistration,
             Effect.sync(() => {
-              // Restored Models can render a mounted drawing before any Prepare Mount runs.
               register()
               return register
             }),

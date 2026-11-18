@@ -61,7 +61,7 @@ const revisionFor = (settings: Settings) =>
   )
 const formatDate = (timestamp: number) =>
   new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' }).format(timestamp)
-const describe = (selection: Selection): string => {
+const describe: (selection: Selection) => string = (selection: Selection) => {
   if (selection._tag === 'Single') return formatDate(selection.date.timestamp)
   if (selection._tag === 'Range') {
     return `${selection.from === null ? 'Choose a start' : formatDate(selection.from.timestamp)} → ${selection.to === null ? 'Choose an end' : formatDate(selection.to.timestamp)}`
@@ -75,7 +75,7 @@ const start = Effect.gen(function* () {
   const today = DateTime.toDateUtc(localNow)
   const dayAfter = (days: number) =>
     DateTime.toDateUtc(DateTime.add(DateTime.startOf(localNow, 'day'), { days }))
-  const environment = makeCalendarEnvironment((_id, revision): CalendarOptions => {
+  const environment = makeCalendarEnvironment((_id, revision) => {
     const profile = profiles[revision]
     if (profile === undefined) throw new Error(`Unknown Calendar example profile ${revision}`)
     return {
@@ -91,7 +91,7 @@ const start = Effect.gen(function* () {
         : {}),
       ...(profile.days === 'weekdays' ? { available: { dayOfWeek: [1, 2, 3, 4, 5] } } : {}),
       ...(profile.days === 'disabled' ? { disabled: true } : {}),
-    }
+    } satisfies CalendarOptions
   })
   const query = new URLSearchParams(window.location.search)
   const examplesUrl = new URL('./', window.location.href).href

@@ -5,7 +5,7 @@ import { hoverModeOf as tabsHoverModeOf } from '../../../components/docs/preview
 import { hoverModeOf as composerHoverModeOf } from '@foldkit-visuals/fluid/input-message'
 import { Number } from 'effect'
 import { modifyFields } from 'foldkit/struct'
-// Fluid Functionalism cc276ca0 InputMessage page and QueuedChatDemo. MIT.
+/* @license Fluid Functionalism cc276ca0 InputMessage page and QueuedChatDemo. MIT. */
 import { Layer, Option } from 'effect'
 import { AsyncData, Update } from 'foldkit'
 import { initAndInsert } from 'foldkit/binding'

@@ -7,7 +7,10 @@ import { Message, Selects, Switches, switchMotion, motion } from './breadcrumb-e
 
 type Builder = Block.ViewBuilderFor<typeof BreadcrumbExampleComposition>
 
-export const playgroundControls = (model: typeof Model.Type, h: Builder): Html => {
+export const playgroundControls: (model: typeof Model.Type, h: Builder) => Html = (
+  model: typeof Model.Type,
+  h: Builder,
+) => {
   const toggleLabels = {
     icons: 'Icons',
     dropdownStep: 'Dropdown on a step',

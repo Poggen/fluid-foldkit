@@ -1,22 +1,23 @@
 import { instantDate, localDate, zonedDate, zonedCivilDate } from './date-boundary.js'
 import { DateTime, Predicate } from 'effect'
-// Adapted from react-day-picker 10.0.2, MIT © 2014-2026 Giampaolo Bellavite and contributors.
-// Full license: NOTICE
+/* @license Adapted from react-day-picker 10.0.2, MIT © 2014-2026 Giampaolo Bellavite and contributors. */
+/* @license Full license: NOTICE */
 import type { DateLib, DateLibOptions } from './date-library.js'
 import { differenceInCalendarDays as differenceInCalendarDaysFn } from 'date-fns/differenceInCalendarDays'
 import { differenceInCalendarMonths as differenceInCalendarMonthsFn } from 'date-fns/differenceInCalendarMonths'
 import { getISOWeek as getISOWeekFn } from 'date-fns/getISOWeek'
 import { getWeek as getWeekFn } from 'date-fns/getWeek'
 
-export function createNoonOverrides(
+export const createNoonOverrides: (
+  timeZone: string,
+  options?: Pick<DateLibOptions, 'weekStartsOn' | 'locale'>,
+) => Partial<DateLib> = function createNoonOverrides(
   timeZone: string,
   options: Pick<DateLibOptions, 'weekStartsOn' | 'locale'> = {},
-): Partial<DateLib> {
+) {
   const { weekStartsOn, locale } = options
 
   const fallbackWeekStartsOn = weekStartsOn ?? locale?.options?.weekStartsOn ?? 0
-  // Keep all internal math anchored at noon in the target zone to avoid
-  // historical second-level offsets from crossing midnight.
 
   const toNoonDate = (date: Date | number | string) => {
     const normalizedDate =
@@ -30,9 +31,6 @@ export function createNoonOverrides(
       12,
     )
   }
-  // Convert a value into a host `Date` that represents the same calendar day
-  // as the target-zone noon. This is useful for helpers (e.g., date-fns week
-  // utilities) that expect local `Date` instances rather than `TZDate`s.
 
   const toCalendarDate = (date: Date) => {
     const zoned = toNoonDate(date)
@@ -124,8 +122,7 @@ export function createNoonOverrides(
 
       return result
     },
-    // Normalize to noon once before arithmetic (avoid DST/midnight edge cases),
-    // mutate the same zoned date, and return it.
+
     addDays: (date, amount) => {
       const base = toNoonDate(date)
       base.setDate(base.getDate() + amount)

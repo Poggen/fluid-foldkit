@@ -30,8 +30,8 @@ const GaugeDrawingElement =
             this.#host?.update(value)
           }
         }
-        get configuration(): GaugeProps | undefined {
-          return this.#configuration
+        get configuration() {
+          return this.#configuration satisfies GaugeProps | undefined
         }
         acquire(id: string) {
           this.classList.add('contents')

@@ -110,7 +110,7 @@ for (const offset of [1000, 60000]) {
           Story.Command.expectNone(),
         )
         const settleCalendar = yield* calendarReplies(initial)
-        // Pass-through instrumentation counts actual formatting constructors; no result is faked.
+
         const formats = vi.spyOn(Intl, 'DateTimeFormat')
         try {
           yield* Story.story(
@@ -163,7 +163,7 @@ for (const offset of [1000, 60000]) {
               if (offset < 60000) expect(formats).not.toHaveBeenCalled()
               else expect(formats).toHaveBeenCalled()
             }),
-            // Older clock results cannot undo the latest generation or time-list configuration.
+
             Story.message(Message.CapturedTime({ generation: 0, now: now + 120000 })),
             Story.model((model) => expect(model.renderNow).toBe(now + offset)),
             settleCalendar,

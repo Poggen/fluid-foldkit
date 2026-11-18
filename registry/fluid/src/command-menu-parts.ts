@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import type { Html, HtmlBuilder } from 'foldkit/html'
 import { resolvePresentation, type Presentation } from './presentation.js'
 import { KeyCaps } from './key-cap.js'
@@ -10,14 +10,21 @@ export interface CommandMenuHint {
   readonly label: string
   readonly keys: string | ReadonlyArray<string>
 }
-export function CommandMenuShortcut<Message>(
+export const CommandMenuShortcut: <Message>(
   props: Presentation & {
     readonly keys: string | ReadonlyArray<string>
     readonly mac?: boolean
     readonly className?: string
   },
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function CommandMenuShortcut<Message>(
+  props: Presentation & {
+    readonly keys: string | ReadonlyArray<string>
+    readonly mac?: boolean
+    readonly className?: string
+  },
+  h: HtmlBuilder<Message>,
+) {
   const caps = (typeof props.keys === 'string' ? [props.keys] : props.keys).flatMap((key) =>
     formatShortcut(key, props.mac ?? false),
   )
@@ -30,7 +37,7 @@ export function CommandMenuShortcut<Message>(
     h,
   )
 }
-export function CommandMenuFooter<Message>(
+export const CommandMenuFooter: <Message>(
   props: Presentation & {
     readonly hints?: ReadonlyArray<CommandMenuHint>
     readonly activeItem?: CommandMenuItem
@@ -40,7 +47,17 @@ export function CommandMenuFooter<Message>(
     readonly children?: ReadonlyArray<Html>
   },
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function CommandMenuFooter<Message>(
+  props: Presentation & {
+    readonly hints?: ReadonlyArray<CommandMenuHint>
+    readonly activeItem?: CommandMenuItem
+    readonly hasTabs?: boolean
+    readonly inDialog?: boolean
+    readonly mac?: boolean
+    readonly children?: ReadonlyArray<Html>
+  },
+  h: HtmlBuilder<Message>,
+) {
   const compact = resolvePresentation(props).size.variant === 'compact'
   const hints = props.hints ?? [
     { label: 'Select', keys: ['up', 'down'] },

@@ -361,7 +361,7 @@ export const view = Composition.makeView.withInputs<ComboboxViewInputs>((model, 
         {
           initial: false,
           animate: model.multiple && fieldHeight !== null ? { height: fieldHeight } : {},
-          // Source animates this MotionValue explicitly, including under reduced motion.
+
           reducedMotion: 'never',
           transition: spring.fast,
         },

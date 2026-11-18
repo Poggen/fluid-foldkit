@@ -1,5 +1,6 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
-import { Effect, Layer, Schema, Stream } from 'effect'
+import { Effect, Layer, Queue, Schema, Stream } from 'effect'
 import { Block, Program, Runtime } from 'foldkit'
 import { defineMessageUnion } from 'foldkit/message'
 import { ContextMenuBlock, layer as ContextMenuLayer } from '../src/context-menu.js'
@@ -20,23 +21,27 @@ it.live('preserves editable and filtered native menus and opens pointer and keyb
     const anchor = host.querySelector<HTMLElement>('button')
     const target = host.querySelector<HTMLElement>('.allowed')
     if (!area || !anchor || !target) throw new Error('Missing context menu fixture')
-    const openings: ContextMenuOpening[] = []
-    const listener = vi.spyOn(area, 'addEventListener')
+    const openings = yield* Queue.unbounded<ContextMenuOpening>()
     yield* observeContextMenu({
       id: 'context',
       element: host,
       viewStateChanges: Stream.make('Live'),
     }).pipe(
-      Stream.runForEach((opening) =>
-        Effect.sync(() => {
-          openings.push(opening)
-        }),
-      ),
+      Stream.runForEach((opening) => Queue.offer(openings, opening)),
       Effect.forkScoped,
     )
     yield* Effect.promise(() =>
-      vi.waitFor(() => expect(listener).toHaveBeenCalledWith('contextmenu', expect.any(Function))),
+      vi.waitFor(() => {
+        const event = new KeyboardEvent('keydown', {
+          key: 'ContextMenu',
+          bubbles: true,
+          cancelable: true,
+        })
+        area.dispatchEvent(event)
+        expect(event.defaultPrevented).toBe(true)
+      }),
     )
+    yield* Queue.take(openings)
     host.dataset.contextMenuFilter = '.allowed'
     for (const element of host.querySelectorAll('input, .excluded')) {
       const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
@@ -52,9 +57,7 @@ it.live('preserves editable and filtered native menus and opens pointer and keyb
     target.dispatchEvent(pointer)
     expect(pointer.defaultPrevented).toBe(true)
     expect(anchor.parentElement).toBe(document.body)
-    yield* Effect.promise(() =>
-      vi.waitFor(() => expect(openings).toEqual([{ _tag: 'OpenedAt', x: 71, y: 83 }])),
-    )
+    expect(yield* Queue.take(openings)).toEqual({ _tag: 'OpenedAt', x: 71, y: 83 })
     delete host.dataset.contextMenuFilter
     area.dispatchEvent(
       new KeyboardEvent('keydown', {
@@ -64,7 +67,7 @@ it.live('preserves editable and filtered native menus and opens pointer and keyb
         cancelable: true,
       }),
     )
-    yield* Effect.promise(() => vi.waitFor(() => expect(openings).toHaveLength(2)))
+    expect((yield* Queue.take(openings))._tag).toBe('OpenedAt')
     const popupItem = document.createElement('button')
     document.body.append(popupItem)
     yield* Effect.addFinalizer(() => Effect.sync(() => popupItem.remove()))
@@ -87,14 +90,11 @@ it.live('preserves editable and filtered native menus and opens pointer and keyb
         bubbles: true,
       }),
     )
-    yield* Effect.promise(() =>
-      vi.waitFor(() => expect(openings).toHaveLength(3), { timeout: 1500 }),
-    )
+    expect(yield* Queue.take(openings)).toEqual({ _tag: 'OpenedAt', x: 41, y: 53 })
     area.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
     const click = new MouseEvent('click', { bubbles: true, cancelable: true })
     area.dispatchEvent(click)
     expect(click.defaultPrevented).toBe(true)
-    expect(openings[2]).toEqual({ _tag: 'OpenedAt', x: 41, y: 53 })
     anchor.remove()
   }).pipe(Effect.scoped),
 )

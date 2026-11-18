@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { HoverMode } from './hover-observation.js'
 import { Schema } from 'effect'
 import * as RadioGroup from '@foldkit/ui/radioGroup'

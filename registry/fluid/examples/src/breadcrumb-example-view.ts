@@ -148,7 +148,7 @@ export const view = BreadcrumbExampleComposition.makeView((model, h) => {
             children: ReadonlyArray<Html | string> = [label],
           ) => item(BreadcrumbPage({ id: `${demo}-7`, children }, context, h))
 
-          const menu = (
+          const menu: (
             key: string,
             context: BreadcrumbContext,
             labels: ReadonlyArray<string>,
@@ -156,7 +156,15 @@ export const view = BreadcrumbExampleComposition.makeView((model, h) => {
             ellipsis: boolean,
             leading?: Html,
             displayLabel?: string,
-          ): Html => {
+          ) => Html = (
+            key: string,
+            context: BreadcrumbContext,
+            labels: ReadonlyArray<string>,
+            openOnHover: boolean,
+            ellipsis: boolean,
+            leading?: Html,
+            displayLabel?: string,
+          ) => {
             const child = model.menus[key]
 
             if (!child) {
@@ -247,7 +255,7 @@ export const view = BreadcrumbExampleComposition.makeView((model, h) => {
             )
           }
 
-          const demo = (key: string): Html => {
+          const demo: (key: string) => Html = (key: string) => {
             const child = model.trails[key]
 
             if (!child) {
@@ -304,7 +312,7 @@ export const view = BreadcrumbExampleComposition.makeView((model, h) => {
             )
           }
 
-          const subject = (key: string): Html => {
+          const subject: (key: string) => Html = (key: string) => {
             if (key === 'playground') {
               return h.div(
                 [

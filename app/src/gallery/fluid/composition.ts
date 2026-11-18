@@ -99,7 +99,7 @@ export const makeView = () => {
       }
       return cards
     }
-    // Construct ordinary occurrences in the gallery frame before entering tooltip providers.
+
     const ordinary = buildCards({
       ...coreDemos(model, inputs, h),
       ...dataComponentDemos(model, inputs.settings, h),

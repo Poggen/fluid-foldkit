@@ -8,7 +8,7 @@ import {
   previewCodeTabId,
   previewCodeTabsViewInputs,
 } from '../../../components/docs/preview-code-tabs'
-// Derived from Fluid Functionalism cc276ca0 Dialog docs. MIT.
+/* @license Derived from Fluid Functionalism cc276ca0 Dialog docs. MIT. */
 import { Layer, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { initAndInsert } from 'foldkit/binding'

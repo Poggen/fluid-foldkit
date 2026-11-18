@@ -1,25 +1,15 @@
 import type { Html, HtmlBuilder } from 'foldkit/html'
 
-export interface ChartLoadingLabelProps {
-  readonly text?: string
-  readonly className?: string
-  readonly exiting?: boolean
-}
-
-function charKeyframes(length: number): string {
-  const cycle = 1 + length * 0.05
-  const end = (1 / cycle) * 100
-
-  return `@keyframes bkm-label-char-${length}{0%{color:var(--bkm-label-color);animation-timing-function:ease-in-out}${end / 2}%{color:var(--bkm-shimmer-color);animation-timing-function:ease-in-out}${end}%,100%{color:var(--bkm-label-color)}}`
-}
-
 /** Native presentation uses the actual parent's builder, including its message scope. */
-export function ChartLoadingLabel<Message, Mounts>(
+export const ChartLoadingLabel: <Message, Mounts>(
+  h: HtmlBuilder<Message, Mounts>,
+  argument1?: ChartLoadingLabelProps,
+) => Html = function ChartLoadingLabel<Message, Mounts>(
   h: HtmlBuilder<Message, Mounts>,
   { text = 'Loading', className, exiting = false }: ChartLoadingLabelProps = {},
-): Html {
+) {
   if (!text.trim()) {
-    return h.empty
+    return h.empty satisfies Html
   }
 
   return h.output(
@@ -38,8 +28,6 @@ export function ChartLoadingLabel<Message, Mounts>(
       h.span(
         [h.Class('ts-bkm-loading-label-text select-none')],
         [
-          // Source deliberately segments UTF-16 units, including individual surrogate halves.
-          // Unkeyed native siblings retain Source's positional index identity for these decorative spans.
           ...text.split('').map((char, index) =>
             h.span(
               [
@@ -66,5 +54,18 @@ export function ChartLoadingLabel<Message, Mounts>(
         ],
       ),
     ],
-  )
+  ) satisfies Html
+}
+
+const charKeyframes: (length: number) => string = function charKeyframes(length: number) {
+  const cycle = 1 + length * 0.05
+  const end = (1 / cycle) * 100
+
+  return `@keyframes bkm-label-char-${length}{0%{color:var(--bkm-label-color);animation-timing-function:ease-in-out}${end / 2}%{color:var(--bkm-shimmer-color);animation-timing-function:ease-in-out}${end}%,100%{color:var(--bkm-label-color)}}`
+}
+
+export interface ChartLoadingLabelProps {
+  readonly text?: string
+  readonly className?: string
+  readonly exiting?: boolean
 }

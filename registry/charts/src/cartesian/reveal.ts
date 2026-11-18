@@ -9,36 +9,8 @@ import type {
 import { REVEAL_EASING } from '../kit/motion/easing'
 import { resumeEnter } from '../kit/motion/resume-enter'
 
-export interface WipeConfig {
-  readonly progress: number
-  readonly width: number
-  readonly height: number
-  readonly padding?: number
-  readonly duration: number
-  readonly clock: () => number
-  readonly armedAt?: { readonly current: number | null }
-  readonly physical?: boolean
-}
-
-export const WIPE_KEY = 'wipe-'
-
-export function wipeMotion(
-  duration: number,
-  armedAt: WipeConfig['armedAt'],
-  now: number,
-): ChartMotionTiming {
-  const resumed =
-    armedAt?.current == null
-      ? false
-      : resumeEnter({ delay: 0, duration, easing: REVEAL_EASING }, armedAt.current, now)
-
-  return resumed === false
-    ? { transition: { type: 'tween', duration, easing: REVEAL_EASING } }
-    : resumed
-}
-
 /** Preserve every datum, point and scale type while transposing the original two-group reveal. */
-export function wipeWrap<
+export const wipeWrap: <
   Datum,
   X extends ChartValue,
   Y extends ChartValue,
@@ -51,11 +23,26 @@ export function wipeWrap<
   tag: string,
   wipe: WipeConfig,
   margin: { readonly left: number; readonly top: number; readonly bottom: number },
-): ChartMark<Datum, X, Y, ScaleX, ScaleY, XId, YId> {
+) => ChartMark<Datum, X, Y, ScaleX, ScaleY, XId, YId> = function wipeWrap<
+  Datum,
+  X extends ChartValue,
+  Y extends ChartValue,
+  ScaleX extends ChartValue,
+  ScaleY extends ChartValue,
+  XId extends string,
+  YId extends string,
+>(
+  mark: ChartMark<Datum, X, Y, ScaleX, ScaleY, XId, YId>,
+  tag: string,
+  wipe: WipeConfig,
+  margin: { readonly left: number; readonly top: number; readonly bottom: number },
+) {
   const padding = wipe.padding ?? 0
   const shift = (1 - wipe.progress) * (wipe.width + 2 * padding)
 
-  const wrap = (scene: MarkScene<Datum, X, Y>): MarkScene<Datum, X, Y> => ({
+  const wrap: (scene: MarkScene<Datum, X, Y>) => MarkScene<Datum, X, Y> = (
+    scene: MarkScene<Datum, X, Y>,
+  ) => ({
     ...scene,
     nodes: [
       {
@@ -82,9 +69,11 @@ export function wipeWrap<
     ],
   })
 
-  const route = (
+  const route: (
     own: ChartMotionDefinition<Datum> | undefined,
-  ): ChartMotionDefinition<Datum> | undefined =>
+  ) => ChartMotionDefinition<Datum> | undefined = (
+    own: ChartMotionDefinition<Datum> | undefined,
+  ) =>
     own === undefined
       ? undefined
       : (context: ChartMotionContext<Datum>) =>
@@ -121,5 +110,37 @@ export function wipeWrap<
             }),
       }
     },
-  }
+  } satisfies ChartMark<Datum, X, Y, ScaleX, ScaleY, XId, YId>
 }
+
+export const wipeMotion: (
+  duration: number,
+  armedAt: WipeConfig['armedAt'],
+  now: number,
+) => ChartMotionTiming = function wipeMotion(
+  duration: number,
+  armedAt: WipeConfig['armedAt'],
+  now: number,
+) {
+  const resumed =
+    armedAt?.current == null
+      ? false
+      : resumeEnter({ delay: 0, duration, easing: REVEAL_EASING }, armedAt.current, now)
+
+  return resumed === false
+    ? { transition: { type: 'tween', duration, easing: REVEAL_EASING } }
+    : resumed
+}
+
+export interface WipeConfig {
+  readonly progress: number
+  readonly width: number
+  readonly height: number
+  readonly padding?: number
+  readonly duration: number
+  readonly clock: () => number
+  readonly armedAt?: { readonly current: number | null }
+  readonly physical?: boolean
+}
+
+export const WIPE_KEY = 'wipe-'

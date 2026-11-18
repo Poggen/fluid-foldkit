@@ -27,36 +27,44 @@ const HoverAttributes =
   Data.taggedEnum<Extract<Attribute<never>, { readonly _tag: 'DataAttribute' }>>()
 
 /** Retained descendants share one physical hover scope without becoming separate controllers. */
-export const hoverSubtreeAttributes = (
+export const hoverSubtreeAttributes: (
+  hidden?: boolean,
+) => ReadonlyArray<Extract<Attribute<never>, { readonly _tag: 'DataAttribute' }>> = (
   hidden = false,
-): ReadonlyArray<Extract<Attribute<never>, { readonly _tag: 'DataAttribute' }>> => [
-  HoverAttributes.DataAttribute({ key: HOVER_SCOPE_ATTR.slice(5), value: '' }),
-  ...(hidden
-    ? [HoverAttributes.DataAttribute({ key: HOVER_HIDDEN_ATTR.slice(5), value: '' })]
-    : []),
-]
+) =>
+  [
+    HoverAttributes.DataAttribute({ key: HOVER_SCOPE_ATTR.slice(5), value: '' }),
+    ...(hidden
+      ? [HoverAttributes.DataAttribute({ key: HOVER_HIDDEN_ATTR.slice(5), value: '' })]
+      : []),
+  ] satisfies ReadonlyArray<Extract<Attribute<never>, { readonly _tag: 'DataAttribute' }>>
 
 /** Registration replaces React refs; nested hover roots own their own items. */
-export const hoverItemAttributes = (
+export const hoverItemAttributes: (
+  index: number,
+  disabled?: boolean,
+  activeIndex?: number | null,
+) => ReadonlyArray<Extract<Attribute<never>, { readonly _tag: 'DataAttribute' }>> = (
   index: number,
   disabled = false,
   activeIndex: number | null = null,
-): ReadonlyArray<Extract<Attribute<never>, { readonly _tag: 'DataAttribute' }>> => [
-  HoverAttributes.DataAttribute({ key: HOVER_ITEM_ATTR.slice(5), value: String(index) }),
-  ...(index === activeIndex
-    ? [
-        HoverAttributes.DataAttribute({ key: ACTIVE_ATTR.slice(5), value: '' }) satisfies Extract<
-          Attribute<never>,
-          { readonly _tag: 'DataAttribute' }
-        >,
-      ]
-    : []),
-  ...(disabled
-    ? [
-        HoverAttributes.DataAttribute({
-          key: HOVER_DISABLED_ATTR.slice(5),
-          value: '',
-        }) satisfies Extract<Attribute<never>, { readonly _tag: 'DataAttribute' }>,
-      ]
-    : []),
-]
+) =>
+  [
+    HoverAttributes.DataAttribute({ key: HOVER_ITEM_ATTR.slice(5), value: String(index) }),
+    ...(index === activeIndex
+      ? [
+          HoverAttributes.DataAttribute({ key: ACTIVE_ATTR.slice(5), value: '' }) satisfies Extract<
+            Attribute<never>,
+            { readonly _tag: 'DataAttribute' }
+          >,
+        ]
+      : []),
+    ...(disabled
+      ? [
+          HoverAttributes.DataAttribute({
+            key: HOVER_DISABLED_ATTR.slice(5),
+            value: '',
+          }) satisfies Extract<Attribute<never>, { readonly _tag: 'DataAttribute' }>,
+        ]
+      : []),
+  ] satisfies ReadonlyArray<Extract<Attribute<never>, { readonly _tag: 'DataAttribute' }>>

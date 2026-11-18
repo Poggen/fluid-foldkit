@@ -17,13 +17,11 @@ export function FunnelChart({ name }: { readonly name: string }) {
     Row: FunnelDatumSchema,
     acceptedLayout: true,
   })
-
-  return {
-    namespace,
-    contract,
-    plans,
-    configuration: polarControl,
-    inputs: (id: string, props: FunnelChartProps): PolarInputs<FunnelStage> => ({
+  const inputs: (id: string, props: FunnelChartProps) => PolarInputs<FunnelStage> = (
+    id: string,
+    props: FunnelChartProps,
+  ) =>
+    ({
       layout: 'contents',
       mount: (element, data, focus, observe, clock, observeSize) =>
         new FunnelHost(element, props, id, data, focus, observe, clock, observeSize),
@@ -77,6 +75,13 @@ export function FunnelChart({ name }: { readonly name: string }) {
                 ),
               ],
             ),
-    }),
+    }) satisfies PolarInputs<FunnelStage>
+
+  return {
+    namespace,
+    contract,
+    plans,
+    configuration: polarControl,
+    inputs,
   }
 }

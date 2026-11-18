@@ -1,7 +1,7 @@
 import { Option } from 'effect'
 import { childAttributes } from 'foldkit/html'
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import { Composition, ObserveDataTable } from './data-table-composition.js'
 import { Table, Actions } from './data-table-definition.js'
 import type { DataTableViewInputs } from './data-table-definition.js'

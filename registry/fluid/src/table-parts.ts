@@ -1,6 +1,6 @@
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import { childAttributes } from 'foldkit/html'
 import type { Attribute, ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
 import type { HoverViewState } from './hover.js'
@@ -11,46 +11,13 @@ import { cn } from './lib/utils.js'
 import { resolvePresentation } from './presentation.js'
 import type { Presentation, PresentationContext } from './presentation.js'
 
-export interface TableContext extends HoverViewState {
-  readonly size: SizeVariant
-  readonly presentation?: PresentationContext
-  readonly selectedIndices?: ReadonlyArray<number>
-  readonly headItemAttributes?: (
-    index: number,
-  ) => ReadonlyArray<Extract<Attribute<never>, { readonly _tag: 'DataAttribute' }>>
-  readonly renderHeader?: (props: {
-    readonly children: ReadonlyArray<Html | string>
-    readonly className?: string
-    readonly attributes?: ReadonlyArray<ChildAttribute>
-  }) => Html
-}
-
-export interface TablePartProps<Message> {
-  readonly children: ReadonlyArray<Html | string>
-  readonly className?: string
-  readonly attributes?: ReadonlyArray<Attribute<Message> | ChildAttribute>
-}
-
-export interface TableRowProps<Message> extends TablePartProps<Message> {
-  readonly keepRule?: boolean
-  readonly index?: number
-  readonly context?: TableContext
-  readonly style?: Readonly<Record<string, string>>
-}
-
-export interface TableCellProps<Message> extends TablePartProps<Message>, Presentation {}
-export interface TableHeadProps<Message> extends Omit<TableCellProps<Message>, 'context'> {
-  readonly context?: PresentationContext | TableContext
-  readonly hoverIndex?: number
-}
-export interface TableHeaderProps<Message> extends TablePartProps<Message> {
-  readonly context?: TableContext
-}
-
-export function TableHeader<Message>(
+export const TableHeader: <Message>(
   props: TableHeaderProps<Message>,
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function TableHeader<Message>(
+  props: TableHeaderProps<Message>,
+  h: HtmlBuilder<Message>,
+) {
   if (props.context?.renderHeader !== undefined)
     return props.context.renderHeader({
       ...props,
@@ -58,125 +25,117 @@ export function TableHeader<Message>(
       attributes: (props.attributes ?? []).flatMap((attribute) =>
         '_tag' in attribute ? childAttributes([attribute]) : [attribute],
       ),
-    })
-  return h.thead([h.Class(cn(props.className)), ...(props.attributes ?? [])], props.children)
+    }) satisfies Html
+  return h.thead(
+    [h.Class(cn(props.className)), ...(props.attributes ?? [])],
+    props.children,
+  ) satisfies Html
 }
 
-export function TableBody<Message>(props: TablePartProps<Message>, h: HtmlBuilder<Message>): Html {
-  return h.tbody([h.Class(cn(props.className)), ...(props.attributes ?? [])], props.children)
-}
+export const TableBody: <Message>(props: TablePartProps<Message>, h: HtmlBuilder<Message>) => Html =
+  function TableBody<Message>(props: TablePartProps<Message>, h: HtmlBuilder<Message>) {
+    return h.tbody(
+      [h.Class(cn(props.className)), ...(props.attributes ?? [])],
+      props.children,
+    ) satisfies Html
+  }
 
-export function TableRow<Message>(props: TableRowProps<Message>, h: HtmlBuilder<Message>): Html {
-  const { index, context } = props
-  const isBodyRow = index !== undefined
-  const activeIndex = context?.activeIndex ?? null
+export const TableRow: <Message>(props: TableRowProps<Message>, h: HtmlBuilder<Message>) => Html =
+  function TableRow<Message>(props: TableRowProps<Message>, h: HtmlBuilder<Message>) {
+    const { index, context } = props
+    const isBodyRow = index !== undefined
+    const activeIndex = context?.activeIndex ?? null
 
-  const selected = context?.selectedIndices ?? []
-  const hideBorder =
-    (isBodyRow ? selected.includes(index) || selected.includes(index + 1) : selected.includes(0)) &&
-    !(props.keepRule && !isBodyRow)
+    const selected = context?.selectedIndices ?? []
+    const hideBorder =
+      (isBodyRow
+        ? selected.includes(index) || selected.includes(index + 1)
+        : selected.includes(0)) && !(props.keepRule && !isBodyRow)
 
-  return h.tr(
-    sourceStyleAttributes(
-      {
-        fontVariationSettings: isBodyRow ? fontWeights.normal : fontWeights.semibold,
-        ...props.style,
-      },
+    return h.tr(
+      sourceStyleAttributes(
+        {
+          fontVariationSettings: isBodyRow ? fontWeights.normal : fontWeights.semibold,
+          ...props.style,
+        },
+        [
+          h.Class(
+            cn(
+              'group/row relative z-10 *:border-b *:transition-[border-color] *:duration-80',
+              'group-data-snap-rules/table:*:duration-0',
+              hideBorder
+                ? '*:border-transparent'
+                : '*:border-accent/40 data-[under-highlight]:*:border-transparent data-[under-highlight]:*:duration-0',
+              isBodyRow && activeIndex === index && 'is-active',
+              props.className,
+            ),
+          ),
+          ...(index === undefined
+            ? []
+            : [
+                h.DataAttribute('fluid-hover-index', String(index)),
+                ...(context?.itemAttributes(index) ?? []),
+              ]),
+          ...(props.attributes ?? []),
+        ],
+      ),
+      props.children,
+    ) satisfies Html
+  }
+
+export const TableHead: <Message>(props: TableHeadProps<Message>, h: HtmlBuilder<Message>) => Html =
+  function TableHead<Message>(props: TableHeadProps<Message>, h: HtmlBuilder<Message>) {
+    return h.th(
       [
+        ...(props.hoverIndex === undefined
+          ? []
+          : [
+              h.DataAttribute('head-hover', ''),
+              ...((typeof props.context === 'function'
+                ? undefined
+                : props.context?.headItemAttributes?.(props.hoverIndex)) ?? []),
+            ]),
         h.Class(
           cn(
-            'group/row relative z-10 *:border-b *:transition-[border-color] *:duration-80',
-            'group-data-snap-rules/table:*:duration-0',
-            hideBorder
-              ? '*:border-transparent'
-              : '*:border-accent/40 data-[under-highlight]:*:border-transparent data-[under-highlight]:*:duration-0',
-            isBodyRow && activeIndex === index && 'is-active',
+            'text-left text-foreground',
+            'py-(--table-cell-py)',
+            (props.size ??
+              (typeof props.context === 'function' ? props.context().size : props.context?.size) ??
+              'default') === 'compact'
+              ? 'px-2.5'
+              : 'px-3',
             props.className,
           ),
         ),
-        ...(index === undefined
-          ? []
-          : [
-              h.DataAttribute('fluid-hover-index', String(index)),
-              ...(context?.itemAttributes(index) ?? []),
-            ]),
         ...(props.attributes ?? []),
       ],
-    ),
-    props.children,
-  )
-}
+      props.children,
+    ) satisfies Html
+  }
 
-export function TableHead<Message>(props: TableHeadProps<Message>, h: HtmlBuilder<Message>): Html {
-  return h.th(
-    [
-      ...(props.hoverIndex === undefined
-        ? []
-        : [
-            h.DataAttribute('head-hover', ''),
-            ...((typeof props.context === 'function'
-              ? undefined
-              : props.context?.headItemAttributes?.(props.hoverIndex)) ?? []),
-          ]),
-      h.Class(
-        cn(
-          'text-left text-foreground',
-          'py-(--table-cell-py)',
-          (props.size ??
-            (typeof props.context === 'function' ? props.context().size : props.context?.size) ??
-            'default') === 'compact'
-            ? 'px-2.5'
-            : 'px-3',
-          props.className,
+export const TableCell: <Message>(props: TableCellProps<Message>, h: HtmlBuilder<Message>) => Html =
+  function TableCell<Message>(props: TableCellProps<Message>, h: HtmlBuilder<Message>) {
+    return h.td(
+      [
+        h.Class(
+          cn(
+            'text-muted-foreground transition-colors duration-80 group-[.is-active]/row:text-foreground',
+            'py-(--table-cell-py)',
+            resolvePresentation(props).size.variant === 'compact' ? 'px-2.5' : 'px-3',
+            props.className,
+          ),
         ),
-      ),
-      ...(props.attributes ?? []),
-    ],
-    props.children,
-  )
-}
-
-export function TableCell<Message>(props: TableCellProps<Message>, h: HtmlBuilder<Message>): Html {
-  return h.td(
-    [
-      h.Class(
-        cn(
-          'text-muted-foreground transition-colors duration-80 group-[.is-active]/row:text-foreground',
-          'py-(--table-cell-py)',
-          resolvePresentation(props).size.variant === 'compact' ? 'px-2.5' : 'px-3',
-          props.className,
-        ),
-      ),
-      ...(props.attributes ?? []),
-    ],
-    props.children,
-  )
-}
-
-export const tableClassName = (size: SizeVariant, className?: string) =>
-  cn(
-    'w-full border-separate border-spacing-0',
-    size === 'compact' ? '[--table-cell-py:5px]' : '[--table-cell-py:--spacing(2)]',
-    sizeMap[size].text,
-    className,
-  )
-
-export interface TableEmptyProps<Message> {
-  readonly columns: number
-  readonly title?: Html | string
-  readonly description?: Html | string
-  readonly action?: Html
-  readonly children?: ReadonlyArray<Html | string>
-  readonly rows?: number
-  readonly className?: string
-  readonly attributes?: ReadonlyArray<Attribute<Message> | ChildAttribute>
-}
+        ...(props.attributes ?? []),
+      ],
+      props.children,
+    ) satisfies Html
+  }
 
 /** Holds the same line boxes and shared vertical padding as populated body rows. */
-export function TableEmpty<Message>(
+export const TableEmpty: <Message>(
   props: TableEmptyProps<Message>,
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function TableEmpty<Message>(props: TableEmptyProps<Message>, h: HtmlBuilder<Message>) {
   return h.tr(
     [
       h.DataAttribute('slot', 'table-empty'),
@@ -218,5 +177,60 @@ export function TableEmpty<Message>(
         ],
       ),
     ],
+  ) satisfies Html
+}
+
+export interface TableContext extends HoverViewState {
+  readonly size: SizeVariant
+  readonly presentation?: PresentationContext
+  readonly selectedIndices?: ReadonlyArray<number>
+  readonly headItemAttributes?: (
+    index: number,
+  ) => ReadonlyArray<Extract<Attribute<never>, { readonly _tag: 'DataAttribute' }>>
+  readonly renderHeader?: (props: {
+    readonly children: ReadonlyArray<Html | string>
+    readonly className?: string
+    readonly attributes?: ReadonlyArray<ChildAttribute>
+  }) => Html
+}
+
+export interface TablePartProps<Message> {
+  readonly children: ReadonlyArray<Html | string>
+  readonly className?: string
+  readonly attributes?: ReadonlyArray<Attribute<Message> | ChildAttribute>
+}
+
+export interface TableRowProps<Message> extends TablePartProps<Message> {
+  readonly keepRule?: boolean
+  readonly index?: number
+  readonly context?: TableContext
+  readonly style?: Readonly<Record<string, string>>
+}
+
+export interface TableCellProps<Message> extends TablePartProps<Message>, Presentation {}
+export interface TableHeadProps<Message> extends Omit<TableCellProps<Message>, 'context'> {
+  readonly context?: PresentationContext | TableContext
+  readonly hoverIndex?: number
+}
+export interface TableHeaderProps<Message> extends TablePartProps<Message> {
+  readonly context?: TableContext
+}
+
+export const tableClassName = (size: SizeVariant, className?: string) =>
+  cn(
+    'w-full border-separate border-spacing-0',
+    size === 'compact' ? '[--table-cell-py:5px]' : '[--table-cell-py:--spacing(2)]',
+    sizeMap[size].text,
+    className,
   )
+
+export interface TableEmptyProps<Message> {
+  readonly columns: number
+  readonly title?: Html | string
+  readonly description?: Html | string
+  readonly action?: Html
+  readonly children?: ReadonlyArray<Html | string>
+  readonly rows?: number
+  readonly className?: string
+  readonly attributes?: ReadonlyArray<Attribute<Message> | ChildAttribute>
 }

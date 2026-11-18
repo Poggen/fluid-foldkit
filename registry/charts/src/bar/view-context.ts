@@ -16,17 +16,15 @@ import { buildBarData, configuredBarDomains, resolveBarSeries, flattenBarLayers 
 import { barPlot, barValueScales } from './plot'
 import { fixedYDomains } from '../cartesian/domains'
 
-const shortDate = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
-
-const isBarValue = Schema.is(Schema.Number)
-
-const indexDate = (index: number): Date => DateTime.toDateUtc(DateTime.makeUnsafe(index))
-
-function stackOffsets<Row>(
+const stackOffsets: <Row>(
   data: ReadonlyArray<Row>,
   keys: ReadonlyArray<string>,
   valueOf: (row: Row, key: string) => number,
-): ReadonlyMap<number, ReadonlyMap<string, number>> {
+) => ReadonlyMap<number, ReadonlyMap<string, number>> = function stackOffsets<Row>(
+  data: ReadonlyArray<Row>,
+  keys: ReadonlyArray<string>,
+  valueOf: (row: Row, key: string) => number,
+) {
   return new Map(
     data.map((row, index) => {
       let cumulative = 0
@@ -39,12 +37,14 @@ function stackOffsets<Row>(
 
       return [index, offsets]
     }),
-  )
+  ) satisfies ReadonlyMap<number, ReadonlyMap<string, number>>
 }
 
-export function barViewport(
+export const barViewport: (
   snapshot: Pick<BarSnapshot<unknown>, 'width' | 'height' | 'margin' | 'data'>,
-): ChartViewport {
+) => ChartViewport = function barViewport(
+  snapshot: Pick<BarSnapshot<unknown>, 'width' | 'height' | 'margin' | 'data'>,
+) {
   return {
     width: snapshot.width,
     height: snapshot.height,
@@ -52,6 +52,13 @@ export function barViewport(
     xDomain: [0, Math.max(1, snapshot.data.length - 1)],
   }
 }
+
+const shortDate = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
+
+const isBarValue = Schema.is(Schema.Number)
+
+const indexDate: (index: number) => Date = (index: number) =>
+  DateTime.toDateUtc(DateTime.makeUnsafe(index))
 
 function barContextGeometry(
   requestedMargin: BarChartProps<never>['margin'],
@@ -118,7 +125,7 @@ export function projectBarViewContext<Row extends Readonly<Record<string, unknow
     strokeWidth: 2,
     yAxisId: item.yAxisId,
   }))
-  const categoryOf = (row: Row): string => String(row[props.xDataKey ?? 'name'])
+  const categoryOf: (row: Row) => string = (row: Row) => String(row[props.xDataKey ?? 'name'])
 
   const references = referenceAreaConfigs(
     props.children.filter((child) => child.kind === 'referenceArea'),
@@ -128,14 +135,19 @@ export function projectBarViewContext<Row extends Readonly<Record<string, unknow
   let lastData: ReadonlyArray<Row> | undefined
   let lastKey: string | undefined
   let stable: ChartStableContextValue<Row> | undefined
-
-  return <Message>(
+  const project: <Message>(
     data: ReadonlyArray<Row>,
     index: number | null,
     state: Interaction,
     viewport: ChartViewport | undefined,
     capabilities: ChartContextCapabilities<Row, Message>,
-  ): BarViewContext<Row, Message> => {
+  ) => BarViewContext<Row, Message> = <Message>(
+    data: ReadonlyArray<Row>,
+    index: number | null,
+    state: Interaction,
+    viewport: ChartViewport | undefined,
+    capabilities: ChartContextCapabilities<Row, Message>,
+  ) => {
     const { width, height, margin, innerWidth, innerHeight, loaded } = barContextGeometry(
       props.margin,
       viewport,
@@ -170,7 +182,7 @@ export function projectBarViewContext<Row extends Readonly<Record<string, unknow
         props,
       )
 
-      const centre = (rowIndex: number): number =>
+      const centre: (rowIndex: number) => number = (rowIndex: number) =>
         (barScale(categories[rowIndex] ?? '') ?? 0) + bandWidth / 2
 
       const xScale = scaleUtc()
@@ -261,6 +273,8 @@ export function projectBarViewContext<Row extends Readonly<Record<string, unknow
         hoveredBarIndex: index,
         setHoveredBarIndex: capabilities.focusRow,
       },
-    }
+    } satisfies BarViewContext<Row, Message>
   }
+
+  return project
 }

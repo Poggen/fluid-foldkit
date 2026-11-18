@@ -1,4 +1,3 @@
-// Native typed options transposed from the pinned Bklit public contracts.
 import type { ChartContent, ChartStyle } from './content-types'
 import type { SpringConfig } from './series-options'
 import type { RegisteredLineConfig as ChartLineConfig } from './context-types'

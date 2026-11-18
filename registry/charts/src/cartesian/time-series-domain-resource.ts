@@ -77,7 +77,7 @@ export function timeSeriesDomainResource<Row, SceneDatum>(options: {
     attach: (invalidate: (() => void) | undefined) => {
       redraw = invalidate
     },
-    schedule: (state: Interaction): boolean => {
+    schedule: (state: Interaction) => {
       if (state.phase === 'swap') {
         const generation = state.generation
         queueMicrotask(() => {
@@ -85,17 +85,17 @@ export function timeSeriesDomainResource<Row, SceneDatum>(options: {
             options.completed(generation)
           }
         })
-        return true
+        return true satisfies boolean
       }
 
       if (state.phase !== 'tween' && state.phase !== 'tweenLoading') {
-        return false
+        return false satisfies boolean
       }
 
       completion = state.generation
       complete()
 
-      return true
+      return true satisfies boolean
     },
     destroy: () => {
       disposed = true

@@ -233,8 +233,9 @@ it.effect(
     }),
 )
 
-const groups = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<SceneGroup> =>
-  nodes.flatMap((node) => (node.kind === 'group' ? [node, ...groups(node.children)] : []))
+const groups: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<SceneGroup> = (
+  nodes: ReadonlyArray<SceneNode>,
+) => nodes.flatMap((node) => (node.kind === 'group' ? [node, ...groups(node.children)] : []))
 
 it.effect(
   'authored band width keeps natural starts and step while fronts, labels and tooltip centers use the same override',

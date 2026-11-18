@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism cc276ca0. MIT; see NOTICE
+/* @license Derived from Fluid Functionalism cc276ca0. MIT; see NOTICE */
 import { modifyFields } from 'foldkit/struct'
 import { HoverMode } from './hover-observation.js'
 import { Effect, Layer, Option, Queue, Schema, Stream, Number } from 'effect'

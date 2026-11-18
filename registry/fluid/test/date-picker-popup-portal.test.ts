@@ -1,14 +1,15 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom -- real Foldkit mount and handler Layer lifetimes
 import { it } from '@effect/vitest'
 import { Effect, Schedule } from 'effect'
 import { Program, Runtime } from 'foldkit'
-import { expect, vi } from 'vitest'
+import { expect } from 'vitest'
 import { PopupAuthorityLayer } from '../src/date-picker-popup-authority.js'
 import { acquireDefaultPortalHost } from '../src/default-portal-host.js'
 import { mountPopupPortal } from '../src/date-picker-popup-portal.js'
 import { DialogResourcesLayer } from '../src/dialog.js'
 import { DialogFixture, DialogFixtureNestedImplementationLayer } from './dialog-parent.js'
-import { PopupFixture, popupFixtureLayer } from './date-picker-popup-fixture.js'
+import { PopupFixture, popupFixtureLayer } from './date-picker-popup.fixture.js'
 
 const eventually = (assertion: () => void) =>
   Effect.try(assertion).pipe(Effect.retry({ times: 100, schedule: Schedule.spaced('10 millis') }))
@@ -178,30 +179,32 @@ it.live(
 
         const popup = element('dispose-open-popup')
         const next = element('dispose-open-next')
-        const order: Array<string> = []
-        const restoreBefore = next.before.bind(next)
-        const removeHost = shared.remove.bind(shared)
-
-        const insertion = vi.spyOn(next, 'before').mockImplementation((...nodes) => {
-          expect(shared.isConnected).toBe(true)
-          expect(document.querySelectorAll('[data-popup-focus-guard]')).toHaveLength(0)
-          order.push('restore')
-          restoreBefore(...nodes)
-        })
-
-        const removal = vi.spyOn(shared, 'remove').mockImplementation(() => {
-          expect(shared.querySelector('[data-date-picker-portal]')).toBeNull()
-          expect(popup.parentNode).not.toBe(shared)
-          order.push('release')
-          removeHost()
-        })
-
+        const home = next.parentNode
+        if (home === null) throw new Error('Popup restoration parent required')
+        const guards = [...document.querySelectorAll('[data-popup-focus-guard]')]
+        const changes: MutationRecord[] = []
+        const observer = new MutationObserver((records) => changes.push(...records))
+        for (const target of new Set([document.body, home, shared])) {
+          observer.observe(target, { childList: true, subtree: true })
+        }
         try {
           yield* runtime.dispose()
-          expect(order).toEqual(['restore', 'release'])
+          const records = [...changes, ...observer.takeRecords()]
+          const restored = records.findIndex(
+            (record) => record.target === home && [...record.addedNodes].includes(popup),
+          )
+          const released = records.findIndex((record) => [...record.removedNodes].includes(shared))
+          expect(restored).toBeGreaterThanOrEqual(0)
+          expect(released).toBeGreaterThan(restored)
+          for (const guard of guards) {
+            const removed = records.findIndex((record) => [...record.removedNodes].includes(guard))
+            expect(removed).toBeGreaterThanOrEqual(0)
+            expect(removed).toBeLessThan(restored)
+          }
+          expect(shared.querySelector('[data-date-picker-portal]')).toBeNull()
+          expect(popup.parentNode).not.toBe(shared)
         } finally {
-          insertion.mockRestore()
-          removal.mockRestore()
+          observer.disconnect()
         }
 
         expect(host()).toBeNull()
@@ -456,7 +459,7 @@ it.live(
             document.querySelectorAll('[data-popup-focus-guard="rebound-popup"]'),
           ).toHaveLength(4)
         })
-        // Mutation observation rebinds the occurrence before the next browser input.
+
         yield* Effect.sleep('10 millis')
         replacement.focus()
         replacement.dispatchEvent(

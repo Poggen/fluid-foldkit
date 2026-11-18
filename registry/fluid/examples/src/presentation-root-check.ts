@@ -27,18 +27,20 @@ const FluidRootCheckABlock = Block.make('FluidRootCheckA', {
 const Outer = FluidRootCheckABlock.makeRequiredFieldBinding(PresentationProviderBlock, {
   field: 'outer',
   init: {
-    contextToArgs: (): [PresentationProviderConfig] => [
-      { id: 'root-a-outer', mode: 'shape', defaultShape: 'pill' },
-    ],
+    contextToArgs: () =>
+      [{ id: 'root-a-outer', mode: 'shape', defaultShape: 'pill' }] satisfies [
+        PresentationProviderConfig,
+      ],
   },
 })
 
 const Inner = FluidRootCheckABlock.makeRequiredFieldBinding(PresentationProviderBlock, {
   field: 'inner',
   init: {
-    contextToArgs: (): [PresentationProviderConfig] => [
-      { id: 'root-a-inner', mode: 'shape', defaultShape: 'rounded' },
-    ],
+    contextToArgs: () =>
+      [{ id: 'root-a-inner', mode: 'shape', defaultShape: 'rounded' }] satisfies [
+        PresentationProviderConfig,
+      ],
   },
 })
 
@@ -94,9 +96,10 @@ const FluidRootCheckBBlock = Block.make('FluidRootCheckB', {
 const Provider = FluidRootCheckBBlock.makeRequiredFieldBinding(PresentationProviderBlock, {
   field: 'provider',
   init: {
-    contextToArgs: (): [PresentationProviderConfig] => [
-      { id: 'root-b', mode: 'shape', defaultShape: 'rounded' },
-    ],
+    contextToArgs: () =>
+      [{ id: 'root-b', mode: 'shape', defaultShape: 'rounded' }] satisfies [
+        PresentationProviderConfig,
+      ],
   },
 })
 

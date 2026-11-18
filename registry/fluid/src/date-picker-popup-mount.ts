@@ -92,7 +92,6 @@ export const PopupResource = PopupBlock.makeMountStream('Popup', {
                   return constVoid
                 }
 
-                // Keep the document lease across popup exits until the handler Layer disposes.
                 let host = hosts.get(document)
 
                 if (host === undefined) {
@@ -325,7 +324,6 @@ export const PopupResource = PopupBlock.makeMountStream('Popup', {
                   policy = makePolicy()
                   releaseOccurrence = startOccurrence(anchor)
                 }
-                // One owned observer covers initial absence, live loss/replacement, and config updates.
 
                 const references = new window.MutationObserver(reconcileAnchor)
                 references.observe(document.body, {

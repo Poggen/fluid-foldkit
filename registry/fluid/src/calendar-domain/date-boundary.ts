@@ -3,20 +3,15 @@ import { TZDate } from '@date-fns/tz'
 import { UTCDate, UTCDateMini } from '@date-fns/utc'
 import { constructFrom } from 'date-fns/constructFrom'
 
-// JS Date exists only at the date-fns boundary. Clock reads are supplied
-// by handler Layers; neither conversion obtains the current time.
-// Invalid Date is an admitted date-fns value, but is outside DateTime's valid
-// domain. Keep that sentinel at the interoperability boundary, without throwing
-// a new error or introducing an ambient clock read.
-const invalidDate = () => constructFrom(DateTime.toDateUtc(DateTime.makeUnsafe(0)), Number.NaN)
-
-export const instantDate = (value: number | string): Date =>
-  Option.match(DateTime.make(Predicate.isNumber(value) ? value : Date.parse(value)), {
-    onNone: invalidDate,
-    onSome: DateTime.toDateUtc,
-  })
-
-export function localDate(
+export const localDate: (
+  year: number,
+  monthIndex: number,
+  day: number,
+  hours?: number,
+  minutes?: number,
+  seconds?: number,
+  millis?: number,
+) => Date = function (
   year: number,
   monthIndex: number,
   day: number,
@@ -24,9 +19,7 @@ export function localDate(
   minutes = 0,
   seconds = 0,
   millis = 0,
-): Date {
-  // Preserve the frozen constructor's 0..99 year convention and overflow
-  // normalization before interpreting the civil parts in the host zone.
+) {
   const integerYear = Math.trunc(year)
 
   return Option.match(
@@ -41,21 +34,21 @@ export function localDate(
     }),
     {
       onNone: invalidDate,
-      // The terminal Z belongs to the normalization instant, not the requested
-      // host-local civil date. Native ISO-local parsing retains the Source Date
-      // constructor's DST resolution and complete three-part date range without
-      // applying DateTime's narrower zoned-offset safety margin.
+
       onSome: (normalized) => instantDate(DateTime.formatIso(normalized).slice(0, -1)),
     },
-  )
+  ) satisfies Date
 }
 
-// UTC arithmetic uses Date's UTC accessors without named-zone offset lookup.
-// Keep full Date formatting available on values returned by library operations.
-export const zonedDate = (value: number | Date, timeZone: string): Date =>
-  timeZone === 'UTC' ? new UTCDate(Number(value)) : new TZDate(Number(value), timeZone)
-
-export function zonedCivilDate(
+export const zonedCivilDate: (
+  year: number,
+  monthIndex: number,
+  day: number,
+  timeZone: string,
+  hours?: number,
+  minutes?: number,
+  seconds?: number,
+) => Date = function (
   year: number,
   monthIndex: number,
   day: number,
@@ -63,28 +56,50 @@ export function zonedCivilDate(
   hours = 0,
   minutes = 0,
   seconds = 0,
-): Date {
-  return timeZone === 'UTC'
-    ? new UTCDate(year, monthIndex, day, hours, minutes, seconds)
-    : new TZDate(year, monthIndex, day, hours, minutes, seconds, timeZone)
+) {
+  return (
+    timeZone === 'UTC'
+      ? new UTCDate(year, monthIndex, day, hours, minutes, seconds)
+      : new TZDate(year, monthIndex, day, hours, minutes, seconds, timeZone)
+  ) satisfies Date
 }
 
-// Custom callbacks previously received TZDate, including its Intl option defaults.
-export const callbackDate = (date: Date): Date =>
-  date instanceof UTCDateMini ? new TZDate(date.getTime(), 'UTC') : date
-
-export function dateCallback<A extends Array<unknown>, R, Receiver>(
+export const dateCallback: <A extends Array<unknown>, R, Receiver>(
   handler: (this: Receiver, date: Date, ...args: A) => R,
-): (this: Receiver, date: Date, ...args: A) => R {
+) => (this: Receiver, date: Date, ...args: A) => R = function dateCallback<
+  A extends Array<unknown>,
+  R,
+  Receiver,
+>(handler: (this: Receiver, date: Date, ...args: A) => R) {
   return function callDateCallback(this: Receiver, date, ...args) {
     return handler.call(this, callbackDate(date), ...args)
-  }
+  } satisfies (this: Receiver, date: Date, ...args: A) => R
 }
 
-export function optionalDateCallback<A extends Array<unknown>, R, Receiver>(
+export const optionalDateCallback: <A extends Array<unknown>, R, Receiver>(
   handler: (this: Receiver, date: Date | undefined, ...args: A) => R,
-): (this: Receiver, date: Date | undefined, ...args: A) => R {
+) => (this: Receiver, date: Date | undefined, ...args: A) => R = function optionalDateCallback<
+  A extends Array<unknown>,
+  R,
+  Receiver,
+>(handler: (this: Receiver, date: Date | undefined, ...args: A) => R) {
   return function callOptionalDateCallback(this: Receiver, date, ...args) {
     return handler.call(this, date === undefined ? undefined : callbackDate(date), ...args)
-  }
+  } satisfies (this: Receiver, date: Date | undefined, ...args: A) => R
 }
+
+const invalidDate = () => constructFrom(DateTime.toDateUtc(DateTime.makeUnsafe(0)), Number.NaN)
+
+export const instantDate: (value: number | string) => Date = (value: number | string) =>
+  Option.match(DateTime.make(Predicate.isNumber(value) ? value : Date.parse(value)), {
+    onNone: invalidDate,
+    onSome: DateTime.toDateUtc,
+  })
+
+export const zonedDate: (value: number | Date, timeZone: string) => Date = (
+  value: number | Date,
+  timeZone: string,
+) => (timeZone === 'UTC' ? new UTCDate(Number(value)) : new TZDate(Number(value), timeZone))
+
+export const callbackDate: (date: Date) => Date = (date: Date) =>
+  date instanceof UTCDateMini ? new TZDate(date.getTime(), 'UTC') : date

@@ -1,6 +1,9 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
 // @effect-diagnostics-next-line nodeBuiltinImport:off -- Build observer joins the formatter and compares serialized hydration bytes before and after formatting.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+
+// oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
 // @effect-diagnostics-next-line nodeBuiltinImport:off -- Build observer joins the formatter and compares serialized hydration bytes before and after formatting.
 import { execFileSync } from 'node:child_process'
 import { Effect, Schema } from 'effect'

@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
 import { Schema } from 'effect'
 import type {
   DataTableColumn,
@@ -56,11 +56,15 @@ export const titles: Record<Scenario, string> = {
   loading: 'Payments',
   keyboard: 'Keyboard',
 }
-const col = (
+const col: (
+  id: string,
+  header: string,
+  options?: Omit<DataTableColumn, 'id' | 'header'>,
+) => DataTableColumn = (
   id: string,
   header: string,
   options: Omit<DataTableColumn, 'id' | 'header'> = {},
-): DataTableColumn => ({ id, header, ...options })
+) => ({ id, header, ...options })
 const text = (id: string, header: string) => col(id, header, { editor: { type: 'text' } })
 const num = (id: string, header: string) =>
   col(id, header, { editor: { type: 'number' }, filter: 'number' })
@@ -125,7 +129,11 @@ const paymentColumns = [
   choice('status', 'Status', payments),
   num('amount', 'Amount'),
 ]
-const view = (id: string, name: string, options: Partial<DataTableView> = {}): DataTableView => ({
+const view: (id: string, name: string, options?: Partial<DataTableView>) => DataTableView = (
+  id: string,
+  name: string,
+  options: Partial<DataTableView> = {},
+) => ({
   id,
   name,
   search: '',
@@ -136,12 +144,19 @@ const view = (id: string, name: string, options: Partial<DataTableView> = {}): D
   ...options,
 })
 
-export function dataset(id: string, scenario: Scenario): DataTableConfig {
-  const make = (
+export const dataset: (id: string, scenario: Scenario) => DataTableConfig = function dataset(
+  id: string,
+  scenario: Scenario,
+) {
+  const make: (
+    rows: readonly DataTableRow[],
+    columns: readonly DataTableColumn[],
+    settings?: Partial<DataTableConfig>,
+  ) => DataTableConfig = (
     rows: readonly DataTableRow[],
     columns: readonly DataTableColumn[],
     settings: Partial<DataTableConfig> = {},
-  ): DataTableConfig => ({
+  ) => ({
     id,
     rows,
     columns,

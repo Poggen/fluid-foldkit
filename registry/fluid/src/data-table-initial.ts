@@ -1,11 +1,11 @@
 import { Option } from 'effect'
 import type { DataTableConfig, DataTableModel } from './data-table-definition.js'
-export const initialDataTable = (
+export const initialDataTable: (
   config: DataTableConfig,
-): Omit<
+) => Omit<
   DataTableModel,
   'table' | 'viewTabs' | 'headerMenu' | 'viewMenu' | 'actions' | 'editors'
-> => ({
+> = (config: DataTableConfig) => ({
   id: config.id,
   viewName: '',
   pendingMove: Option.none(),

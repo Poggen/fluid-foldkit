@@ -1,4 +1,5 @@
 import { acquireCarousel as acquireCarouselProgram, eventually } from './carousel-program.js'
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { expect } from 'vitest'
 import { motionValue } from 'motion-dom'

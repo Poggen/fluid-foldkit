@@ -1,16 +1,16 @@
 import type { DataTableObservedMessage } from './data-table-observation.js'
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import type { Message } from './data-table-definition.js'
 
 type Constructors = typeof Message
 type Emit = (message: DataTableObservedMessage) => void
 
-export function observeDataTableDrag(
+export const observeDataTableDrag: (
   root: Element,
   messages: Constructors,
   emit: Emit,
-): () => void {
+) => () => void = function observeDataTableDrag(root: Element, messages: Constructors, emit: Emit) {
   const document = root.ownerDocument
   const owns = (element: Element) =>
     root.contains(element) ||

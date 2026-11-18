@@ -1,4 +1,4 @@
-// Exact fixed-data configurations from Bklit's authored demos; native public carriers.
+/* @license Exact fixed-data configurations from Bklit's authored demos; native public carriers. */
 import {
   Line,
   Area,
@@ -182,7 +182,9 @@ export const areaVariant: TimeSeriesProps<typeof AreaRow.Type> = {
     ChartTooltip(),
   ],
 }
-export const depthProps = (paused: boolean): BarChartProps<typeof BarRow.Type> => ({
+export const depthProps: (paused: boolean) => BarChartProps<typeof BarRow.Type> = (
+  paused: boolean,
+) => ({
   xDataKey: 'month',
   aspectRatio: '2/1',
   children: [

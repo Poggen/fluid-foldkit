@@ -87,7 +87,9 @@ export const controls = [
     values: Configuration.fields.size.literals,
   },
 ] satisfies ReadonlyArray<Control<keyof Configuration>>
-export const controlsFor = (configuration: Configuration): ReadonlyArray<Control> =>
+export const controlsFor: (configuration: Configuration) => ReadonlyArray<Control> = (
+  configuration: Configuration,
+) =>
   controls.map((control) => {
     if (control.prop === 'description')
       return { ...control, enabled: configuration.showDescription }

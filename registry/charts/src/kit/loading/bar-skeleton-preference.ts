@@ -1,10 +1,10 @@
 import { Effect, Option, Queue, Stream } from 'effect'
 
-const QUERY = '(prefers-reduced-motion: reduce)'
-
-function currentPreference(): boolean {
+const currentPreference: () => boolean = function currentPreference() {
   return typeof window === 'undefined' ? false : window.matchMedia(QUERY).matches
 }
+
+const QUERY = '(prefers-reduced-motion: reduce)'
 
 /** Sample in Program Flags before pure initialization, including each later occurrence creation. */
 export const initialReducedMotion = Effect.sync(currentPreference)

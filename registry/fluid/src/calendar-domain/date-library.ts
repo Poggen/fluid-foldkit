@@ -43,9 +43,8 @@ import { startOfYear } from 'date-fns/startOfYear'
 import { endOfBroadcastWeek, startOfBroadcastWeek } from './broadcast.js'
 import { enUS } from 'date-fns/locale/en-US'
 
-// Adapted from react-day-picker 10.0.2, MIT © 2014-2026 Giampaolo Bellavite and contributors.
-// Full license: NOTICE
-// Framework-independent date operations; supplied to handlers through Calendar rules Layer.
+/* @license Adapted from react-day-picker 10.0.2, MIT © 2014-2026 Giampaolo Bellavite and contributors. */
+/* @license Full license: NOTICE */
 
 export interface DateLibOptions extends DateFnsFormatOptions, StartOfWeekOptions, EndOfWeekOptions {
   readonly Date?: typeof Date
@@ -140,10 +139,15 @@ export class DateLib {
     overrides?: Partial<DateLib>,
     internalOverrides?: Partial<DateLib>,
   ) {
-    const customDate = (operation: keyof DateLib, date: Date): Date =>
-      overrides?.[operation] === undefined ? date : callbackDate(date)
+    const customDate: (operation: keyof DateLib, date: Date) => Date = (
+      operation: keyof DateLib,
+      date: Date,
+    ) => (overrides?.[operation] === undefined ? date : callbackDate(date))
 
-    const customInterval = (operation: keyof DateLib, interval: Interval): Interval => {
+    const customInterval: (operation: keyof DateLib, interval: Interval) => Interval = (
+      operation: keyof DateLib,
+      interval: Interval,
+    ) => {
       if (overrides?.[operation] === undefined) {
         return interval
       }
@@ -156,7 +160,10 @@ export class DateLib {
         : { ...interval, start, end }
     }
 
-    const customDates = (operation: keyof DateLib, dates: Array<Date>): Array<Date> => {
+    const customDates: (operation: keyof DateLib, dates: Array<Date>) => Array<Date> = (
+      operation: keyof DateLib,
+      dates: Array<Date>,
+    ) => {
       if (overrides?.[operation] === undefined) {
         return dates
       }
@@ -170,8 +177,6 @@ export class DateLib {
       if (this.overrides?.today) {
         return this.overrides.today()
       }
-      // Standalone date-library fallback. CalendarEnvironment always
-      // supplies the captured Effect Clock through overrides.today.
 
       if (this.options.timeZone !== undefined && this.options.timeZone !== '') {
         return zonedDate(DateTime.toEpochMillis(DateTime.nowUnsafe()), this.options.timeZone)
@@ -241,16 +246,12 @@ export class DateLib {
       const years = this.overrides?.eachYearOfInterval
         ? this.overrides.eachYearOfInterval(customInterval('eachYearOfInterval', interval))
         : eachYearOfInterval(interval)
-      // Remove duplicates that may happen across DST transitions (e.g., "America/Sao_Paulo")
-      // See https://github.com/date-fns/tz/issues/72
 
       const uniqueYears = new Set(years.map((d) => this.getYear(d)))
 
       if (uniqueYears.size === years.length) {
-        // No duplicates, return as is
         return years
       }
-      // Rebuild the array to ensure one date per year
 
       const yearsArray: Array<Date> = []
 
@@ -413,12 +414,10 @@ export class DateLib {
 
   private getDigitMap() {
     const { numerals = 'latn' } = this.options
-    // Use Intl.NumberFormat to create a formatter with the specified numbering system
 
     const formatter = new Intl.NumberFormat('en-US', {
       numberingSystem: numerals,
     })
-    // Map Arabic digits (0-9) to the target numerals
 
     const digitMap: Record<string, string> = {}
 
@@ -429,27 +428,29 @@ export class DateLib {
     return digitMap
   }
 
-  private replaceDigits(input: string): string {
+  private replaceDigits(input: string) {
     const digitMap = this.getDigitMap()
 
-    return input.replaceAll(/\d/gu, (digit) => digitMap[digit] ?? digit)
+    return input.replaceAll(/\d/gu, (digit) => digitMap[digit] ?? digit) satisfies string
   }
 
-  formatNumber(value: number | string): string {
-    return this.replaceDigits(value.toString())
+  formatNumber(value: number | string) {
+    return this.replaceDigits(value.toString()) satisfies string
   }
 
-  getMonthYearOrder(): MonthYearOrder {
+  getMonthYearOrder() {
     const code = this.options.locale?.code
 
     if (code === undefined || code === '') {
-      return 'month-first'
+      return 'month-first' satisfies MonthYearOrder
     }
 
-    return DateLib.yearFirstLocales.has(code) ? 'year-first' : 'month-first'
+    return (
+      DateLib.yearFirstLocales.has(code) ? 'year-first' : 'month-first'
+    ) satisfies MonthYearOrder
   }
 
-  formatMonthYear(date: Date): string {
+  formatMonthYear(date: Date) {
     const { locale, timeZone, numerals } = this.options
 
     const localeCode = locale?.code
@@ -465,15 +466,13 @@ export class DateLib {
 
         const formatted = intl.format(date)
 
-        return formatted
-      } catch {
-        // Fallback to date-fns formatting below.
-      }
+        return formatted satisfies string
+      } catch {}
     }
 
     const pattern = this.getMonthYearOrder() === 'year-first' ? 'y LLLL' : 'LLLL y'
 
-    return this.format(date, pattern)
+    return this.format(date, pattern) satisfies string
   }
 }
 

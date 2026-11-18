@@ -44,7 +44,6 @@ const PolarNamespace = Block.makeNamespace('Polar')
 
 const LifecycleMessage = defineMessageUnion({ CompletedPrepare: {}, CompletedMount: {} })
 
-// Mount services are named globally; all recipes share these handlers and dispatch to their own element.
 const Prepare = PolarNamespace.makeMount('Prepare', {
   messages: [LifecycleMessage.CompletedPrepare, LifecycleMessage.CompletedMount],
   *handler() {
@@ -329,13 +328,12 @@ export function polarRecipe<RowSchema extends ChartRowSchema>({
           Layer.effect(
             PolarRegistration,
             Effect.sync(() => {
-              // Restored Models can render a mounted drawing before any Prepare Mount runs.
               register()
               return register
             }),
           ),
         ),
-        // Shared Mount identities capture a separate registration capability for each recipe.
+
         Layer.fresh,
       ),
     }

@@ -4,7 +4,6 @@ import { describe, expect, it } from 'vitest'
 import { knownPath } from '../../../lib/catalogue'
 import { pathFromUrl } from '../route'
 
-// These URLs are published by the original documentation and shared bookmarks.
 describe('System documentation URLs', () => {
   it.each([
     ['/docs', '/introduction'],

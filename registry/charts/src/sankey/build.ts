@@ -13,66 +13,31 @@ import { hasText } from '../kit/guards'
 import { SankeyNode, SankeyLink } from './carriers'
 import type { SankeyNodeProps, SankeyLinkProps, SankeyTooltipProps } from './carriers'
 
-export function sankeyPlan(
+export const sanitizeSankeyData: (data: SankeyChartProps['data']) => SankeyChartProps['data'] =
+  function sanitizeSankeyData(data: SankeyChartProps['data']) {
+    const valid = (value: number) => Number.isFinite(value) && value >= 0
+
+    if (!data.links.some((link) => valid(link.value) && link.value > 0))
+      return { nodes: [], links: [] }
+
+    return data.links.every((link) => valid(link.value))
+      ? data
+      : {
+          nodes: data.nodes,
+          links: data.links.map((link) => (valid(link.value) ? link : { ...link, value: 0 })),
+        }
+  }
+
+export const sankeyDefinition: (
   props: SankeyChartProps,
-  normalizedData: SankeyChartProps['data'] = sanitizeSankeyData(props.data),
-) {
-  let node: SankeyNodeProps = {},
-    link: SankeyLinkProps = {},
-    tooltip: SankeyTooltipProps = {}
-
-  for (const child of props.children ?? [])
-    switch (child.role) {
-      case 'node':
-        node = child.props
-        break
-      case 'link':
-        link = child.props
-        break
-      case 'tooltip':
-        tooltip = child.props
-        break
-    }
-
-  const data = normalizedData
-
-  const nodeColor = (index: number): string => {
-    if (hasText(node.fill)) return node.fill
-
-    const datum = data.nodes.at(index),
-      custom = node.getNodeColor ?? link.getNodeColor
-
-    return custom !== undefined && datum !== undefined
-      ? custom({ ...datum, index }, index)
-      : `var(--chart-${(index % 5) + 1})`
-  }
-
-  return {
-    data,
-    node,
-    link,
-    tooltip,
-    paintChildren: [SankeyLink(link), SankeyNode(node)],
-    nodeColor,
-    margin: { top: 40, right: 180, bottom: 40, left: 180, ...props.margin },
-  }
-}
-
-export function sanitizeSankeyData(data: SankeyChartProps['data']): SankeyChartProps['data'] {
-  const valid = (value: number) => Number.isFinite(value) && value >= 0
-
-  if (!data.links.some((link) => valid(link.value) && link.value > 0))
-    return { nodes: [], links: [] }
-
-  return data.links.every((link) => valid(link.value))
-    ? data
-    : {
-        nodes: data.nodes,
-        links: data.links.map((link) => (valid(link.value) ? link : { ...link, value: 0 })),
-      }
-}
-
-export function sankeyDefinition(
+  id: string,
+  reverse: (value: boolean) => void,
+  now: () => number,
+  plan?: ReturnType<typeof sankeyPlan>,
+  feed?: SankeyPaintFeed,
+  tooltipExtension?: ChartTooltipExtension,
+  measureTextWidth?: SankeyTextWidth,
+) => DomChartDefinition<SankeyDatum, number, number> = function sankeyDefinition(
   props: SankeyChartProps,
   id: string,
   reverse: (value: boolean) => void,
@@ -81,7 +46,7 @@ export function sankeyDefinition(
   feed: SankeyPaintFeed = createPaintFeed(),
   tooltipExtension?: ChartTooltipExtension,
   measureTextWidth?: SankeyTextWidth,
-): DomChartDefinition<SankeyDatum, number, number> {
+) {
   const { data, tooltip, margin } = plan
 
   const nodeWidth = props.nodeWidth ?? 16,
@@ -89,7 +54,10 @@ export function sankeyDefinition(
   const roles: Array<SankeyMarkConfig> = plan.paintChildren.flatMap((child, occurrence) => {
     if (child.role !== 'node' && child.role !== 'link') return []
     const { node, link } = plan
-    const nodeColor = (index: number, laidOut?: import('./types').SankeyPropNode): string => {
+    const nodeColor: (index: number, laidOut?: import('./types').SankeyPropNode) => string = (
+      index: number,
+      laidOut?: import('./types').SankeyPropNode,
+    ) => {
       if (hasText(node.fill)) return node.fill
       const datum = data.nodes.at(index),
         custom = node.getNodeColor ?? link.getNodeColor
@@ -228,54 +196,100 @@ export function sankeyDefinition(
   )
 }
 
-export const formatSankeyInt = (value: number): string => intFmt.format(value)
+export const sameSankeyDrawing: (a: SankeyChartProps, b: SankeyChartProps) => boolean =
+  function sameSankeyDrawing(a: SankeyChartProps, b: SankeyChartProps) {
+    const values = (p: SankeyChartProps) => {
+      const { node, link, tooltip, margin } = sankeyPlan(p)
 
-export function sameSankeyDrawing(a: SankeyChartProps, b: SankeyChartProps): boolean {
-  const values = (p: SankeyChartProps) => {
-    const { node, link, tooltip, margin } = sankeyPlan(p)
+      return [
+        p.data,
+        ...(p.children ?? []).flatMap((child) => [child.role, ...Object.values(child.props)]),
+        p.animationDuration,
+        p.enterTransition,
+        p.revealSignature,
+        p.aspectRatio,
+        p.nodeWidth,
+        p.nodePadding,
+        p.ariaLabel,
+        p.ariaDescription,
+        margin.top,
+        margin.right,
+        margin.bottom,
+        margin.left,
+        node.fill,
+        node.lineCap,
+        node.fadedOpacity,
+        node.showLabels,
+        node.showValueLabels,
+        node.formatValue,
+        node.labelOrientation,
+        node.getNodeColor,
+        link.stroke,
+        link.strokeOpacity,
+        link.fadedOpacity,
+        link.useGradient,
+        link.getNodeColor,
+        link.getLinkColor,
+        link.patterns,
+        link.getLinkPattern,
+        tooltip?.nodeContent,
+        tooltip?.linkContent,
+        tooltip?.formatValue,
+        tooltip?.className,
+      ]
+    }
 
-    return [
-      p.data,
-      ...(p.children ?? []).flatMap((child) => [child.role, ...Object.values(child.props)]),
-      p.animationDuration,
-      p.enterTransition,
-      p.revealSignature,
-      p.aspectRatio,
-      p.nodeWidth,
-      p.nodePadding,
-      p.ariaLabel,
-      p.ariaDescription,
-      margin.top,
-      margin.right,
-      margin.bottom,
-      margin.left,
-      node.fill,
-      node.lineCap,
-      node.fadedOpacity,
-      node.showLabels,
-      node.showValueLabels,
-      node.formatValue,
-      node.labelOrientation,
-      node.getNodeColor,
-      link.stroke,
-      link.strokeOpacity,
-      link.fadedOpacity,
-      link.useGradient,
-      link.getNodeColor,
-      link.getLinkColor,
-      link.patterns,
-      link.getLinkPattern,
-      tooltip?.nodeContent,
-      tooltip?.linkContent,
-      tooltip?.formatValue,
-      tooltip?.className,
-    ]
+    const left = values(a),
+      right = values(b)
+
+    return (
+      left.length === right.length && left.every((value, index) => Object.is(value, right[index]))
+    )
   }
 
-  const left = values(a),
-    right = values(b)
+export function sankeyPlan(
+  props: SankeyChartProps,
+  normalizedData: SankeyChartProps['data'] = sanitizeSankeyData(props.data),
+) {
+  let node: SankeyNodeProps = {},
+    link: SankeyLinkProps = {},
+    tooltip: SankeyTooltipProps = {}
 
-  return (
-    left.length === right.length && left.every((value, index) => Object.is(value, right[index]))
-  )
+  for (const child of props.children ?? [])
+    switch (child.role) {
+      case 'node':
+        node = child.props
+        break
+      case 'link':
+        link = child.props
+        break
+      case 'tooltip':
+        tooltip = child.props
+        break
+    }
+
+  const data = normalizedData
+
+  const nodeColor: (index: number) => string = (index: number) => {
+    if (hasText(node.fill)) return node.fill
+
+    const datum = data.nodes.at(index),
+      custom = node.getNodeColor ?? link.getNodeColor
+
+    return custom !== undefined && datum !== undefined
+      ? custom({ ...datum, index }, index)
+      : `var(--chart-${(index % 5) + 1})`
+  }
+
+  return {
+    data,
+    node,
+    link,
+    tooltip,
+    paintChildren: [SankeyLink(link), SankeyNode(node)],
+    nodeColor,
+    margin: { top: 40, right: 180, bottom: 40, left: 180, ...props.margin },
+  }
 }
+
+export const formatSankeyInt: (value: number) => string = (value: number) => intFmt.format(value)

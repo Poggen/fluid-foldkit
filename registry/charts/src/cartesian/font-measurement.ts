@@ -4,9 +4,7 @@ import type {
   ChartTextTypography,
 } from '@tanstack/charts'
 
-const measurementLimit = 2048
-
-function stretch(value: string): CanvasFontStretch {
+const stretch: (value: string) => CanvasFontStretch = function stretch(value: string) {
   switch (value) {
     case 'ultra-condensed':
     case 'extra-condensed':
@@ -64,39 +62,26 @@ function stretch(value: string): CanvasFontStretch {
   }
 }
 
-function textDirection(value: string | undefined): 'ltr' | 'rtl' | 'inherit' {
-  if (value === 'rtl' || value === 'ltr') {
-    return value
+const textDirection: (value: string | undefined) => 'ltr' | 'rtl' | 'inherit' =
+  function textDirection(value: string | undefined) {
+    if (value === 'rtl' || value === 'ltr') {
+      return value
+    }
+
+    return 'inherit'
   }
 
-  return 'inherit'
-}
-
-function typographyOf(element: HTMLElement) {
-  const css = element.ownerDocument.defaultView?.getComputedStyle(element)
-  const spacing = Number((css?.letterSpacing ?? '').replace('px', ''))
-
-  const typography: ChartTextTypography = {
-    fontFamily:
-      css?.fontFamily === undefined || css.fontFamily === '' ? 'sans-serif' : css.fontFamily,
-    fontStyle: css?.fontStyle === undefined || css.fontStyle === '' ? 'normal' : css.fontStyle,
-    fontStretch: stretch(css?.fontStretch ?? ''),
-    letterSpacing: Number.isFinite(spacing) ? spacing : 0,
-    direction: textDirection(css?.direction),
-  }
-
-  return {
-    typography,
-    weight: css?.fontWeight === undefined || css.fontWeight === '' ? '400' : css.fontWeight,
-  }
-}
-
-function measureBounds(
+const measureBounds: (
   context: CanvasRenderingContext2D,
   text: string,
   options: ChartTextMeasureOptions,
   weight: string,
-): ChartTextMetrics {
+) => ChartTextMetrics = function measureBounds(
+  context: CanvasRenderingContext2D,
+  text: string,
+  options: ChartTextMeasureOptions,
+  weight: string,
+) {
   const scale = Number.isFinite(options.fontScale) && options.fontScale > 0 ? options.fontScale : 1
   const size = options.fontSize * scale
   context.font = `${options.fontStyle} ${options.fontWeight ?? weight} ${size}px ${options.fontFamily}`
@@ -129,6 +114,27 @@ function measureBounds(
     y: options.baseline === 'middle' ? -size / 2 : y,
     width,
     height: size,
+  }
+}
+
+const measurementLimit = 2048
+
+function typographyOf(element: HTMLElement) {
+  const css = element.ownerDocument.defaultView?.getComputedStyle(element)
+  const spacing = Number((css?.letterSpacing ?? '').replace('px', ''))
+
+  const typography: ChartTextTypography = {
+    fontFamily:
+      css?.fontFamily === undefined || css.fontFamily === '' ? 'sans-serif' : css.fontFamily,
+    fontStyle: css?.fontStyle === undefined || css.fontStyle === '' ? 'normal' : css.fontStyle,
+    fontStretch: stretch(css?.fontStretch ?? ''),
+    letterSpacing: Number.isFinite(spacing) ? spacing : 0,
+    direction: textDirection(css?.direction),
+  }
+
+  return {
+    typography,
+    weight: css?.fontWeight === undefined || css.fontWeight === '' ? '400' : css.fontWeight,
   }
 }
 

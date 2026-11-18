@@ -8,9 +8,7 @@ import {
   SIDEBAR_MAX_WIDTH,
   SIDEBAR_COLLAPSE_SLOP,
 } from './sidebar-state.js'
-
-const providers = new WeakMap<Document, Set<HTMLElement>>()
-export function observeSidebar<A>(
+export const observeSidebar: <A>(
   element: Element,
   changes: Stream.Stream<Mount.ViewState>,
   config: {
@@ -27,7 +25,24 @@ export function observeSidebar<A>(
     readonly peek: (open: boolean) => A
     readonly resized: (width: number, open: boolean, resizing: boolean) => A
   },
-): Stream.Stream<A> {
+) => Stream.Stream<A> = function observeSidebar<A>(
+  element: Element,
+  changes: Stream.Stream<Mount.ViewState>,
+  config: {
+    readonly breakpoint: number
+    readonly shortcut: string | null
+    readonly side: 'left' | 'right'
+    readonly persist: boolean
+  },
+  messages: {
+    readonly pinComplete: (generation: number) => A
+    readonly dragComplete: (generation: number) => A
+    readonly toggle: () => A
+    readonly mobile: (mobile: boolean) => ReadonlyArray<A>
+    readonly peek: (open: boolean) => A
+    readonly resized: (width: number, open: boolean, resizing: boolean) => A
+  },
+) {
   return changes.pipe(
     Stream.switchMap((state) =>
       state !== 'Live'
@@ -179,7 +194,7 @@ export function observeSidebar<A>(
                     panel.closest('[data-slot="sidebar-wrapper"]') !== element
                   )
                     return
-                  // Source uses the owning outer shell, including a legitimate collapsed width of zero.
+
                   const width = panel.offsetWidth
                   drag = {
                     pointer: event.pointerId,
@@ -287,5 +302,7 @@ export function observeSidebar<A>(
             ).pipe(Effect.flatMap(() => Effect.never)),
           ),
     ),
-  )
+  ) satisfies Stream.Stream<A>
 }
+
+const providers = new WeakMap<Document, Set<HTMLElement>>()

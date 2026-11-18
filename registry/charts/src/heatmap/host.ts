@@ -259,7 +259,6 @@ export class HeatmapHost implements HeatmapHostContract<HeatmapChartProps['data'
 
     const css = base + dim + target + (point === undefined ? legend : '')
 
-    // Replacing a stylesheet invalidates styles across the gallery; cell focus only changes attributes.
     if (this.#hoverStyle.textContent !== css) this.#hoverStyle.textContent = css
     this.#tooltipFor(point ?? null)
   }
@@ -402,7 +401,6 @@ export class HeatmapHost implements HeatmapHostContract<HeatmapChartProps['data'
   ) {
     const changed = data !== this.#data || entered !== this.#entered
 
-    // Unrelated parent presentations must not rebuild the tooltip or restart its timers.
     if (!changed && focus === this.#focus && level === this.#level) return
 
     if (level !== null && level !== this.#level) {

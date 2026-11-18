@@ -1,33 +1,14 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
-import { afterEach, beforeEach, describe, expect, vi } from 'vitest'
+import { afterEach, describe, expect } from 'vitest'
 import { it } from '@effect/vitest'
 import { Effect } from 'effect'
 import { observeMessageScroller } from '../src/message-scroller-observer.js'
 
-const resizeCallbacks = new Set<() => void>()
 let release: () => void = () => undefined
-beforeEach(() => {
-  vi.stubGlobal(
-    'ResizeObserver',
-    class implements ResizeObserver {
-      readonly tick: () => void
-      constructor(callback: ResizeObserverCallback) {
-        this.tick = () => callback([], this)
-        resizeCallbacks.add(this.tick)
-      }
-      observe() {}
-      unobserve() {}
-      disconnect() {
-        resizeCallbacks.delete(this.tick)
-      }
-    },
-  )
-})
 afterEach(() => {
   release()
-  resizeCallbacks.clear()
   document.body.replaceChildren()
-  vi.unstubAllGlobals()
 })
 const changed = Effect.sleep(0)
 const wait = (ms: number) => Effect.sleep(ms)
@@ -80,7 +61,7 @@ function fixture(reduced = true) {
     positions,
     grow: (next: number) => {
       height = next
-      for (const tick of resizeCallbacks) tick()
+      content.append(document.createTextNode('reply'))
     },
     anchor: (offset: number) => {
       const row = document.createElement('div')
@@ -96,23 +77,30 @@ function fixture(reduced = true) {
 }
 
 describe('MessageScroller', () => {
-  it('opens history at the end, follows growth, and releases when the reader scrolls away', () => {
-    const f = fixture()
-    expect(f.viewport.scrollTop).toBe(400)
-    expect(f.spacer.style.height).toBe('')
-    f.grow(800)
-    expect(f.viewport.scrollTop).toBe(600)
-    f.viewport.scrollTop = 100
-    f.viewport.dispatchEvent(new Event('scroll'))
-    f.grow(1000)
-    expect(f.viewport.scrollTop).toBe(100)
-    expect(f.positions.at(-1)).toEqual({ atEnd: false, following: false })
-    f.viewport.scrollTop = 790
-    f.viewport.dispatchEvent(new Event('scroll'))
-    f.grow(1100)
-    expect(f.viewport.scrollTop).toBe(900)
-    expect(f.positions.at(-1)).toEqual({ atEnd: true, following: true })
-  })
+  it.live(
+    'opens history at the end, follows growth, and releases when the reader scrolls away',
+    () =>
+      Effect.gen(function* () {
+        const f = fixture()
+        expect(f.viewport.scrollTop).toBe(400)
+        expect(f.spacer.style.height).toBe('')
+        f.grow(800)
+        yield* changed
+        expect(f.viewport.scrollTop).toBe(600)
+        f.viewport.scrollTop = 100
+        f.viewport.dispatchEvent(new Event('scroll'))
+        f.grow(1000)
+        yield* changed
+        expect(f.viewport.scrollTop).toBe(100)
+        expect(f.positions.at(-1)).toEqual({ atEnd: false, following: false })
+        f.viewport.scrollTop = 790
+        f.viewport.dispatchEvent(new Event('scroll'))
+        f.grow(1100)
+        yield* changed
+        expect(f.viewport.scrollTop).toBe(900)
+        expect(f.positions.at(-1)).toEqual({ atEnd: true, following: true })
+      }),
+  )
   it.live(
     'anchors only a new user turn with a shrinking spacer, then follows an overflowing reply',
     () =>
@@ -124,9 +112,11 @@ describe('MessageScroller', () => {
         expect(f.spacer.style.height).toBe('144px')
         expect(f.viewport.scrollTop).toBe(584)
         f.grow(700)
+        yield* changed
         expect(f.spacer.style.height).toBe('84px')
         expect(f.viewport.scrollTop).toBe(584)
         f.grow(1000)
+        yield* changed
         expect(f.spacer.style.height).toBe('0px')
         expect(f.viewport.scrollTop).toBe(800)
         row.remove()
@@ -155,6 +145,7 @@ describe('MessageScroller', () => {
         f.root.setAttribute('data-message-auto-scroll', 'false')
         yield* changed
         f.grow(800)
+        yield* changed
         expect(f.viewport.scrollTop).toBe(400)
       }),
   )
@@ -207,7 +198,6 @@ describe('MessageScroller', () => {
       yield* wait(300)
       expect(f.viewport.scrollTop).toBe(top)
       expect(f.positions).toHaveLength(count)
-      expect(resizeCallbacks.size).toBe(0)
     }),
   )
 })

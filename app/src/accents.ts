@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 export const accentPresets = [
   { value: 'red', label: 'Red', light: '#E7000B', dark: '#FF6467' },
   { value: 'orange', label: 'Orange', light: '#F54900', dark: '#FF8904' },

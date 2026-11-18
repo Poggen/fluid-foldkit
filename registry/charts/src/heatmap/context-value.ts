@@ -8,12 +8,17 @@ import { linearScale, timeScale } from './scales'
 import { formatHeatmapContributionLabel } from './format'
 import { DateTime } from 'effect'
 
-export function heatmapContext(
+export const heatmapContext: (
+  props: HeatmapChartProps,
+  width: number,
+  currentDate: Readonly<Date>,
+  containerRef?: { readonly current: HTMLDivElement | null },
+) => HeatmapContextValue = function heatmapContext(
   props: HeatmapChartProps,
   width: number,
   currentDate: Readonly<Date>,
   containerRef: { readonly current: HTMLDivElement | null } = { current: null },
-): HeatmapContextValue {
+) {
   const p = heatmapPlan(props, width, currentDate)
   let revealEpoch = 0
 

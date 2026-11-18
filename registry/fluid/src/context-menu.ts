@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
 import { Layer, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { modifyFields } from 'foldkit/struct'

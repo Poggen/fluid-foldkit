@@ -95,7 +95,6 @@ export function createPolarCenter() {
       }
     },
     destroy() {
-      // NumberFlow awaits its animations' finished promises; use its public cleanup setter.
       flow.animated = false
       node.remove()
     },

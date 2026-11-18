@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
 import { Effect, Layer, Queue, Schema, Stream } from 'effect'
 import { Block } from 'foldkit'
 import { defineInMessageUnion, defineMessageUnion } from 'foldkit/message'
@@ -212,16 +212,17 @@ export interface MessageScrollerItemProps {
   readonly children: ReadonlyArray<Html | string>
   readonly attributes?: ReadonlyArray<ChildAttribute>
 }
-export function MessageScrollerItem<M>(props: MessageScrollerItemProps, h: HtmlBuilder<M>): Html {
-  return h.div(
-    [
-      h.Class(`flex flex-col ${props.className ?? ''}`),
-      ...(props.anchor === true ? [h.DataAttribute('message-anchor', '')] : []),
-      ...(props.attributes ?? []),
-    ],
-    props.children,
-  )
-}
+export const MessageScrollerItem: <M>(props: MessageScrollerItemProps, h: HtmlBuilder<M>) => Html =
+  function MessageScrollerItem<M>(props: MessageScrollerItemProps, h: HtmlBuilder<M>) {
+    return h.div(
+      [
+        h.Class(`flex flex-col ${props.className ?? ''}`),
+        ...(props.anchor === true ? [h.DataAttribute('message-anchor', '')] : []),
+        ...(props.attributes ?? []),
+      ],
+      props.children,
+    )
+  }
 
 export interface MessageScrollerContentProps {
   readonly children: ReadonlyArray<Html | string>
@@ -229,10 +230,13 @@ export interface MessageScrollerContentProps {
   readonly className?: string
   readonly attributes?: ReadonlyArray<ChildAttribute>
 }
-export function MessageScrollerContent<M>(
+export const MessageScrollerContent: <M>(
   props: MessageScrollerContentProps,
   h: HtmlBuilder<M>,
-): Html {
+) => Html = function MessageScrollerContent<M>(
+  props: MessageScrollerContentProps,
+  h: HtmlBuilder<M>,
+) {
   return h.div(
     [
       h.Role('log'),
@@ -253,10 +257,13 @@ export interface MessageScrollerButtonProps extends Presentation {
   readonly className?: string
   readonly attributes?: ReadonlyArray<ChildAttribute>
 }
-export function MessageScrollerButton<M>(
+export const MessageScrollerButton: <M>(
   props: MessageScrollerButtonProps,
   h: HtmlBuilder<M>,
-): Html | null {
+) => Html | null = function MessageScrollerButton<M>(
+  props: MessageScrollerButtonProps,
+  h: HtmlBuilder<M>,
+) {
   if (!(props.retained ?? !props.atEnd)) return null
   const presentation = resolvePresentation(props)
   const compact = presentation.size.variant === 'compact'

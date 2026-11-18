@@ -109,7 +109,7 @@ export const detailsSettings = (presentation: ComponentPresentation, preserveCol
     const accent = accentColor(desired.accent, desired.theme)
     const color = {
       ...currentColor,
-      // Equivalent reflected colors keep the picker owner's full-precision HSV.
+
       value:
         preserveColor || colorValueOf(model.color).toLowerCase() === accent.toLowerCase()
           ? currentColor.value

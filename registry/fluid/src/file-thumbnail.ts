@@ -1,5 +1,5 @@
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { modifyFields } from 'foldkit/struct'
 import { Option, Schema, Number } from 'effect'
 import { Block } from 'foldkit'
@@ -62,7 +62,7 @@ const Source = Schema.Union([
 ])
 type Source = typeof Source.Type
 
-const sourceOf = (file: File): Source =>
+const sourceOf: (file: File) => Source = (file: File) =>
   'url' in file
     ? { _tag: 'Remote', url: file.url, name: file.filename ?? 'Attachment', type: file.mediaType }
     : { _tag: 'Local', ...file }

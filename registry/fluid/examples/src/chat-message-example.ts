@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Effect, Layer } from 'effect'
 import { FetchHttpClient, HttpClient } from 'effect/http'
 import { Program, Runtime } from 'foldkit'

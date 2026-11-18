@@ -1,7 +1,7 @@
 import { modifyFields } from 'foldkit/struct'
 import { HoverMode } from './hover-observation.js'
 import { NumberDisplay, latinNumberDisplay } from './color-number-locale.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Match, Option, Schema } from 'effect'
 import { roundColorNumber } from './color-number-parse.js'
 import {
@@ -15,6 +15,112 @@ import {
   clamp01,
 } from './color-picker-math.js'
 import type { ParsedColor } from './color-picker-math.js'
+
+export const colorSettings: (config: ColorPickerConfig) => typeof ColorSettings.Type =
+  function colorSettings(config: ColorPickerConfig) {
+    return {
+      value: Option.fromNullishOr(config.value),
+      format: Option.fromNullishOr(config.format),
+      formatOpen: Option.fromNullishOr(config.formatOpen),
+      swatches: config.swatches ?? [],
+      hideEyedropper: config.hideEyedropper ?? false,
+    }
+  }
+
+export const colorInitial: (config: ColorPickerConfig) => ColorState = function colorInitial(
+  config: ColorPickerConfig,
+) {
+  const raw = config.value ?? config.defaultValue ?? '#6B97FF'
+  const parsed = parseColor(raw)
+
+  const hsv = parsed
+    ? { ...rgbToHsv(parsed.r, parsed.g, parsed.b), a: parsed.a }
+    : { h: 0, s: 1, v: 1, a: 1 }
+
+  return {
+    id: config.id,
+    channelTooltipProvider: config.channelTooltipProvider ?? 'local',
+    numberDisplay: NumberDisplay.make(config.numberDisplay ?? latinNumberDisplay),
+    hsv,
+    settings: colorSettings(config),
+    internalValue: raw,
+    internalFormat: config.defaultFormat ?? 'hex',
+    oklchHue: Option.none(),
+    lastEmitted: '',
+    syncedValue: Option.fromNullishOr(config.value),
+    dragging: Option.none(),
+    squareHovered: false,
+    squareFocused: false,
+    cursor: Option.none(),
+    editing: Option.none(),
+    drafts: {},
+    scrub: Option.none(),
+    scrubCursor: Option.none(),
+    eyedropperSupported: false,
+    mounted: false,
+    resolvedSwatches: {},
+    pressed: false,
+  }
+}
+
+export const currentFormat: (state: ColorState) => ColorFormat = function currentFormat(
+  state: ColorState,
+) {
+  return Option.getOrElse(state.settings.format, () => state.internalFormat)
+}
+
+export const colorParsed: (state: ColorState) => ParsedColor = function colorParsed(
+  state: ColorState,
+) {
+  const { h, s, v, a } = state.hsv
+
+  return buildParsed(h, s, v, a)
+}
+
+export const colorConfigure: (
+  state: ColorState,
+  settings: typeof ColorSettings.Type,
+) => ColorState = function colorConfigure(state: ColorState, settings: typeof ColorSettings.Type) {
+  const next = modifyFields(state, { settings: () => settings })
+
+  if (
+    Option.isNone(settings.value) ||
+    Option.getOrNull(settings.value) === Option.getOrNull(state.syncedValue)
+  ) {
+    return next
+  }
+
+  const { value } = settings.value
+  const parsed = value === state.lastEmitted ? null : parseColor(value)
+
+  if (!parsed) {
+    return modifyFields(next, { syncedValue: () => settings.value })
+  }
+
+  const hsv = rgbToHsv(parsed.r, parsed.g, parsed.b)
+
+  return modifyFields(next, {
+    syncedValue: () => settings.value,
+    oklchHue: () => Option.none(),
+    hsv: () => ({ h: hsv.s === 0 ? state.hsv.h : hsv.h, s: hsv.s, v: hsv.v, a: parsed.a }),
+  })
+}
+
+export const boundChannel: (value: number, spec: ChannelSpec) => number = function boundChannel(
+  value: number,
+  spec: ChannelSpec,
+) {
+  const rounded = roundColorNumber(value, spec.decimals)
+
+  const bounded =
+    spec.wrap && (rounded < spec.min || rounded > spec.max)
+      ? ((((rounded - spec.min) % (spec.max - spec.min)) + spec.max - spec.min) %
+          (spec.max - spec.min)) +
+        spec.min
+      : Math.max(spec.min, Math.min(spec.max, rounded))
+
+  return Number(bounded.toFixed(spec.decimals))
+}
 
 export const ColorFormat = Schema.Literals(['hex', 'rgb', 'hsl', 'oklch'])
 
@@ -129,86 +235,6 @@ export const ColorState = Schema.Struct({
 
 export type ColorState = typeof ColorState.Type
 
-export function colorSettings(config: ColorPickerConfig): typeof ColorSettings.Type {
-  return {
-    value: Option.fromNullishOr(config.value),
-    format: Option.fromNullishOr(config.format),
-    formatOpen: Option.fromNullishOr(config.formatOpen),
-    swatches: config.swatches ?? [],
-    hideEyedropper: config.hideEyedropper ?? false,
-  }
-}
-
-export function colorInitial(config: ColorPickerConfig): ColorState {
-  const raw = config.value ?? config.defaultValue ?? '#6B97FF'
-  const parsed = parseColor(raw)
-
-  const hsv = parsed
-    ? { ...rgbToHsv(parsed.r, parsed.g, parsed.b), a: parsed.a }
-    : { h: 0, s: 1, v: 1, a: 1 }
-
-  return {
-    id: config.id,
-    channelTooltipProvider: config.channelTooltipProvider ?? 'local',
-    numberDisplay: NumberDisplay.make(config.numberDisplay ?? latinNumberDisplay),
-    hsv,
-    settings: colorSettings(config),
-    internalValue: raw,
-    internalFormat: config.defaultFormat ?? 'hex',
-    oklchHue: Option.none(),
-    lastEmitted: '',
-    syncedValue: Option.fromNullishOr(config.value),
-    dragging: Option.none(),
-    squareHovered: false,
-    squareFocused: false,
-    cursor: Option.none(),
-    editing: Option.none(),
-    drafts: {},
-    scrub: Option.none(),
-    scrubCursor: Option.none(),
-    eyedropperSupported: false,
-    mounted: false,
-    resolvedSwatches: {},
-    pressed: false,
-  }
-}
-
-export function currentFormat(state: ColorState): ColorFormat {
-  return Option.getOrElse(state.settings.format, () => state.internalFormat)
-}
-
-export function colorParsed(state: ColorState): ParsedColor {
-  const { h, s, v, a } = state.hsv
-
-  return buildParsed(h, s, v, a)
-}
-
-export function colorConfigure(state: ColorState, settings: typeof ColorSettings.Type): ColorState {
-  const next = modifyFields(state, { settings: () => settings })
-
-  if (
-    Option.isNone(settings.value) ||
-    Option.getOrNull(settings.value) === Option.getOrNull(state.syncedValue)
-  ) {
-    return next
-  }
-
-  const { value } = settings.value
-  const parsed = value === state.lastEmitted ? null : parseColor(value)
-
-  if (!parsed) {
-    return modifyFields(next, { syncedValue: () => settings.value })
-  }
-
-  const hsv = rgbToHsv(parsed.r, parsed.g, parsed.b)
-
-  return modifyFields(next, {
-    syncedValue: () => settings.value,
-    oklchHue: () => Option.none(),
-    hsv: () => ({ h: hsv.s === 0 ? state.hsv.h : hsv.h, s: hsv.s, v: hsv.v, a: parsed.a }),
-  })
-}
-
 export function colorEmit(state: ColorState, hsv: typeof Hsv.Type, format = currentFormat(state)) {
   const parsed = buildParsed(hsv.h, hsv.s, hsv.v, hsv.a)
   const value = parsed[format]
@@ -308,25 +334,26 @@ export function colorChannel(state: ColorState, channel: Exclude<Channel, 'hex'>
   )
 }
 
-const channelSpec = (
+const channelSpec: (
   channel: Channel,
   label: string,
   value: string,
   max: number,
-  wrap = false,
-): ChannelSpec => ({
-  channel,
-  label,
-  value,
-  min: 0,
-  max,
-  step: 1,
-  largeStep: 10,
-  decimals: 0,
-  wrap,
-  percent: false,
-  mode: 'numeric',
-})
+  wrap?: boolean,
+) => ChannelSpec = (channel: Channel, label: string, value: string, max: number, wrap = false) =>
+  ({
+    channel,
+    label,
+    value,
+    min: 0,
+    max,
+    step: 1,
+    largeStep: 10,
+    decimals: 0,
+    wrap,
+    percent: false,
+    mode: 'numeric',
+  }) satisfies ChannelSpec
 
 export function channelSpecs(state: ColorState) {
   const parsed = colorParsed(state)
@@ -407,17 +434,4 @@ export interface ChannelSpec {
   readonly wrap: boolean
   readonly percent: boolean
   readonly mode: string
-}
-
-export function boundChannel(value: number, spec: ChannelSpec): number {
-  const rounded = roundColorNumber(value, spec.decimals)
-
-  const bounded =
-    spec.wrap && (rounded < spec.min || rounded > spec.max)
-      ? ((((rounded - spec.min) % (spec.max - spec.min)) + spec.max - spec.min) %
-          (spec.max - spec.min)) +
-        spec.min
-      : Math.max(spec.min, Math.min(spec.max, rounded))
-
-  return Number(bounded.toFixed(spec.decimals))
 }

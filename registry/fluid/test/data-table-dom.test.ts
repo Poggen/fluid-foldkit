@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it } from 'vitest'
 import { Message } from '../src/data-table-definition.js'

@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Effect, Queue, Schema, Stream, Layer } from 'effect'
 import { Block, Update } from 'foldkit'
 import type { Html, HtmlBuilder } from 'foldkit/html'
@@ -12,6 +12,43 @@ import { cn } from './lib/utils.js'
 import { CommandMenuTab, CommandMenuTabsConfig } from './command-menu-tabs-contracts.js'
 import type { CommandMenuTabsViewInputs } from './command-menu-tabs-contracts.js'
 import { observeCommandMenuTabs } from './command-menu-tabs-observer.js'
+
+export const CommandMenuFilters: <Message>(
+  props: Presentation & {
+    readonly inTabsRow?: boolean
+    readonly className?: string
+    readonly children: (context: PresentationContext) => ReadonlyArray<Html>
+  },
+  h: HtmlBuilder<Message>,
+) => Html = function CommandMenuFilters<Message>(
+  props: Presentation & {
+    readonly inTabsRow?: boolean
+    readonly className?: string
+    readonly children: (context: PresentationContext) => ReadonlyArray<Html>
+  },
+  h: HtmlBuilder<Message>,
+) {
+  const compact = resolvePresentation(props).size.variant === 'compact'
+
+  return h.div(
+    [
+      h.DataAttribute('slot', 'command-menu-filters'),
+      h.Class(
+        cn(
+          'flex shrink-0 items-center gap-1 [&_[role=combobox]]:w-auto [&_[role=combobox]]:min-w-0',
+          props.inTabsRow !== true && 'flex-wrap',
+          props.inTabsRow !== true && (compact ? 'px-2 pb-1.5' : 'px-2.5 pb-2'),
+          props.className,
+        ),
+      ),
+    ],
+    [
+      ...props.children(
+        createPresentationContext({ ...props, size: 'compact', hasSizeProvider: true }),
+      ),
+    ],
+  ) satisfies Html
+}
 
 export {
   CommandMenuTab,
@@ -202,33 +239,3 @@ export const CommandMenuTabsLayer = CommandMenuTabsBlock.makeLayer({
   view,
   EffectsLayer: ObserveLayer,
 }).pipe(Layer.provide(TabsLayer))
-
-export function CommandMenuFilters<Message>(
-  props: Presentation & {
-    readonly inTabsRow?: boolean
-    readonly className?: string
-    readonly children: (context: PresentationContext) => ReadonlyArray<Html>
-  },
-  h: HtmlBuilder<Message>,
-): Html {
-  const compact = resolvePresentation(props).size.variant === 'compact'
-
-  return h.div(
-    [
-      h.DataAttribute('slot', 'command-menu-filters'),
-      h.Class(
-        cn(
-          'flex shrink-0 items-center gap-1 [&_[role=combobox]]:w-auto [&_[role=combobox]]:min-w-0',
-          props.inTabsRow !== true && 'flex-wrap',
-          props.inTabsRow !== true && (compact ? 'px-2 pb-1.5' : 'px-2.5 pb-2'),
-          props.className,
-        ),
-      ),
-    ],
-    [
-      ...props.children(
-        createPresentationContext({ ...props, size: 'compact', hasSizeProvider: true }),
-      ),
-    ],
-  )
-}

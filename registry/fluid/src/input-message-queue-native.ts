@@ -30,7 +30,6 @@ export const createInputMessageQueueNativeLayer = (window: Window & typeof globa
                       return
                     }
 
-                    // Source handles composing row keys too; the SDK key factory suppresses them.
                     if (
                       event.key === 'Enter' ||
                       event.key === 'F2' ||

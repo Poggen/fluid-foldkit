@@ -1,5 +1,5 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 /**
  * Shared geometry for sidebar-anchored dropdown menus (the workspace switcher
  * in the header, the user menu in the footer).

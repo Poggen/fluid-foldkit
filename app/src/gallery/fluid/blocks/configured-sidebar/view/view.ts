@@ -49,7 +49,7 @@ import {
 import { demoPresentation } from '../../../render-presentation'
 import { renderSidebarCallouts } from './callouts'
 
-const render = (
+const render: (
   events: Events,
   sidebar: Snapshot['sidebar'],
   sidebarScroll: Snapshot['sidebarScroll'],
@@ -74,7 +74,32 @@ const render = (
   size: ComponentPresentation['size'],
   hover: ComponentPresentation['hover'],
   h: ConfiguredSidebarViewBuilder,
-): Html => {
+) => Html = (
+  events: Events,
+  sidebar: Snapshot['sidebar'],
+  sidebarScroll: Snapshot['sidebarScroll'],
+  sidebarTooltips: Snapshot['sidebarTooltips'],
+  headerRows: Snapshot['sidebarHeaderActions'],
+  footerRows: Snapshot['sidebarFooterActions'],
+  threads: Snapshot['threads'],
+  workspace: Snapshot['sidebarWorkspace'],
+  user: Snapshot['sidebarUser'],
+  menus: Snapshot['sidebarMenus'],
+  calloutGroup: Snapshot['sidebarCallouts'],
+  calloutPresence: Snapshot['sidebarCalloutPresence'],
+  sections: Snapshot['sidebarSections'],
+  expanded: Snapshot['sidebarExpanded'],
+  dismissed: Snapshot['sidebarDismissedCallouts'],
+  calloutsHovered: boolean,
+  calloutHeight: number,
+  action: string,
+  search: string,
+  configuration: Configuration,
+  shape: ComponentPresentation['shape'],
+  size: ComponentPresentation['size'],
+  hover: ComponentPresentation['hover'],
+  h: ConfiguredSidebarViewBuilder,
+) => {
   const context = demoPresentation(shape, size, hover)
   const content = (context: PresentationContext) => {
     const compact = createPresentationContext({ context, size: 'compact' })
@@ -105,7 +130,10 @@ const render = (
         },
         h,
       )
-    const menu = (id: string, actionContext: SidebarActionContext): Html => {
+    const menu: (id: string, actionContext: SidebarActionContext) => Html = (
+      id: string,
+      actionContext: SidebarActionContext,
+    ) => {
       const model = menus.find((item) => item.id === id)?.model
       if (model === undefined) throw new Error(`Missing sidebar menu ${id}`)
       return h.block(

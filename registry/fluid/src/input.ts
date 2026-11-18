@@ -1,6 +1,6 @@
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
 import { fontWeights } from './lib/font-weight.js'
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { modifyFields } from 'foldkit/struct'
 import { InputFileResources, InputFile } from './input-file-resources.js'
 import * as Primitive from '@foldkit/ui/input'

@@ -15,8 +15,9 @@ import { LineChart } from '../src/cartesian/root'
 import { CandlestickChart } from '../src/candlestick/root'
 import type { TimeSeriesProps } from '../src/cartesian/root-options'
 
-const descendants = (nodes: ReadonlyArray<SceneNode>): ReadonlyArray<SceneNode> =>
-  nodes.flatMap((node) => [node, ...(node.kind === 'group' ? descendants(node.children) : [])])
+const descendants: (nodes: ReadonlyArray<SceneNode>) => ReadonlyArray<SceneNode> = (
+  nodes: ReadonlyArray<SceneNode>,
+) => nodes.flatMap((node) => [node, ...(node.kind === 'group' ? descendants(node.children) : [])])
 
 const Row = Schema.Struct({ date: Schema.DateFromString, value: Schema.Finite })
 

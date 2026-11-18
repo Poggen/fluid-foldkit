@@ -6,7 +6,7 @@ import type { InputCopyViewBuilder } from './input-copy-core.js'
 import type { Model } from './input-copy-state.js'
 import type { Message, ResultLifetime } from './input-copy-effects.js'
 import type { DocumentTooltipOccurrenceViewInputs } from './tooltip-native-public.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { childAttributes } from 'foldkit/html'
 import type { ChildAttribute, Html, TaggedAttribute } from 'foldkit/html'
 import { cn } from './lib/utils.js'
@@ -39,7 +39,7 @@ export interface InputCopyViewInputs extends Presentation {
   ) => Html
 }
 
-export function inputCopyPaint(
+export const inputCopyPaint: (
   model: typeof Model.Type,
   inputs: InputCopyViewInputs,
   h: InputCopyViewBuilder,
@@ -54,7 +54,22 @@ export function inputCopyPaint(
       { readonly _tag: 'OnCustomEvent' }
     >
   },
-): Html {
+) => Html = function inputCopyPaint(
+  model: typeof Model.Type,
+  inputs: InputCopyViewInputs,
+  h: InputCopyViewBuilder,
+  events: {
+    readonly copy: typeof Message.Type
+    readonly mount: ReadonlyArray<ChildAttribute<Mount.RequirementsOf<typeof ResultLifetime>>>
+    readonly down: ReturnType<InputCopyViewBuilder['OnPointerDown']>
+    readonly enter: ReturnType<InputCopyViewBuilder['OnMouseEnter']>
+    readonly leave: ReturnType<InputCopyViewBuilder['OnMouseLeave']>
+    readonly completed: Extract<
+      TaggedAttribute<typeof Message.Type>,
+      { readonly _tag: 'OnCustomEvent' }
+    >
+  },
+) {
   const p = resolvePresentation(inputs)
   const buttonVariant = model.variant === 'button'
   const displayedButtonVariant = model.displayedVariant === 'button'

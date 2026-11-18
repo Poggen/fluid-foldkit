@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 import { it } from '@effect/vitest'
 import { Effect } from 'effect'
@@ -54,7 +55,7 @@ it.live(
           vi.waitFor(() => expect(order()).toEqual(['research', 'summary', 'share'])),
         )
         expect(row('research')).toBe(original)
-        // Dispose with a layout-changing command queued, before its next commit.
+
         click('queue-reverse')
       } finally {
         yield* Effect.promise(() => first.dispose())

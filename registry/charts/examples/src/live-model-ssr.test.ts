@@ -2,7 +2,7 @@ import { Effect } from 'effect'
 import { renderToString } from 'foldkit/experimental/server'
 import { it } from '@effect/vitest'
 import { expect } from 'vitest'
-import { liveModelExample } from './live-model-fixture'
+import { liveModelExample } from './live-model.fixture'
 
 it.effect(
   'server-renders the bound LiveLine fixture with its hydration identity and initial data',

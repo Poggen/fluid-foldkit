@@ -2,12 +2,17 @@ import { Effect, Function, Queue, Stream } from 'effect'
 import type * as Mount from 'foldkit/mount'
 import { HOVER_HIDDEN_ATTR } from './hover-attributes.js'
 
-export function observeNavMenu<A>(
+export const observeNavMenu: <A>(
   element: Element,
   viewStateChanges: Stream.Stream<Mount.ViewState>,
   focused: (index: number | null, keyboard: boolean) => A,
   popupChanged: (open: boolean) => A,
-): Stream.Stream<A> {
+) => Stream.Stream<A> = function observeNavMenu<A>(
+  element: Element,
+  viewStateChanges: Stream.Stream<Mount.ViewState>,
+  focused: (index: number | null, keyboard: boolean) => A,
+  popupChanged: (open: boolean) => A,
+) {
   return viewStateChanges.pipe(
     Stream.switchMap((state) =>
       state === 'Live'
@@ -156,5 +161,5 @@ export function observeNavMenu<A>(
           )
         : Stream.never,
     ),
-  )
+  ) satisfies Stream.Stream<A>
 }

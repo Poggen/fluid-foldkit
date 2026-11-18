@@ -44,13 +44,19 @@ interface NodeRowShape extends NodeLayoutRow {
 
 const intFmt = /* @__PURE__ */ new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
 
-const placeLabels = (
+const placeLabels: (
+  nodes: ReadonlyArray<NodeLayoutRow>,
+  chart: { readonly x: number; readonly width: number },
+  orientation: LabelOrientation,
+  showValue: boolean,
+  formatValue?: (value: number) => string,
+) => Array<LabelRow> = (
   nodes: ReadonlyArray<NodeLayoutRow>,
   chart: { readonly x: number; readonly width: number },
   orientation: LabelOrientation,
   showValue: boolean,
   formatValue: (value: number) => string = (value) => `${intFmt.format(value)} sessions`,
-): Array<LabelRow> =>
+) =>
   nodes.map((node) => {
     const nodeW = Math.max(0, node.x1 - node.x0)
     const centerY = node.y0 + (node.y1 - node.y0) / 2
@@ -83,14 +89,17 @@ const placeLabels = (
       valueX: edge,
       valueY: centerY + VALUE_LABEL_GAP,
     }
-  })
+  }) satisfies Array<LabelRow>
 
 interface BaselineShift {
   readonly dx: number
   readonly dy: number
 }
 
-const baselineShift = (fontSize: number, rotate: number): BaselineShift => {
+const baselineShift: (fontSize: number, rotate: number) => BaselineShift = (
+  fontSize: number,
+  rotate: number,
+) => {
   const shift = fontSize * BASELINE_RESIDUAL_EM
 
   if (rotate === -ROTATE_CW) {
@@ -104,7 +113,6 @@ const baselineShift = (fontSize: number, rotate: number): BaselineShift => {
   return { dx: 0, dy: shift }
 }
 
-// bklit hovers a node from its whole <g>, labels included; the focus strategy reads these boxes so a label hover resolves to its node.
 interface HitBox {
   readonly x0: number
   readonly x1: number
@@ -116,7 +124,11 @@ const LINE_BOX = 1.2
 
 const SSR_WIDTH_RATIO = 0.55
 
-const leftEdge = (anchor: LabelRow['anchor'], x: number, length: number): number => {
+const leftEdge: (anchor: LabelRow['anchor'], x: number, length: number) => number = (
+  anchor: LabelRow['anchor'],
+  x: number,
+  length: number,
+) => {
   if (anchor === 'end') {
     return x - length
   }
@@ -126,19 +138,24 @@ const leftEdge = (anchor: LabelRow['anchor'], x: number, length: number): number
 
 type SankeyTextWidth = typeof textWidth
 
-const labelHitBoxes = (
+const labelHitBoxes: (
+  label: LabelRow,
+  showValue: boolean,
+  family: string,
+  measureTextWidth?: SankeyTextWidth,
+) => ReadonlyArray<HitBox> = (
   label: LabelRow,
   showValue: boolean,
   family: string,
   measureTextWidth: SankeyTextWidth = textWidth,
-): ReadonlyArray<HitBox> => {
-  const one = (
+) => {
+  const one: (
     content: string,
     fontSize: number,
     fontWeight: number,
     x: number,
     y: number,
-  ): HitBox => {
+  ) => HitBox = (content: string, fontSize: number, fontWeight: number, x: number, y: number) => {
     const length = measureTextWidth(content, fontSize, fontWeight, family, SSR_WIDTH_RATIO)
     const thick = fontSize * LINE_BOX
 
@@ -157,11 +174,8 @@ const labelHitBoxes = (
     boxes.push(one(label.value, VALUE_FONT_SIZE, 400, label.valueX, label.valueY))
   }
 
-  return boxes
+  return boxes satisfies ReadonlyArray<HitBox>
 }
-
-// bklit's inner width goes negative on narrow hosts and sankeyDiagram refuses an extent narrower than its node: the native layout gives
-// y, heights and layers at a 1px node, and columns use d3-sankey's x0 = left + layer * (inner - nodeWidth) / (columns - 1).
 
 export {
   NAME_FONT_SIZE,

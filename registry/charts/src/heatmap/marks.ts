@@ -31,9 +31,6 @@ export interface CellDatum {
   readonly x1: number
 }
 
-/** bklit's useDelayedTooltipData hideDelay (default 120ms, the `hideDelay` prop overrides): the tooltip holds that long before unmounting (opacity/scale neutralised in CSS). */
-
-/** Rendered height of the default heatmap tooltip body (date, weekday, rule, count). */
 const LOADING_BASE_OPACITY = 0.2
 
 const SHIMMER_SEED_SALT = 73_133
@@ -43,11 +40,15 @@ const FALLBACK_LEVEL = 0
 const QUARTER_LABEL_RISE_PX = 8
 
 /** Left edge of a column in plot pixels, including separator gutters. */
-export const columnStartX = (
+export const columnStartX: (
   column: number,
   cellSize: number,
   layout: Readonly<HeatmapSeparatorLayout> | null,
-): number => {
+) => number = (
+  column: number,
+  cellSize: number,
+  layout: Readonly<HeatmapSeparatorLayout> | null,
+) => {
   let gutters = 0
 
   if (layout && layout.spacing > 0) {
@@ -70,13 +71,13 @@ interface BuildCellDataParams {
 }
 
 /** Unknown and ghost bins never draw or take focus; iteration retains their weekday positions. */
-const buildCellData = ({
+const buildCellData: (argument0: Readonly<BuildCellDataParams>) => Array<CellDatum> = ({
   columns,
   dayLabels,
   displayRange,
   cellSize,
   layout,
-}: Readonly<BuildCellDataParams>): Array<CellDatum> => {
+}: Readonly<BuildCellDataParams>) => {
   const data: Array<CellDatum> = []
 
   for (const [column, col] of columns.entries()) {
@@ -102,17 +103,19 @@ const buildCellData = ({
     }
   }
 
-  return data
+  return data satisfies Array<CellDatum>
 }
 
-const patternRef = (id: string, prefix: string | undefined): string =>
-  prefix === undefined || prefix === '' ? id : `${prefix}-${id}`
+const patternRef: (id: string, prefix: string | undefined) => string = (
+  id: string,
+  prefix: string | undefined,
+) => (prefix === undefined || prefix === '' ? id : `${prefix}-${id}`)
 
-const levelFill = (
+const levelFill: (
   level: number,
   styles: HeatmapLevelStyles,
   patternIdPrefix: string | undefined,
-): string => {
+) => string = (level: number, styles: HeatmapLevelStyles, patternIdPrefix: string | undefined) => {
   const style = styles[level] ?? styles[FALLBACK_LEVEL]
 
   if (isHeatmapLevelPattern(style)) {
@@ -174,10 +177,13 @@ interface ColumnMonthTicks {
   readonly labels: Map<number, string>
 }
 
-const monthKey = (anchor: Readonly<Date>): string => `${anchor.getFullYear()}-${anchor.getMonth()}`
+const monthKey: (anchor: Readonly<Date>) => string = (anchor: Readonly<Date>) =>
+  `${anchor.getFullYear()}-${anchor.getMonth()}`
 
 /** One tick per month transition, anchored at the first column of the month. */
-const monthTicks = (columns: ReadonlyArray<HeatmapColumn>): ColumnMonthTicks => {
+const monthTicks: (columns: ReadonlyArray<HeatmapColumn>) => ColumnMonthTicks = (
+  columns: ReadonlyArray<HeatmapColumn>,
+) => {
   const values: Array<number> = []
   const labels = new Map<number, string>()
   let lastKey = ''
@@ -199,16 +205,20 @@ type DecorativeMark = ReturnType<typeof decorative>
 
 type MakeCells = (data: ReadonlyArray<CellDatum>, options: Record<string, unknown>) => CellMark
 
-const createCellMaker = (linearX: boolean, baseInset: number, cornerRadius: number): MakeCells => {
+const createCellMaker: (linearX: boolean, baseInset: number, cornerRadius: number) => MakeCells = (
+  linearX: boolean,
+  baseInset: number,
+  cornerRadius: number,
+) => {
   const positions = linearX
     ? {
-        x1: (datum: Readonly<CellDatum>): number => datum.x0,
-        x2: (datum: Readonly<CellDatum>): number => datum.x1,
-        y: (datum: Readonly<CellDatum>): string => datum.rowKey,
+        x1: (datum: Readonly<CellDatum>) => datum.x0 satisfies number,
+        x2: (datum: Readonly<CellDatum>) => datum.x1 satisfies number,
+        y: (datum: Readonly<CellDatum>) => datum.rowKey satisfies string,
       }
     : {
-        x: (datum: Readonly<CellDatum>): string => datum.colKey,
-        y: (datum: Readonly<CellDatum>): string => datum.rowKey,
+        x: (datum: Readonly<CellDatum>) => datum.colKey satisfies string,
+        y: (datum: Readonly<CellDatum>) => datum.rowKey satisfies string,
       }
 
   return (data, options) => {
@@ -220,15 +230,20 @@ const createCellMaker = (linearX: boolean, baseInset: number, cornerRadius: numb
   }
 }
 
-const shimmers = (datum: Readonly<CellDatum>, randomness: number, shimmer: boolean): boolean => {
+const shimmers: (datum: Readonly<CellDatum>, randomness: number, shimmer: boolean) => boolean = (
+  datum: Readonly<CellDatum>,
+  randomness: number,
+  shimmer: boolean,
+) => {
   const random = seededRandom(heatmapCellSeed(datum.column, datum.row) + SHIMMER_SEED_SALT)
 
   return shimmer && (randomness >= 1 || (randomness > 0 && random() < randomness))
 }
 
-// bklit heatmap-cells.tsx:313-348 gives every cell its own random target/duration/pause. Marks take no per-datum opacity channel, so the cells that
-// shimmer share one group (`heatmap-loading-shimmer`) and styles.css derives each rect's own timing and peaks from its sibling index.
-const loadingMarks = (
+const loadingMarks: (
+  argument0: Readonly<BuildHeatmapDefinitionParams>,
+  makeCells: MakeCells,
+) => Array<CellMark> = (
   {
     cellData,
     levelStyles,
@@ -237,7 +252,7 @@ const loadingMarks = (
     loadingShimmer,
   }: Readonly<BuildHeatmapDefinitionParams>,
   makeCells: MakeCells,
-): Array<CellMark> => {
+) => {
   const still: Array<CellDatum> = []
   const pulsing: Array<CellDatum> = []
 
@@ -258,14 +273,14 @@ const loadingMarks = (
           fillOpacity,
           id,
           key: (datum: Readonly<CellDatum>) => `load-${datum.column}-${datum.row}`,
-          // bklit heatmap-cells.tsx:149-151: the shimmer layer drops to 0 at once on reveal, the data layer fades in.
+
           motion: false satisfies false,
         }),
       )
     }
   }
 
-  return marks
+  return marks satisfies Array<CellMark>
 }
 
 interface CellGroup {
@@ -273,13 +288,15 @@ interface CellGroup {
   readonly data: Array<CellDatum>
 }
 
-// Marks take a scalar fillOpacity, so cells group by effective opacity; the level -> paint mapping is the chart-level `color` scale.
-// Groups are per level (stable ids) so legend dimming only changes fillOpacity, never re-enters cells.
-const groupCells = (
+const groupCells: (
   cellData: ReadonlyArray<CellDatum>,
   levelStyles: HeatmapLevelStyles,
   rowOpacity: RowOpacity,
-): Map<string, CellGroup> => {
+) => Map<string, CellGroup> = (
+  cellData: ReadonlyArray<CellDatum>,
+  levelStyles: HeatmapLevelStyles,
+  rowOpacity: RowOpacity,
+) => {
   const groups = new Map<string, CellGroup>()
 
   for (const datum of cellData) {
@@ -300,7 +317,11 @@ const groupCells = (
   return groups
 }
 
-const readyMarks = (
+const readyMarks: (
+  argument0: Readonly<BuildHeatmapDefinitionParams>,
+  makeCells: MakeCells,
+  motionFor: ReturnType<typeof createHeatmapCellMotion<CellDatum>>,
+) => Array<CellMark> = (
   {
     cellData,
     levelStyles,
@@ -310,21 +331,20 @@ const readyMarks = (
   }: Readonly<BuildHeatmapDefinitionParams>,
   makeCells: MakeCells,
   motionFor: ReturnType<typeof createHeatmapCellMotion<CellDatum>>,
-): Array<CellMark> => {
+) => {
   const marks: Array<CellMark> = []
 
   for (const [groupId, { opacity, data }] of groupCells(cellData, levelStyles, rowOpacity)) {
-    // First paint (seedOnly): one transparent placeholder keeps the mark group alive, so the real cells
-    // ENTER it afterwards with their own delays (the motion renderer only animates entering elements).
     const seeded = seedOnly
-      ? { fill: 'transparent', key: (): string => 'seed', motion: false satisfies false }
+      ? { fill: 'transparent', key: () => 'seed' satisfies string, motion: false satisfies false }
       : null
 
     marks.push(
       makeCells(seeded ? data.slice(0, 1) : data, {
         ...(seeded ?? {
-          color: (datum: Readonly<CellDatum>): number => datum.level,
-          key: (datum: Readonly<CellDatum>): string => `${datum.column}-${datum.row}:${revealKey}`,
+          color: (datum: Readonly<CellDatum>) => datum.level satisfies number,
+          key: (datum: Readonly<CellDatum>) =>
+            `${datum.column}-${datum.row}:${revealKey}` satisfies string,
           motion: motionFor,
         }),
         fillOpacity: opacity,
@@ -333,16 +353,18 @@ const readyMarks = (
     )
   }
 
-  return marks
+  return marks satisfies Array<CellMark>
 }
 
-// One vertical segment per gutter, spanning bklit's [startOffset+paddingY, innerHeight-paddingY] on a
-// pixel-linear helper y scale (`link` is the native segment mark; `ruleX` can only span the full plot).
-const separatorRules = (
+const separatorRules: (
+  argument0: Readonly<BuildHeatmapDefinitionParams>,
+  layout: Readonly<HeatmapSeparatorLayout>,
+  separator: Readonly<HeatmapSeparatorStyle>,
+) => DecorativeMark = (
   { cellSize, separatorGradientId, separatorSpan }: Readonly<BuildHeatmapDefinitionParams>,
   layout: Readonly<HeatmapSeparatorLayout>,
   separator: Readonly<HeatmapSeparatorStyle>,
-): DecorativeMark => {
+) => {
   const xs = layout.atColumns.map((at) => columnStartX(at, cellSize, layout) - layout.spacing / 2)
 
   return decorative(
@@ -372,16 +394,21 @@ const separatorRules = (
       y2: () => separatorSpan.y2,
       yScale: 'sepY',
     }),
-  )
+  ) satisfies DecorativeMark
 }
 
-const separatorLabels = (
+const separatorLabels: (
+  argument0: Readonly<BuildHeatmapDefinitionParams>,
+  layout: Readonly<HeatmapSeparatorLayout>,
+  separator: Readonly<HeatmapSeparatorStyle>,
+  linearX: boolean,
+) => DecorativeMark = (
   { cellSize, dayLabels }: Readonly<BuildHeatmapDefinitionParams>,
   layout: Readonly<HeatmapSeparatorLayout>,
   separator: Readonly<HeatmapSeparatorStyle>,
   linearX: boolean,
-): DecorativeMark => {
-  const labelFormat = separator.labelFormat ?? ((quarter: number): string => `Q${quarter}`)
+) => {
+  const labelFormat = separator.labelFormat ?? ((quarter: number) => `Q${quarter}` satisfies string)
   const first = dayLabels[0] ?? ''
 
   const labelRows = layout.groups.map((group) => ({
@@ -405,13 +432,13 @@ const separatorLabels = (
     readonly x: number | string
   }>
 
-  return decorative(text(labelRows, options))
+  return decorative(text(labelRows, options)) satisfies DecorativeMark
 }
 
-const separatorMarks = (
+const separatorMarks: (
   params: Readonly<BuildHeatmapDefinitionParams>,
   linearX: boolean,
-): Array<DecorativeMark> => {
+) => Array<DecorativeMark> = (params: Readonly<BuildHeatmapDefinitionParams>, linearX: boolean) => {
   const { layout, separator, dayLabels } = params
   const marks: Array<DecorativeMark> = []
 

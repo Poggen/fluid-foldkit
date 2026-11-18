@@ -1,12 +1,45 @@
 import { HoverMode } from './hover-observation.js'
 import { PresentationProjectionFields } from './calendar-view/presentation.js'
-// Native Fluid Calendar data contracts; no callback/provider functions in Model.
+
 import { Schema } from 'effect'
 import { instantDate, zonedDate } from './calendar-domain/date-boundary.js'
 import { TZDate } from '@date-fns/tz'
 import { UTCDateMini } from '@date-fns/utc'
 import { dayNumber } from './calendar-domain/rules.js'
 import type { DateRange } from './calendar-domain/matcher-types.js'
+
+export const dateValue: (date: Date) => DateValue = function dateValue(date: Date) {
+  const timeZone = date instanceof TZDate ? (date.timeZone ?? null) : null
+
+  return {
+    timestamp: date.getTime(),
+    ordinal: dayNumber(date),
+    timeZone: date instanceof UTCDateMini ? 'UTC' : timeZone,
+  }
+}
+
+export const restoreDate: (value: DateValue) => Date = function restoreDate(value: DateValue) {
+  return value.timeZone === null
+    ? instantDate(value.timestamp)
+    : zonedDate(value.timestamp, value.timeZone)
+}
+
+export const selectionValue: (value?: Date | DateRange) => Selection = function selectionValue(
+  value?: Date | DateRange,
+) {
+  if (value === undefined) {
+    return Selection.cases.Empty.make({})
+  }
+
+  if (value instanceof Date) {
+    return Selection.cases.Single.make({ date: dateValue(value) })
+  }
+
+  return Selection.cases.Range.make({
+    from: value.from ? dateValue(value.from) : null,
+    to: value.to ? dateValue(value.to) : null,
+  })
+}
 
 export const DateValue = Schema.Struct({
   timestamp: Schema.Finite,
@@ -161,34 +194,3 @@ export const Action = Schema.TaggedUnion({
 })
 
 export type Action = typeof Action.Type
-
-export function dateValue(date: Date): DateValue {
-  const timeZone = date instanceof TZDate ? (date.timeZone ?? null) : null
-
-  return {
-    timestamp: date.getTime(),
-    ordinal: dayNumber(date),
-    timeZone: date instanceof UTCDateMini ? 'UTC' : timeZone,
-  }
-}
-
-export function restoreDate(value: DateValue): Date {
-  return value.timeZone === null
-    ? instantDate(value.timestamp)
-    : zonedDate(value.timestamp, value.timeZone)
-}
-
-export function selectionValue(value?: Date | DateRange): Selection {
-  if (value === undefined) {
-    return Selection.cases.Empty.make({})
-  }
-
-  if (value instanceof Date) {
-    return Selection.cases.Single.make({ date: dateValue(value) })
-  }
-
-  return Selection.cases.Range.make({
-    from: value.from ? dateValue(value.from) : null,
-    to: value.to ? dateValue(value.to) : null,
-  })
-}

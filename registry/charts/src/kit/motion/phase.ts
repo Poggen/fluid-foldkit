@@ -1,4 +1,3 @@
-// Lifecycle vocabulary shared by the native charts' public props.
 import { REVEAL_BEZIER } from './easing'
 
 type TransitionEasing = ReadonlyArray<number> | string | ((progress: number) => number)
@@ -49,27 +48,22 @@ export const DEFAULT_CHART_ENTER_TRANSITION: Transition = {
 
 export const DEFAULT_CHART_STATUS: ChartStatus = 'ready'
 
-/** @internal */
 export const DEFAULT_Y_DOMAIN_TWEEN_MS = 500
 
-/** @internal */
-export const resolveRestingChartPhase = (status: ChartStatus): ChartPhase =>
-  status === 'loading' ? 'loading' : 'ready'
+export const resolveRestingChartPhase: (status: ChartStatus) => ChartPhase = (
+  status: ChartStatus,
+) => (status === 'loading' ? 'loading' : 'ready')
 
-/** @internal */
-export const isChartInteractionPhase = (phase: ChartPhase): boolean => phase === 'ready'
+export const isChartInteractionPhase: (phase: ChartPhase) => boolean = (phase: ChartPhase) =>
+  phase === 'ready'
 
-/** @internal */
 export const Y_AXIS_DEFAULT_TICK_COUNT = 5
 
-/** @internal */
 export const Y_AXIS_MIN_TICK_COUNT = 1
 
-/** @internal */
 export const Y_AXIS_MAX_TICK_COUNT = 10
 
-/** @internal */
-export const resolveYAxisTickCount = (numTicks?: number): number => {
+export const resolveYAxisTickCount: (numTicks?: number) => number = (numTicks?: number) => {
   if (numTicks === undefined || !Number.isFinite(numTicks)) {
     return Y_AXIS_DEFAULT_TICK_COUNT
   }

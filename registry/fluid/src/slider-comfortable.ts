@@ -7,90 +7,15 @@ import { sliderBubble, sliderKeyboardView } from './slider-parts.js'
 import type { SliderViewInputs } from './slider-parts.js'
 import type { SliderModel } from './slider-state.js'
 
-const hasLabel = (label: string | undefined): label is string => label !== undefined && label !== ''
-
-function comfortableLabels<M, R>(
+const comfortablePreview: <M, R>(
+  model: SliderModel,
+  inputs: SliderViewInputs,
+  h: HtmlBuilder<M, R>,
+) => Html = function comfortablePreview<M, R>(
   model: SliderModel,
   inputs: SliderViewInputs,
   h: HtmlBuilder<M, R>,
 ) {
-  const { settings } = model
-  const { reducedMotion } = resolvePresentation(inputs)
-  const format = inputs.formatValue ?? String
-  const value = Predicate.isNumber(settings.value) ? settings.value : settings.value[0]
-  const active = model.hovered || Option.isSome(model.focusedThumb)
-  const textClass = 'text-[length:var(--fs-body,13px)] leading-[var(--lh-body,20px)]'
-  const color = active ? 'var(--foreground)' : 'var(--muted-foreground)'
-
-  const text = (label: string, className: string, isValue: boolean, ghost: boolean) => {
-    const node = h.span(
-      [
-        h.Class(cn(textClass, className)),
-        ...(ghost ? [h.AriaHidden(true)] : []),
-        h.Style(
-          isValue
-            ? ghost
-              ? {
-                  minWidth: `${Math.max(format(settings.min).length, format(settings.max).length)}ch`,
-                }
-              : {
-                  minWidth: `${Math.max(format(settings.min).length, format(settings.max).length)}ch`,
-                  textAlign: 'right',
-                }
-            : {},
-        ),
-      ],
-      [label],
-    )
-
-    return ghost
-      ? node
-      : inputs.animate(node, {
-          initial: false,
-          animate: { color },
-          transition: spring.fast,
-          reducedMotion,
-        })
-  }
-
-  const labelLayer = (ghost: boolean) =>
-    h.div(
-      [
-        h.Class(
-          cn(
-            ghost
-              ? 'absolute inset-0 flex items-center px-2 z-[2] pointer-events-none'
-              : 'absolute inset-0 flex items-center px-2 z-[4] pointer-events-none',
-          ),
-        ),
-        ...(ghost ? [h.AriaHidden(true)] : []),
-      ],
-      [
-        inputs.label !== undefined && inputs.label !== ''
-          ? text(
-              inputs.label,
-              cn('px-2', ghost && 'bg-background text-transparent select-none'),
-              false,
-              ghost,
-            )
-          : null,
-        text(
-          format(value),
-          cn('tabular-nums ml-auto px-2', ghost && 'bg-background text-transparent select-none'),
-          true,
-          ghost,
-        ),
-      ],
-    )
-
-  return { text, labelLayer }
-}
-
-function comfortablePreview<M, R>(
-  model: SliderModel,
-  inputs: SliderViewInputs,
-  h: HtmlBuilder<M, R>,
-): Html {
   const preview = Option.getOrNull(model.preview)
   const { reducedMotion } = resolvePresentation(inputs)
 
@@ -109,14 +34,18 @@ function comfortablePreview<M, R>(
       transition: { opacity: { duration: 0.15 } },
       reducedMotion,
     },
-  )
+  ) satisfies Html
 }
 
-function comfortableLine<M, R>(
+const comfortableLine: <M, R>(
   model: SliderModel,
   inputs: SliderViewInputs,
   h: HtmlBuilder<M, R>,
-): Html {
+) => Html = function comfortableLine<M, R>(
+  model: SliderModel,
+  inputs: SliderViewInputs,
+  h: HtmlBuilder<M, R>,
+) {
   const { reducedMotion } = resolvePresentation(inputs)
   const focused = Option.isSome(model.focusedThumb)
   const active = model.hovered || focused
@@ -148,14 +77,18 @@ function comfortableLine<M, R>(
       transition: spring.fast,
       reducedMotion,
     },
-  )
+  ) satisfies Html
 }
 
-function comfortablePips<M, R>(
+const comfortablePips: <M, R>(
   model: SliderModel,
   inputs: SliderViewInputs,
   h: HtmlBuilder<M, R>,
-): Html {
+) => Html = function comfortablePips<M, R>(
+  model: SliderModel,
+  inputs: SliderViewInputs,
+  h: HtmlBuilder<M, R>,
+) {
   const { settings } = model
   const value = Predicate.isNumber(settings.value) ? settings.value : settings.value[0]
   const { reducedMotion } = resolvePresentation(inputs)
@@ -192,15 +125,20 @@ function comfortablePips<M, R>(
         )
       },
     ),
-  )
+  ) satisfies Html
 }
 
-export function sliderComfortableView<M, R>(
+export const sliderComfortableView: <M, R>(
   model: SliderModel,
   inputs: SliderViewInputs,
   attributes: NonNullable<Parameters<HtmlBuilder<M, R>['div']>[0]>,
   h: HtmlBuilder<M, R>,
-): Html {
+) => Html = function sliderComfortableView<M, R>(
+  model: SliderModel,
+  inputs: SliderViewInputs,
+  attributes: NonNullable<Parameters<HtmlBuilder<M, R>['div']>[0]>,
+  h: HtmlBuilder<M, R>,
+) {
   const { shape, reducedMotion } = resolvePresentation(inputs)
   const { settings } = model
   const format = inputs.formatValue ?? String
@@ -291,5 +229,84 @@ export function sliderComfortableView<M, R>(
       ],
     ),
     model,
-  )
+  ) satisfies Html
+}
+
+const hasLabel = (label: string | undefined): label is string => label !== undefined && label !== ''
+
+function comfortableLabels<M, R>(
+  model: SliderModel,
+  inputs: SliderViewInputs,
+  h: HtmlBuilder<M, R>,
+) {
+  const { settings } = model
+  const { reducedMotion } = resolvePresentation(inputs)
+  const format = inputs.formatValue ?? String
+  const value = Predicate.isNumber(settings.value) ? settings.value : settings.value[0]
+  const active = model.hovered || Option.isSome(model.focusedThumb)
+  const textClass = 'text-[length:var(--fs-body,13px)] leading-[var(--lh-body,20px)]'
+  const color = active ? 'var(--foreground)' : 'var(--muted-foreground)'
+
+  const text = (label: string, className: string, isValue: boolean, ghost: boolean) => {
+    const node = h.span(
+      [
+        h.Class(cn(textClass, className)),
+        ...(ghost ? [h.AriaHidden(true)] : []),
+        h.Style(
+          isValue
+            ? ghost
+              ? {
+                  minWidth: `${Math.max(format(settings.min).length, format(settings.max).length)}ch`,
+                }
+              : {
+                  minWidth: `${Math.max(format(settings.min).length, format(settings.max).length)}ch`,
+                  textAlign: 'right',
+                }
+            : {},
+        ),
+      ],
+      [label],
+    )
+
+    return ghost
+      ? node
+      : inputs.animate(node, {
+          initial: false,
+          animate: { color },
+          transition: spring.fast,
+          reducedMotion,
+        })
+  }
+
+  const labelLayer = (ghost: boolean) =>
+    h.div(
+      [
+        h.Class(
+          cn(
+            ghost
+              ? 'absolute inset-0 flex items-center px-2 z-[2] pointer-events-none'
+              : 'absolute inset-0 flex items-center px-2 z-[4] pointer-events-none',
+          ),
+        ),
+        ...(ghost ? [h.AriaHidden(true)] : []),
+      ],
+      [
+        inputs.label !== undefined && inputs.label !== ''
+          ? text(
+              inputs.label,
+              cn('px-2', ghost && 'bg-background text-transparent select-none'),
+              false,
+              ghost,
+            )
+          : null,
+        text(
+          format(value),
+          cn('tabular-nums ml-auto px-2', ghost && 'bg-background text-transparent select-none'),
+          true,
+          ghost,
+        ),
+      ],
+    )
+
+  return { text, labelLayer }
 }

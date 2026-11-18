@@ -1,18 +1,24 @@
 import type { DataTableObservedMessage } from './data-table-observation.js'
-// Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 import type { Message } from './data-table-definition.js'
 
 type Constructors = typeof Message
 type Emit = (message: DataTableObservedMessage) => void
 
-export function observeDataTableKeyboard(
+export const observeDataTableKeyboard: (
   root: Element,
   messages: Constructors,
   emit: Emit,
   startEdit: (cell: HTMLElement) => void,
   focusCell: (cell: HTMLElement) => void,
-): () => void {
+) => () => void = function observeDataTableKeyboard(
+  root: Element,
+  messages: Constructors,
+  emit: Emit,
+  startEdit: (cell: HTMLElement) => void,
+  focusCell: (cell: HTMLElement) => void,
+) {
   let hovered: HTMLElement | null = null
   let rangeAnchor: string | null = null
   let beforeRange: ReadonlyArray<string> = []

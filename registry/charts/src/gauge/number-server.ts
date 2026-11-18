@@ -2,17 +2,14 @@ import { CustomElement } from 'foldkit'
 import type { Html, HtmlBuilder } from 'foldkit/html'
 import type { Data } from 'number-flow/lite'
 
-const ReserveNumber = CustomElement.define({
-  tag: 'fk-bklit-number-reserve',
-  properties: {},
-  events: {},
-})
-
 /** Hydration-safe visible NumberFlow fallback. The registered Mount acquires the live native engine. */
-export function numberServerView<Message, Requirements>(
+export const numberServerView: <Message, Requirements>(
   h: HtmlBuilder<Message, Requirements>,
   data: Data,
-): Html {
+) => Html = function numberServerView<Message, Requirements>(
+  h: HtmlBuilder<Message, Requirements>,
+  data: Data,
+) {
   return ReserveNumber.withMessage(h)(
     [
       h.DataAttribute('will-change', ''),
@@ -32,5 +29,11 @@ export function numberServerView<Message, Requirements>(
         [data.valueAsString],
       ),
     ],
-  )
+  ) satisfies Html
 }
+
+const ReserveNumber = CustomElement.define({
+  tag: 'fk-bklit-number-reserve',
+  properties: {},
+  events: {},
+})

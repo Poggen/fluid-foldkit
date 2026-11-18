@@ -22,8 +22,6 @@ export function mountElementMotion(
   const animation = createAnimationState(visual)
   visual.animationState = animation
 
-  // An onUpdate prop would force Source's accelerated opacity onto the JS backend.
-  // Only transform values affect hit geometry, so observe those owned values directly.
   const subscriptions = Object.entries(initial).flatMap(([key, value]) =>
     key !== 'opacity' && Predicate.isNumber(value)
       ? [visual.getValue(key, value).on('change', publish)]
@@ -40,7 +38,7 @@ export function mountElementMotion(
     update(next: MotionNodeOptions) {
       element.dataset.bkmOwnedMotion = ''
       visual.update(next, null)
-      // A native scene refresh may restore destination attributes; put the current physical pose back.
+
       visual.render()
       void animation.animateChanges()
     },

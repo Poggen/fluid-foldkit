@@ -8,14 +8,103 @@ import { Action, dateValue } from '../calendar-state.js'
 import { instantDate, zonedDate } from '../calendar-domain/date-boundary.js'
 import type { CalendarContext, CalendarViewInputs, H, SlotName, SlotProps } from './contracts.js'
 
-// The overridden Fluid MonthCaption does not call DayPicker dropdowns. Those
-// defaults remain callable capabilities for a caller's custom MonthCaption.
-export function boundAttributes(
+export const boundAttributes: (
   attributes: SlotProps['attributes'],
-): ReadonlyArray<ChildAttribute> {
+) => ReadonlyArray<ChildAttribute> = function boundAttributes(attributes: SlotProps['attributes']) {
   return attributes.flatMap((attribute) =>
     '__childAttribute' in attribute ? [attribute] : childAttributes([attribute]),
   )
+}
+
+export const hasCustomComponent: (inputs: CalendarViewInputs, name: SlotName) => boolean =
+  function hasCustomComponent(inputs: CalendarViewInputs, name: SlotName) {
+    return (
+      inputs.renderComponent !== undefined && (inputs.customComponents?.includes(name) ?? false)
+    )
+  }
+
+const modifierClass: (inputs: CalendarViewInputs, flag: string) => string | undefined =
+  function modifierClass(inputs: CalendarViewInputs, flag: string) {
+    return Match.value(flag).pipe(
+      Match.whenOr(
+        'disabled',
+        'hidden',
+        'outside',
+        'focused',
+        'today',
+        'selected',
+        'range_start',
+        'range_middle',
+        'range_end',
+        (name) => inputs.classNames?.[name] ?? `rdp-${name}`,
+      ),
+      Match.orElse(constUndefined),
+    )
+  }
+
+const dropdownInput: (h: H, name: SlotName, initialInput: SlotProps) => SlotProps | null =
+  function dropdownInput(h: H, name: SlotName, initialInput: SlotProps) {
+    let input = initialInput
+
+    if ((name === 'MonthsDropdown' || name === 'YearsDropdown') && input.select === undefined) {
+      const { context } = input
+      const { projection } = context
+
+      const dropdown =
+        projection.dropdowns.find((item) => item.date === input.month?.date) ??
+        projection.dropdowns[0]
+
+      if (dropdown === undefined) {
+        return null
+      }
+
+      const options = name === 'MonthsDropdown' ? dropdown.monthOptions : dropdown.yearOptions
+
+      const select = {
+        value: String(name === 'MonthsDropdown' ? dropdown.selectedMonth : dropdown.selectedYear),
+        label: name === 'MonthsDropdown' ? dropdown.monthDropdownLabel : dropdown.yearDropdownLabel,
+        options,
+        request: (raw: string) => {
+          const option = options.find((item) => String(item.value) === raw && !item.disabled)
+
+          return context.goToMonth(
+            option === undefined
+              ? context.calendar.month
+              : dateValue(
+                  projection.timeZone === null
+                    ? instantDate(option.month)
+                    : zonedDate(option.month, projection.timeZone),
+                ),
+          )
+        },
+      }
+
+      input = {
+        ...input,
+        select,
+        attributes: [
+          ...input.attributes,
+          h.Value(select.value),
+          h.AriaLabel(select.label),
+          h.Disabled(projection.disableNavigation),
+          h.OnChange(select.request),
+        ],
+      }
+    }
+
+    return input
+  }
+
+export const slotProps: (
+  context: CalendarContext,
+  attributes: SlotProps['attributes'],
+  children: SlotProps['children'],
+) => SlotProps = function slotProps(
+  context: CalendarContext,
+  attributes: SlotProps['attributes'],
+  children: SlotProps['children'],
+) {
+  return { context, attributes, children }
 }
 
 const defaultClasses: Record<SlotName, string> = {
@@ -44,80 +133,6 @@ const defaultClasses: Record<SlotName, string> = {
   WeekNumberHeader: 'rdp-week_number_header',
   MonthsDropdown: 'rdp-months_dropdown',
   YearsDropdown: 'rdp-years_dropdown',
-}
-
-export function hasCustomComponent(inputs: CalendarViewInputs, name: SlotName): boolean {
-  return inputs.renderComponent !== undefined && (inputs.customComponents?.includes(name) ?? false)
-}
-
-function modifierClass(inputs: CalendarViewInputs, flag: string): string | undefined {
-  return Match.value(flag).pipe(
-    Match.whenOr(
-      'disabled',
-      'hidden',
-      'outside',
-      'focused',
-      'today',
-      'selected',
-      'range_start',
-      'range_middle',
-      'range_end',
-      (name) => inputs.classNames?.[name] ?? `rdp-${name}`,
-    ),
-    Match.orElse(constUndefined),
-  )
-}
-
-function dropdownInput(h: H, name: SlotName, initialInput: SlotProps): SlotProps | null {
-  let input = initialInput
-
-  if ((name === 'MonthsDropdown' || name === 'YearsDropdown') && input.select === undefined) {
-    const { context } = input
-    const { projection } = context
-
-    const dropdown =
-      projection.dropdowns.find((item) => item.date === input.month?.date) ??
-      projection.dropdowns[0]
-
-    if (dropdown === undefined) {
-      return null
-    }
-
-    const options = name === 'MonthsDropdown' ? dropdown.monthOptions : dropdown.yearOptions
-
-    const select = {
-      value: String(name === 'MonthsDropdown' ? dropdown.selectedMonth : dropdown.selectedYear),
-      label: name === 'MonthsDropdown' ? dropdown.monthDropdownLabel : dropdown.yearDropdownLabel,
-      options,
-      request: (raw: string) => {
-        const option = options.find((item) => String(item.value) === raw && !item.disabled)
-
-        return context.goToMonth(
-          option === undefined
-            ? context.calendar.month
-            : dateValue(
-                projection.timeZone === null
-                  ? instantDate(option.month)
-                  : zonedDate(option.month, projection.timeZone),
-              ),
-        )
-      },
-    }
-
-    input = {
-      ...input,
-      select,
-      attributes: [
-        ...input.attributes,
-        h.Value(select.value),
-        h.AriaLabel(select.label),
-        h.Disabled(projection.disableNavigation),
-        h.OnChange(select.request),
-      ],
-    }
-  }
-
-  return input
 }
 
 function slotPresentation(h: H, inputs: CalendarViewInputs, name: SlotName, input: SlotProps) {
@@ -187,7 +202,10 @@ function slotPresentation(h: H, inputs: CalendarViewInputs, name: SlotName, inpu
 }
 
 export function createSlotRenderer(h: H, inputs: CalendarViewInputs) {
-  const render = (name: SlotName, initialInput: SlotProps): Html => {
+  const render: (name: SlotName, initialInput: SlotProps) => Html = (
+    name: SlotName,
+    initialInput: SlotProps,
+  ) => {
     const input = dropdownInput(h, name, initialInput)
 
     if (input === null) {
@@ -196,14 +214,14 @@ export function createSlotRenderer(h: H, inputs: CalendarViewInputs) {
 
     const { props, ownClasses, classes, styles } = slotPresentation(h, inputs, name, input)
 
-    const defaultView = (): Html => {
+    const defaultView: () => Html = () => {
       const { attributes, children, key } = props
 
       const div = () =>
         key === undefined ? h.div(attributes, children) : h.keyed('div')(key, attributes, children)
 
       return Match.value(name).pipe(
-        Match.when('Chevron', (): Html => {
+        Match.when('Chevron', () => {
           const orientation = props.orientation ?? 'left'
 
           const points = Match.value(orientation).pipe(
@@ -226,98 +244,108 @@ export function createSlotRenderer(h: H, inputs: CalendarViewInputs) {
               h.ViewBox('0 0 24 24'),
             ],
             [h.polygon([h.Points(points)])],
-          )
+          ) satisfies Html
         }),
-        Match.when('DayButton', (): Html => h.button(attributes, children)),
-        Match.whenOr('PreviousMonthButton', 'NextMonthButton', (): Html =>
-          h.button(attributes, children),
+        Match.when('DayButton', () => h.button(attributes, children) satisfies Html),
+        Match.whenOr(
+          'PreviousMonthButton',
+          'NextMonthButton',
+          () => h.button(attributes, children) satisfies Html,
         ),
-        Match.when('Nav', (): Html =>
-          h.nav(
-            [...attributes, h.AriaLabel(props.context.projection.navLabel)],
-            children.length > 0
-              ? children
-              : ['previous', 'next'].map((direction) => {
-                  const previous = direction === 'previous'
+        Match.when(
+          'Nav',
+          () =>
+            h.nav(
+              [...attributes, h.AriaLabel(props.context.projection.navLabel)],
+              children.length > 0
+                ? children
+                : ['previous', 'next'].map((direction) => {
+                    const previous = direction === 'previous'
 
-                  const target = previous
-                    ? props.context.projection.previous
-                    : props.context.projection.next
+                    const target = previous
+                      ? props.context.projection.previous
+                      : props.context.projection.next
 
-                  return props.context.render(
-                    previous ? 'PreviousMonthButton' : 'NextMonthButton',
-                    {
-                      ...props,
-                      attributes: [
-                        h.Type('button'),
-                        h.AriaLabel(
-                          previous
-                            ? props.context.projection.previousLabel
-                            : props.context.projection.nextLabel,
-                        ),
-                        ...(target === null ? [h.AriaDisabled(true), h.Tabindex(-1)] : []),
-                        h.OnClick(
-                          props.context.request(
-                            Action.cases.Navigated.make({
-                              direction: previous ? 'previous' : 'next',
-                            }),
+                    return props.context.render(
+                      previous ? 'PreviousMonthButton' : 'NextMonthButton',
+                      {
+                        ...props,
+                        attributes: [
+                          h.Type('button'),
+                          h.AriaLabel(
+                            previous
+                              ? props.context.projection.previousLabel
+                              : props.context.projection.nextLabel,
                           ),
-                        ),
-                      ],
-                      children: [
-                        props.context.render('Chevron', {
-                          ...props,
-                          attributes: [],
-                          children: [],
-                          orientation: previous ? 'left' : 'right',
-                        }),
-                      ],
-                    },
-                  )
-                }),
-          ),
+                          ...(target === null ? [h.AriaDisabled(true), h.Tabindex(-1)] : []),
+                          h.OnClick(
+                            props.context.request(
+                              Action.cases.Navigated.make({
+                                direction: previous ? 'previous' : 'next',
+                              }),
+                            ),
+                          ),
+                        ],
+                        children: [
+                          props.context.render('Chevron', {
+                            ...props,
+                            attributes: [],
+                            children: [],
+                            orientation: previous ? 'left' : 'right',
+                          }),
+                        ],
+                      },
+                    )
+                  }),
+            ) satisfies Html,
         ),
-        Match.when('Option', (): Html => h.option(attributes, children)),
-        Match.when('Select', (): Html => h.select(attributes, children)),
-        Match.when('CaptionLabel', (): Html =>
-          key === undefined
-            ? h.span(attributes, children)
-            : h.keyed('span')(key, attributes, children),
+        Match.when('Option', () => h.option(attributes, children) satisfies Html),
+        Match.when('Select', () => h.select(attributes, children) satisfies Html),
+        Match.when(
+          'CaptionLabel',
+          () =>
+            (key === undefined
+              ? h.span(attributes, children)
+              : h.keyed('span')(key, attributes, children)) satisfies Html,
         ),
-        Match.when('Weekday', (): Html =>
-          h.div(
-            [
-              ...attributes,
-              h.Role('columnheader'),
-              h.Class(
-                cn(
-                  'flex h-[calc(var(--cell-size)*0.8)] items-center justify-center text-muted-foreground supports-[width:round(1px,1px)]:h-[round(down,calc(var(--cell-size)*0.8),1px)]',
-                  inputs.fill ? 'min-w-0 flex-1' : 'w-[var(--cell-size)]',
-                  typeClass('caption', inputs.compact ? 'compact' : 'default'),
-                  ...ownClasses,
-                  ...classes,
+        Match.when(
+          'Weekday',
+          () =>
+            h.div(
+              [
+                ...attributes,
+                h.Role('columnheader'),
+                h.Class(
+                  cn(
+                    'flex h-[calc(var(--cell-size)*0.8)] items-center justify-center text-muted-foreground supports-[width:round(1px,1px)]:h-[round(down,calc(var(--cell-size)*0.8),1px)]',
+                    inputs.fill ? 'min-w-0 flex-1' : 'w-[var(--cell-size)]',
+                    typeClass('caption', inputs.compact ? 'compact' : 'default'),
+                    ...ownClasses,
+                    ...classes,
+                  ),
                 ),
-              ),
-            ],
-            children,
-          ),
+              ],
+              children,
+            ) satisfies Html,
         ),
-        Match.when('WeekNumberHeader', (): Html =>
-          h.div(
-            [
-              ...attributes,
-              h.Role('columnheader'),
-              h.Class(cn('w-[calc(var(--cell-size)*0.75)] shrink-0', ...ownClasses, ...classes)),
-            ],
-            [],
-          ),
+        Match.when(
+          'WeekNumberHeader',
+          () =>
+            h.div(
+              [
+                ...attributes,
+                h.Role('columnheader'),
+                h.Class(cn('w-[calc(var(--cell-size)*0.75)] shrink-0', ...ownClasses, ...classes)),
+              ],
+              [],
+            ) satisfies Html,
         ),
-        Match.when('Weekdays', (): Html => null),
-        Match.when('Dropdown', (): Html => {
+        Match.when('Weekdays', () => null satisfies Html),
+        Match.when('Dropdown', () => {
           const { select } = props
 
           if (select === undefined) {
-            return null
+            return null satisfies Html
           }
 
           const selected = select.options.find((option) => String(option.value) === select.value)
@@ -369,10 +397,12 @@ export function createSlotRenderer(h: H, inputs: CalendarViewInputs) {
                 ],
               ),
             ],
-          )
+          ) satisfies Html
         }),
-        Match.whenOr('MonthsDropdown', 'YearsDropdown', (): Html =>
-          props.context.render('Dropdown', props),
+        Match.whenOr(
+          'MonthsDropdown',
+          'YearsDropdown',
+          () => props.context.render('Dropdown', props) satisfies Html,
         ),
         Match.whenOr(
           'Root',
@@ -386,7 +416,7 @@ export function createSlotRenderer(h: H, inputs: CalendarViewInputs) {
           'Week',
           'Day',
           'WeekNumber',
-          (): Html => div(),
+          () => div() satisfies Html,
         ),
         Match.exhaustive,
       )
@@ -437,12 +467,4 @@ export function createSlotRenderer(h: H, inputs: CalendarViewInputs) {
   }
 
   return render
-}
-
-export function slotProps(
-  context: CalendarContext,
-  attributes: SlotProps['attributes'],
-  children: SlotProps['children'],
-): SlotProps {
-  return { context, attributes, children }
 }

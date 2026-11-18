@@ -1,5 +1,5 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
-// See NOTICE
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
+/* @license See NOTICE */
 /**
  * A shallow copy of `object` without `keys`: the same own properties a
  * `{ key: _key, ...rest }` destructure keeps, without the unused binding.
@@ -7,13 +7,16 @@
  * element (framer-motion's own onDrag/onAnimation* handlers, a primitive's
  * style, a prop the other flavor reads).
  */
-export function omit<T extends object, K extends keyof T>(
+export const omit: <T extends object, K extends keyof T>(
   object: T,
   keys: ReadonlyArray<K>,
-): Omit<T, K> {
+) => Omit<T, K> = function omit<T extends object, K extends keyof T>(
+  object: T,
+  keys: ReadonlyArray<K>,
+) {
   const rest = { ...object }
 
   for (const key of keys) delete rest[key]
 
-  return rest
+  return rest satisfies Omit<T, K>
 }

@@ -1,4 +1,5 @@
 // oxlint-disable no-comments/no-comments -- Vitest needs the actual DOM for native Nav ownership and visibility observations.
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment happy-dom
 // oxlint-enable no-comments/no-comments -- Resume comment policy after required test metadata.
 import { it } from '@effect/vitest'

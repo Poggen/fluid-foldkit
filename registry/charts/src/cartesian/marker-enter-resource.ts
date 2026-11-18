@@ -7,12 +7,15 @@ import { keyAttr } from './build-state'
 import { CLS, keyIs } from '../kit/renderer-dom'
 import type { ResolvedSeries } from './series'
 
-const visibleSeries = (series: ResolvedSeries, state: Interaction): boolean =>
+const visibleSeries: (series: ResolvedSeries, state: Interaction) => boolean = (
+  series: ResolvedSeries,
+  state: Interaction,
+) =>
   series.showMarkers &&
   series.marker.animate &&
   (series.kind === 'line' || state.phase === 'ready' || state.phase === 'concealing')
 
-const entranceNode = (node: SVGGElement): SVGGElement =>
+const entranceNode: (node: SVGGElement) => SVGGElement = (node: SVGGElement) =>
   node.closest<SVGGElement>('g.bkm-wipe-i') ?? node
 
 /** Source's Motion marker clock is a real acquisition time, rather than CSS's previous document frame. */
@@ -38,7 +41,11 @@ export function markerEnterResource<Row>(
   let disposed = false
   let pending = false
 
-  const create = (node: SVGGElement, blur: number, delay: number): Entry => {
+  const create: (node: SVGGElement, blur: number, delay: number) => Entry = (
+    node: SVGGElement,
+    blur: number,
+    delay: number,
+  ) => {
     const original = {
       opacity: node.getAttribute('opacity'),
       filter: node.getAttribute('filter'),
@@ -142,7 +149,6 @@ export function markerEnterResource<Row>(
               continue
             }
 
-            // Enter and hover dim belong to separate SVG layers in Original.
             const target = entranceNode(node)
             active.add(target)
             const old = entries.get(target)

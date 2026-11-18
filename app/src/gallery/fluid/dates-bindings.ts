@@ -13,7 +13,7 @@ export const Calendar = RawCalendar.withOutMessagePolicy({
       FluidGalleryBlock.makeStep((model) => {
         let selections = model.calendarSelections
         let selected = false
-        // The completed child mode owns this event, even if Type changed in flight.
+
         const completedMode = model.calendar.calendar.selection.mode
         for (const event of events) {
           if (event._tag !== 'Selected') continue

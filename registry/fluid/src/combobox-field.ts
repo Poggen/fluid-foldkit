@@ -27,7 +27,9 @@ export const observeComboboxField = (
     Stream.switchMap((state) =>
       state === 'Live'
         ? Stream.callback<typeof ComboboxFieldEvent.Type>((queue) => {
-            const send = (message: typeof ComboboxFieldEvent.Type): void => {
+            const send: (message: typeof ComboboxFieldEvent.Type) => void = (
+              message: typeof ComboboxFieldEvent.Type,
+            ) => {
               Queue.offerUnsafe(queue, message)
             }
             return Effect.acquireRelease(
@@ -199,7 +201,7 @@ export const observeComboboxField = (
                         value: chip.dataset.comboChipMotion ?? '',
                         left: chip.offsetLeft,
                         top: chip.offsetTop,
-                        // Pop-layout preserves fractional CSS sizes; rounded offsets create a scale correction.
+
                         // oxlint-disable-next-line unicorn/prefer-number-coercion -- Source measures computed CSS pixel strings; Number rejects their px suffix.
                         width: Number.parseFloat(style.width),
                         // oxlint-disable-next-line unicorn/prefer-number-coercion -- Source measures computed CSS pixel strings; Number rejects their px suffix.

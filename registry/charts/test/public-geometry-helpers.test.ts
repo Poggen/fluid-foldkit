@@ -17,7 +17,7 @@ const invalidDate = () => {
   return date
 }
 
-const projectionWithValue = (value: number): Array<ProjectionLineConfig> => [
+const projectionWithValue: (value: number) => Array<ProjectionLineConfig> = (value: number) => [
   { yAxisId: 'left', data: [{ date: dateAt(0), value }] },
 ]
 
@@ -43,7 +43,7 @@ it('preserves the original y-domain on no extents and filters axes before readin
 
       return 'right'
     },
-    get data(): ProjectionLineConfig['data'] {
+    get data(): never {
       throw new Error('Unselected projection data must not be read')
     },
   }

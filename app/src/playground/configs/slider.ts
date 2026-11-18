@@ -131,7 +131,9 @@ export const controls = [
     values: Configuration.fields.size.literals,
   },
 ] satisfies ReadonlyArray<Control<keyof Configuration>>
-export const controlsFor = (configuration: Configuration): ReadonlyArray<Control> =>
+export const controlsFor: (configuration: Configuration) => ReadonlyArray<Control> = (
+  configuration: Configuration,
+) =>
   controls.map((control) => {
     if (control.prop === 'upperValue') return { ...control, enabled: configuration.range }
     if (
@@ -189,7 +191,9 @@ export const settingsFor = (
     ...(configuration.showSteps ? { showSteps: true } : {}),
   })
 
-export const normalize = (configuration: Configuration): Configuration => {
+export const normalize: (configuration: Configuration) => Configuration = (
+  configuration: Configuration,
+) => {
   const settings = settingsFor(configuration, 'playground-slider', 'default')
   const first = sliderSnap(configuration.value, settings)
   const second = sliderSnap(configuration.upperValue, settings)

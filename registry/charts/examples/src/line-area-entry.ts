@@ -115,7 +115,7 @@ const crosshairMode = Schema.decodeUnknownOption(CrosshairMode)(
   showcaseOptions.get('crosshairFade'),
 )
 const crosshairOptions = Option.match(crosshairMode, {
-  onNone: (): TooltipOptions => ({}),
+  onNone: () => ({}) satisfies TooltipOptions,
   onSome: (mode) => crosshairCases[mode],
 })
 
@@ -126,7 +126,7 @@ const readTooltipRow = Schema.decodeUnknownSync(Schema.toType(Row))
 const indicatorColor = (point: TooltipPoint) =>
   (readTooltipRow(point).revenue ?? 0) >= 200 ? 'rgb(200, 0, 100)' : 'rgb(0, 100, 220)'
 
-const makeTooltipOptions = (): TooltipOptions => {
+const makeTooltipOptions: () => TooltipOptions = () => {
   let tooltipOptions: TooltipOptions = crosshairOptions
 
   if (showcaseOptions.has('indicatorColor')) {

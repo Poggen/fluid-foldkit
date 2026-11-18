@@ -6,17 +6,17 @@ import type { State } from './block'
 import { makeProjection } from './projection'
 import { centroidOf } from './focus'
 
-export interface ChoroplethActions<Action = void> {
-  readonly hover: (index: number | null) => Action
-  readonly transform: (scale: number, x: number, y: number) => Action
-}
-
-export function choroplethContext<Action>(
+export const choroplethContext: <Action>(
   props: ChoroplethChartProps,
   state: State,
   actions: ChoroplethActions<Action>,
   container: HTMLDivElement | null,
-): ChoroplethContextValue<Action> {
+) => ChoroplethContextValue<Action> = function choroplethContext<Action>(
+  props: ChoroplethChartProps,
+  state: State,
+  actions: ChoroplethActions<Action>,
+  container: HTMLDivElement | null,
+) {
   const margin = { top: 0, right: 0, bottom: 0, left: 0, ...props.margin }
 
   const bounds = {
@@ -36,7 +36,8 @@ export function choroplethContext<Action>(
     }),
     path = geoPath(projection)
 
-  const raw = (geo: GeoPermissibleObjects): string | null => path(geo)
+  const raw: (geo: GeoPermissibleObjects) => string | null = (geo: GeoPermissibleObjects) =>
+    path(geo)
   let paths: Array<string | null> | undefined
 
   const feature =
@@ -110,17 +111,26 @@ export function choroplethContext<Action>(
     setHoveredFeatureIndex: actions.hover,
     tooltipData,
     setTooltipData,
-  }
+  } satisfies ChoroplethContextValue<Action>
 }
 
-export const useChoropleth = <Action>(
-  context: ChoroplethContextValue<Action>,
-): ChoroplethContextValue<Action> => context
+export interface ChoroplethActions<Action = void> {
+  readonly hover: (index: number | null) => Action
+  readonly transform: (scale: number, x: number, y: number) => Action
+}
 
-export const ChoroplethProvider = <Action>({
+export const useChoropleth: <Action>(
+  context: ChoroplethContextValue<Action>,
+) => ChoroplethContextValue<Action> = <Action>(context: ChoroplethContextValue<Action>) =>
+  context satisfies ChoroplethContextValue<Action>
+
+export const ChoroplethProvider: <Action>(argument0: {
+  readonly value: ChoroplethContextValue<Action>
+  readonly children: (value: ChoroplethContextValue<Action>) => Html
+}) => Html = <Action>({
   value,
   children,
 }: {
   readonly value: ChoroplethContextValue<Action>
   readonly children: (value: ChoroplethContextValue<Action>) => Html
-}): Html => children(value)
+}) => children(value) satisfies Html

@@ -1,4 +1,4 @@
-// Adapted from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Adapted from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { Layer, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { initAndInsert } from 'foldkit/binding'
@@ -52,7 +52,10 @@ const RevealSystemPageComposition = RevealSystemPageBlock.makeComposition({
   bindings: [Scrolls, Tabs],
 })
 const modes = ['landing', 'product'] as const
-const presetFor = (mode: typeof Mode.Type, subtle: boolean): RevealPresetName =>
+const presetFor: (mode: typeof Mode.Type, subtle: boolean) => RevealPresetName = (
+  mode: typeof Mode.Type,
+  subtle: boolean,
+) =>
   mode === 'landing'
     ? subtle
       ? 'reveal-landing-subtle'

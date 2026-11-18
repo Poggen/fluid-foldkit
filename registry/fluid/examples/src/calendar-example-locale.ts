@@ -6,7 +6,9 @@ type LocaleOptions = Pick<
   'lang' | 'locale' | 'weekStartsOn' | 'formatters' | 'labels'
 >
 
-export const calendarExampleLocale = (locale: 'en-US' | 'sv-SE'): LocaleOptions => {
+export const calendarExampleLocale: (locale: 'en-US' | 'sv-SE') => LocaleOptions = (
+  locale: 'en-US' | 'sv-SE',
+) => {
   if (locale === 'en-US') return { lang: locale, locale: { code: locale } }
 
   const monthYear = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' })

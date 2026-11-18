@@ -3,11 +3,15 @@ import { cssAttr } from '../bar/hover'
 import type { SeriesBarSpec } from './bars'
 
 /** The existing accepted Cartesian focus supplies --bkm-hx and data-bkm-hover. */
-export function composedBarHoverCss(
+export const composedBarHoverCss: (
   id: string,
   bars: ReadonlyArray<SeriesBarSpec>,
   order: ReadonlyArray<string>,
-): string {
+) => string = function composedBarHoverCss(
+  id: string,
+  bars: ReadonlyArray<SeriesBarSpec>,
+  order: ReadonlyArray<string>,
+) {
   const scope = `[data-bkm-kit="${id}"]`
   const outside =
     'clamp(0,calc((abs(attr(x type(<number>)) + attr(width type(<number>)) / 2 - var(--bkm-hx,-9999)) - attr(width type(<number>)) / 2) * 1000),1)'

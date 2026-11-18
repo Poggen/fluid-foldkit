@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import { popupShape } from './lib/shape.js'
 import { cn } from './lib/utils.js'
 import type { ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
@@ -6,12 +6,17 @@ import type { CommandMenuItem, CommandMenuViewInputs } from './command-menu-cont
 import { CommandMenuShortcut } from './command-menu-parts.js'
 import { resolvePresentation } from './presentation.js'
 
-export function commandMenuItemContent<Message>(
+export const commandMenuItemContent: <Message>(
   item: CommandMenuItem,
   inputs: CommandMenuViewInputs,
   active: boolean,
   h: HtmlBuilder<Message>,
-): ReadonlyArray<Html> {
+) => ReadonlyArray<Html> = function commandMenuItemContent<Message>(
+  item: CommandMenuItem,
+  inputs: CommandMenuViewInputs,
+  active: boolean,
+  h: HtmlBuilder<Message>,
+) {
   const { size } = resolvePresentation(inputs)
   const icon = inputs.renderIcon === undefined ? inputs.itemIconFor?.(item) : undefined
   return [
@@ -33,7 +38,6 @@ export function commandMenuItemContent<Message>(
           h.span(
             [h.Class('flex min-w-0 flex-1 items-baseline gap-2')],
             [
-              // Trimmed text needs overflow clearance for ascenders and descenders.
               h.span(
                 [h.Class('truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1')],
                 [item.label],
@@ -57,10 +61,10 @@ export function commandMenuItemContent<Message>(
     ...(item.shortcut === undefined
       ? []
       : [CommandMenuShortcut({ ...inputs, keys: item.shortcut }, h)]),
-  ]
+  ] satisfies ReadonlyArray<Html>
 }
 
-export function commandMenuItemView<Message>(
+export const commandMenuItemView: <Message>(
   props: {
     readonly item: CommandMenuItem
     readonly index: number
@@ -73,7 +77,20 @@ export function commandMenuItemView<Message>(
     readonly select: (value: string) => Message
   },
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function commandMenuItemView<Message>(
+  props: {
+    readonly item: CommandMenuItem
+    readonly index: number
+    readonly active: number | null
+    readonly id: string
+    readonly total: number
+    readonly virtualized: boolean
+    readonly inputs: CommandMenuViewInputs
+    readonly attributes: ReadonlyArray<ChildAttribute>
+    readonly select: (value: string) => Message
+  },
+  h: HtmlBuilder<Message>,
+) {
   const { item, index, active, id, inputs } = props
   const { size, shape } = resolvePresentation(inputs)
   const view = h.div(
@@ -98,5 +115,7 @@ export function commandMenuItemView<Message>(
     ],
     inputs.renderItemContent?.(item) ?? commandMenuItemContent(item, inputs, active === index, h),
   )
-  return inputs.renderItem === undefined ? view : inputs.renderItem(item, index, view)
+  return (
+    inputs.renderItem === undefined ? view : inputs.renderItem(item, index, view)
+  ) satisfies Html
 }

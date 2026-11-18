@@ -1,6 +1,17 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Schema } from 'effect'
 import type { SelectOption } from './select.js'
+export const settingsChoices: (
+  section: SettingsSection,
+  index: number,
+) => { readonly items: ReadonlyArray<SelectOption>; readonly value: string } =
+  function settingsChoices(section: SettingsSection, index: number) {
+    if (section === 'members') return { items: roles, value: members[index]?.role ?? 'member' }
+    if (section === 'appearance')
+      return index === 0 ? { items: themes, value: 'system' } : { items: density, value: 'default' }
+    return index === 0 ? { items: languages, value: 'en' } : { items: timezones, value: 'utc+1' }
+  }
+
 export const SettingsSection = Schema.Literals([
   'general',
   'notifications',
@@ -9,7 +20,7 @@ export const SettingsSection = Schema.Literals([
   'members',
 ])
 export type SettingsSection = typeof SettingsSection.Type
-export const settingsSection = (value: string): SettingsSection =>
+export const settingsSection: (value: string) => SettingsSection = (value: string) =>
   Schema.is(SettingsSection)(value) ? value : 'general'
 export const settingsSections = [
   {
@@ -43,8 +54,9 @@ export const members = [
   { name: 'Sam Park', email: 'sam@acme.com', role: 'admin' },
   { name: 'Ravi Patel', email: 'ravi@acme.com', role: 'member' },
 ]
-const options = (values: ReadonlyArray<readonly [string, string]>): ReadonlyArray<SelectOption> =>
-  values.map(([value, label]) => ({ value, label }))
+const options: (values: ReadonlyArray<readonly [string, string]>) => ReadonlyArray<SelectOption> = (
+  values: ReadonlyArray<readonly [string, string]>,
+) => values.map(([value, label]) => ({ value, label }))
 const languages = options([
   ['en', 'English'],
   ['fr', 'Français'],
@@ -72,15 +84,6 @@ const roles = options([
   ['admin', 'Admin'],
   ['member', 'Member'],
 ])
-export function settingsChoices(
-  section: SettingsSection,
-  index: number,
-): { readonly items: ReadonlyArray<SelectOption>; readonly value: string } {
-  if (section === 'members') return { items: roles, value: members[index]?.role ?? 'member' }
-  if (section === 'appearance')
-    return index === 0 ? { items: themes, value: 'system' } : { items: density, value: 'default' }
-  return index === 0 ? { items: languages, value: 'en' } : { items: timezones, value: 'utc+1' }
-}
 export function settingsSwitchRows(section: SettingsSection) {
   return section === 'security'
     ? [

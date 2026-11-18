@@ -1,3 +1,4 @@
+// oxlint-disable-next-line landmines-style/no-comments -- Required Vitest environment directive.
 // @vitest-environment node
 import { it } from '@effect/vitest'
 import { Effect, Layer } from 'effect'

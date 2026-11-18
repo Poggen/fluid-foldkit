@@ -1,22 +1,19 @@
 import type { ChartPoint } from '@tanstack/charts'
 import type { CellDatum } from './definition'
 
-type Point = ChartPoint<Readonly<CellDatum>, number | string, string>
-
-const steps = new Map<string, readonly [number, number]>([
-  ['ArrowDown', [0, 1]],
-  ['ArrowLeft', [-1, 0]],
-  ['ArrowRight', [1, 0]],
-  ['ArrowUp', [0, -1]],
-])
-
-export function gridTarget(
+export const gridTarget: (
   points: ReadonlyArray<Point>,
   current: Point,
   key: string,
   columns: number,
   rows: number,
-): Point | undefined {
+) => Point | undefined = function gridTarget(
+  points: ReadonlyArray<Point>,
+  current: Point,
+  key: string,
+  columns: number,
+  rows: number,
+) {
   const step = steps.get(key)
 
   if (step === undefined) {
@@ -39,3 +36,12 @@ export function gridTarget(
 
   return current
 }
+
+type Point = ChartPoint<Readonly<CellDatum>, number | string, string>
+
+const steps = new Map<string, readonly [number, number]>([
+  ['ArrowDown', [0, 1]],
+  ['ArrowLeft', [-1, 0]],
+  ['ArrowRight', [1, 0]],
+  ['ArrowUp', [0, -1]],
+])

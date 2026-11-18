@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Schema } from 'effect'
 
 export const Rect = Schema.Struct({
@@ -29,7 +29,9 @@ export type IndexedGeometry = typeof IndexedGeometry.Type
 
 export const emptyGeometry: IndexedGeometry = { length: 0, entries: [] }
 
-export const geometryFromEntries = (entries: ReadonlyArray<typeof Entry.Type>): IndexedGeometry => {
+export const geometryFromEntries: (entries: ReadonlyArray<typeof Entry.Type>) => IndexedGeometry = (
+  entries: ReadonlyArray<typeof Entry.Type>,
+) => {
   const unique = new Map<number, Rect>()
 
   let length = 0
@@ -48,9 +50,9 @@ export const geometryFromEntries = (entries: ReadonlyArray<typeof Entry.Type>): 
   }
 }
 
-export const geometryFromArray = (
+export const geometryFromArray: (
   rects: ReadonlyArray<Rect | null | undefined>,
-): IndexedGeometry => ({
+) => IndexedGeometry = (rects: ReadonlyArray<Rect | null | undefined>) => ({
   length: rects.length,
   entries: Object.keys(rects).flatMap((key) => {
     const index = Number(key)
@@ -66,17 +68,19 @@ const isRectArray = (
   geometry: IndexedGeometry | ReadonlyArray<Rect | null | undefined>,
 ): geometry is ReadonlyArray<Rect | null | undefined> => Array.isArray(geometry)
 
-export const normalizeGeometry = (
+export const normalizeGeometry: (
   geometry: IndexedGeometry | ReadonlyArray<Rect | null | undefined>,
-): IndexedGeometry => (isRectArray(geometry) ? geometryFromArray(geometry) : geometry)
+) => IndexedGeometry = (geometry: IndexedGeometry | ReadonlyArray<Rect | null | undefined>) =>
+  isRectArray(geometry) ? geometryFromArray(geometry) : geometry
 
-export const rectAt = (geometry: IndexedGeometry, index: number): Rect | undefined =>
-  geometry.entries.find((entry) => entry.index === index)?.rect
+export const rectAt: (geometry: IndexedGeometry, index: number) => Rect | undefined = (
+  geometry: IndexedGeometry,
+  index: number,
+) => geometry.entries.find((entry) => entry.index === index)?.rect
 
 export const integerGeometryEntries = (geometry: IndexedGeometry) =>
   geometry.entries.filter(({ index }) => arrayIndex(index)).toSorted((a, b) => a.index - b.index)
 
-// Source publication compares array slots; ordinary numeric properties travel only with a slot change.
 export const samePublishedGeometry = (previous: IndexedGeometry, next: IndexedGeometry) => {
   if (previous.length !== next.length) {
     return false

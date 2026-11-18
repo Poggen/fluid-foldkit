@@ -28,7 +28,7 @@ export const GroupVisual = defineTaggedUnion({
 })
 export type GroupVisual = typeof GroupVisual.Type
 
-export const visualOwner = (visual: GroupVisual): string | undefined =>
+export const visualOwner: (visual: GroupVisual) => string | undefined = (visual: GroupVisual) =>
   visual._tag === 'Empty'
     ? undefined
     : visual._tag === 'Transferring'
@@ -46,12 +46,12 @@ export const GroupPaint = defineTaggedUnion({
 })
 export type GroupPaint = typeof GroupPaint.Type
 
-export const groupPaint = (
+export const groupPaint: (
   visual: GroupVisual,
   key: string,
   open: boolean,
   generation: number,
-): GroupPaint => {
+) => GroupPaint = (visual: GroupVisual, key: string, open: boolean, generation: number) => {
   if (visual._tag === 'Transferring') {
     if (visual.to === key)
       return Option.match(visual.geometry, {

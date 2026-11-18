@@ -36,7 +36,9 @@ export const defaults: Configuration = Configuration.make({
   mediaType: 'image/png',
   filename: 'micka.png',
 })
-export const filesFor = (configuration: Configuration): NonNullable<ChatMessageConfig['files']> => {
+export const filesFor: (configuration: Configuration) => NonNullable<ChatMessageConfig['files']> = (
+  configuration: Configuration,
+) => {
   const remote = {
     url: configuration.remoteUrl,
     mediaType: configuration.mediaType,
@@ -129,7 +131,9 @@ export const controls = [
     values: [defaults.actionLabel],
   },
 ] satisfies ReadonlyArray<Control<keyof Configuration>>
-export const controlsFor = (configuration: Configuration): ReadonlyArray<Control> =>
+export const controlsFor: (configuration: Configuration) => ReadonlyArray<Control> = (
+  configuration: Configuration,
+) =>
   controls.map((control) => {
     if (['remoteUrl', 'mediaType', 'filename', 'thumbnailSize'].includes(control.prop))
       return { ...control, enabled: configuration.attachments !== 'none' }

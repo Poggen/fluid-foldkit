@@ -40,14 +40,13 @@ import { TimeFieldBlock, layer as TimeFieldLayer } from './date-picker-time.js'
 const Clear = DatePickerBlock.makeRequiredFieldBinding(PresenceBlock, {
   field: 'clear',
   init: {
-    contextToArgs: (
-      config: DatePickerPreparedConfig,
-    ): [{ readonly id: string; readonly open: boolean }] => [
-      {
-        id: `${config.initial.id}-clear`,
-        open: pickerHasClear(config.initial, config.presentation),
-      },
-    ],
+    contextToArgs: (config: DatePickerPreparedConfig) =>
+      [
+        {
+          id: `${config.initial.id}-clear`,
+          open: pickerHasClear(config.initial, config.presentation),
+        },
+      ] satisfies [{ readonly id: string; readonly open: boolean }],
   },
 }).withOutMessagePolicy({
   fold: DatePickerBlock.makeOutMessageFold(PresenceBlock, {
@@ -57,8 +56,6 @@ const Clear = DatePickerBlock.makeRequiredFieldBinding(PresenceBlock, {
   }),
 })
 
-// Only this owner's data is computed here. Children receive their public
-// operations in the same fold, before Calendar drains its next queued intent.
 interface SynchronizeOptions {
   readonly now?: number
   readonly sampleTime?: boolean
@@ -400,7 +397,7 @@ const inMessageUpdate = Composition.makeInMessageUpdate({
           ...((model.presentation.hoverMode ?? 'fluid') === (presentation.hoverMode ?? 'fluid')
             ? []
             : [configureHover(presentation.hoverMode ?? 'fluid')]),
-          // This public operation changes prepared data, retaining all owners/DOM.
+
           synchronizeState(model.picker, { previousPresentation: model.presentation }),
         ]),
       ),

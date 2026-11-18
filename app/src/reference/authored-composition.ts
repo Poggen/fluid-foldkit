@@ -30,15 +30,16 @@ import { standaloneRows, singleRows, multipleRows, highlightRows } from './accor
 export const Standalone = AuthoredExamplesBlock.makeRequiredFieldBinding(AccordionBlock, {
   field: 'standalone',
   init: {
-    contextToArgs: (): [AccordionConfig] => [
-      {
-        id: 'docs-standalone',
-        type: 'single',
-        collapsible: true,
-        defaultValue: 'item-1',
-        items: standaloneRows.map(({ value }) => ({ value })),
-      },
-    ],
+    contextToArgs: () =>
+      [
+        {
+          id: 'docs-standalone',
+          type: 'single',
+          collapsible: true,
+          defaultValue: 'item-1',
+          items: standaloneRows.map(({ value }) => ({ value })),
+        },
+      ] satisfies [AccordionConfig],
   },
 }).withOutMessagePolicy({
   fold: AuthoredExamplesBlock.makeOutMessageFold(AccordionBlock, {
@@ -48,15 +49,16 @@ export const Standalone = AuthoredExamplesBlock.makeRequiredFieldBinding(Accordi
 export const Single = AuthoredExamplesBlock.makeRequiredFieldBinding(AccordionGroupBlock, {
   field: 'single',
   init: {
-    contextToArgs: (): [AccordionConfig] => [
-      {
-        id: 'docs-single',
-        type: 'single',
-        collapsible: true,
-        defaultValue: 'item-1',
-        items: singleRows.map(({ value }, index) => ({ value, index })),
-      },
-    ],
+    contextToArgs: () =>
+      [
+        {
+          id: 'docs-single',
+          type: 'single',
+          collapsible: true,
+          defaultValue: 'item-1',
+          items: singleRows.map(({ value }, index) => ({ value, index })),
+        },
+      ] satisfies [AccordionConfig],
   },
 }).withOutMessagePolicy({
   fold: AuthoredExamplesBlock.makeOutMessageFold(AccordionGroupBlock, {
@@ -66,14 +68,15 @@ export const Single = AuthoredExamplesBlock.makeRequiredFieldBinding(AccordionGr
 export const Multiple = AuthoredExamplesBlock.makeRequiredFieldBinding(AccordionGroupBlock, {
   field: 'multiple',
   init: {
-    contextToArgs: (): [AccordionConfig] => [
-      {
-        id: 'docs-multiple',
-        type: 'multiple',
-        defaultValue: ['item-1'],
-        items: multipleRows.map(({ value }, index) => ({ value, index })),
-      },
-    ],
+    contextToArgs: () =>
+      [
+        {
+          id: 'docs-multiple',
+          type: 'multiple',
+          defaultValue: ['item-1'],
+          items: multipleRows.map(({ value }, index) => ({ value, index })),
+        },
+      ] satisfies [AccordionConfig],
   },
 }).withOutMessagePolicy({
   fold: AuthoredExamplesBlock.makeOutMessageFold(AccordionGroupBlock, {
@@ -83,16 +86,17 @@ export const Multiple = AuthoredExamplesBlock.makeRequiredFieldBinding(Accordion
 export const Highlight = AuthoredExamplesBlock.makeRequiredFieldBinding(AccordionGroupBlock, {
   field: 'highlight',
   init: {
-    contextToArgs: (): [AccordionConfig] => [
-      {
-        id: 'docs-highlight',
-        type: 'single',
-        collapsible: true,
-        highlight: 'trigger',
-        defaultValue: 'item-1',
-        items: highlightRows.map(({ value }, index) => ({ value, index })),
-      },
-    ],
+    contextToArgs: () =>
+      [
+        {
+          id: 'docs-highlight',
+          type: 'single',
+          collapsible: true,
+          highlight: 'trigger',
+          defaultValue: 'item-1',
+          items: highlightRows.map(({ value }, index) => ({ value, index })),
+        },
+      ] satisfies [AccordionConfig],
   },
 }).withOutMessagePolicy({
   fold: AuthoredExamplesBlock.makeOutMessageFold(AccordionGroupBlock, {
@@ -115,134 +119,172 @@ export const PreviewTabs = AuthoredExamplesBlock.makeRecordBinding(PreviewContro
 export const Forms = AuthoredExamplesBlock.makeOptionalFieldBinding(AuthoredFormsBlock, {
   field: 'maybeForms',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'forms' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'forms' ? Option.some([]) : Option.none()) satisfies Option.Option<
+        readonly []
+      >,
   },
 })
 export const Controls = AuthoredExamplesBlock.makeOptionalFieldBinding(AuthoredControlsBlock, {
   field: 'maybeControls',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'controls' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'controls'
+        ? Option.some([])
+        : Option.none()) satisfies Option.Option<readonly []>,
   },
 })
 export const Charts = AuthoredExamplesBlock.makeOptionalFieldBinding(AuthoredChartsBlock, {
   field: 'maybeCharts',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'charts' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'charts'
+        ? Option.some([])
+        : Option.none()) satisfies Option.Option<readonly []>,
   },
 })
 export const Menus = AuthoredExamplesBlock.makeOptionalFieldBinding(AuthoredMenusBlock, {
   field: 'maybeMenus',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'menus' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'menus' ? Option.some([]) : Option.none()) satisfies Option.Option<
+        readonly []
+      >,
   },
 })
 export const Thinking = AuthoredExamplesBlock.makeOptionalFieldBinding(AuthoredThinkingBlock, {
   field: 'maybeThinking',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'thinking' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'thinking'
+        ? Option.some([])
+        : Option.none()) satisfies Option.Option<readonly []>,
   },
 })
 export const Surfaces = AuthoredExamplesBlock.makeOptionalFieldBinding(AuthoredSurfacesBlock, {
   field: 'maybeSurfaces',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'surfaces' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'surfaces'
+        ? Option.some([])
+        : Option.none()) satisfies Option.Option<readonly []>,
   },
 })
 export const Copy = AuthoredExamplesBlock.makeOptionalFieldBinding(AuthoredCopyBlock, {
   field: 'maybeCopy',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'copy' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'copy' ? Option.some([]) : Option.none()) satisfies Option.Option<
+        readonly []
+      >,
   },
 })
 export const Colors = AuthoredExamplesBlock.makeOptionalFieldBinding(AuthoredColorsBlock, {
   field: 'maybeColors',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'colors' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'colors'
+        ? Option.some([])
+        : Option.none()) satisfies Option.Option<readonly []>,
   },
 })
 export const Choices = AuthoredExamplesBlock.makeOptionalFieldBinding(AuthoredChoicesBlock, {
   field: 'maybeChoices',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'choices' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'choices'
+        ? Option.some([])
+        : Option.none()) satisfies Option.Option<readonly []>,
   },
 })
 export const Tooltip = AuthoredExamplesBlock.makeOptionalFieldBinding(TooltipShowcaseBlock, {
   field: 'maybeTooltip',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'tooltip' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'tooltip'
+        ? Option.some([])
+        : Option.none()) satisfies Option.Option<readonly []>,
   },
 })
 export const Calendar = AuthoredExamplesBlock.makeOptionalFieldBinding(CalendarAuthoredBlock, {
   field: 'maybeCalendar',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'calendar' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'calendar'
+        ? Option.some([])
+        : Option.none()) satisfies Option.Option<readonly []>,
   },
 })
 export const Banner = AuthoredExamplesBlock.makeOptionalFieldBinding(AuthoredBannerBlock, {
   field: 'maybeBanner',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'banner' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'banner'
+        ? Option.some([])
+        : Option.none()) satisfies Option.Option<readonly []>,
   },
 })
 export const Chat = AuthoredExamplesBlock.makeOptionalFieldBinding(ChatMessageExampleBlock, {
   field: 'maybeChat',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'chat' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'chat' ? Option.some([]) : Option.none()) satisfies Option.Option<
+        readonly []
+      >,
   },
 })
 export const Questions = AuthoredExamplesBlock.makeOptionalFieldBinding(AuthoredQuestionsBlock, {
   field: 'maybeQuestions',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'questions' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'questions'
+        ? Option.some([])
+        : Option.none()) satisfies Option.Option<readonly []>,
   },
 })
 export const Dialogs = AuthoredExamplesBlock.makeOptionalFieldBinding(AuthoredDialogsBlock, {
   field: 'maybeDialogs',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'dialogs' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'dialogs'
+        ? Option.some([])
+        : Option.none()) satisfies Option.Option<readonly []>,
   },
 })
 export const Dates = AuthoredExamplesBlock.makeOptionalFieldBinding(AuthoredDatesBlock, {
   field: 'maybeDates',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'dates' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'dates' ? Option.some([]) : Option.none()) satisfies Option.Option<
+        readonly []
+      >,
   },
 })
 export const Commands = AuthoredExamplesBlock.makeOptionalFieldBinding(AuthoredCommandsBlock, {
   field: 'maybeCommands',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'commands' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'commands'
+        ? Option.some([])
+        : Option.none()) satisfies Option.Option<readonly []>,
   },
 })
 export const Messages = AuthoredExamplesBlock.makeOptionalFieldBinding(AuthoredMessagesBlock, {
   field: 'maybeMessages',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'messages' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'messages'
+        ? Option.some([])
+        : Option.none()) satisfies Option.Option<readonly []>,
   },
 })
 export const Sidebars = AuthoredExamplesBlock.makeOptionalFieldBinding(AuthoredSidebarsBlock, {
   field: 'maybeSidebars',
   init: {
-    contextToArgs: (slug: string): Option.Option<readonly []> =>
-      authoredFeature(slug) === 'sidebars' ? Option.some([]) : Option.none(),
+    contextToArgs: (slug: string) =>
+      (authoredFeature(slug) === 'sidebars'
+        ? Option.some([])
+        : Option.none()) satisfies Option.Option<readonly []>,
   },
 })
 export const AuthoredExamplesComposition = AuthoredExamplesBlock.makeComposition({

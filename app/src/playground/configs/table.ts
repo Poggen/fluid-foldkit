@@ -123,7 +123,9 @@ export const controls = [
     values: [defaults.emptyDescription],
   },
 ] satisfies ReadonlyArray<Control<keyof Configuration>>
-export const controlsFor = (configuration: Configuration): ReadonlyArray<Control> =>
+export const controlsFor: (configuration: Configuration) => ReadonlyArray<Control> = (
+  configuration: Configuration,
+) =>
   controls.map((control) => {
     if (control.prop === 'headers') return { ...control, enabled: configuration.showHeader }
     if (control.prop === 'firstCell') return { ...control, enabled: configuration.rowCount > 0 }

@@ -1,42 +1,35 @@
 import { defineRule } from '@oxlint/plugins'
 import type { ESTree, Variable } from '@oxlint/plugins'
 
-type BroadTypeKind = 'top' | 'object' | 'record'
+const unwrapExpressionParentheses: (expression: ESTree.Expression) => ESTree.Expression =
+  function unwrapExpressionParentheses(expression: ESTree.Expression) {
+    let current = expression
+    while (current.type === 'ParenthesizedExpression') current = current.expression
+    return current
+  }
 
-type KnownValueEvidence = {
-  readonly type: ESTree.TSType | null
-}
+const unwrapTypeParentheses: (type: ESTree.TSType) => ESTree.TSType =
+  function unwrapTypeParentheses(type: ESTree.TSType) {
+    let current = type
+    while (current.type === 'TSParenthesizedType') current = current.typeAnnotation
+    return current
+  }
 
-const functionBoundaryTypes = new Set([
-  'ArrowFunctionExpression',
-  'FunctionDeclaration',
-  'FunctionExpression',
-  'TSDeclareFunction',
-  'TSEmptyBodyFunctionExpression',
-])
+const typeReferenceName: (type: ESTree.TSTypeReference) => string | null =
+  function typeReferenceName(type: ESTree.TSTypeReference) {
+    return type.typeName.type === 'Identifier' ? type.typeName.name : null
+  }
 
-function unwrapExpressionParentheses(expression: ESTree.Expression): ESTree.Expression {
-  let current = expression
-  while (current.type === 'ParenthesizedExpression') current = current.expression
-  return current
-}
-
-function unwrapTypeParentheses(type: ESTree.TSType): ESTree.TSType {
-  let current = type
-  while (current.type === 'TSParenthesizedType') current = current.typeAnnotation
-  return current
-}
-
-function typeReferenceName(type: ESTree.TSTypeReference): string | null {
-  return type.typeName.type === 'Identifier' ? type.typeName.name : null
-}
-
-function isUnknownOrAnyType(type: ESTree.TSType): boolean {
+const isUnknownOrAnyType: (type: ESTree.TSType) => boolean = function isUnknownOrAnyType(
+  type: ESTree.TSType,
+) {
   const unwrapped = unwrapTypeParentheses(type)
   return unwrapped.type === 'TSUnknownKeyword' || unwrapped.type === 'TSAnyKeyword'
 }
 
-function isBroadRecordKeyType(type: ESTree.TSType): boolean {
+const isBroadRecordKeyType: (type: ESTree.TSType) => boolean = function isBroadRecordKeyType(
+  type: ESTree.TSType,
+) {
   const unwrapped = unwrapTypeParentheses(type)
   if (
     unwrapped.type === 'TSStringKeyword' ||
@@ -49,7 +42,9 @@ function isBroadRecordKeyType(type: ESTree.TSType): boolean {
   return unwrapped.type === 'TSTypeReference' && typeReferenceName(unwrapped) === 'PropertyKey'
 }
 
-function isBroadRecordType(type: ESTree.TSType): boolean {
+const isBroadRecordType: (type: ESTree.TSType) => boolean = function isBroadRecordType(
+  type: ESTree.TSType,
+) {
   const unwrapped = unwrapTypeParentheses(type)
 
   if (unwrapped.type === 'TSTypeReference') {
@@ -81,37 +76,48 @@ function isBroadRecordType(type: ESTree.TSType): boolean {
   )
 }
 
-function broadTypeKind(type: ESTree.TSType): BroadTypeKind | null {
+const broadTypeKind: (type: ESTree.TSType) => BroadTypeKind | null = function broadTypeKind(
+  type: ESTree.TSType,
+) {
   const unwrapped = unwrapTypeParentheses(type)
   if (unwrapped.type === 'TSUnknownKeyword' || unwrapped.type === 'TSAnyKeyword') return 'top'
   if (unwrapped.type === 'TSObjectKeyword') return 'object'
   return isBroadRecordType(unwrapped) ? 'record' : null
 }
 
-function assertedExpression(
+const assertedExpression: (
   node: ESTree.TSAsExpression | ESTree.TSTypeAssertion,
-): ESTree.Expression {
+) => ESTree.Expression = function assertedExpression(
+  node: ESTree.TSAsExpression | ESTree.TSTypeAssertion,
+) {
   return unwrapExpressionParentheses(node.expression)
 }
 
-function assertionFromExpression(
+const assertionFromExpression: (
   expression: ESTree.Expression,
-): ESTree.TSAsExpression | ESTree.TSTypeAssertion | null {
+) => ESTree.TSAsExpression | ESTree.TSTypeAssertion | null = function assertionFromExpression(
+  expression: ESTree.Expression,
+) {
   const unwrapped = unwrapExpressionParentheses(expression)
   return unwrapped.type === 'TSAsExpression' || unwrapped.type === 'TSTypeAssertion'
     ? unwrapped
     : null
 }
 
-function normalizedTypeText(sourceText: string, type: ESTree.TSType): string {
-  return sourceText.slice(type.start, type.end).replaceAll(/\s+/gu, '')
-}
+const normalizedTypeText: (sourceText: string, type: ESTree.TSType) => string =
+  function normalizedTypeText(sourceText: string, type: ESTree.TSType) {
+    return sourceText.slice(type.start, type.end).replaceAll(/\s+/gu, '')
+  }
 
-function typesHaveSameSyntax(
+const typesHaveSameSyntax: (
   sourceText: string,
   left: ESTree.TSType | null,
   right: ESTree.TSType,
-): boolean {
+) => boolean = function typesHaveSameSyntax(
+  sourceText: string,
+  left: ESTree.TSType | null,
+  right: ESTree.TSType,
+) {
   return (
     left !== null &&
     normalizedTypeText(sourceText, unwrapTypeParentheses(left)) ===
@@ -119,7 +125,9 @@ function typesHaveSameSyntax(
   )
 }
 
-function isDefinitelyObjectType(type: ESTree.TSType): boolean {
+const isDefinitelyObjectType: (type: ESTree.TSType) => boolean = function isDefinitelyObjectType(
+  type: ESTree.TSType,
+) {
   const unwrapped = unwrapTypeParentheses(type)
   switch (unwrapped.type) {
     case 'TSArrayType':
@@ -140,26 +148,29 @@ function isDefinitelyObjectType(type: ESTree.TSType): boolean {
   }
 }
 
-function isDefinitelyNarrowerRecordType(type: ESTree.TSType): boolean {
-  const unwrapped = unwrapTypeParentheses(type)
-  if (unwrapped.type === 'TSTypeLiteral') {
-    return unwrapped.members.some((member) => member.type !== 'TSIndexSignature')
+const isDefinitelyNarrowerRecordType: (type: ESTree.TSType) => boolean =
+  function isDefinitelyNarrowerRecordType(type: ESTree.TSType) {
+    const unwrapped = unwrapTypeParentheses(type)
+    if (unwrapped.type === 'TSTypeLiteral') {
+      return unwrapped.members.some((member) => member.type !== 'TSIndexSignature')
+    }
+
+    if (unwrapped.type !== 'TSTypeReference') return false
+    if (typeReferenceName(unwrapped) === 'Readonly') {
+      const [inner] = unwrapped.typeArguments?.params ?? []
+      return inner !== undefined && isDefinitelyNarrowerRecordType(inner)
+    }
+    if (typeReferenceName(unwrapped) !== 'Record') return false
+
+    const parameters = unwrapped.typeArguments?.params ?? []
+    return (
+      parameters.length === 2 && parameters[1] !== undefined && !isUnknownOrAnyType(parameters[1])
+    )
   }
 
-  if (unwrapped.type !== 'TSTypeReference') return false
-  if (typeReferenceName(unwrapped) === 'Readonly') {
-    const [inner] = unwrapped.typeArguments?.params ?? []
-    return inner !== undefined && isDefinitelyNarrowerRecordType(inner)
-  }
-  if (typeReferenceName(unwrapped) !== 'Record') return false
-
-  const parameters = unwrapped.typeArguments?.params ?? []
-  return (
-    parameters.length === 2 && parameters[1] !== undefined && !isUnknownOrAnyType(parameters[1])
-  )
-}
-
-function functionBoundary(node: ESTree.Node): ESTree.Node | null {
+const functionBoundary: (node: ESTree.Node) => ESTree.Node | null = function functionBoundary(
+  node: ESTree.Node,
+) {
   let current = node.parent
   while (current !== null && current.type !== 'Program') {
     if (functionBoundaryTypes.has(current.type)) return current
@@ -168,7 +179,7 @@ function functionBoundary(node: ESTree.Node): ESTree.Node | null {
   return null
 }
 
-function resolvedVariableForIdentifier(
+const resolvedVariableForIdentifier: (
   scopes: readonly {
     readonly references: readonly {
       readonly identifier: ESTree.Node
@@ -176,7 +187,15 @@ function resolvedVariableForIdentifier(
     }[]
   }[],
   identifier: ESTree.IdentifierReference,
-): Variable | null {
+) => Variable | null = function resolvedVariableForIdentifier(
+  scopes: readonly {
+    readonly references: readonly {
+      readonly identifier: ESTree.Node
+      readonly resolved: Variable | null
+    }[]
+  }[],
+  identifier: ESTree.IdentifierReference,
+) {
   for (const scope of scopes) {
     const reference = scope.references.find(
       (candidate) =>
@@ -188,21 +207,27 @@ function resolvedVariableForIdentifier(
   return null
 }
 
-function variableDeclarator(variable: Variable): ESTree.VariableDeclarator | null {
-  for (const definition of variable.defs) {
-    if (definition.type === 'Variable' && definition.node.type === 'VariableDeclarator') {
-      return definition.node
+const variableDeclarator: (variable: Variable) => ESTree.VariableDeclarator | null =
+  function variableDeclarator(variable: Variable) {
+    for (const definition of variable.defs) {
+      if (definition.type === 'Variable' && definition.node.type === 'VariableDeclarator') {
+        return definition.node
+      }
     }
+    return null
   }
-  return null
-}
 
-function knownValueEvidence(
+const knownValueEvidence: (
   expression: ESTree.Expression,
   scopes: Parameters<typeof resolvedVariableForIdentifier>[0],
   boundary: ESTree.Node | null,
   visitedVariables: ReadonlySet<Variable>,
-): KnownValueEvidence | null {
+) => KnownValueEvidence | null = function knownValueEvidence(
+  expression: ESTree.Expression,
+  scopes: Parameters<typeof resolvedVariableForIdentifier>[0],
+  boundary: ESTree.Node | null,
+  visitedVariables: ReadonlySet<Variable>,
+) {
   const unwrapped = unwrapExpressionParentheses(expression)
 
   if (unwrapped.type === 'TSAsExpression' || unwrapped.type === 'TSTypeAssertion') {
@@ -260,15 +285,18 @@ function knownValueEvidence(
   )
 }
 
-function widenedBinding(
+const widenedBinding: (
   variable: Variable,
   scopes: Parameters<typeof resolvedVariableForIdentifier>[0],
-): {
+) => {
   readonly broadKind: BroadTypeKind
   readonly evidence: KnownValueEvidence
   readonly declaredAt: number
   readonly boundary: ESTree.Node | null
-} | null {
+} | null = function widenedBinding(
+  variable: Variable,
+  scopes: Parameters<typeof resolvedVariableForIdentifier>[0],
+) {
   const declarator = variableDeclarator(variable)
   if (
     declarator === null ||
@@ -298,18 +326,37 @@ function widenedBinding(
   return evidence === null ? null : { broadKind, evidence, declaredAt: declarator.end, boundary }
 }
 
-function assertionIsNarrower(
+const assertionIsNarrower: (
   sourceText: string,
   broadKind: BroadTypeKind,
   evidence: KnownValueEvidence,
   assertedType: ESTree.TSType,
-): boolean {
+) => boolean = function assertionIsNarrower(
+  sourceText: string,
+  broadKind: BroadTypeKind,
+  evidence: KnownValueEvidence,
+  assertedType: ESTree.TSType,
+) {
   if (broadTypeKind(assertedType) !== null) return false
   if (broadKind === 'top') return true
   if (typesHaveSameSyntax(sourceText, evidence.type, assertedType)) return true
   if (broadKind === 'object') return isDefinitelyObjectType(assertedType)
   return isDefinitelyNarrowerRecordType(assertedType)
 }
+
+type BroadTypeKind = 'top' | 'object' | 'record'
+
+type KnownValueEvidence = {
+  readonly type: ESTree.TSType | null
+}
+
+const functionBoundaryTypes = new Set([
+  'ArrowFunctionExpression',
+  'FunctionDeclaration',
+  'FunctionExpression',
+  'TSDeclareFunction',
+  'TSEmptyBodyFunctionExpression',
+])
 
 /** Detect immutable local bindings that erase a known type and are later asserted back to a narrower type. */
 export const noWidenThenAssertRule = defineRule({

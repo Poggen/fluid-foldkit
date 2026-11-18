@@ -16,8 +16,8 @@ export interface RadarAxisProps {
   readonly className?: string
 }
 
-// Role marker: a declarative config carrier, read once by RadarChart and never rendered.
 /**
  * Draws one spoke from the centre to each metric. Include it as a child of `RadarChart`; it renders nothing by itself.
  */
-export const RadarAxis = (props: RadarAxisProps = {}): RadarChild => ({ kind: 'axis', props })
+export const RadarAxis: (props?: RadarAxisProps) => RadarChild = (props: RadarAxisProps = {}) =>
+  ({ kind: 'axis', props }) satisfies RadarChild

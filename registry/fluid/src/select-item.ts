@@ -1,4 +1,4 @@
-// Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism cc276ca0. MIT, copyright 2026 Micka Touillaud. */
 import type { ChildAttribute, Html, HtmlBuilder } from 'foldkit/html'
 import { childAttributes } from 'foldkit/html'
 import { resolvePresentation } from './presentation.js'
@@ -7,46 +7,15 @@ import { popupShape } from './lib/shape.js'
 import { cn } from './lib/utils.js'
 import type { TargetMotionOptions as MotionOptions } from './motion-target.js'
 
-export interface SelectItemContext extends Presentation {
-  readonly id: string
-  readonly activeIndex: number | null
-  readonly multiple: boolean
-  readonly inMenu: boolean
-  readonly checkedIndex?: number
-  readonly checkedIndices?: ReadonlyArray<number>
-}
-
-export interface SelectItemProps {
-  readonly id?: string
-  readonly index: number
-  readonly label: string
-  readonly checked?: boolean
-  readonly disabled?: boolean
-  readonly closeOnClick?: boolean
-  readonly icon?: Icon
-  readonly className?: string
-  readonly attributes?: ReadonlyArray<ChildAttribute>
-  readonly leading?: Html
-  readonly children?: ReadonlyArray<Html>
-  readonly render?: (
-    attributes: ReadonlyArray<ChildAttribute>,
-    children: ReadonlyArray<Html>,
-  ) => Html
-  readonly animate: (node: Html, options: MotionOptions) => Html
-}
-
-const inlineTabIndex = (props: SelectItemProps, context: SelectItemContext): number =>
-  !context.inMenu &&
-  props.disabled !== true &&
-  props.index === (context.checkedIndex ?? context.checkedIndices?.[0] ?? 0)
-    ? 0
-    : -1
-
-export function SelectItem<Message>(
+export const SelectItem: <Message>(
   props: SelectItemProps,
   context: SelectItemContext,
   h: HtmlBuilder<Message>,
-): Html {
+) => Html = function SelectItem<Message>(
+  props: SelectItemProps,
+  context: SelectItemContext,
+  h: HtmlBuilder<Message>,
+) {
   const { size, shape: inheritedShape } = resolvePresentation(context)
   const shape = popupShape(inheritedShape.variant)
 
@@ -142,5 +111,45 @@ export function SelectItem<Message>(
     ...(props.children ?? []),
   ]
 
-  return props.render ? props.render(attributes, children) : h.div(attributes, children)
+  return (
+    props.render ? props.render(attributes, children) : h.div(attributes, children)
+  ) satisfies Html
 }
+
+export interface SelectItemContext extends Presentation {
+  readonly id: string
+  readonly activeIndex: number | null
+  readonly multiple: boolean
+  readonly inMenu: boolean
+  readonly checkedIndex?: number
+  readonly checkedIndices?: ReadonlyArray<number>
+}
+
+export interface SelectItemProps {
+  readonly id?: string
+  readonly index: number
+  readonly label: string
+  readonly checked?: boolean
+  readonly disabled?: boolean
+  readonly closeOnClick?: boolean
+  readonly icon?: Icon
+  readonly className?: string
+  readonly attributes?: ReadonlyArray<ChildAttribute>
+  readonly leading?: Html
+  readonly children?: ReadonlyArray<Html>
+  readonly render?: (
+    attributes: ReadonlyArray<ChildAttribute>,
+    children: ReadonlyArray<Html>,
+  ) => Html
+  readonly animate: (node: Html, options: MotionOptions) => Html
+}
+
+const inlineTabIndex: (props: SelectItemProps, context: SelectItemContext) => number = (
+  props: SelectItemProps,
+  context: SelectItemContext,
+) =>
+  !context.inMenu &&
+  props.disabled !== true &&
+  props.index === (context.checkedIndex ?? context.checkedIndices?.[0] ?? 0)
+    ? 0
+    : -1

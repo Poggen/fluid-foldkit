@@ -1,4 +1,4 @@
-// Fluid's view-specific local-day preview is independent from DayPicker selection.
+import { constant } from 'effect/Function'
 import { Match } from 'effect'
 import type { CalendarRules } from '../calendar-domain/rules.js'
 import { resolveDayMatchers } from '../calendar-domain/rules.js'
@@ -8,11 +8,15 @@ import { restoreDate } from '../calendar-state.js'
 import { calendarBand } from '../calendar-presentation.js'
 import type { PresentationProjection } from './presentation.js'
 
-export function projectCalendarPresentation(
+export const projectCalendarPresentation: (
   state: Pick<CalendarState, 'selection' | 'month' | 'hoverOrdinal'>,
   projection: Pick<Projection, 'months' | 'timeZone'>,
   rules: CalendarRules,
-): PresentationProjection {
+) => PresentationProjection = function projectCalendarPresentation(
+  state: Pick<CalendarState, 'selection' | 'month' | 'hoverOrdinal'>,
+  projection: Pick<Projection, 'months' | 'timeZone'>,
+  rules: CalendarRules,
+) {
   const { dateLib: lib, formatters, labels, options } = rules
   const firstDay = projection.months[0]?.weeks[0]?.days[0]
 
@@ -43,9 +47,9 @@ export function projectCalendarPresentation(
     disableNavigation: options.disableNavigation === true,
     navLabel: labels.labelNav(),
     dir: Match.value(rules.input.dir).pipe(
-      Match.when('rtl', (): PresentationProjection['dir'] => 'rtl'),
-      Match.when('ltr', (): PresentationProjection['dir'] => 'ltr'),
-      Match.when('auto', (): PresentationProjection['dir'] => 'auto'),
+      Match.when('rtl', constant<PresentationProjection['dir']>('rtl')),
+      Match.when('ltr', constant<PresentationProjection['dir']>('ltr')),
+      Match.when('auto', constant<PresentationProjection['dir']>('auto')),
       Match.orElse(() => null),
     ),
     lang: rules.input.lang ?? lib.options.locale?.code ?? null,

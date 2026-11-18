@@ -92,7 +92,7 @@ export const gaugeLabelClasses = (props: GaugeProps, arc: boolean) => {
       : selfAlignment[align],
     inner: [
       'ts-bkm-center-stat',
-      // Arc sizing overrides the shared full-size centre-stat defaults.
+
       arc
         ? 'flex flex-col items-center justify-center text-center h-[max(88px,calc(40cqh_-_16px))]! w-[max(88px,calc(40cqh_-_16px))]!'
         : `flex flex-col min-w-0 ${itemAlignment[align]} ${textAlignment[align]}`,

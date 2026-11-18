@@ -1,7 +1,5 @@
 import { DateTime } from 'effect'
 
-// Accepted divergence from bklit: the overlay scales on the heatmap context are plain linear maps (call, invert, domain, range),
-// not d3 scales; no chart code reads them and d3-scale with d3-time-format cost about 30 kB minified.
 interface HeatmapLinearScale {
   (value: number): number
   readonly domain: () => [number, number]
@@ -16,35 +14,37 @@ interface HeatmapTimeScale {
   readonly invert: (pixel: number) => Date
 }
 
-const linearScale = (
+const linearScale: (
   domain: readonly [number, number],
   range: readonly [number, number],
-): HeatmapLinearScale => {
+) => HeatmapLinearScale = (domain: readonly [number, number], range: readonly [number, number]) => {
   const [d0, d1] = domain
   const [r0, r1] = range
   const span = d1 - d0
-  const map = (value: number): number => (span === 0 ? r0 : r0 + ((value - d0) / span) * (r1 - r0))
+  const map: (value: number) => number = (value: number) =>
+    span === 0 ? r0 : r0 + ((value - d0) / span) * (r1 - r0)
 
-  const invert = (pixel: number): number =>
+  const invert: (pixel: number) => number = (pixel: number) =>
     r1 === r0 ? d0 : d0 + ((pixel - r0) / (r1 - r0)) * span
 
   return Object.assign(map, {
-    domain: (): [number, number] => [d0, d1],
+    domain: () => [d0, d1] satisfies [number, number],
     invert,
-    range: (): [number, number] => [r0, r1],
+    range: () => [r0, r1] satisfies [number, number],
   })
 }
 
-const timeScale = (
+const timeScale: (
   domain: readonly [Date, Date],
   range: readonly [number, number],
-): HeatmapTimeScale => {
+) => HeatmapTimeScale = (domain: readonly [Date, Date], range: readonly [number, number]) => {
   const linear = linearScale([domain[0].getTime(), domain[1].getTime()], range)
-  const map = (value: Date | number): number => linear(Number(value))
+  const map: (value: Date | number) => number = (value: Date | number) => linear(Number(value))
 
   return Object.assign(map, {
-    domain: (): [Date, Date] => [domain[0], domain[1]],
-    invert: (pixel: number): Date => DateTime.toDateUtc(DateTime.makeUnsafe(linear.invert(pixel))),
+    domain: () => [domain[0], domain[1]] satisfies [Date, Date],
+    invert: (pixel: number) =>
+      DateTime.toDateUtc(DateTime.makeUnsafe(linear.invert(pixel))) satisfies Date,
     range: linear.range,
   })
 }

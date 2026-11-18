@@ -214,7 +214,7 @@ const start = Effect.gen(function* start() {
               return render({ button })
             },
             render: ({ tooltip }) => {
-              const inputs = (key: string): DatePickerViewInputs => ({
+              const inputs: (key: string) => DatePickerViewInputs = (key: string) => ({
                 ...calendarViewInputs(h, {
                   key,
                   context,

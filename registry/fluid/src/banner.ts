@@ -1,5 +1,5 @@
 import { sourceStyleAttributes } from './lib/source-style-attributes.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { modifyFields } from 'foldkit/struct'
 import { Data, Effect, Option, Predicate, Schema, Number } from 'effect'
 import { Block } from 'foldkit'
@@ -13,6 +13,36 @@ import type { IconName } from './icons.js'
 import { cn } from './lib/utils.js'
 import { createPresentationContext, resolvePresentation } from './presentation.js'
 import type { Icon, Presentation } from './presentation.js'
+
+const visibility: (model: Model, open: boolean) => Model = function visibility(
+  model: Model,
+  open: boolean,
+) {
+  if (open) {
+    return model.phase === 'Present'
+      ? model
+      : modifyFields(model, {
+          phase: () => 'Present',
+          generation: Number.increment,
+          initial: () => model.phase === 'Closed',
+        })
+  }
+
+  return model.phase === 'Present'
+    ? modifyFields(model, { phase: () => 'Exiting', generation: Number.increment })
+    : model
+}
+
+/** Foldkit requires callbacks at the top level of ViewInputs. */
+export const bannerViewInputs: (props: BannerProps) => BannerViewInputs = function bannerViewInputs(
+  props: BannerProps,
+) {
+  const { motion, icons, ...rest } = props
+
+  const withMotion = motion === undefined ? rest : { ...rest, getMotion: () => motion }
+
+  return icons === undefined ? withMotion : { ...withMotion, getIcons: () => icons }
+}
 
 export type BannerStatus = 'default' | 'info' | 'success' | 'warning' | 'error'
 
@@ -70,7 +100,6 @@ export const BannerBlock = Block.make('Banner', {
   view: { kind: 'Element', Inputs: Block.makeInputContract<BannerViewInputs>() },
 })
 
-// Pinned Motion captures preference per component mount; reset starts a new lifetime.
 const CaptureReducedMotion = BannerBlock.makeCommand('CaptureReducedMotion', {
   args: { mountGeneration: Schema.Natural },
   messages: [Message.CapturedReducedMotion],
@@ -107,22 +136,6 @@ const init = BannerComposition.makeInit((config: BannerConfig) => ({
   }),
   commands: [CaptureReducedMotion({ mountGeneration: 0 })],
 }))
-
-function visibility(model: Model, open: boolean): Model {
-  if (open) {
-    return model.phase === 'Present'
-      ? model
-      : modifyFields(model, {
-          phase: () => 'Present',
-          generation: Number.increment,
-          initial: () => model.phase === 'Closed',
-        })
-  }
-
-  return model.phase === 'Present'
-    ? modifyFields(model, { phase: () => 'Exiting', generation: Number.increment })
-    : model
-}
 
 const dismiss = (model: Model) => ({
   model: Option.isNone(model.controlledOpen)
@@ -192,15 +205,6 @@ export interface BannerProps extends Presentation {
 export interface BannerViewInputs extends Omit<BannerProps, 'motion' | 'icons'> {
   readonly getMotion?: () => BannerMotionConfig
   readonly getIcons?: () => Partial<Record<IconName, Icon>>
-}
-
-/** Foldkit requires callbacks at the top level of ViewInputs. */
-export function bannerViewInputs(props: BannerProps): BannerViewInputs {
-  const { motion, icons, ...rest } = props
-
-  const withMotion = motion === undefined ? rest : { ...rest, getMotion: () => motion }
-
-  return icons === undefined ? withMotion : { ...withMotion, getIcons: () => icons }
 }
 
 const tone: Record<BannerStatus, string> = {

@@ -80,9 +80,14 @@ export const SelectionFormsExampleBlock = Block.make('SelectionFormsExample', {
 const Provider = SelectionFormsExampleBlock.makeRequiredFieldBinding(PresentationProviderBlock, {
   field: 'provider',
   init: {
-    contextToArgs: (): [PresentationProviderConfig] => [
-      { id: 'selection-page', mode: 'shape', defaultShape: examplePresentation.shape ?? 'rounded' },
-    ],
+    contextToArgs: () =>
+      [
+        {
+          id: 'selection-page',
+          mode: 'shape',
+          defaultShape: examplePresentation.shape ?? 'rounded',
+        },
+      ] satisfies [PresentationProviderConfig],
   },
 })
 

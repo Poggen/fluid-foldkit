@@ -13,9 +13,11 @@ export interface ContextMenuOpening {
 const editable = 'input, textarea, select, [contenteditable]:not([contenteditable=false])'
 
 /** Native resources retain DOM focus handles; the Block owns visibility and position. */
-export function observeContextMenu(
+export const observeContextMenu: (
   input: ContextMenuObservationInput,
-): Stream.Stream<ContextMenuOpening> {
+) => Stream.Stream<ContextMenuOpening> = function observeContextMenu(
+  input: ContextMenuObservationInput,
+) {
   return input.viewStateChanges.pipe(
     Stream.switchMap((state) =>
       state === 'Paused'
@@ -50,7 +52,7 @@ export function observeContextMenu(
                   returnTo =
                     active instanceof HTMLElement && active !== document.body ? active : area
                 }
-                // Keep the point in viewport coordinates, outside transformed and scrolled ancestors.
+
                 ;(area.closest('dialog[open]') ?? document.body).append(anchor)
                 anchor.style.left = `${x}px`
                 anchor.style.top = `${y}px`
@@ -133,7 +135,7 @@ export function observeContextMenu(
                     if (anchor.getAttribute('aria-expanded') === 'true' || returnTo === null) return
                     restoreFrame = window?.requestAnimationFrame(restoreFocus)
                   })
-                  // Dropdown restores its trigger after exit; retain the origin until that handoff.
+
                   anchor.addEventListener('focus', restoreFocus)
                   observer.observe(anchor, { attributes: true, attributeFilter: ['aria-expanded'] })
                   area.addEventListener('contextmenu', contextmenu)

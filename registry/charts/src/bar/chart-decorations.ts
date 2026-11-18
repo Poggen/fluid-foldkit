@@ -6,30 +6,31 @@ import { cssAttr } from './hover'
 import type { HoverTarget } from './hover'
 import type { BarSeries } from './model'
 
+const barHoverTargets: (bars: ReadonlyArray<BarSeries>) => Array<HoverTarget> =
+  function barHoverTargets(bars: ReadonlyArray<BarSeries>) {
+    return [
+      ...bars.map((item) => ({
+        select: `${keyStarts('bars:')}${keyEnds(`:${cssAttr(item.key)}`)}:not(g)`,
+        keep: null,
+        dim: bars[0]?.bar?.fadedOpacity ?? 0.3,
+        seriesIndex: item.index,
+        legendOnly: true,
+      })),
+      {
+        select: `${keyStarts('bars:')}:not(g)`,
+        keep: (index) =>
+          `:is(${bars.map((item) => keyEnds(`:${index}:${cssAttr(item.key)}`)).join(',')})`,
+        dim: bars[0]?.bar?.fadedOpacity ?? 0.3,
+      },
+    ]
+  }
+
 interface BarDecorationInputs<Row> {
   readonly common: Omit<ExtraMarkInput<Row>, 'live'>
   readonly bars: ReadonlyArray<BarSeries>
   readonly horizontal: boolean
   readonly loading: boolean
   readonly innerHeight: number
-}
-
-function barHoverTargets(bars: ReadonlyArray<BarSeries>): Array<HoverTarget> {
-  return [
-    ...bars.map((item) => ({
-      select: `${keyStarts('bars:')}${keyEnds(`:${cssAttr(item.key)}`)}:not(g)`,
-      keep: null,
-      dim: bars[0]?.bar?.fadedOpacity ?? 0.3,
-      seriesIndex: item.index,
-      legendOnly: true,
-    })),
-    {
-      select: `${keyStarts('bars:')}:not(g)`,
-      keep: (index) =>
-        `:is(${bars.map((item) => keyEnds(`:${index}:${cssAttr(item.key)}`)).join(',')})`,
-      dim: bars[0]?.bar?.fadedOpacity ?? 0.3,
-    },
-  ]
 }
 
 export function buildBarDecorations<Row>({

@@ -24,7 +24,12 @@ import type {
 } from '../src/index'
 import paths from './fixtures/sunburst-public-paths.json'
 
-const datum = (id: string, depth: number, a0: number, a1: number): ArcDatum => ({
+const datum: (id: string, depth: number, a0: number, a1: number) => ArcDatum = (
+  id: string,
+  depth: number,
+  a0: number,
+  a1: number,
+) => ({
   id,
   name: id,
   depth,

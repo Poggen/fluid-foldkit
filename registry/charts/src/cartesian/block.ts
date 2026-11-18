@@ -44,6 +44,18 @@ import { remountInteraction } from './mount-interaction'
 import { cartesianContracts } from './block-contract'
 import type { CartesianViewInputs } from './block-contract'
 
+const revealInteraction: (
+  configuration: Parameters<typeof initialInteraction>[0],
+  startRevealing: boolean,
+) => Interaction = function revealInteraction(
+  configuration: Parameters<typeof initialInteraction>[0],
+  startRevealing: boolean,
+) {
+  const interaction = initialInteraction(configuration)
+
+  return startRevealing ? modifyFields(interaction, { revealReady: () => false }) : interaction
+}
+
 export type { CartesianViewInputs } from './block-contract'
 
 type Interaction = ReturnType<typeof initialInteraction>
@@ -54,17 +66,10 @@ const sameDomains = Schema.toEquivalence(Domains)
 
 const sameViewport = Schema.toEquivalence(Schema.Option(ChartViewport))
 
-const limit = (index: number | null, length: number): number | null =>
-  index === null || length === 0 ? null : Math.max(0, Math.min(length - 1, index))
-
-function revealInteraction(
-  configuration: Parameters<typeof initialInteraction>[0],
-  startRevealing: boolean,
-): Interaction {
-  const interaction = initialInteraction(configuration)
-
-  return startRevealing ? modifyFields(interaction, { revealReady: () => false }) : interaction
-}
+const limit: (index: number | null, length: number) => number | null = (
+  index: number | null,
+  length: number,
+) => (index === null || length === 0 ? null : Math.max(0, Math.min(length - 1, index)))
 
 /** Stateful native orchestration. Families supply typed scene compilation through view inputs. */
 export function defineCartesianBlock<
@@ -262,7 +267,6 @@ export function defineCartesianBlock<
           const measuredViewport = viewport === undefined ? model.viewport : Option.some(viewport)
           const yTweens = yDomainsTween(current, target)
 
-          // Drawing may repeat after input rebinding; only changed measurements own a new model.
           if (
             model.updateStep !== 'snap' &&
             sameDomains(model.domains, current) &&
@@ -509,7 +513,7 @@ export function defineCartesianBlock<
                 : chartStyleProperties(inputs.familyRoot.style),
             ),
             h.OnMount(PrepareCartesian()),
-            // Retire before a retained Binding can reacquire its next physical view.
+
             ...(DrawingElement === undefined ? [] : [h.OnUnmount(Message.Unmounted())]),
           ],
           [

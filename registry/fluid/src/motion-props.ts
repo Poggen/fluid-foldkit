@@ -1,12 +1,17 @@
 import type { MotionNodeOptions, ResolvedValues } from 'motion-dom'
 import type { MotionTargetProperties } from './motion-contract.js'
 
-export function motionProps(
+export const motionProps: (
   options: MotionTargetProperties,
   onAnimationComplete: () => void,
   onUpdate: (values: ResolvedValues) => void,
   adapter: Partial<MotionNodeOptions> | undefined,
-): MotionNodeOptions {
+) => MotionNodeOptions = function motionProps(
+  options: MotionTargetProperties,
+  onAnimationComplete: () => void,
+  onUpdate: (values: ResolvedValues) => void,
+  adapter: Partial<MotionNodeOptions> | undefined,
+) {
   const result: MotionNodeOptions = { animate: options.animate, onAnimationComplete }
 
   if (options.onUpdate !== undefined) {

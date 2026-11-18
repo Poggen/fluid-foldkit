@@ -1,22 +1,14 @@
-// bklit's momentum detector (same thresholds), kept local so the native
-// live-line has no dependency on internal/.
-export type Momentum = 'up' | 'down' | 'flat'
-
-const MIN_SAMPLES = 5
-
-const TAIL_SAMPLES = 5
-
-const THRESHOLD_FACTOR = 0.12
-
-const DEFAULT_LOOKBACK = 20
-
-export function detectMomentum(
+export const detectMomentum: (
+  data: ReadonlyArray<Record<string, unknown>>,
+  dataKey: string,
+  lookback?: number,
+) => Momentum = function (
   data: ReadonlyArray<Record<string, unknown>>,
   dataKey: string,
   lookback = DEFAULT_LOOKBACK,
-): Momentum {
+) {
   if (data.length < MIN_SAMPLES) {
-    return 'flat'
+    return 'flat' satisfies Momentum
   }
 
   const start = Math.max(0, data.length - lookback)
@@ -35,7 +27,7 @@ export function detectMomentum(
   const range = max - min
 
   if (range === 0) {
-    return 'flat'
+    return 'flat' satisfies Momentum
   }
 
   const tailStart = Math.max(start, data.length - TAIL_SAMPLES)
@@ -45,12 +37,22 @@ export function detectMomentum(
   const threshold = range * THRESHOLD_FACTOR
 
   if (delta > threshold) {
-    return 'up'
+    return 'up' satisfies Momentum
   }
 
   if (delta < -threshold) {
-    return 'down'
+    return 'down' satisfies Momentum
   }
 
-  return 'flat'
+  return 'flat' satisfies Momentum
 }
+
+export type Momentum = 'up' | 'down' | 'flat'
+
+const MIN_SAMPLES = 5
+
+const TAIL_SAMPLES = 5
+
+const THRESHOLD_FACTOR = 0.12
+
+const DEFAULT_LOOKBACK = 20

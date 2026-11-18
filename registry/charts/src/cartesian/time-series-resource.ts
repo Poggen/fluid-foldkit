@@ -36,7 +36,7 @@ import { pointerObservations } from './pointer-observations'
 import { applyChartStyle, replaceChartStyle, bklitSurfaceStyle } from './style'
 import { bandSpring } from './band-spring'
 
-export function mountTimeSeriesResource<
+export const mountTimeSeriesResource: <
   Row extends Readonly<Record<string, unknown>>,
   SceneDatum = Row,
 >(
@@ -51,7 +51,22 @@ export function mountTimeSeriesResource<
     readonly notifyOnCallbackChange?: boolean
     readonly compile?: TimeSeriesCompiler<Row, SceneDatum>
   },
-): CartesianResource<Row, SceneDatum> {
+) => CartesianResource<Row, SceneDatum> = function mountTimeSeriesResource<
+  Row extends Readonly<Record<string, unknown>>,
+  SceneDatum = Row,
+>(
+  target: FamilyResourceElements,
+  observe: NativeObservation,
+  initialProps: TimeSeriesProps<Row>,
+  id: string,
+  clock: () => number,
+  phases: {
+    readonly modelViewport: ModelViewportDemand
+    readonly phaseOf?: (state: Interaction) => ChartPhase | null
+    readonly notifyOnCallbackChange?: boolean
+    readonly compile?: TimeSeriesCompiler<Row, SceneDatum>
+  },
+) {
   const { drawingHost: element, visualRoot } = target
   const releaseCssScope = mountCartesianCssScope(element, id)
   let props = initialProps
@@ -432,7 +447,6 @@ export function mountTimeSeriesResource<
       reveal?.prepare(state)
     },
     configure: (next) => {
-      // Configuration is rebound by Foldkit; draw owns measurement change detection.
       if (visualRoot === undefined) {
         replaceChartStyle(
           element,
@@ -530,7 +544,7 @@ export function mountTimeSeriesResource<
     },
   }
 
-  return domain === undefined
-    ? resource
-    : Object.assign(resource, { definition: domain.definition })
+  return (
+    domain === undefined ? resource : Object.assign(resource, { definition: domain.definition })
+  ) satisfies CartesianResource<Row, SceneDatum>
 }

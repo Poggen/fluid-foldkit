@@ -59,31 +59,32 @@ const FluidInputShowcaseBlock = Block.make('FluidInputShowcase', {
 const Inputs = FluidInputShowcaseBlock.makeRequiredFieldBinding(InputFamilyExampleBlock, {
   field: 'inputs',
   init: {
-    contextToArgs: (): [InputFamilyConfig] => [
-      {
-        valuePolicy: 'accept',
-        copy: { id: 'copy-command', value: 'npx shadcn@latest registry add @fluid' },
-        message: {
-          id: 'message-composer',
-          value: '',
-          reduceMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-          placeholderSuggestion: 'Why is every other input box so stiff?',
-          suggestions: sourcePreset
-            ? [
-                'What is Fluid Functionalism about?',
-                'How does Micka tune the springs behind these animations?',
-                'Install the InputMessage component in my project',
-                'Draft a short thank-you note to Micka for the library',
-              ]
-            : ['Summarize this conversation', 'Help me write an update'],
-          history: ['Earlier draft'],
-          supportsFiles: true,
-          supportsQueue: true,
-          supportsStop: true,
-          status: 'idle',
+    contextToArgs: () =>
+      [
+        {
+          valuePolicy: 'accept',
+          copy: { id: 'copy-command', value: 'npx shadcn@latest registry add @fluid' },
+          message: {
+            id: 'message-composer',
+            value: '',
+            reduceMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+            placeholderSuggestion: 'Why is every other input box so stiff?',
+            suggestions: sourcePreset
+              ? [
+                  'What is Fluid Functionalism about?',
+                  'How does Micka tune the springs behind these animations?',
+                  'Install the InputMessage component in my project',
+                  'Draft a short thank-you note to Micka for the library',
+                ]
+              : ['Summarize this conversation', 'Help me write an update'],
+            history: ['Earlier draft'],
+            supportsFiles: true,
+            supportsQueue: true,
+            supportsStop: true,
+            status: 'idle',
+          },
         },
-      },
-    ],
+      ] satisfies [InputFamilyConfig],
   },
 })
 

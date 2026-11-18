@@ -15,7 +15,7 @@ export const isFiniteNumber = <T>(value: T): value is T & number =>
 
 /** `parseFloat`, which tolerates trailing units ("300ms", "1.5x"); `Number()` would reject them. */
 // oxlint-disable-next-line unicorn/prefer-number-coercion -- the partial parse is the point
-export const leadingFloat = (text: string): number => Number.parseFloat(text)
+export const leadingFloat: (text: string) => number = (text: string) => Number.parseFloat(text)
 
 /** Non-null object (arrays included). */
 export const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>

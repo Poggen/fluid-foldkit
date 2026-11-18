@@ -10,14 +10,12 @@ const directories = [
   'app/src',
 ]
 
-const stylesheets = (directory: string): string[] =>
+const stylesheets: (directory: string) => string[] = (directory: string) =>
   readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const file = path.join(directory, entry.name)
     return entry.isDirectory() ? stylesheets(file) : file.endsWith('.css') ? [file] : []
   })
 
-// Flatten our own styles to avoid shadcn's 64-import traversal limit. Tailwind's
-// implementation stays an import; no generated CSS is loaded by the application.
 export const prepareDesignSystemTheme = (root: string) => {
   const file = path.join(root, '.verification/design-system-theme.css')
   const css = [
@@ -34,8 +32,6 @@ export const prepareDesignSystemTheme = (root: string) => {
   let previous = ''
   try {
     previous = readFileSync(file, 'utf8')
-  } catch {
-    // The first lint run creates the ignored theme cache.
-  }
+  } catch {}
   if (previous !== css) writeFileSync(file, css)
 }

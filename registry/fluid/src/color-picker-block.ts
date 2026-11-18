@@ -1,7 +1,7 @@
 import { modifyFields } from 'foldkit/struct'
 import { HoverMode } from './hover-observation.js'
 import { displayColorNumber } from './color-number-locale.js'
-// Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud.
+/* @license Derived from Fluid Functionalism 200b4534. MIT, copyright 2026 Micka Touillaud. */
 import { Effect, Option, Schema, Predicate } from 'effect'
 import { Block, Update } from 'foldkit'
 import { defineInMessageUnion, defineMessageUnion } from 'foldkit/message'
@@ -273,7 +273,6 @@ const railSettingsSatisfied = (
   settings: typeof SliderSettings.Type,
 ) =>
   railSettingsEqual(model.settings, settings) &&
-  // A released drag may still need its controlled targets acknowledged.
   (model.drag !== 'idle' || sliderTargets(model) === model)
 
 const syncRails = (state: ColorState) =>
@@ -353,13 +352,14 @@ const SwatchHighlight = ColorPickerBlock.makeRequiredFieldBinding(HoverHighlight
 const Swatches = ColorPickerBlock.makeRequiredFieldBinding(HoverBlock, {
   field: 'swatches',
   init: {
-    contextToArgs: (config: ColorPickerConfig): [HoverConfig] => [
-      {
-        id: `${config.id}-swatches`,
-        axis: 'xy',
-        ...(config.hoverMode === undefined ? {} : { mode: config.hoverMode }),
-      },
-    ],
+    contextToArgs: (config: ColorPickerConfig) =>
+      [
+        {
+          id: `${config.id}-swatches`,
+          axis: 'xy',
+          ...(config.hoverMode === undefined ? {} : { mode: config.hoverMode }),
+        },
+      ] satisfies [HoverConfig],
   },
 }).withOutMessagePolicy({
   fold: ColorPickerBlock.makeOutMessageFold(HoverBlock, {
@@ -373,7 +373,7 @@ const Swatches = ColorPickerBlock.makeRequiredFieldBinding(HoverBlock, {
 const MenuInitial = ColorPickerBlock.makeRequiredFieldBinding(ColorFormatMenuBlock, {
   field: 'menu',
   init: {
-    contextToArgs: (config: ColorPickerConfig): [ColorFormatMenuConfig] => {
+    contextToArgs: (config: ColorPickerConfig) => {
       const menu: ColorFormatMenuConfig = {
         id: `${config.id}-menu`,
         ...(config.hoverMode === undefined ? {} : { hoverMode: config.hoverMode }),
@@ -387,7 +387,7 @@ const MenuInitial = ColorPickerBlock.makeRequiredFieldBinding(ColorFormatMenuBlo
         config.defaultFormatOpen === undefined
           ? configured
           : { ...configured, defaultOpen: config.defaultFormatOpen },
-      ]
+      ] satisfies [ColorFormatMenuConfig]
     },
   },
 })
