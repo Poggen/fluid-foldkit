@@ -34,6 +34,8 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: ./.github/actions/setup
       - run: ${{ matrix.command }}
+        env:
+          VITEST_MAX_WORKERS: 3
   build:
     runs-on: ubuntu-latest
     steps:
@@ -64,9 +66,9 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-chromium-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('bun.lock') }}
-      - run: bunx --no-install playwright install --with-deps chromium
+      - run: bunx --no-install playwright install --only-shell chromium
         working-directory: app
-      - run: bun run test:showcase --shard=${{ matrix.shard }}/8
+      - run: bun run test:showcase --workers=2 --shard=${{ matrix.shard }}/8
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
@@ -80,8 +82,11 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: ./.github/actions/setup
-      - run: bunx --no-install agent-browser install --with-deps
-      - run: bun run test:consumer
+      - name: Test the installed registry with runner Chrome
+        run: |
+          export AGENT_BROWSER_EXECUTABLE_PATH="$(command -v google-chrome)"
+          "$AGENT_BROWSER_EXECUTABLE_PATH" --version
+          bun run test:consumer
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

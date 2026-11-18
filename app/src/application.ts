@@ -407,7 +407,7 @@ const update = ApplicationComposition.makeUpdate.compose(
             ApplicationBlock.makeFieldsStep(() => ({ columns: () => columns })),
             informPageViewport(columns),
             ...(model.columns === null
-              ? [ApplicationBlock.makeCommandsStep(() => [ReleaseStartupInput({})])]
+              ? [ApplicationBlock.makeCommandsStep(() => [ReleaseStartupInput()])]
               : []),
             ...(columns === 3 ? [MobileNavigation.requestClose()] : []),
           ]),

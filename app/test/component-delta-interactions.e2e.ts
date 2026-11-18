@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test'
 import { expectUpstreamHomeTable } from './component-delta-home-fixture'
 
+test.describe.configure({ mode: 'parallel' })
+
 test('CodeBlock keeps exact clipboard text through live line, wrapping and header changes', async ({
   page,
 }) => {
