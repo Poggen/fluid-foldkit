@@ -180,7 +180,7 @@ it.live(
       const second = yield* Effect.forkChild(effects.transitionTheme)
       try {
         yield* Effect.sleep('30 millis')
-        expect(themeStyles()).toHaveLength(2)
+        expect(themeStyles()).toHaveLength(1)
         yield* Fiber.interrupt(first)
         expect(themeStyles()).toHaveLength(1)
         completion.reject(new Error('Skipped transition'))

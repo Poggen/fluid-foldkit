@@ -51,6 +51,18 @@ export const Apply = ApplicationBlock.makeCommand('Apply', {
       env.apply(settings, fontFailed).pipe(Effect.as(Message.CompletedApply()))
   },
 })
+export const ReleaseStartupInput = ApplicationBlock.makeCommand('ReleaseStartupInput', {
+  args: {},
+  messages: [Message.ReleasedStartupInput],
+  *handler() {
+    const env = yield* SiteEnvironment
+    return () =>
+      Render.afterCommit.pipe(
+        Effect.andThen(env.releaseStartupInput ?? Effect.void),
+        Effect.as(Message.ReleasedStartupInput()),
+      )
+  },
+})
 export const CopyInstall = ApplicationBlock.makeCommand('CopyInstall', {
   args: { path: Schema.String, settings: Settings, revision: Schema.Natural, source: CopySource },
   messages: [Message.CompletedCopyInstall],

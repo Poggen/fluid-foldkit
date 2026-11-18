@@ -2,6 +2,23 @@
 export const earlyInputHead = `<script>
 (() => {
   let pending;
+  let focused;
+  const restoreEditor = () => {
+    if (!focused || focused.isConnected || document.activeElement !== document.body) return;
+    const target = document.getElementById(focused.id);
+    if (!(target instanceof HTMLInputElement) || target.disabled ||
+      target.dataset.playgroundEditable !== focused.dataset.playgroundEditable ||
+      target.closest('[data-playground-controls-path]')?.dataset.playgroundControlsPath !== location.pathname) return;
+    const {selectionStart, selectionEnd} = focused;
+    target.focus({preventScroll:true});
+    if (selectionStart !== null && selectionEnd !== null) target.setSelectionRange(selectionStart, selectionEnd);
+  };
+  const relocation = new MutationObserver(restoreEditor);
+  const rememberFocus = (event) => {
+    relocation.disconnect();
+    focused = event.target instanceof HTMLInputElement && event.target.matches('[data-playground-editable]') ? event.target : undefined;
+    if (focused) relocation.observe(document.documentElement, {childList:true, subtree:true});
+  };
   const edits = new Map();
   const pendingClasses = [
     '[&_button:focus]:cursor-progress',
@@ -73,6 +90,8 @@ export const earlyInputHead = `<script>
     });
   };
   const dispose = () => {
+    relocation.disconnect();
+    document.removeEventListener('focusin', rememberFocus, true);
     delete window.__releaseShowcaseInput;
     delete window.__cancelShowcaseInput;
     document.removeEventListener('input', captureEdit, true);
@@ -82,6 +101,7 @@ export const earlyInputHead = `<script>
     document.removeEventListener('focusin', abandonOutside, true);
     clearPending();
   };
+  document.addEventListener('focusin', rememberFocus, true);
   document.addEventListener('input', captureEdit, true);
   document.addEventListener('click', capture, true);
   document.addEventListener('keydown', capture, true);
@@ -89,6 +109,7 @@ export const earlyInputHead = `<script>
   document.addEventListener('focusin', abandonOutside, true);
   window.__cancelShowcaseInput = dispose;
   window.__releaseShowcaseInput = () => {
+    restoreEditor();
     const input = pending;
     const drafts = Array.from(edits.values());
     dispose();
@@ -137,7 +158,7 @@ declare global {
   }
 }
 
-/** Called by the initial presentation command, after Foldkit's boot and DOM commit. */
+/** Called by the initial viewport command, after Foldkit's boot and DOM commit. */
 export const releaseEarlyInput = (window: Window) => {
   if (window.__releaseShowcaseInput === undefined) return
   window.requestAnimationFrame(() => window.__releaseShowcaseInput?.())

@@ -14,6 +14,7 @@ export class SiteEnvironment extends Context.Service<
     readonly systemThemeChanges?: Stream.Stream<ResolvedTheme>
     readonly loadFont?: (choice: FontChoice) => Effect.Effect<boolean>
     readonly columnsChanges: Stream.Stream<1 | 2 | 3>
+    readonly releaseStartupInput?: Effect.Effect<void>
     readonly transitionShape?: Effect.Effect<void>
     readonly transitionTheme?: Effect.Effect<void>
     readonly apply: (settings: Settings, fontFailed?: boolean) => Effect.Effect<void>
@@ -49,23 +50,29 @@ export const publishRootPresentation = (
 
 export const presentationEffects = (document: Document, window: Window) => {
   const shapeGuards = new Set<symbol>()
-  const themeGuards = new Set<HTMLStyleElement>()
+  let themeStyle: HTMLStyleElement | undefined
+  let themeOwners = 0
   const root = document.documentElement
   const synchronizeShapeGuard = () =>
-    root.classList.toggle('transitioning', shapeGuards.size > 0 && themeGuards.size === 0)
+    root.classList.toggle('transitioning', shapeGuards.size > 0 && themeOwners === 0)
   const nextFrame = Effect.callback<void>((resume) => {
     const frame = window.requestAnimationFrame(() => resume(Effect.void))
     return Effect.sync(() => window.cancelAnimationFrame(frame))
   })
   const acquireThemeGuard = () => {
-    const style = document.createElement('style')
-    style.textContent = themeTransitionStyles + suppressTransitionStyles
-    document.head.appendChild(style)
-    themeGuards.add(style)
+    if (themeStyle === undefined) {
+      themeStyle = document.createElement('style')
+      themeStyle.textContent = themeTransitionStyles + suppressTransitionStyles
+      document.head.appendChild(themeStyle)
+    }
+    themeOwners += 1
     synchronizeShapeGuard()
     return () => {
-      style.remove()
-      themeGuards.delete(style)
+      themeOwners -= 1
+      if (themeOwners === 0) {
+        themeStyle?.remove()
+        themeStyle = undefined
+      }
       synchronizeShapeGuard()
     }
   }

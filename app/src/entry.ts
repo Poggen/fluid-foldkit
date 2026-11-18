@@ -131,6 +131,7 @@ const environment = Layer.succeed(SiteEnvironment, {
       (release) => Effect.sync(release),
     ).pipe(Effect.flatMap(() => Effect.never)),
   ),
+  releaseStartupInput: Effect.sync(() => releaseEarlyInput(window)),
   apply: (settings, fontFailed) =>
     Render.afterCommit.pipe(
       Effect.andThen(
@@ -142,7 +143,6 @@ const environment = Layer.succeed(SiteEnvironment, {
                 : 'light'
               : settings.theme
           publishRootPresentation(document.documentElement, settings, theme, fontFailed)
-          releaseEarlyInput(window)
         }),
       ),
     ),
