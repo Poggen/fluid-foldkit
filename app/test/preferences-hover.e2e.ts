@@ -79,7 +79,10 @@ for (const mode of ['fluid', 'standard']) {
   }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
     await page.goto(`/components/button?hover=${mode}`)
-    const owner = page.locator('#docs-controls-rows')
+    const owner = page
+      .locator('#site-customizer')
+      .getByRole('complementary', { name: 'Button props' })
+      .locator('#docs-controls-rows')
     await follows(owner, row(owner, 0))
     await follows(owner, row(owner, 3))
     await owner.getByLabel('Label', { exact: true }).hover()

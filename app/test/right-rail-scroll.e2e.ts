@@ -13,9 +13,6 @@ test('short right rail scrolls independently and delivers lower Card controls', 
   const rail = page.locator('#site-customizer')
   const media = rail.getByRole('combobox', { name: 'Media', exact: true })
   await expect(media).toBeAttached()
-  await expect(
-    page.locator('#site-customizer').getByRole('combobox', { name: 'Media', exact: true }),
-  ).toBeAttached()
   await page.locator(viewport).hover()
   await page.mouse.wheel(0, 650)
   await expect(media).toBeInViewport()
