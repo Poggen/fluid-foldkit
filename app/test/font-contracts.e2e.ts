@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { fileURLToPath } from 'node:url'
+import { readFile } from 'node:fs/promises'
 import { bundleRuntimeFixture, mountRuntimeFixture } from './style-contract-helpers'
 
 let fixture = ''
@@ -14,6 +15,10 @@ test.beforeAll(async () => {
 test('native Canvas cache and callback retirement retain current font ownership through real font admission', async ({
   page,
 }) => {
+  const font = await readFile(new URL('../src/assets/GeistSerif-Regular.woff2', import.meta.url))
+  await page.route('**/__font-contract__/font.woff2', (route) =>
+    route.fulfill({ body: font, contentType: 'font/woff2' }),
+  )
   await mountRuntimeFixture(page, '/charts/line', fixture)
   await expect(page.locator('#font-metrics')).toBeAttached()
   const metrics = JSON.parse((await page.locator('#font-metrics').textContent()) ?? '{}')
@@ -32,12 +37,12 @@ test('native Canvas cache and callback retirement retain current font ownership 
   expect(callbacks.retiredTooltip).toMatch(/ sans-serif$/u)
   expect(callbacks.cleared).toBe(true)
   expect(callbacks.clearedFont).toMatch(/ monospace$/u)
-  await expect(page.locator('#font-admission')).toBeAttached()
+  await expect(page.locator('#font-admission, #font-error')).toBeAttached()
+  expect(await page.locator('#font-error').allTextContents()).toEqual([])
   const admission = JSON.parse((await page.locator('#font-admission').textContent()) ?? '{}')
   expect(admission.loaded).toBe('loaded')
   expect(admission.rendered).toBe(true)
   expect(admission.freshScene).toBe(true)
   expect(admission.retainedSvg).toBe(true)
   expect(admission.nativeFont).toContain('NativeFontContract')
-  await expect(page.locator('#font-error')).toHaveCount(0)
 })

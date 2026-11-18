@@ -215,10 +215,7 @@ const callbacks = () => {
 
 const admission = Effect.gen(function* nativeFontAdmission() {
   const element = container()
-  const face = new FontFace(
-    'NativeFontContract',
-    'url(/charts/geist-latin.woff2?font-contract=admission)',
-  )
+  const face = new FontFace('NativeFontContract', 'url(/__font-contract__/font.woff2)')
   document.fonts.add(face)
   element.style.fontFamily = 'NativeFontContract, monospace'
   let rendered = 0
