@@ -80,7 +80,7 @@ unit tests retain narrowly documented finite host controls for race and failure 
 
 `check` runs architecture guards, Effect diagnostics, tsrs typechecks, lint,
 generated consumer admission, unit tests, builds, and production browser tests.
-Pull requests, merge groups and pushes to main run the complete GitHub Actions gate. Release tags reuse the commit's verification. Chromium shards test the same production build. Each shard uploads its report and failure traces. The `check` job requires every lane to pass.
+Pull requests, merge groups and pushes to main run the complete GitHub Actions gate. Release tags reuse the commit's verification. Playwright discovers the current suite on every run. CI balances it across 16 Chromium shards using measured Linux durations and verifies each shard’s executed count against its assignment. Every shard tests the same production build. Each shard uploads its report and failure traces. The `check` job requires every lane to pass.
 
 `bun run test:admission` checks copied Sidebar state retention and all generated
 CommandMenu layouts with tsrs and the real Foldkit runtime before unit tests. Linux CI installs Playwright

@@ -15,6 +15,7 @@
   },
   "include": [
     "vercel.ts",
+    "ci/**/*.ts",
     "registry/**/*.ts",
     "guardrails.ts",
     "../oxlint.config.ts",

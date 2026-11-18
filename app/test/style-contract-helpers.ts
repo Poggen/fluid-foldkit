@@ -2,21 +2,31 @@ import type { Page } from '@playwright/test'
 import { build } from 'vite'
 
 export const loadBuiltStyles = async (page: Page, route: string, html: string) => {
-  await page.goto(route)
-  const stylesheets = await page
-    .locator('link[rel="stylesheet"]')
-    .evaluateAll((links) =>
-      links.map((link) => link.getAttribute('href')).filter((href) => href !== null),
-    )
-  const chartStyles = await page
-    .locator('style[data-chart-styles]')
-    .evaluateAll((styles) => styles.map((style) => style.textContent ?? '').filter(Boolean))
-  if (stylesheets.length === 0) throw new Error('Normal production stylesheets are required')
-  // setContent loses native pointer departure events in Linux headless Chromium.
-  await page.route(page.url(), (route) => route.fulfill({ contentType: 'text/html', body: html }), {
-    times: 1,
-  })
-  await page.reload()
+  const response = await page.request.get(route)
+  if (!response.ok()) throw new Error(`Stylesheet source ${route} returned ${response.status()}`)
+  const { stylesheets, chartStyles } = await page.evaluate(
+    (source) => {
+      const ssr = new DOMParser().parseFromString(source, 'text/html')
+      return {
+        stylesheets: Array.from(
+          ssr.querySelectorAll('link[rel="stylesheet"][href]'),
+          (link) => link.getAttribute('href') ?? '',
+        ).filter(Boolean),
+        chartStyles: Array.from(
+          ssr.querySelectorAll('style[data-chart-styles]'),
+          (style) => style.textContent ?? '',
+        ).filter(Boolean),
+      }
+    },
+    await response.text(),
+  )
+  if (!stylesheets.length) throw new Error('Normal production stylesheets are required')
+  await page.route(
+    response.url(),
+    (request) => request.fulfill({ contentType: 'text/html', body: html }),
+    { times: 1 },
+  )
+  await page.goto(response.url())
   for (const url of stylesheets) await page.addStyleTag({ url })
   for (const content of chartStyles) await page.addStyleTag({ content })
   await page.evaluate(async () => {

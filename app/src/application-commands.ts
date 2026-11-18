@@ -52,7 +52,6 @@ export const Apply = ApplicationBlock.makeCommand('Apply', {
   },
 })
 export const ReleaseStartupInput = ApplicationBlock.makeCommand('ReleaseStartupInput', {
-  args: {},
   messages: [Message.ReleasedStartupInput],
   *handler() {
     const env = yield* SiteEnvironment

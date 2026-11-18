@@ -12,7 +12,10 @@ export const shouldTransitionTheme = (
   known: boolean,
   previousSystem: ResolvedTheme = 'light',
   system: ResolvedTheme = 'light',
-) => previousKnown && known && resolveTheme(before, previousSystem) !== resolveTheme(after, system)
+) =>
+  (before.theme !== 'system' || previousKnown) &&
+  (after.theme !== 'system' || known) &&
+  resolveTheme(before, previousSystem) !== resolveTheme(after, system)
 export const themeClass = (settings: Settings, systemTheme: ResolvedTheme, known: boolean) =>
   settings.theme === 'system' && !known
     ? 'system'

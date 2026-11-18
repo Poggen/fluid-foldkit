@@ -238,6 +238,28 @@ test('native replacement theme transition interpolates after active Back navigat
         () => {
           generation.ready = 'resolved'
           generation.readyAt = performance.now()
+          const snapshots = document
+            .getAnimations()
+            .filter(
+              (animation) =>
+                animation.effect instanceof KeyframeEffect &&
+                ['::view-transition-old(root)', '::view-transition-new(root)'].includes(
+                  animation.effect.pseudoElement ?? '',
+                ),
+            )
+          for (const animation of snapshots) {
+            animation.pause()
+            animation.currentTime = Number(animation.effect?.getComputedTiming().duration) / 2
+          }
+          const old = getComputedStyle(document.documentElement, '::view-transition-old(root)')
+          const next = getComputedStyle(document.documentElement, '::view-transition-new(root)')
+          generation.samples.push({
+            oldOpacity: Number(old.opacity),
+            newOpacity: Number(next.opacity),
+            duration: old.animationDuration,
+            suppressed: getComputedStyle(document.body).transitionDuration === '0s',
+          })
+          if (generation.id !== 1) for (const animation of snapshots) animation.play()
         },
         () => {
           generation.ready = 'rejected'
@@ -270,20 +292,9 @@ test('native replacement theme transition interpolates after active Back navigat
       const generation = generations.at(-1)
       const active = document.documentElement.matches(':active-view-transition')
       if (generation?.ready === 'resolved' && generation.finished === 'pending' && active) {
-        const old = getComputedStyle(document.documentElement, '::view-transition-old(root)')
-        const next = getComputedStyle(document.documentElement, '::view-transition-new(root)')
-        const value = {
-          oldOpacity: Number(old.opacity),
-          newOpacity: Number(next.opacity),
-          duration: old.animationDuration,
-          suppressed: getComputedStyle(document.body).transitionDuration === '0s',
-        }
-        generation.samples.push(value)
         if (
           generation.id === 1 &&
           backRequests.length === 0 &&
-          value.oldOpacity > 0 &&
-          value.oldOpacity < 1 &&
           new URL(location.href).searchParams.get('theme') === 'dark'
         ) {
           backRequests.push({ at: performance.now(), active })
@@ -309,8 +320,16 @@ test('native replacement theme transition interpolates after active Back navigat
   try {
     await page.keyboard.press('t')
     await expect
-      .poll(() => observation.evaluate(({ generations }) => generations[1]?.finished))
-      .toBe('resolved')
+      .poll(() =>
+        observation.evaluate(({ generations, backRequests, traversals }) => ({
+          generations,
+          backRequests,
+          traversals,
+        })),
+      )
+      .toMatchObject({
+        generations: [expect.anything(), expect.objectContaining({ finished: 'resolved' })],
+      })
     const recorded = await observation.evaluate(({ generations, traversals, backRequests }) => ({
       generations,
       traversals,

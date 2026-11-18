@@ -37,10 +37,14 @@ jobs:
         env:
           VITEST_MAX_WORKERS: 3
   build:
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: ./.github/actions/setup
+      - id: plan
+        run: bun scripts/ci/browser-shards.ts 16
       - run: bun run build
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -50,12 +54,12 @@ jobs:
             app/dist
           if-no-files-found: error
   browser:
+    name: Chromium ${{ matrix.shard }}
     needs: build
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+      matrix: ${{ fromJSON(needs.build.outputs.matrix) }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: ./.github/actions/setup
@@ -68,7 +72,14 @@ jobs:
           key: playwright-chromium-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('bun.lock') }}
       - run: bunx --no-install playwright install --only-shell chromium
         working-directory: app
-      - run: bun run test:showcase --workers=2 --shard=${{ matrix.shard }}/8
+      - name: Run assigned Chromium cases
+        env:
+          TEST_LIST: ${{ matrix.list }}
+          TEST_COUNT: ${{ matrix.count }}
+        run: |
+          printf '%s\n' "$TEST_LIST" > "$RUNNER_TEMP/tests.txt"
+          bun run test:showcase --workers=2 --test-list "$RUNNER_TEMP/tests.txt"
+          jq -e --argjson n "$TEST_COUNT" '.stats | .expected == $n and .skipped == 0 and .unexpected == 0 and .flaky == 0' .verification/showcase-tests.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

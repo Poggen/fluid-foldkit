@@ -78,6 +78,14 @@ describe('canonical theme and heading preferences', () => {
     expect(system.theme).toBe('system')
     expect(resolveSettings(system, 'dark')).toBe(resolveSettings(system, 'dark'))
     expect(componentPresentation(system, 'dark').theme).toBe('dark')
+    expect(
+      shouldTransitionTheme(
+        { ...system, theme: 'light' },
+        { ...system, theme: 'dark' },
+        false,
+        false,
+      ),
+    ).toBe(true)
     expect(shouldTransitionTheme(system, { ...system, theme: 'light' }, false, true)).toBe(false)
     expect(shouldTransitionTheme(system, { ...system, theme: 'light' }, true, true)).toBe(false)
     expect(
