@@ -2,6 +2,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } fr
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Schema } from 'effect'
+import { retainShowcaseAssets } from './retain-showcase-assets'
 import { restoreRegistryArchive } from './registry/history'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
@@ -73,6 +74,10 @@ writeJson(path.join(functionDirectory, '.vc-config.json'), {
   launcherType: 'Nodejs',
   supportsResponseStreaming: true,
 })
+const retainedAssetOrigin =
+  process.env.VERCEL_ENV === 'production'
+    ? await retainShowcaseAssets(path.join(output, 'static/assets'))
+    : undefined
 writeJson(path.join(output, 'config.json'), {
   version: 3,
   routes: [
@@ -90,6 +95,9 @@ writeJson(path.join(output, 'config.json'), {
       continue: true,
     },
     { handle: 'filesystem' },
+    ...(retainedAssetOrigin
+      ? [{ src: '/assets/(.+)', dest: `${retainedAssetOrigin}/assets/$1` }]
+      : []),
     { src: '/(.*)', dest: '/render' },
   ],
 })

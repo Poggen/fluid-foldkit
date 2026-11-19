@@ -36,6 +36,11 @@ SSR. Git pushes deploy through the linked Vercel project. `REGISTRY_ORIGIN` can
 override the deployment's public registry origin. Vercel builds enable Web Analytics
 through the showcase's browser entry; local builds leave it disabled.
 
+For production, connect a public Vercel Blob store to the project. Each build
+archives its hashed browser assets before promotion. When an open tab requests
+a chunk from an older deployment, the CDN serves the archived file at its
+original URL. The store credential belongs in the production build environment.
+
 ## Source
 
 - `app/` owns the SSR showcase, server, and browser tests.
