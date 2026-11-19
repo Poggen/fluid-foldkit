@@ -51,13 +51,14 @@ for (const state of ['empty dataset', 'unmatched filter'] as const) {
     if (state === 'unmatched filter') {
       for (const text of sourceCopy) await expect(scroll.getByText(text)).toHaveCount(0)
     }
+    const hostWidth = await page.locator('#style-contract-root').evaluate((el) => el.clientWidth)
     for (const end of [false, true]) {
       const viewport = await scroll.evaluate((el, right) => {
         el.scrollLeft = right ? el.scrollWidth : 0
         const rect = el.getBoundingClientRect()
         return { left: rect.left, width: el.clientWidth, scrollLeft: el.scrollLeft }
       }, end)
-      expect(viewport.width).toBe(358)
+      expect(viewport.width).toBe(hostWidth)
       if (end) expect(viewport.scrollLeft).toBeGreaterThan(0)
       for (const text of content) {
         const label = scroll.getByText(text, { exact: true })

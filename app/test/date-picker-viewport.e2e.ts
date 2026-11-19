@@ -54,7 +54,7 @@ test('keyboard opening focuses today for an empty picker and the chosen date on 
   await trigger.focus()
   await page.keyboard.press('Enter')
   await expect(popup).toHaveAttribute('data-side', /top|bottom|left|right/)
-  const today = popup.locator('[data-today="true"] [data-calendar-button]')
+  const today = popup.getByRole('button', { name: /^Today,/u })
   await expect(today).toBeFocused()
   const ordinal = Number(await today.getAttribute('data-calendar-ordinal'))
   await page.keyboard.press('ArrowRight')
