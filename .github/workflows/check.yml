@@ -78,7 +78,7 @@ jobs:
           TEST_COUNT: ${{ matrix.count }}
         run: |
           printf '%s\n' "$TEST_LIST" > "$RUNNER_TEMP/tests.txt"
-          bun run test:showcase --workers=2 --test-list "$RUNNER_TEMP/tests.txt"
+          bun run test:showcase --test-list "$RUNNER_TEMP/tests.txt"
           jq -e --argjson n "$TEST_COUNT" '.stats | .expected == $n and .skipped == 0 and .unexpected == 0 and .flaky == 0' .verification/showcase-tests.json
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()

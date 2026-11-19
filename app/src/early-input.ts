@@ -55,7 +55,7 @@ export const earlyInputHead = `<script>
     ) return;
     const preference = target.matches('[role="combobox"]') &&
       /^customize-(desktop|mobile)-(theme|accent|font|weight|shape|size|hover)-select-trigger$/.test(target.id);
-    if (target.id !== 'site-menu-button' && !preference) return;
+    if (target.id !== 'site-menu-button' && !preference && !target.hasAttribute('data-fluid-dialog-trigger')) return;
     if (
       event.type === 'keydown' &&
       (!preference || !['ArrowDown', 'ArrowUp'].includes(event.key))

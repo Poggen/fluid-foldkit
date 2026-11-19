@@ -12,6 +12,20 @@ const holdModules = async (page: Page) => {
   return release
 }
 
+test('the first-painted invite dialog opens after hydration', async ({ page }) => {
+  const release = await holdModules(page)
+  try {
+    await page.goto('/surfaces', { waitUntil: 'commit' })
+    await page.getByRole('button', { name: 'Invite to your workspace', exact: true }).click()
+    await expect(page.locator('html')).toHaveAttribute('data-showcase-input-pending', '')
+    release()
+    const dialog = page.getByRole('dialog', { name: 'Invite to your workspace', exact: true })
+    await expect(dialog.getByRole('combobox', { name: 'Workspace role' })).toBeVisible()
+  } finally {
+    release()
+  }
+})
+
 for (const activation of ['mouse', 'keyboard'] as const) {
   test(`first-painted Radius retains its ${activation} activation while modules are blocked`, async ({
     page,
