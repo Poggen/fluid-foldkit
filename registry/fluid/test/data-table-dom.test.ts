@@ -14,9 +14,8 @@ const fixture = () => {
   const root = document.createElement('div')
   root.id = 'grid-bridge'
   root.setAttribute('data-fluid-data-table', '')
-  root.setAttribute('data-grid-selected', '')
-  root.setAttribute('data-grid-all-rows', 'a\u001fb\u001fc')
-  root.setAttribute('data-grid-columns', 'name\u001femail')
+  root.setAttribute('data-grid-selected', '[]')
+  root.setAttribute('data-grid-columns', JSON.stringify(['name', 'email']))
   root.innerHTML = `<button data-grid-action="header" data-grid-column="name">Name</button><table><tbody>${['a', 'b', 'c'].map((id) => `<tr data-grid-body-row data-grid-row="${id}"><td><button data-grid-action="select" data-grid-row="${id}" aria-checked="false">Select ${id}</button></td><td tabindex="0" data-grid-cell data-grid-editable="true" data-grid-row="${id}" data-grid-column="name">Name ${id}</td><td tabindex="-1" data-grid-cell data-grid-row="${id}" data-grid-column="email">Email ${id}</td></tr>`).join('')}</tbody></table>`
   document.body.append(root)
   const messages: Array<typeof Message.Type> = []
@@ -90,11 +89,13 @@ describe('DataTable browser interaction bridge', () => {
   })
   it('reorders a column from its portalled menu using Alt and arrow keys', () => {
     const { root, messages } = fixture()
+    const column = 'display\u001fname'
+    root.setAttribute('data-grid-columns', JSON.stringify([column, 'email']))
     const menu = document.createElement('div')
     menu.id = `${root.id}-view-menu`
     const item = document.createElement('div')
-    item.dataset.gridColumnMenuRow = 'name'
-    item.dataset.gridColumn = 'name'
+    item.dataset.gridColumnMenuRow = column
+    item.dataset.gridColumn = column
     item.dataset.gridDrag = 'column-menu'
     item.tabIndex = 0
     menu.append(item)
@@ -107,7 +108,7 @@ describe('DataTable browser interaction bridge', () => {
     })
     item.dispatchEvent(key)
     expect(key.defaultPrevented).toBe(true)
-    expect(messages).toEqual([Message.ColumnOrderChanged({ ids: ['email', 'name'] })])
+    expect(messages).toEqual([Message.ColumnOrderChanged({ ids: ['email', column] })])
   })
   it('closes a collapsible search on Escape before outer handlers run', () => {
     const { root, messages } = fixture()

@@ -13,6 +13,8 @@ export const NavItemConfig = Schema.Struct({
 export type NavItemConfig = typeof NavItemConfig.Type
 
 export interface NavMenuConfig {
+  /** Let each navigation item paint its current, hover and keyboard focus states. */
+  readonly itemFeedback?: boolean
   readonly hoverMode?: HoverMode
   readonly id: string
   readonly items: ReadonlyArray<NavItemConfig>

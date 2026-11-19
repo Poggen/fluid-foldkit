@@ -46,6 +46,7 @@ for (const [version, sha256] of Object.entries({
   '0.1.0-preview.0': '673c465c89670a9c89d37b83e238eb5bca547ac0228e3e3f1e9c0eb65c345f35',
   '0.1.0-preview.1': '7381c188004608fa8944009879849291d642bb656e3f25da0e8142e1b93f7913',
   '0.1.0-preview.2': '373de3698a7c6139f36ac95ec02ebe30be5f382bdbacbbe1f13be6939f15092d',
+  '0.1.0-preview.3': '03157b7031e19488a544e522c918686dc8740fb6ebabbc03e29434357b4c6103',
 })) {
   const archive = await fetch(
     `https://github.com/Poggen/fluid-foldkit/releases/download/registry-${version}/registry-${version}.json.gz`,

@@ -140,13 +140,17 @@ test('the latest first-painted control replaces an earlier intent', async ({ pag
   const release = await holdModules(page)
   try {
     await page.goto('/', { waitUntil: 'commit' })
+    await expect
+      .poll(() =>
+        page.evaluate(() => performance.getEntriesByName('first-contentful-paint').length),
+      )
+      .toBe(1)
     const customizer = page.locator('#site-customizer')
     const radius = customizer.getByRole('combobox', { name: 'Radius' })
     const theme = customizer.getByRole('combobox', { name: 'Theme' })
     for (const control of [radius, theme]) {
-      const box = await control.boundingBox()
-      if (box === null) throw new Error('Preference must be visible before its input')
-      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
+      await control.click()
+      await expect(control).toBeFocused()
       await expect(page.locator('html')).toHaveAttribute('data-showcase-input-pending', '')
     }
     release()

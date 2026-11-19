@@ -158,8 +158,8 @@ export const layer = Root.makeLayer({
               empty: inputs.empty ?? false,
               editable: inputs.editable ?? !home,
               draggable: inputs.rowReorder ?? (catalogue || scenario === 'reorder'),
-              resizableColumns: inputs.resizableColumns ?? !home,
-              reorderColumns: inputs.reorderColumns ?? true,
+              resizableColumns: inputs.resizableColumns ?? (!home && scenario !== 'directory'),
+              reorderColumns: inputs.reorderColumns ?? scenario !== 'directory',
               savedViews: inputs.savedViews ?? (catalogue || scenario === 'views'),
               cellAlignment: inputs.cellAlignment ?? 'auto',
               ...lines,
@@ -173,6 +173,16 @@ export const layer = Root.makeLayer({
                   }
                 : {}),
               renderCell: ({ row, column, value }) => {
+                if (scenario === 'directory' && column.id !== 'group' && typeof value === 'string')
+                  return h.a(
+                    [
+                      h.Href('/components/' + value.toLowerCase()),
+                      h.Class(
+                        'rounded-sm text-foreground underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-(--focus-ring)',
+                      ),
+                    ],
+                    [value],
+                  )
                 if (
                   scenario === 'keyboard' &&
                   column.id === 'keys' &&

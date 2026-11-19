@@ -31,6 +31,7 @@ export const renderDataTable: (
 ) {
   const focusedCell = Option.getOrNull(model.focusedCell)
   const rows = inputs.empty === true ? [] : dataTableRows(model)
+  const emptySource = inputs.empty === true || model.rows.length === 0
   const columns = dataTableColumns(model)
   const { icons } = resolvePresentation(inputs)
   const first = columns[0]?.id
@@ -56,8 +57,11 @@ export const renderDataTable: (
                         model.rows.filter((row) => row.parentId === undefined).length,
                       ),
                     ),
-                    title: inputs.emptyTitle ?? 'No results',
-                    ...(inputs.emptyDescription === undefined
+                    title:
+                      emptySource && inputs.emptyTitle !== undefined
+                        ? inputs.emptyTitle
+                        : 'No results',
+                    ...(!emptySource || inputs.emptyDescription === undefined
                       ? {}
                       : { description: inputs.emptyDescription }),
                   },
@@ -69,6 +73,10 @@ export const renderDataTable: (
                   TableRow(
                     {
                       index,
+                      hoverable:
+                        model.selectable ||
+                        (model.editable && inputs.editable !== false) ||
+                        inputs.draggable !== false,
                       context,
                       className: 'data-[grid-drop-target]:*:border-foreground',
                       attributes: [
@@ -76,7 +84,9 @@ export const renderDataTable: (
                         h.DataAttribute('grid-body-row', ''),
                         h.DataAttribute('grid-row', row.id),
                         h.DataAttribute('grid-parent', row.parentId ?? ''),
-                        h.AriaSelected(model.selectedIds.includes(row.id)),
+                        ...(model.selectable
+                          ? [h.AriaSelected(model.selectedIds.includes(row.id))]
+                          : []),
                       ],
                       children: [
                         ...(inputs.draggable === false
@@ -168,7 +178,7 @@ export const renderDataTable: (
                                 h.DataAttribute('grid-row', row.id),
                                 h.DataAttribute('grid-column', column.id),
                                 h.DataAttribute('grid-editable', String(editable)),
-                                h.AriaLabel(`${column.header} ${editable ? 'editable' : ''}`),
+                                ...(editable ? [h.AriaLabel(`${column.header} editable`)] : []),
                                 h.Style({
                                   ...dataTablePinStyle(model, column, inputs),
                                   ...(inputs.resizableColumns === false &&

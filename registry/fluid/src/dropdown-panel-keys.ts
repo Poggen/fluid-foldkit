@@ -5,6 +5,7 @@ import type { DropdownPanelObservation } from './dropdown-observation.js'
 interface PanelKeys {
   readonly element: HTMLElement
   readonly inline: boolean
+  readonly tabTrigger: HTMLElement | null
   readonly owned: (target: EventTarget | null) => boolean
   readonly search: () => HTMLInputElement | undefined
   readonly rows: () => ReadonlyArray<HTMLElement>
@@ -103,6 +104,7 @@ export const dropdownPanelKeys = (context: PanelKeys) => (event: KeyboardEvent) 
     return
   }
   if (event.key === 'Tab') {
+    if (!context.inline) context.tabTrigger?.focus({ preventScroll: true })
     context.send(
       DropdownObservation.Dismissed({
         restore: false,

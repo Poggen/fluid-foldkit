@@ -26,6 +26,7 @@ import { documentationRuntime } from '../documentation-runtime'
 import { target } from '../motion'
 
 const dataScenes = [
+  'directory',
   'team',
   'filters',
   'views',
@@ -41,6 +42,10 @@ const dataScenes = [
   'keyboard',
 ] as const
 const tableSections: Record<(typeof dataScenes)[number], readonly [string, string]> = {
+  directory: [
+    'Read-only directory',
+    'Follow a component link or use a column’s options to change the view.',
+  ],
   team: ['Selection and actions', 'Select team members to change their role or status together.'],
   filters: ['Filters', 'Combine status, amount, customer and due-date filters on the invoices.'],
   views: [

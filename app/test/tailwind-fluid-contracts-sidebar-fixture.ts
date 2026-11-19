@@ -75,7 +75,11 @@ const PrimaryNav = SidebarServerBlock.makeRequiredFieldBinding(NavMenuBlock, {
 })
 const SecondaryNav = SidebarServerBlock.makeRequiredFieldBinding(NavMenuBlock, {
   field: 'secondaryNav',
-  init: { contextToArgs: () => [{ id: 'server-secondary-nav', items: navItems }] },
+  init: {
+    contextToArgs: () => [
+      { id: 'server-secondary-nav', items: navItems, itemFeedback: true, activeSlug: '#nested' },
+    ],
+  },
 }).withOutMessagePolicy({
   fold: SidebarServerBlock.makeOutMessageFold(NavMenuBlock, {
     Selected: SidebarServerBlock.makeNoopStep,
@@ -140,7 +144,7 @@ const SidebarServerLayer = SidebarServerBlock.makeLayer({
               highlight: preserveNode,
               content: () => [
                 h.div(
-                  [h.DataAttribute('app-inset', 'secondary')],
+                  [h.DataAttribute('app-inset', 'secondary'), h.Style({ '--active': '#24416f' })],
                   [
                     h.block(
                       SecondaryNav.embedView({

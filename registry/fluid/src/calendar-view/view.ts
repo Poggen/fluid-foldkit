@@ -244,6 +244,7 @@ function renderMonths(
     [
       h.Class(
         cn(
+          'overflow-x-clip',
           stacked
             ? 'pointer-events-none -mx-1 -mb-6 -mt-4 flex flex-col gap-4 px-1 pb-6 pt-4 [&>[data-slot=calendar-month]]:pointer-events-auto'
             : cn('-mx-2 -mb-2 flex flex-row gap-x-6 px-2 pb-2', inputs.fill && 'min-w-0 flex-1'),

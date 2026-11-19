@@ -1,4 +1,4 @@
-import type { DataTableObservedMessage } from './data-table-observation.js'
+import { gridIds, type DataTableObservedMessage } from './data-table-observation.js'
 /* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
 /* @license See NOTICE */
 import type { Message } from './data-table-definition.js'
@@ -45,6 +45,13 @@ export const observeDataTableKeyboard: (
       return
     if (root.getAttribute('aria-disabled') === 'true') return
     const target = event.target
+    if (
+      ['Enter', ' ', 'F2'].includes(event.key) &&
+      target.closest(
+        'a,button,input,select,textarea,[contenteditable="true"],[role="button"],[role="checkbox"],[role="switch"],[role="radio"]',
+      )
+    )
+      return
     if (
       target.closest('button,a') &&
       !target.closest('[data-grid-cell]') &&
@@ -102,8 +109,9 @@ export const observeDataTableKeyboard: (
       x = cells.indexOf(cell),
       y = rows.indexOf(row),
       rowId = row.dataset.gridRow ?? ''
-    const selected = root.getAttribute('data-grid-selected')?.split('\u001f').filter(Boolean) ?? []
+    const selected = gridIds(root, 'data-grid-selected')
     if (event.altKey && ['ArrowUp', 'ArrowDown'].includes(event.key)) {
+      if (!root.querySelector('[data-grid-drag="row"]')) return
       const ids = selected.includes(rowId) ? selected : [rowId]
       const ordered = rows.map((item) => item.dataset.gridRow ?? '')
       const positions = ids.map((id) => ordered.indexOf(id)).filter((index) => index >= 0)

@@ -1,4 +1,4 @@
-import type { DataTableObservedMessage } from './data-table-observation.js'
+import { gridIds, type DataTableObservedMessage } from './data-table-observation.js'
 /* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
 /* @license See NOTICE */
 import type { Message } from './data-table-definition.js'
@@ -158,8 +158,7 @@ export const observeDataTableDrag: (
       const current = state
       if (current.target) {
         if (current.kind === 'row') {
-          const selected =
-            root.getAttribute('data-grid-selected')?.split('\u001f').filter(Boolean) ?? []
+          const selected = gridIds(root, 'data-grid-selected')
           const targetId = current.target.dataset.gridRow ?? ''
           emit(
             messages.RowsMoved({
@@ -174,7 +173,7 @@ export const observeDataTableDrag: (
             }),
           )
         } else {
-          const ids = root.getAttribute('data-grid-columns')?.split('\u001f') ?? []
+          const ids = gridIds(root, 'data-grid-columns')
           const from = ids.indexOf(current.id),
             to = ids.indexOf(current.target.dataset.gridColumn ?? '')
           if (from >= 0 && to >= 0) {
@@ -210,8 +209,7 @@ export const observeDataTableDrag: (
     if (handle.dataset.gridDrag === 'row' && ['ArrowUp', 'ArrowDown'].includes(event.key)) {
       const rows = [...root.querySelectorAll<HTMLElement>('[data-grid-body-row]')]
       const sourceId = handle.dataset.gridRow ?? ''
-      const selected =
-        root.getAttribute('data-grid-selected')?.split('\u001f').filter(Boolean) ?? []
+      const selected = gridIds(root, 'data-grid-selected')
       const ids = selected.includes(sourceId) ? selected : [sourceId]
       const positions = rows.flatMap((row, index) =>
         ids.includes(row.dataset.gridRow ?? '') ? [index] : [],
@@ -233,7 +231,7 @@ export const observeDataTableDrag: (
       (handle.dataset.gridDrag === 'column' && ['ArrowLeft', 'ArrowRight'].includes(event.key)) ||
       (handle.dataset.gridDrag === 'column-menu' && ['ArrowUp', 'ArrowDown'].includes(event.key))
     ) {
-      const ids = root.getAttribute('data-grid-columns')?.split('\u001f') ?? [],
+      const ids = gridIds(root, 'data-grid-columns'),
         id = handle.dataset.gridColumn ?? '',
         from = ids.indexOf(id),
         to = from + (event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : -1)

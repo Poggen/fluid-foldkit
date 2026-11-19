@@ -321,6 +321,7 @@ export const observeDropdownPanel: (
                   const panelKey = dropdownPanelKeys({
                     element,
                     inline: input.inline,
+                    tabTrigger: document.getElementById(`${input.rootId}-trigger`),
                     owned,
                     search,
                     rows,

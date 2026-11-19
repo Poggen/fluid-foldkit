@@ -70,7 +70,7 @@ export const TableRow: <Message>(props: TableRowProps<Message>, h: HtmlBuilder<M
               props.className,
             ),
           ),
-          ...(index === undefined
+          ...(index === undefined || props.hoverable === false
             ? []
             : [
                 h.DataAttribute('fluid-hover-index', String(index)),
@@ -201,6 +201,7 @@ export interface TablePartProps<Message> {
 }
 
 export interface TableRowProps<Message> extends TablePartProps<Message> {
+  readonly hoverable?: boolean
   readonly keepRule?: boolean
   readonly index?: number
   readonly context?: TableContext

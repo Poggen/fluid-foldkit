@@ -35,7 +35,8 @@ export const PopupAuthorityLayer = Layer.sync(PopupAuthority, () => {
       const document = element.ownerDocument
       let returnAnchor = anchor
       pendingReturns.delete(anchor)
-      const previousFocus = popupActiveElement(document)
+      const active = popupActiveElement(document)
+      const previousFocus = active && popupContains(element, active) ? null : active
       const history = (histories.get(document) ?? []).filter((entry) => entry.deref()?.isConnected)
 
       if (previousFocus && previousFocus.localName !== 'body')

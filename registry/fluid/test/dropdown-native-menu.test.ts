@@ -104,6 +104,7 @@ describe.each(['Enter', ' '])('Base Dropdown keyboard activation: %s', (key) => 
 
     const handler = dropdownPanelKeys({
       element: panel,
+      tabTrigger: null,
       inline: false,
       owned: (target) => target === row,
       search: () => [...panel.querySelectorAll<HTMLInputElement>('input')].at(-1),

@@ -39,6 +39,10 @@ export const NavItem: <Message>(props: NavItemProps<Message>, h: HtmlBuilder<Mes
                   ? 'h-7'
                   : 'h-8',
               shape.item,
+              props.itemFeedback && (current ? 'bg-active' : 'hover:bg-hover'),
+              props.itemFeedback &&
+                props.focusRing !== false &&
+                'focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--focus-ring)',
               props.sidebar ? 'peer/menu-button pl-2' : 'px-3',
               props.sidebar && props.sidebarGutter === undefined && 'pr-2',
               props.sidebarGutter !== undefined &&
@@ -198,6 +202,8 @@ export interface NavItemProps<Message> extends Presentation {
   readonly index: number
   readonly current: boolean
   readonly hovered: boolean
+  readonly itemFeedback?: boolean
+  readonly focusRing?: boolean
   readonly tabbable: boolean
   readonly kind?: 'link' | 'button' | 'action'
   readonly sidebar?: boolean | undefined

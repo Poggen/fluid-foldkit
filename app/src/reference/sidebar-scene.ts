@@ -116,6 +116,7 @@ export const layer = Root.makeLayer({
                 id: `${config.id}-nav-${nav.key.toLowerCase().replaceAll(' ', '-')}`,
                 items: nav.items,
                 activeSlug: config.kind === 'layout' ? 'Chat' : null,
+                itemFeedback: config.kind === 'layout' && config.variant === 'inset',
                 ariaLabel: nav.key,
               },
             ],

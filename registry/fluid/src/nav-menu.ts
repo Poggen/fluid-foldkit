@@ -29,6 +29,7 @@ const Model = Schema.Struct({
   ariaLabel: Schema.String,
   focused: Schema.OptionFromNullOr(Schema.Finite),
   keyboard: Schema.Boolean,
+  itemFeedback: Schema.Boolean,
   indicators: Schema.Array(NavIndicator),
   indicatorGeneration: Schema.Natural,
   hover: HoverBlock.Model,
@@ -56,6 +57,7 @@ const InMessage = defineInMessageUnion({
 })
 
 const Config = Schema.Struct({
+  itemFeedback: Schema.optionalKey(Schema.Boolean),
   hoverMode: Schema.optionalKey(HoverMode),
   id: Schema.String,
   items: Schema.Array(NavItemConfig),
@@ -79,6 +81,7 @@ export const NavMenuBlock = Block.make('NavMenu', {
 })
 
 const SynchronizeIndicators = NavMenuBlock.makeFieldsStep((model) => {
+  if (model.itemFeedback) return {}
   const next = synchronizeNavIndicators({
     ...model,
     activeSlug: Option.getOrNull(model.activeSlug),
@@ -138,7 +141,9 @@ const Hover = HoverRequests.withOutMessagePolicy({
 
         return Update.combineSteps([
           unavailable ? HoverRequests.requestClear() : NavMenuBlock.makeNoopStep(),
-          Highlight.informOfSource(targetKey === undefined ? source : { ...source, targetKey }),
+          model.itemFeedback
+            ? NavMenuBlock.makeNoopStep()
+            : Highlight.informOfSource(targetKey === undefined ? source : { ...source, targetKey }),
           SynchronizeIndicators,
         ])
       }),
@@ -167,6 +172,7 @@ const init = NavMenuComposition.makeInit((config: NavMenuConfig) => ({
   childInitContext: config,
   model: {
     id: config.id,
+    itemFeedback: config.itemFeedback ?? false,
     items: config.items,
     activeSlug: Option.fromNullishOr(config.activeSlug),
     ariaLabel: config.ariaLabel ?? 'Navigation',
@@ -321,6 +327,7 @@ const view = NavMenuComposition.makeView.withInputs<NavMenuViewInputs>((model, i
                       {
                         items: model.items,
                         nativeItems: items,
+                        itemFeedback: model.itemFeedback,
                         inputs,
                         snapshot,
                         layout: model.hover.rowLayout,

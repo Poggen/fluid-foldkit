@@ -262,6 +262,8 @@ export interface DataTableViewInputs extends Presentation {
   readonly searchColumn?: string
   readonly searchCollapsible?: boolean
   readonly searchWidth?: number
+  /** Renders parent-owned controls between the toolbar and filter chips. */
+  readonly renderScope?: () => Html
   readonly renderCell?: (cell: {
     readonly row: DataTableRow
     readonly column: DataTableColumn

@@ -172,6 +172,7 @@ export const navMenuRows: <Message>(
   props: {
     readonly items: ReadonlyArray<NavItemConfig>
     readonly nativeItems: ReadonlyArray<ItemInfo>
+    readonly itemFeedback: boolean
     readonly inputs: NavMenuViewInputs
     readonly snapshot: HoverSnapshot
     readonly layout: Option.Option<HoverRowLayout>
@@ -182,6 +183,7 @@ export const navMenuRows: <Message>(
   props: {
     readonly items: ReadonlyArray<NavItemConfig>
     readonly nativeItems: ReadonlyArray<ItemInfo>
+    readonly itemFeedback: boolean
     readonly inputs: NavMenuViewInputs
     readonly snapshot: HoverSnapshot
     readonly layout: Option.Option<HoverRowLayout>
@@ -254,7 +256,9 @@ export const navMenuRows: <Message>(
           item: config,
           index: item.index,
           current: item.isCurrent,
-          hovered: snapshot.activeIndex === item.index,
+          hovered: !props.itemFeedback && snapshot.activeIndex === item.index,
+          itemFeedback: props.itemFeedback,
+          focusRing: inputs.focusRing !== false,
           tabbable,
           actionCount: actions.entries.length,
           ...(inputs.sidebar

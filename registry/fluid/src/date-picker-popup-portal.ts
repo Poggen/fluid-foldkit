@@ -1,3 +1,4 @@
+import { popupActiveElement, popupContains } from './date-picker-popup-focus.js'
 import type { PopupConfig } from './date-picker-popup-definition.js'
 
 export const findPopupAnchor: (document: Document, config: PopupConfig) => HTMLElement | null =
@@ -32,7 +33,15 @@ export function mountPopupPortal(
   const portal = document.createElement('div')
   portal.dataset.datePickerPortal = config.id
   destination.append(portal)
-  portal.append(element)
+  if (typeof portal.moveBefore === 'function' && portal.isConnected && element.isConnected) {
+    portal.moveBefore(element, null)
+  } else {
+    const focused = popupActiveElement(document)
+    portal.append(element)
+    if (focused instanceof window.HTMLElement && popupContains(element, focused)) {
+      focused.focus({ preventScroll: true })
+    }
+  }
   element.classList.add(
     'left-0',
     'top-0',

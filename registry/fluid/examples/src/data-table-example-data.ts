@@ -24,6 +24,7 @@ import { keyboard } from './data-table-example-keyboard.js'
 export const Scenario = Schema.Literals([
   'showcase',
   'catalogue',
+  'directory',
   'team',
   'filters',
   'views',
@@ -42,6 +43,7 @@ export type Scenario = typeof Scenario.Type
 export const titles: Record<Scenario, string> = {
   showcase: 'Components',
   catalogue: 'Components',
+  directory: 'Component directory',
   team: 'Team',
   filters: 'Invoices',
   views: 'People',
@@ -165,6 +167,18 @@ export const dataset: (id: string, scenario: Scenario) => DataTableConfig = func
     ...settings,
   })
   switch (scenario) {
+    case 'directory':
+      return make(
+        [
+          { id: 'forms', values: { group: 'Forms', component: 'Checkbox', related: 'Switch' } },
+          {
+            id: 'navigation',
+            values: { group: 'Navigation', component: 'Breadcrumb', related: 'Tabs' },
+          },
+        ],
+        [col('group', 'Group'), col('component', 'Component'), col('related', 'Related')],
+        { editable: false, rowActions: [], selectionActions: [] },
+      )
     case 'catalogue':
       return make(catalogue, componentColumns, {
         selectable: true,

@@ -10,7 +10,7 @@ import { hoverHighlightAnimation } from './hover-highlight.js'
 import { DataTableToolbar, DataTablePagination } from './data-table-toolbar.js'
 import { DataTableFilterChips } from './data-table-filters-view.js'
 import { renderDataTable } from './data-table-render.js'
-import { dataTableRows, dataTableFilteredRows } from './data-table-state.js'
+import { dataTableRows } from './data-table-state.js'
 import { resolvePresentation } from './presentation.js'
 
 export const makeDataTableView = (motion: MotionScope) => {
@@ -26,14 +26,8 @@ export const makeDataTableView = (motion: MotionScope) => {
           h.Class(`relative flex min-w-0 flex-col gap-3 ${inputs.className ?? ''}`),
           h.DataAttribute('fluid-data-table', ''),
           h.DataAttribute('grid-header-menu', menu?.kind === 'column' ? menu.id : ''),
-          h.DataAttribute('grid-columns', model.columnOrder.join('\u001f')),
-          h.DataAttribute('grid-selected', model.selectedIds.join('\u001f')),
-          h.DataAttribute(
-            'grid-all-rows',
-            dataTableFilteredRows(model)
-              .map((row) => row.id)
-              .join('\u001f'),
-          ),
+          h.DataAttribute('grid-columns', JSON.stringify(model.columnOrder)),
+          h.DataAttribute('grid-selected', JSON.stringify(model.selectedIds)),
           h.AriaBusy(inputs.loading ?? false),
           h.AriaDisabled(model.disabled),
           h.OnMount(ObserveDataTable()),
@@ -51,9 +45,21 @@ export const makeDataTableView = (motion: MotionScope) => {
               )
             : null,
           inputs.showToolbar === false ? null : DataTableToolbar(model, inputs, h, motion),
+          inputs.renderScope?.() ?? null,
           inputs.showFilters === false ? null : DataTableFilterChips(model, h, inputs),
           h.div(
-            [h.Class('relative min-w-0 overflow-x-auto'), h.DataAttribute('grid-scroll', '')],
+            [
+              h.Class(
+                [
+                  '@container relative min-w-0 overflow-x-auto [--table-view-w:100cqi]',
+                  '[--table-edge:color-mix(in_srgb,var(--foreground)_18%,transparent)]',
+                  '[background-image:linear-gradient(to_right,var(--background)_50%,transparent),linear-gradient(to_left,var(--background)_50%,transparent),linear-gradient(to_right,var(--table-edge),transparent),linear-gradient(to_left,var(--table-edge),transparent)]',
+                  '[background-position:left,right,left,right] [background-size:1.5rem_100%,1.5rem_100%,0.65rem_100%,0.65rem_100%]',
+                  'bg-no-repeat [background-attachment:local,local,scroll,scroll]',
+                ].join(' '),
+              ),
+              h.DataAttribute('grid-scroll', ''),
+            ],
             [
               h.block(
                 Actions.embedView({

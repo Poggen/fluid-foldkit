@@ -108,15 +108,16 @@ export const renderDataTableHead: (
                 : []),
               ...columns.map((column, index) => {
                 const sort = model.sorting.find((entry) => entry.id === column.id)
+                const fixed = inputs.reorderColumns === false && inputs.resizableColumns === false
                 const ownWidth = model.columnWidths[column.id] ?? column.width
                 const width = ownWidth ?? 166
                 const sized = inputs.resizableColumns !== false || ownWidth !== undefined
                 return TableHead(
                   {
                     context,
-                    hoverIndex: index,
+                    ...(fixed ? {} : { hoverIndex: index }),
                     ...(inputs.size === undefined ? {} : { size: inputs.size }),
-                    className: 'relative select-none data-[grid-drop-target]:bg-hover',
+                    className: 'group/column relative select-none data-[grid-drop-target]:bg-hover',
                     attributes: [
                       h.Key(column.id),
                       h.Scope('col'),
@@ -147,7 +148,8 @@ export const renderDataTableHead: (
                                 h.DataAttribute('grid-column', column.id),
                                 h.DataAttribute('grid-action', 'header'),
                                 h.Class(
-                                  'flex min-w-0 flex-1 cursor-pointer touch-none items-center gap-1.5 text-left outline-none focus-visible:underline',
+                                  'flex min-w-0 flex-1 cursor-pointer touch-none items-center gap-1.5 text-left outline-none focus-visible:underline' +
+                                    (fixed ? ' rounded-md hover:bg-hover' : ''),
                                 ),
                               ],
                               [
@@ -174,7 +176,7 @@ export const renderDataTableHead: (
                               h.AriaHasPopup('menu'),
                               h.AriaExpanded(menu?.kind === 'column' && menu.id === column.id),
                               h.Class(
-                                'flex size-6 shrink-0 items-center justify-center rounded-md opacity-0 outline-none transition-opacity hover:bg-hover focus-visible:opacity-100 group-hover/row:opacity-100',
+                                'flex size-6 shrink-0 items-center justify-center rounded-md opacity-0 outline-none transition-opacity hover:bg-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-(--focus-ring) focus-visible:opacity-100 group-hover/column:opacity-100 group-focus-within/column:opacity-100',
                               ),
                               h.OnClick(
                                 Message.MenuChanged({

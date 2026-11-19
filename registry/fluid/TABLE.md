@@ -12,4 +12,8 @@ Pass the content callback's Table context to `TableHeader`, `TableHead`, and `Ta
 
 `selectionMirrorIds` names empty HTML hosts in matching coordinate systems. Table owns inert, ID-free presentation copies in those hosts; hosts must not render competing children. Mirrors copy the primary committed styles and share its single selection timeline. Removing a host or unmounting the child releases its copies.
 
-`TableEmpty` reserves three rows by default. Its height uses the Table's line height, vertical padding, and one divider pixel per row. Set `--table-view-w` on the scroll viewport to keep empty content within its visible width; it falls back to 100% and remains sticky at the left edge.
+`TableEmpty` reserves three rows by default. Its height uses the Table's line height, vertical padding, and one divider pixel per row. DataTable sizes empty content to its scroll viewport, including when filters hide every row. When composing a standalone Table in a horizontal scroll container, apply `@container [--table-view-w:100cqi]` to that container to get the same behavior.
+
+DataTable uses `emptyTitle` and `emptyDescription` when its source is empty or the caller sets `empty`. When search or filters hide every source row, the table displays “No results”.
+
+In a read-only DataTable, set `selectable`, `editable`, and `draggable` to false so links and buttons own their feedback. To give fixed headers the same behavior, turn off `reorderColumns` and `resizableColumns`.
