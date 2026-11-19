@@ -33,7 +33,7 @@ for (const state of ['empty dataset', 'unmatched filter'] as const) {
       page,
       '/components/data-table',
       fixture,
-      `<section style="margin:16px"><main id="style-contract-root" ${state === 'empty dataset' ? 'data-no-descriptors' : ''}></main></section>`,
+      `<section data-table-host style="margin:16px"><main id="style-contract-root" ${state === 'empty dataset' ? 'data-no-descriptors' : ''}></main></section>`,
     )
     const scroll = page.locator('[data-grid-scroll]')
     const populated = page.getByRole('button', { name: 'Battery temperature' })
@@ -51,7 +51,7 @@ for (const state of ['empty dataset', 'unmatched filter'] as const) {
     if (state === 'unmatched filter') {
       for (const text of sourceCopy) await expect(scroll.getByText(text)).toHaveCount(0)
     }
-    const hostWidth = await page.locator('#style-contract-root').evaluate((el) => el.clientWidth)
+    const hostWidth = await page.locator('[data-table-host]').evaluate((el) => el.clientWidth)
     for (const end of [false, true]) {
       const viewport = await scroll.evaluate((el, right) => {
         el.scrollLeft = right ? el.scrollWidth : 0
