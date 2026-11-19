@@ -9,51 +9,39 @@ import {
   type DataTableModel,
   type DataTableViewInputs,
 } from './data-table-definition.js'
+import { addFilterKey, operatorKey, filterChip } from './data-table-filter-options.js'
+import { FilterSelects } from './data-table-filter-selects.js'
+import type { MotionScope } from './motion.js'
 import { resolvePresentation } from './presentation.js'
 
 type Chip = Exclude<DataTableFilterValue, string>
 const segment =
   'relative z-[1] inline-flex h-full min-w-0 items-center gap-1 px-1 outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)] transition-[background-color] duration-80 aria-expanded:bg-active'
 
-export const emptyColumnFilter: (column: DataTableColumn) => Chip = function emptyColumnFilter(
-  column: DataTableColumn,
+function filterSelect(
+  model: DataTableModel,
+  key: string,
+  ariaLabel: string,
+  h: DataTableViewBuilder,
+  inputs: DataTableViewInputs,
+  motion: MotionScope,
 ) {
-  const type = typeof column.filter === 'string' ? column.filter : column.editor?.type
-  switch (type) {
-    case 'number':
-      return { kind: 'number' }
-    case 'date':
-      return { kind: 'date' }
-    case 'select':
-    case 'tags':
-    case 'options':
-      return { kind: 'options', values: [] }
-    default:
-      return { kind: 'text', query: '' }
-  }
-}
-
-const filterPicker = (model: DataTableModel, h: DataTableViewBuilder) => {
-  const available = model.columns.filter(
-    (column) => column.filter !== false && !model.filters.some((filter) => filter.id === column.id),
-  )
-  return h.select(
-    [
-      h.AriaLabel('Add a filter'),
-      h.Disabled(available.length === 0 || model.disabled),
-      h.Class('max-w-36 cursor-pointer bg-transparent text-caption text-muted-foreground'),
-      h.Value(''),
-      h.OnInput((id) => {
-        const column = available.find((option) => option.id === id)
-        return column
-          ? Message.FilterChanged({ id, value: emptyColumnFilter(column) })
-          : Message.MenuChanged({ menu: null })
-      }),
-    ],
-    [
-      h.option([h.Value(''), h.Disabled(true), h.Selected(true)], ['Add filter']),
-      ...available.map((column) => h.option([h.Value(column.id)], [column.header])),
-    ],
+  const entry = model.filterSelects.find((entry) => entry.key === key)
+  if (!entry) return h.empty
+  return h.block(
+    FilterSelects.embedView({
+      key,
+      slotId: entry.model.id,
+      model: entry.model,
+      viewInputs: {
+        ...inputs,
+        className: 'max-w-36',
+        ariaLabel,
+        placeholder: 'Add filter',
+        variant: 'borderless',
+        animate: motion.node,
+      },
+    }),
   )
 }
 
@@ -61,12 +49,15 @@ export const DataTableFilters: (
   model: DataTableModel,
   h: DataTableViewBuilder,
   inputs: DataTableViewInputs,
+  motion: MotionScope,
 ) => Html = function DataTableFilters(
   model: DataTableModel,
   h: DataTableViewBuilder,
   inputs: DataTableViewInputs,
+  motion: MotionScope,
 ) {
-  if (model.filters.length === 0) return filterPicker(model, h)
+  if (model.filters.length === 0)
+    return filterSelect(model, addFilterKey, 'Add a filter', h, inputs, motion)
   return Button(
     {
       ...inputs,
@@ -83,36 +74,24 @@ export const DataTableFilters: (
   )
 }
 
-function operator<T extends string>(
-  h: DataTableViewBuilder,
-  label: string,
-  current: T,
-  choices: readonly T[],
-  change: (value: T) => typeof Message.Type,
-) {
-  return h.select(
-    [
-      h.AriaLabel(label),
-      h.Class(segment),
-      h.Value(current),
-      h.OnInput((word) => change(choices.find((choice) => choice === word) ?? current)),
-    ],
-    choices.map((choice) => h.option([h.Value(choice), h.Selected(choice === current)], [choice])),
-  )
-}
-
 const chipFields: (
   model: DataTableModel,
   h: DataTableViewBuilder,
   column: DataTableColumn,
   value: Chip,
+  inputs: DataTableViewInputs,
+  motion: MotionScope,
 ) => Html[] = function chipFields(
   model: DataTableModel,
   h: DataTableViewBuilder,
   column: DataTableColumn,
   value: Chip,
+  inputs: DataTableViewInputs,
+  motion: MotionScope,
 ) {
   const label = column.header
+  const operator = () =>
+    filterSelect(model, operatorKey(column.id), label + ' operator', h, inputs, motion)
   const change = (next: Chip) => Message.FilterChanged({ id: column.id, value: next })
   const field = (name: string, type: string, text: string, accept: (input: string) => Chip) =>
     h.input([
@@ -126,22 +105,7 @@ const chipFields: (
     case 'text': {
       const op = value.op ?? 'contains'
       return [
-        operator(
-          h,
-          `${label} operator`,
-          op,
-          [
-            'contains',
-            'does not contain',
-            'is',
-            'is not',
-            'starts with',
-            'ends with',
-            'is empty',
-            'is not empty',
-          ],
-          (next) => change({ ...value, op: next }),
-        ),
+        operator(),
         ...(op === 'is empty' || op === 'is not empty'
           ? []
           : [field(`${label} ${op}`, 'text', value.query, (query) => ({ ...value, query }))]),
@@ -162,9 +126,7 @@ const chipFields: (
       const dateField = (key: 'from' | 'to') =>
         field(`${label} ${key}`, 'date', value[key] ?? '', (text) => ({ ...value, [key]: text }))
       return [
-        operator(h, `${label} operator`, op, ['between', 'before', 'after'], (next) =>
-          change({ ...value, op: next }),
-        ),
+        operator(),
         ...(op === 'before' ? [] : [dateField('from')]),
         ...(op === 'after' ? [] : [dateField('to')]),
       ]
@@ -181,9 +143,7 @@ const chipFields: (
           ),
         ].map((item) => ({ value: item, label: item }))
       return [
-        operator(h, `${label} operator`, value.op ?? 'is', ['is', 'is not'], (next) =>
-          change({ ...value, op: next }),
-        ),
+        operator(),
         h.details(
           [h.Class('relative')],
           [
@@ -238,10 +198,12 @@ export const DataTableFilterChips: (
   model: DataTableModel,
   h: DataTableViewBuilder,
   inputs: DataTableViewInputs,
+  motion: MotionScope,
 ) => Html = function DataTableFilterChips(
   model: DataTableModel,
   h: DataTableViewBuilder,
   inputs: DataTableViewInputs,
+  motion: MotionScope,
 ) {
   const { shape, size } = resolvePresentation(inputs)
   if (model.filtersHidden || !model.filters.length) return h.empty
@@ -251,10 +213,7 @@ export const DataTableFilterChips: (
       ...model.filters.flatMap((filter) => {
         const column = model.columns.find((candidate) => candidate.id === filter.id)
         if (!column) return []
-        const value =
-          typeof filter.value === 'string'
-            ? { kind: 'text' as const, query: filter.value }
-            : filter.value
+        const value = filterChip(filter.value)
         return [
           h.keyed('div')(
             column.id,
@@ -268,7 +227,7 @@ export const DataTableFilterChips: (
             ],
             [
               h.span([h.Class('pl-1 font-medium')], [column.header]),
-              ...chipFields(model, h, column, value),
+              ...chipFields(model, h, column, value, inputs, motion),
               Button(
                 {
                   ...inputs,
@@ -286,7 +245,7 @@ export const DataTableFilterChips: (
           ),
         ]
       }),
-      filterPicker(model, h),
+      filterSelect(model, addFilterKey, 'Add a filter', h, inputs, motion),
     ],
   )
 }

@@ -11,6 +11,7 @@ import type { Html } from 'foldkit/html'
 import type { Composition } from './data-table-composition.js'
 export type DataTableViewBuilder = Block.ViewBuilderFor<typeof Composition>
 import { defineInMessageUnion, defineMessageUnion } from 'foldkit/message'
+import { SelectBlock } from './select.js'
 import { TabsBlock } from './tabs.js'
 import { TableBlock } from './table.js'
 import { DropdownMenuBlock } from './dropdown.js'
@@ -140,6 +141,7 @@ const Model = Schema.Struct({
     }),
   ),
   actions: DataTableActionsBlock.Model,
+  filterSelects: Schema.Array(SelectBlock.Instance),
   editors: DataTableEditorsBlock.Model,
   table: TableBlock.Model,
   viewTabs: TabsBlock.Model,
@@ -315,6 +317,11 @@ export const DataTableBlock = Block.make('DataTable', {
     RequestedUndo: { outMessage: OutMessage.RowsChanged },
     RequestedRedo: { outMessage: OutMessage.RowsChanged },
   },
+})
+export const RawFilterSelects = DataTableBlock.makeKeyedArrayBinding(SelectBlock, {
+  field: 'filterSelects',
+  key: 'key',
+  childField: 'model',
 })
 export const Definition = DataTableBlock
 export const Table = DataTableBlock.makeRequiredFieldBinding(TableBlock, {

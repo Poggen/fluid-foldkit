@@ -72,7 +72,8 @@ export const ObserveDataTable = DataTableBlock.makeMountStream('ObserveDataTable
       )
   },
 })
+import { FilterSelects } from './data-table-filter-selects.js'
 export const Composition = DataTableBlock.makeComposition({
-  bindings: [Table, ViewTabs, HeaderMenu, ViewMenu, Actions, Editors],
+  bindings: [Table, ViewTabs, HeaderMenu, ViewMenu, Actions, Editors, FilterSelects],
   mounts: [ObserveDataTable],
 })

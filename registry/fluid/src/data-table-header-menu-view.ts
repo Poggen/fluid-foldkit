@@ -12,7 +12,7 @@ import type {
 } from './data-table-definition.js'
 import { DropdownItem } from './dropdown-item.js'
 import type { MotionScope } from './motion.js'
-import { emptyColumnFilter } from './data-table-filters-view.js'
+import { emptyColumnFilter } from './data-table-filter-options.js'
 
 export const DataTableHeaderMenu: (
   model: DataTableModel,

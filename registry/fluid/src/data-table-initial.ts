@@ -4,7 +4,7 @@ export const initialDataTable: (
   config: DataTableConfig,
 ) => Omit<
   DataTableModel,
-  'table' | 'viewTabs' | 'headerMenu' | 'viewMenu' | 'actions' | 'editors'
+  'filterSelects' | 'table' | 'viewTabs' | 'headerMenu' | 'viewMenu' | 'actions' | 'editors'
 > = (config: DataTableConfig) => ({
   id: config.id,
   viewName: '',

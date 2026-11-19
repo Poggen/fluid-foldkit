@@ -46,7 +46,7 @@ export const makeDataTableView = (motion: MotionScope) => {
             : null,
           inputs.showToolbar === false ? null : DataTableToolbar(model, inputs, h, motion),
           inputs.renderScope?.() ?? null,
-          inputs.showFilters === false ? null : DataTableFilterChips(model, h, inputs),
+          inputs.showFilters === false ? null : DataTableFilterChips(model, h, inputs, motion),
           h.div(
             [
               h.Class(

@@ -2,6 +2,7 @@ import { Effect, Schema, Layer, Option } from 'effect'
 import { it } from '@effect/vitest'
 import { describe, expect } from 'vitest'
 import { Story } from 'foldkit'
+import { HoverBlock, test as hoverTest } from '../src/hover.js'
 import { TableBlock, test as tableTest } from '../src/table.js'
 import { SelectionBackgroundsBlock, test as selectionTest } from '../src/selection-backgrounds.js'
 import {
@@ -12,6 +13,10 @@ import {
   dataTablePageCount,
 } from '../src/data-table.js'
 import { DropdownResourcesServerLayer } from '../src/dropdown-resources.js'
+const settleFilterHover = Story.Command.resolve(
+  hoverTest.ControlHover,
+  HoverBlock.Message.CompletedControl(),
+)
 const subject = {
   block: DataTableBlock,
   layer: DataTableLayer.pipe(Layer.provide(DropdownResourcesServerLayer)),
@@ -134,7 +139,9 @@ describe('DataTable', () => {
         subject,
         init(),
         Story.message(Message.FilterChanged({ id: 'name', value: { kind: 'text', query: 'a' } })),
+        settleFilterHover,
         Story.message(Message.FilterChanged({ id: 'amount', value: { kind: 'number', min: 2 } })),
+        settleFilterHover,
         Story.message(Message.FilterChanged({ id: 'name', value: { kind: 'text', query: 'ad' } })),
         Story.model((model) => {
           expect(model.filters.map((filter) => filter.id)).toEqual(['name', 'amount'])
@@ -142,7 +149,9 @@ describe('DataTable', () => {
         }),
         Story.message(Message.FiltersVisibilityChanged()),
         Story.message(Message.FilterChanged({ id: 'name', value: null })),
+        settleFilterHover,
         Story.message(Message.FilterChanged({ id: 'name', value: 'a' })),
+        settleFilterHover,
         Story.model((model) => expect(model.filtersHidden).toBe(false)),
       )
     }),
@@ -249,6 +258,7 @@ describe('DataTable', () => {
           expect(Option.getOrNull(model.editing)?.draft).toBe('twelve')
         }),
         Story.inMessage(InMessage.RequestedConfigure({ rows, columns, disabled: true })),
+        settleFilterHover,
         Story.message(Message.RowsDeleted({ ids: ['a'] })),
         Story.model((model) => expect(model.rows.map((row) => row.id)).toEqual(['a', 'b', 'c'])),
       )

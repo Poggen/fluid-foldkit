@@ -1,3 +1,4 @@
+import { filterSelectOptions } from './data-table-filter-options.js'
 import { Option } from 'effect'
 import { Update } from 'foldkit'
 import {
@@ -6,13 +7,52 @@ import {
   HeaderMenu,
   RawActions,
   RawEditors,
+  RawFilterSelects,
   RawViewTabs,
 } from './data-table-definition.js'
 import type { DataTableModel } from './data-table-definition.js'
 import { dataTableRows, dataTableSelectedRows } from './data-table-state.js'
 import type { dataTableUpdate } from './data-table-update.js'
+function syncFilterSelects(model: DataTableModel) {
+  const desired = filterSelectOptions(model)
+  const added = desired.filter(({ key }) => !model.filterSelects.some((entry) => entry.key === key))
+  const removed = model.filterSelects.some((entry) => !desired.some(({ key }) => key === entry.key))
+  return Update.combineSteps([
+    ...(added.length || removed
+      ? [
+          DataTableBlock.makeFieldsStep(() => ({
+            filterSelects: (entries) => [
+              ...entries.filter((entry) => desired.some(({ key }) => key === entry.key)),
+              ...added.map(({ key, config }) => RawFilterSelects.create({ key, args: [config] })),
+            ],
+          })),
+        ]
+      : []),
+    ...desired.flatMap(({ key, config }) => {
+      const child = model.filterSelects.find((entry) => entry.key === key)?.model
+      if (
+        !child ||
+        (child.value === config.value &&
+          child.disabled === config.disabled &&
+          child.items.length === config.items.length &&
+          child.items.every(
+            (item, i) =>
+              item.value === config.items[i]?.value && item.label === config.items[i]?.label,
+          ))
+      )
+        return []
+      return [
+        RawFilterSelects.requestConfigure(key, {
+          items: config.items,
+          value: config.value,
+          disabled: config.disabled,
+        }),
+      ]
+    }),
+  ])
+}
 export const syncDataTableModel = (model: DataTableModel) =>
-  DataTableBlock.makeStep(() => {
+  DataTableBlock.makeStep((previous) => {
     const menu = Option.getOrNull(model.menu)
     const editing = Option.getOrNull(model.editing)
     const active = Option.getOrNull(model.editors.active)
@@ -21,6 +61,11 @@ export const syncDataTableModel = (model: DataTableModel) =>
       : -1
     return Update.combineSteps([
       DataTableBlock.makeStep(() => ({ model })),
+      ...(previous.columns !== model.columns ||
+      previous.filters !== model.filters ||
+      previous.disabled !== model.disabled
+        ? [syncFilterSelects(model)]
+        : []),
       ...(viewIndex >= 0 && viewIndex !== model.viewTabs.selectedIndex
         ? [RawViewTabs.requestSelected({ selectedIndex: viewIndex })]
         : []),

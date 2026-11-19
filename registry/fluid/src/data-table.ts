@@ -2,7 +2,8 @@ import { FocusSearch } from './data-table-search-focus.js'
 /* @license Derived from Fluid Functionalism f8014098. MIT, copyright 2026 Micka Touillaud. */
 import { Effect, Layer, Option } from 'effect'
 import { Update } from 'foldkit'
-import { DataTableBlock, Message } from './data-table-definition.js'
+import { filterSelectOptions } from './data-table-filter-options.js'
+import { DataTableBlock, Message, RawFilterSelects } from './data-table-definition.js'
 import type { DataTableConfig } from './data-table-definition.js'
 import { syncDataTableModel, applyDataTableResult } from './data-table-transitions.js'
 import { DataTableActionsLayer } from './data-table-actions.js'
@@ -10,6 +11,7 @@ import { layer as EditorsLayer } from './data-table-editors.js'
 import { initialDataTable } from './data-table-initial.js'
 import { Composition, ObserveDataTable } from './data-table-composition.js'
 import { menuLayer as DropdownLayer } from './dropdown.js'
+import { layer as SelectLayer } from './select.js'
 import { layer as TabsLayer } from './tabs.js'
 import { layer as TableLayer } from './table.js'
 import { reconcileDataTable } from './data-table-state.js'
@@ -36,10 +38,21 @@ export {
   dataTableSelectedRows,
   dataTableMatches,
 } from './data-table-state.js'
-const init = Composition.makeInit((config: DataTableConfig) => ({
-  childInitContext: config,
-  model: initialDataTable(config),
-}))
+const init = Composition.makeInit((config: DataTableConfig) => {
+  const initial = initialDataTable(config)
+  return {
+    childInitContext: config,
+    model: { ...initial, filterSelects: [] },
+    steps: [
+      DataTableBlock.makeFieldsStep(() => ({
+        filterSelects: () =>
+          filterSelectOptions(initial).map(({ key, config }) =>
+            RawFilterSelects.create({ key, args: [config] }),
+          ),
+      })),
+    ],
+  }
+})
 const handle = DataTableBlock.makeStep((model, message: typeof Message.Type) =>
   applyDataTableResult(dataTableUpdate(model, message)),
 )
@@ -168,7 +181,14 @@ export const DataTableLayer = DataTableBlock.makeLayer(
   }),
 ).pipe(
   Layer.provide(
-    Layer.mergeAll(TabsLayer, TableLayer, DropdownLayer, DataTableActionsLayer, EditorsLayer),
+    Layer.mergeAll(
+      SelectLayer,
+      TabsLayer,
+      TableLayer,
+      DropdownLayer,
+      DataTableActionsLayer,
+      EditorsLayer,
+    ),
   ),
 )
 export const layer = DataTableLayer

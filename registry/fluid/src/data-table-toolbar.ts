@@ -32,7 +32,7 @@ export const DataTableToolbar: (
         [h.Class('flex min-w-0 flex-1 items-center gap-2')],
         [
           inputs.showSearch === false ? null : DataTableSearchField(model, inputs, h, motion),
-          inputs.showFilters === false ? null : DataTableFilters(model, h, inputs),
+          inputs.showFilters === false ? null : DataTableFilters(model, h, inputs, motion),
           DataTableSavedViews(model, inputs, h, motion),
         ],
       ),

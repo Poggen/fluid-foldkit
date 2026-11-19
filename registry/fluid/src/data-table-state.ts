@@ -8,7 +8,7 @@ import type {
 } from './data-table-definition.js'
 type DataTableState = Omit<
   DataTableModel,
-  'table' | 'viewTabs' | 'headerMenu' | 'viewMenu' | 'actions' | 'editors'
+  'filterSelects' | 'table' | 'viewTabs' | 'headerMenu' | 'viewMenu' | 'actions' | 'editors'
 >
 export const dataTableText: (value: DataTableValue | undefined) => string = (
   value: DataTableValue | undefined,
