@@ -298,25 +298,33 @@ test('DataTable moves rows with pointer and keyboard and confirms removal of sor
   )
 })
 
-test('DataTable native number, select, tags and date editors commit their values', async ({
-  page,
-}) => {
+async function openEditableAccordionRow(page: Page) {
   await page.goto('/components/data-table')
-  const preview = page
-    .getByRole('region', { name: 'Playground', exact: true })
-    .locator('.reference-preview')
-  const row = preview.locator('tbody tr').first()
+  const preview = page.locator('#preview-data-table')
+  return { preview, row: preview.locator('tbody tr[data-grid-row="accordion"]') }
+}
+
+test('DataTable number editor commits its value', async ({ page }) => {
+  const { preview, row } = await openEditableAccordionRow(page)
   const props = row.locator('td[data-grid-column="props"]')
   await props.click()
   const numeric = preview.getByRole('spinbutton', { name: 'Props for accordion', exact: true })
   await numeric.fill('123')
   await numeric.press('Enter')
   await expect(props).toHaveText('123')
+})
+
+test('DataTable select editor commits its value', async ({ page }) => {
+  const { preview, row } = await openEditableAccordionRow(page)
   const primitives = row.locator('td[data-grid-column="primitives"]')
   await primitives.click()
   await preview.getByRole('combobox', { name: 'Primitives for accordion', exact: true }).click()
   await page.getByRole('option', { name: 'None', exact: true }).click()
   await expect(primitives).toHaveText('None')
+})
+
+test('DataTable tags editor commits its value', async ({ page }) => {
+  const { preview, row } = await openEditableAccordionRow(page)
   const tags = row.locator('td[data-grid-column="tags"]')
   await tags.click()
   const tagInput = preview.getByRole('combobox', { name: 'Tags for accordion', exact: true })
@@ -328,6 +336,10 @@ test('DataTable native number, select, tags and date editors commit their values
     .click()
   await expect(tags).toContainText('Browser proof')
   await expect(tags).toContainText('Layout')
+})
+
+test('DataTable date editor commits its value', async ({ page }) => {
+  const { preview, row } = await openEditableAccordionRow(page)
   const added = row.locator('td[data-grid-column="added"]')
   await added.click()
   await preview.getByRole('button', { name: /^Cell date/ }).click()
