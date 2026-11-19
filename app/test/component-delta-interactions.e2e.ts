@@ -329,6 +329,12 @@ test('DataTable tags editor commits its value', async ({ page }) => {
   await tags.click()
   const tagInput = preview.getByRole('combobox', { name: 'Tags for accordion', exact: true })
   await tagInput.fill('Browser proof')
+  const create = page.getByRole('option', { name: 'Create “Browser proof”', exact: true })
+  await expect(create).toBeVisible()
+  await expect(tagInput).toHaveAttribute(
+    'aria-activedescendant',
+    await create.evaluate((el) => el.id),
+  )
   await tagInput.press('Enter')
   await preview
     .locator('[data-grid-rich-editor]')
