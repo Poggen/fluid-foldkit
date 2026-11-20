@@ -392,6 +392,7 @@ for (const fallback of ['reduced-motion', 'no-api'] as const) {
       .locator('#site-customizer')
       .getByRole('combobox', { name: 'Theme', exact: true })
     await expect(theme).toContainText('Light')
+    await expect(page.locator('[data-live-previews]')).toHaveAttribute('data-live-previews', 'true')
     await page.keyboard.press('t')
     await expect(theme).toContainText('Dark')
     await expect(page).toHaveURL(/[?&]theme=dark(?:&|$)/u)
