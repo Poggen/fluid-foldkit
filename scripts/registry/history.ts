@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { Schema } from 'effect'
+import { families } from '../../lib/registry-families'
 
 export const restoreRegistryArchive = (
   output: string,
@@ -21,7 +22,7 @@ export const restoreRegistryArchive = (
     if (
       parts.length !== 4 ||
       parts[0] !== 'r' ||
-      !['fluid', 'charts'].includes(parts[1] ?? '') ||
+      !families.some((family) => family === parts[1]) ||
       parts[2] !== release ||
       !/^[a-z0-9-]+\.json$/.test(parts[3] ?? '')
     )

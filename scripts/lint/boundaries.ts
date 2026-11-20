@@ -21,6 +21,7 @@ const repoRoot = path.resolve(import.meta.dirname, '../..')
 const workspacePackages = {
   '@foldkit-visuals/fluid': 'registry/fluid',
   '@foldkit-visuals/charts': 'registry/charts',
+  '@foldkit-visuals/ramka': 'registry/ramka',
   '@foldkit-visuals/showcase': 'app',
 }
 const workspacePath = (filename: string) =>
@@ -28,7 +29,7 @@ const workspacePath = (filename: string) =>
 const isWithin = (filename: string, directory: string) =>
   filename === directory || filename.startsWith(`${directory}/`)
 const isBrowserZone = (filename: string) =>
-  /^registry\/(?:fluid|charts)\/(?:src|examples\/src)\//u.test(filename)
+  /^registry\/(?:fluid|charts|ramka)\/(?:src|examples\/src)\//u.test(filename)
 
 const normalizeWorkspacePath: (filename: string, specifier: string) => string | null = (
   filename: string,

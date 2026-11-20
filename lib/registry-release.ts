@@ -1,1 +1,1 @@
-export const release = '0.1.0-preview.5'
+export const release = '0.1.0-preview.6'

@@ -23,8 +23,10 @@ const recommendedRules = (rules: Readonly<Record<string, string | undefined>>) =
 const scopes = [
   'registry/fluid/src',
   'registry/charts/src',
+  'registry/ramka/src',
   'registry/fluid/examples/src',
   'registry/charts/examples/src',
+  'registry/ramka/examples/src',
   'app/src',
   'lib',
 ]

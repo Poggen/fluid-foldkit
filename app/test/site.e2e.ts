@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { chartPages, componentPages, fluidPages } from '../../lib/catalogue'
+import { chartPages, componentPages, fluidPages, ramkaPages } from '../../lib/catalogue'
 
 const live = (page: Page) => expect(page.locator('[data-live-previews="true"]')).toBeVisible()
 
@@ -17,6 +17,7 @@ test.describe('server documents', () => {
     ).toBeVisible()
     await expect(page.locator('[data-component^="fluid/"]')).toHaveCount(fluidPages.length)
     await expect(page.locator('[data-component^="charts/"]')).toHaveCount(chartPages.length)
+    await expect(page.locator('[data-component^="ramka/"]')).toHaveCount(ramkaPages.length)
     await expect(
       page.locator('#site-navigation').getByRole('link', { name: 'Card', exact: true }),
     ).toHaveAttribute('href', '/components/card')
@@ -25,6 +26,7 @@ test.describe('server documents', () => {
     expect((await request.get('/not-a-page')).status()).toBe(404)
     expect((await request.get('/r/fluid/registry.json')).status()).toBe(200)
     expect((await request.get('/r/charts/registry.json')).status()).toBe(200)
+    expect((await request.get('/r/ramka/registry.json')).status()).toBe(200)
   })
   test('renders documentation and a deep component URL directly', async ({ page }) => {
     await page.goto('/installation')

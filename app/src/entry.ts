@@ -1,3 +1,4 @@
+import { defaultEnvironmentLayer as RamkaEnvironmentLayer } from '@foldkit-visuals/ramka/lightbox'
 import { prepareDocumentation } from './documentation-runtime'
 import { inject } from '@vercel/analytics'
 import { releaseEarlyInput, cancelEarlyInput } from './early-input'
@@ -179,6 +180,7 @@ const hydrate = (diagnostics?: ReturnType<typeof createBrowserDiagnostics>) =>
     }).provide(
       Layer.mergeAll(
         diagnostics?.layer ?? Layer.empty,
+        RamkaEnvironmentLayer,
         messageAssetsLayer(messageFiles),
         createQueuedStackFramesLayer(window),
         environment,

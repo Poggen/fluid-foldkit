@@ -112,6 +112,25 @@ try {
     )
   }
   await run([path.join(root, 'node_modules/.bin/shadcn'), 'add', ...addresses, '--yes'], consumer)
+  const beforeSdkSetup = JSON.parse(readFileSync(path.join(consumer, 'package.json'), 'utf8'))
+  await run(['bun', 'scripts/install-ramka-sdk.mjs'], consumer)
+  const afterSdkSetup = JSON.parse(readFileSync(path.join(consumer, 'package.json'), 'utf8'))
+  const { patchedDependencies: _beforePatch, ...beforeUnrelated } = beforeSdkSetup
+  const { patchedDependencies: _afterPatch, ...afterUnrelated } = afterSdkSetup
+  assert.deepEqual(afterUnrelated, beforeUnrelated, 'SDK setup changed unrelated manifest fields')
+  const configuredManifest = readFileSync(path.join(consumer, 'package.json'), 'utf8')
+  const configuredLock = readFileSync(path.join(consumer, 'bun.lock'), 'utf8')
+  await run(['bun', 'scripts/install-ramka-sdk.mjs'], consumer)
+  assert.equal(
+    readFileSync(path.join(consumer, 'package.json'), 'utf8'),
+    configuredManifest,
+    'SDK setup is not idempotent',
+  )
+  assert.equal(
+    readFileSync(path.join(consumer, 'bun.lock'), 'utf8'),
+    configuredLock,
+    'Idempotent SDK setup changed the lockfile',
+  )
   const installed = Schema.decodeUnknownSync(ToolManifest)(
     JSON.parse(readFileSync(path.join(consumer, 'package.json'), 'utf8')),
   )
@@ -215,6 +234,7 @@ try {
         registryOrigin,
         itemsInstalled: addresses.length,
         frameworkVersionsPreserved: true,
+        ramkaSdkPatchInstalledAndVerified: true,
         reactInstalled: false,
         typecheck: 'passed',
         typeNegativeCases: typeNegativeCases.length,

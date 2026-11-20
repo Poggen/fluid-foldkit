@@ -1,3 +1,4 @@
+import sdkPatch from '../../registry/ramka/sdk/foldkit-ramka-54f8.json' with { type: 'json' }
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import path from 'node:path'
@@ -12,6 +13,7 @@ import {
   itemName,
   registryUrl,
 } from './config.ts'
+import { upstreams } from '../../lib/registry-families.ts'
 import { buildReferences } from './reference.ts'
 import { closure, dependencies, installedPath, installedContent } from './graph.ts'
 
@@ -30,6 +32,7 @@ export interface RegistryItem {
   readonly registryDependencies: readonly string[]
   readonly dependencies: readonly string[]
   readonly files: readonly RegistryFile[]
+  readonly docs?: string
   readonly meta: { readonly framework: string; readonly release: string; readonly upstream: string }
 }
 const write = (file: string, value: object) => {
@@ -66,16 +69,43 @@ export const buildRegistries = () => {
         registryDependencies: [],
         dependencies: [],
         files: foundation,
+        ...(family === 'ramka'
+          ? {
+              docs: 'Required SDK setup after source installation: bun scripts/install-ramka-sdk.mjs. This applies and verifies the bundled exact Foldkit patch; then import your installed ramka/parts.css and provide defaultEnvironmentLayer at the Program boundary.',
+            }
+          : {}),
         meta: {
           framework: 'foldkit',
           release,
-          upstream:
-            family === 'fluid'
-              ? 'mickadesign/fluid-functionalism'
-              : 'toomingos/bklit-tanstack-charts-migration',
+          upstream: upstreams[family],
         },
       },
     ]
+    if (family === 'ramka') {
+      for (const [file, target] of [
+        ['foldkit-ramka-54f8.patch', sdkPatch.target],
+        ['foldkit-ramka-54f8.json', 'patches/foldkit-ramka-54f8.json'],
+        ['install-ramka-sdk.mjs', 'scripts/install-ramka-sdk.mjs'],
+        ['FOLDKIT-LICENSE', 'patches/foldkit-ramka-54f8.LICENSE'],
+      ]) {
+        if (file === undefined || target === undefined)
+          throw new Error('Missing SDK patch distribution path')
+        foundation.push({
+          path: `registry/ramka/sdk/${file}`,
+          type: 'registry:file',
+          target: `~/${target}`,
+          content: readFileSync(path.join(root, 'registry/ramka/sdk', file), 'utf8'),
+        })
+      }
+      for (const notice of ['LICENSE', 'THIRD-PARTY-NOTICES.md', 'upstream-manifest.json']) {
+        foundation.push({
+          path: `registry/${family}/${notice}`,
+          type: 'registry:file',
+          target: `@ui/${family}/${notice}`,
+          content: readFileSync(path.join(root, 'registry', family, notice), 'utf8'),
+        })
+      }
+    }
     const names = new Map([['foundation', style]])
     for (const [entry, location] of Object.entries(source.exports)) {
       if (entry === './styles.css') continue

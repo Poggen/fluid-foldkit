@@ -1,0 +1,64 @@
+.ramka-example .ramka-triggers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.ramka-example [data-ramka-trigger] {
+  border: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  cursor: zoom-in;
+}
+.ramka-example [data-ramka-trigger] img {
+  width: 100%;
+  height: 112px;
+  object-fit: cover;
+}
+[data-ramka-content] {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: #17151de8;
+  color: white;
+}
+[data-ramka-content]:not([open]) {
+  display: none;
+}
+.ramka-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+[data-ramka-stage] {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+[data-ramka-counter] {
+  margin-inline-start: auto;
+}
+[data-ramka-media] img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+[data-ramka-thumbnail] img {
+  width: 56px;
+  height: 40px;
+  object-fit: cover;
+}
+[data-ramka-close],
+[data-ramka-previous],
+[data-ramka-next],
+[data-ramka-zoom-in],
+[data-ramka-zoom-out] {
+  border: 1px solid #ffffff55;
+  border-radius: 8px;
+  background: #262330;
+  color: white;
+  padding: 10px 14px;
+  cursor: pointer;
+}

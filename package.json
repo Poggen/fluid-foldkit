@@ -9,11 +9,11 @@
   "scripts": {
     "typecheck": "effect-tsrs diagnostics --project tsconfig.json --strict --type-check",
     "typecheck:tools": "tsrs --noEmit -p scripts/tsconfig.json && tsrs --noEmit -p app/tsconfig.json",
-    "lint": "bun scripts/lint.ts registry/fluid/src registry/fluid/test registry/charts/src registry/charts/test registry/fluid/examples/src registry/charts/examples/src components/docs lib app/src scripts/ci scripts/registry scripts/guardrails.ts oxlint.config.ts scripts/policy/scoped-view-policy.ts scripts/policy/scoped-view-policy.test.ts scripts/policy/scoped-view-resolution.ts scripts/policy/design-system-*.ts scripts/policy/tailwind-*.ts scripts/policy/dependency-patch-policy*.ts scripts/policy/source-boundaries.test.ts scripts/vercel.ts scripts/retain-showcase-assets.ts",
+    "lint": "bun scripts/lint.ts registry/fluid/src registry/fluid/test registry/charts/src registry/charts/test registry/ramka/src registry/ramka/test registry/ramka/sdk registry/ramka/examples/src registry/fluid/examples/src registry/charts/examples/src components/docs lib app/src scripts/ci scripts/registry scripts/guardrails.ts oxlint.config.ts scripts/policy/scoped-view-policy.ts scripts/policy/scoped-view-policy.test.ts scripts/policy/scoped-view-resolution.ts scripts/policy/design-system-*.ts scripts/policy/tailwind-*.ts scripts/policy/dependency-patch-policy*.ts scripts/policy/source-boundaries.test.ts scripts/vercel.ts scripts/retain-showcase-assets.ts",
     "format": "oxfmt --write registry app components lib scripts tests oxlint.config.ts",
     "format:check": "oxfmt --check registry app components lib scripts/ci scripts/registry scripts/guardrails.ts oxlint.config.ts scripts/vercel.ts scripts/retain-showcase-assets.ts",
-    "guardrails": "bun test scripts/registry/history.test.ts scripts/policy/dependency-patch-policy.test.ts scripts/policy/scoped-view-policy.test.ts scripts/policy/design-system-policy.test.ts scripts/policy/tailwind-policy.test.ts scripts/policy/tailwind-chart-tooltip-ownership.test.ts scripts/policy/source-boundaries.test.ts && bun scripts/guardrails.ts",
-    "test": "bun run test:admission && bun run --cwd registry/fluid test && bun run --cwd registry/charts test && bun run --cwd app test && cd registry/charts/examples && bunx --no-install vitest run",
+    "guardrails": "bun test scripts/registry/install-ramka-sdk.test.ts scripts/registry/history.test.ts scripts/policy/dependency-patch-policy.test.ts scripts/policy/scoped-view-policy.test.ts scripts/policy/design-system-policy.test.ts scripts/policy/tailwind-policy.test.ts scripts/policy/tailwind-chart-tooltip-ownership.test.ts scripts/policy/source-boundaries.test.ts && bun scripts/guardrails.ts",
+    "test": "bun run test:admission && bun run --cwd registry/fluid test && bun run --cwd registry/charts test && bun run --cwd registry/ramka test && bun run --cwd app test && cd registry/charts/examples && bunx --no-install vitest run",
     "registry:build": "bun scripts/registry/build.ts",
     "site:build": "bun scripts/registry/site.ts",
     "build": "bun run registry:build && bun run site:build",
@@ -35,6 +35,7 @@
   "dependencies": {
     "@effect/platform-browser": "4.1.2",
     "@foldkit-visuals/fluid": "workspace:*",
+    "@foldkit-visuals/ramka": "workspace:*",
     "@foldkit/ui": "0.170.0-canary.54f8bcd443b4",
     "@tanstack/highlight": "1.2.12",
     "effect": "4.1.2",

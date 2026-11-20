@@ -4,8 +4,10 @@ import path from 'node:path'
 const directories = [
   'registry/fluid/src',
   'registry/charts/src',
+  'registry/ramka/src',
   'registry/fluid/examples/src',
   'registry/charts/examples/src',
+  'registry/ramka/examples/src',
   'components/docs',
   'app/src',
 ]

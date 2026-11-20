@@ -1,0 +1,26 @@
+{
+  "name": "@foldkit-visuals/ramka",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Native Foldkit port of Ramka media lightbox with checked Blocks, Bindings and Effect Layers.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": [
+    "*.css",
+    "./src/parts.css"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/parts.css",
+    "./lightbox": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "effect-tsrs diagnostics --project tsconfig.json --strict --type-check",
+    "test": "vitest run"
+  },
+  "dependencies": {},
+  "peerDependencies": {
+    "effect": "4.1.2",
+    "foldkit": "0.170.0-canary.54f8bcd443b4"
+  }
+}

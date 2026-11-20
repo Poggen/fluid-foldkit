@@ -1,0 +1,20 @@
+Ramka native Foldkit adaptation
+
+Upstream: https://github.com/arturbien/ramka
+Revision: bf58a38a92f8905a7014f23da38db06f41479c34
+Package: @ramka/react 0.0.2
+Copyright (c) 2026 Artur Bień
+Licensed under the MIT License, reproduced verbatim in LICENSE.
+
+This adaptation implements the full lightbox/gallery public surface through
+native Foldkit Blocks, PartContext, Binding Steps and scoped browser resources.
+It adapts upstream morph, geometry, motion and metadata source, with native
+framework integration and deliberate API/tooling equivalents documented in
+CONTRACTS.md and UPSTREAM.md. It contains no React runtime. Verification is
+bounded to the concrete tests and engine receipts listed in VERIFICATION.md;
+source adaptation is not a claim that every upstream test has executed.
+
+Upstream React render/ref/prop-merging utilities are derived from Base UI,
+copyright (c) 2019 Material-UI SAS, MIT licensed. The native port replaces those
+React utilities with native Html builders and explicit bindings. Retained
+upstream source headers and the Ramka MIT license remain applicable.

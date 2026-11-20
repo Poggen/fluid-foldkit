@@ -10,9 +10,11 @@ import { rendererStylesheets } from './tailwind-renderer-styles.ts'
 const maintained = [
   'registry/fluid/src',
   'registry/charts/src',
+  'registry/ramka/src',
   'app/src',
   'registry/fluid/examples',
   'registry/charts/examples',
+  'registry/ramka/examples',
   'components/docs',
   'tests/parity/accordion',
 ]

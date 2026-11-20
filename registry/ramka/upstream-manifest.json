@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "upstream": {
+    "repository": "https://github.com/arturbien/ramka",
+    "commit": "bf58a38a92f8905a7014f23da38db06f41479c34",
+    "package": "@ramka/react",
+    "version": "0.0.2",
+    "license": "MIT",
+    "licenseSha256": "672e6b3e20e456ef29c2c65fe1f7942fcb9d364676cc665aa74b7b1354a92e16"
+  },
+  "adaptation": {
+    "scope": "full native Foldkit lightbox/gallery API and browser resources",
+    "architectureReference": "Foldkit Block Composition Environment resources and Binding Steps",
+    "motion": "Upstream-derived WAAPI discrete/release visual projection with Model poseSample acknowledgement and committed target render state; exact View Transition compositor generation; consumer-animation observation on non-VT fallback",
+    "components": 23,
+    "domIdentityMarkers": 21,
+    "framework": "native Foldkit; no React runtime",
+    "apiEquivalents": {
+      "contexts": "explicit PartContext and read-only get*Context selectors",
+      "handles": "parent Binding Steps and model selectors",
+      "callbacks": "atomic Changed flags for open-at-index; separate lifecycle/navigation/zoom outputs",
+      "lazyChunks": "lazy native engine modules with idle/intent warmup and failure fallback",
+      "cjs": "async adapter loads native ESM graph"
+    },
+    "evidence": {
+      "contracts": "../../CONTRACTS.md",
+      "provenance": "../../provenance/",
+      "chromium": "../../evidence/browser-receipt.json",
+      "webkit": "../../evidence/browser-webkit.json",
+      "consumer": "../../evidence/consumer-receipt.json",
+      "verification": "../../VERIFICATION.md",
+      "morphComparison": "../../provenance/morph-comparison-summary.json",
+      "morphComparisonRows": "../../provenance/morph-comparison.json",
+      "numerical": "../../provenance/gesture-math-differential.json",
+      "guards": "../../provenance/browser-guards-receipt.json",
+      "hydration": "../../provenance/ssr-hydration-summary.json"
+    },
+    "proofLimits": [
+      "806 named upstream cases assessed by family;96 original named numerical tests executed, not all806",
+      "84 actual3-engine VT normalized animation/geometry comparisons exact; wall-clock frame/device performance is not identical by implication",
+      "Physical iOS/Android and downstream SSR frameworks beyond tested Foldkit hydration matrix remain unmeasured",
+      "Final native/browser gate status comes from current VERIFICATION/receipts"
+    ],
+    "registryRelease": {
+      "namespace": "@ramka-foldkit",
+      "items": ["lightbox", "all"],
+      "preparedVersion": "preview.6",
+      "status": "prepared; publication and live consumer proof pending root receipts"
+    }
+  },
+  "sdk": {
+    "foldkit": "0.170.0-canary.54f8bcd443b4",
+    "effect": "4.1.2",
+    "patchSha256": "24d36d7159e88ccca9cd0a9e4b4959e5043cccb976da741dec49dd230f8e1b0f",
+    "previousFoundationPatchSha256": "031056e7d30a370fe8860c3f519564bae60c9c949b5021e29398663808d06436",
+    "patchExtension": {
+      "publicAPI": "Render.flushSync",
+      "purpose": "synchronous complete Model-view commit inside native View Transition callback, including custom render hosts",
+      "preservesOriginalFixes": true,
+      "regressionReview": "pending",
+      "distribution": "registry foundation patch plus explicit Bun setup script; fresh default-VT consumer proof pending"
+    }
+  }
+}

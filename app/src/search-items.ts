@@ -50,7 +50,13 @@ const pageItems: ReadonlyArray<SearchItem> = pages.map((page) => {
     keywords: [
       ...('description' in page ? [page.description] : []),
       ...('family' in page
-        ? [page.family === 'charts' ? 'chart charts bklit tanstack' : 'fluid components']
+        ? [
+            page.family === 'charts'
+              ? 'chart charts bklit tanstack'
+              : page.family === 'ramka'
+                ? 'ramka lightbox media gallery zoom'
+                : 'fluid components',
+          ]
         : []),
     ],
     intent: { _tag: 'Page', href: page.href },

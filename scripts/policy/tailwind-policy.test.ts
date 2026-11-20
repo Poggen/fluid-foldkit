@@ -78,6 +78,8 @@ test('maintained scanner excludes frozen sources exactly and discovers new style
     for (const directory of [
       'registry/fluid/src',
       'registry/charts/src',
+      'registry/ramka/src',
+      'registry/ramka/examples',
       'app/src',
       'registry/fluid/examples',
       'components/docs',

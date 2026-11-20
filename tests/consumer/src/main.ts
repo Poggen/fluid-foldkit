@@ -1,3 +1,12 @@
+import firstMedia from './assets/ramka-first.svg?url'
+import secondMedia from './assets/ramka-second.svg?url'
+import {
+  type Config,
+  LightboxBlock,
+  layer as LightboxLayer,
+  defaultEnvironmentLayer,
+} from '@/ui/ramka/index.js'
+import '@/ui/ramka/parts.css'
 import { Effect, Layer, Schema } from 'effect'
 import { Block, Program, Runtime, Update } from 'foldkit'
 import { defineMessageUnion } from 'foldkit/message'
@@ -21,6 +30,7 @@ const Message = defineMessageUnion({ Increase: {}, SetSecond: {}, ToggleMount: {
 const Model = Schema.Struct({
   accordion: AccordionGroupBlock.Model,
   gauge: GaugeBlock.Model,
+  lightbox: LightboxBlock.Model,
   visible: Schema.Boolean,
   selection: Schema.Array(Schema.String),
 })
@@ -31,6 +41,10 @@ const App = Block.make('RegistryConsumer', {
   Message,
   InitArgs: Schema.Tuple([GaugeConfiguration]),
   ChildInitContext: GaugeConfiguration,
+  effects: Block.makeEffectsContract<
+    never,
+    Block.FactsOf<typeof LightboxBlock>['programRequirements']
+  >(),
   view: { kind: 'Element' },
 })
 const AccordionBinding = App.makeRequiredFieldBinding(AccordionGroupBlock, {
@@ -66,7 +80,32 @@ const Gauge = App.makeRequiredFieldBinding(GaugeBlock, {
   field: 'gauge',
   init: { contextToArgs: (configuration) => [configuration, 'registry-gauge'] },
 })
-const composition = App.makeComposition({ bindings: [Accordion, Gauge] })
+const Lightbox = App.makeRequiredFieldBinding(LightboxBlock, {
+  field: 'lightbox',
+  init: {
+    contextToArgs: () =>
+      [
+        {
+          id: 'consumer-lightbox',
+          items: [
+            { id: 'first', width: 1920, height: 1280, caption: 'First installed image' },
+            { id: 'second', width: 1920, height: 1280, caption: 'Second installed image' },
+          ],
+          options: { viewTransition: 'default' },
+        },
+      ] satisfies [Config],
+  },
+}).withOutMessagePolicy({
+  fold: App.makeOutMessageFold(LightboxBlock, {
+    Changed: App.makeNoopStep,
+    OpenChanged: App.makeNoopStep,
+    ValueChanged: App.makeNoopStep,
+    OpenChangeCompleted: App.makeNoopStep,
+    ZoomChanged: App.makeNoopStep,
+    Failed: App.makeNoopStep,
+  }),
+})
+const composition = App.makeComposition({ bindings: [Accordion, Gauge, Lightbox] })
 const motion = createMotionScope('registry-accordion-motion')
 const animateHighlight = hoverHighlightAnimation(motion)
 const layer = App.makeLayer({
@@ -170,6 +209,31 @@ const layer = App.makeLayer({
         model.visible
           ? h.block(Gauge.embedView({ slotId: 'gauge', model: model.gauge, viewInputs: {} }))
           : h.empty,
+        model.visible
+          ? h.block(
+              Lightbox.embedView({
+                slotId: 'lightbox',
+                model: model.lightbox,
+                viewInputs: {
+                  label: 'Installed Ramka gallery',
+                  carouselLabel: 'Installed gallery images',
+                  trigger: (index) => [
+                    h.img([
+                      h.Src(index === 0 ? firstMedia : secondMedia),
+                      h.Alt(`Open installed image ${index + 1}`),
+                      h.Width('160'),
+                      h.Height('107'),
+                    ]),
+                  ],
+                  item: (index) =>
+                    h.img([
+                      h.Src(index === 0 ? firstMedia : secondMedia),
+                      h.Alt(`Installed image ${index + 1}`),
+                    ]),
+                },
+              }),
+            )
+          : h.empty,
         h.p(
           [h.Id('status')],
           [
@@ -179,7 +243,7 @@ const layer = App.makeLayer({
       ],
     ),
   ),
-}).pipe(Layer.provide(AccordionGroupLayer), Layer.provide(GaugeLayer))
+}).pipe(Layer.provide(AccordionGroupLayer), Layer.provide(GaugeLayer), Layer.provide(LightboxLayer))
 
 const configuration = Schema.decodeUnknownSync(GaugeConfiguration)({
   value: 60,
@@ -193,5 +257,5 @@ const program = Program.makeElement({
   Flags: GaugeConfiguration,
   flags: Effect.succeed(configuration),
   container: document.getElementById('root'),
-}).provide({ services: Layer.empty, runtime: motion.layer })
+}).provide({ services: defaultEnvironmentLayer, runtime: motion.layer })
 Runtime.run(program)

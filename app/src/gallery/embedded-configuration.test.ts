@@ -105,7 +105,8 @@ describe('embedded URI configuration DTO reconciliation', () => {
     for (const page of componentPages) {
       const configuration = configurationForEmbeddedPage(page, {})
       expect(Option.isSome(decodeConfiguration(JSON.stringify(configuration)))).toBe(true)
-      expect(configuration._tag).not.toBe('none')
+      if (page.family === 'ramka') expect(configuration._tag).toBe('none')
+      else expect(configuration._tag).not.toBe('none')
       expect(reconcileEmbeddedLocation(Option.none(), configuration, Option.none())).toEqual({
         configuration,
         intent: 'initialize',
@@ -117,6 +118,12 @@ describe('embedded URI configuration DTO reconciliation', () => {
     expect(
       configurationForEmbeddedPage(input, { configuration: JSON.stringify(Button.defaults) }),
     ).toEqual(Input.defaults)
+    const ramka = pageAt('/ramka/lightbox')
+    if (ramka === undefined) throw new Error('Expected the actual Ramka catalogue entry')
+    expect(configurationForEmbeddedPage(ramka, {})).toEqual({ _tag: 'none' })
+    expect(
+      configurationForEmbeddedPage(ramka, { configuration: JSON.stringify(Button.defaults) }),
+    ).toEqual({ _tag: 'none' })
   })
 })
 

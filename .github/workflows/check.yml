@@ -28,6 +28,8 @@ jobs:
             command: bun run --cwd registry/fluid test
           - task: charts
             command: bun run --cwd registry/charts test
+          - task: ramka
+            command: bun run --cwd registry/ramka test
           - task: application
             command: bun run --cwd app test && cd registry/charts/examples && bunx --no-install vitest run
     steps:
