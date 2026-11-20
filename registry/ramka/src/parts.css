@@ -1,0 +1,163 @@
+/* Ramka Foldkit adaptation. MIT. Copyright (c) 2026 Artur Bień. */
+/* Structural rules only. Colors, chrome layout and motion skins belong to the caller. */
+[data-ramka-content] {
+  pointer-events: auto;
+  box-sizing: border-box;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  user-select: none;
+  -webkit-user-select: none;
+}
+[data-ramka-content]::backdrop {
+  background: transparent;
+}
+[data-ramka-backdrop] {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+}
+[data-ramka-stage] {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+}
+[data-ramka-slides] {
+  position: relative;
+  container-type: size;
+  scroll-behavior: auto;
+  overflow-anchor: none;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+}
+[data-ramka-slides]::-webkit-scrollbar {
+  display: none;
+}
+[data-ramka-slide] {
+  box-sizing: border-box;
+  position: relative;
+  flex: 0 0 100%;
+  min-width: 0;
+  height: 100%;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  overflow: visible;
+}
+[data-ramka-item] {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+[data-ramka-item][data-active] {
+  will-change: transform;
+}
+[data-ramka-zoom] {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  container-type: size;
+  user-select: none;
+  touch-action: pan-x pan-y;
+}
+[data-ramka-zoom][data-zoom] {
+  touch-action: none;
+  cursor: grab;
+}
+[data-ramka-zoom][data-dragging] {
+  cursor: grabbing;
+}
+[data-lightbox-transform] {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center center;
+}
+[data-ramka-media] {
+  position: relative;
+  flex-shrink: 0;
+  display: grid;
+  isolation: isolate;
+  max-width: 100%;
+  max-height: 100%;
+}
+[data-ramka-media]:not(#_) > :is(img:not([data-ramka-media-poster]), video, canvas, picture) {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+[data-ramka-media] > :is(img, video),
+[data-ramka-media] > picture > img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+[data-ramka-media] > picture > img {
+  width: 100%;
+  height: 100%;
+}
+[data-ramka-thumbnail-strip] {
+  position: relative;
+  overflow: clip;
+}
+[data-ramka-thumbnail-strip-track] {
+  display: flex;
+  width: max-content;
+}
+[data-ramka-thumbnail] {
+  flex-shrink: 0;
+}
+
+/* Initial server paint: native scroll targeting, or opt-in viewport-wide shift. */
+[data-ssr-active] {
+  scroll-initial-target: nearest;
+}
+[data-ssr-shift] [data-ssr-active] {
+  scroll-initial-target: none;
+}
+[data-ssr-shift] [data-ramka-slide] {
+  transform: translateX(
+    calc(
+      var(--lightbox-ssr-index, 0) * var(--lightbox-ssr-shift-sign, -1) *
+        (100% + var(--lightbox-ssr-slide-gap, 0px))
+    )
+  );
+}
+/* Both axes must clip; clip/hidden would remain a scroll container in Gecko. */
+[data-ramka-slides][data-ssr-shift] {
+  overflow-x: clip;
+  overflow-y: clip;
+  scroll-snap-type: none;
+}
+/* Upstream morph-target hiding is eager, including an initially open SSR view. */
+[data-morph-target] {
+  opacity: 0;
+  transition: opacity 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+:root[data-ramka-view-transition] [data-morph-target] {
+  transition: none;
+}

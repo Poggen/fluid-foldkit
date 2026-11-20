@@ -24,6 +24,16 @@ export const compositionSources = (family: Family, slug: string) => {
       content: readFileSync(path.join(root, file), 'utf8'),
     }))
   }
+  if (family === 'ramka') {
+    return [
+      'registry/ramka/examples/src/lightbox-example.ts',
+      'registry/ramka/examples/src/main.ts',
+      'registry/ramka/examples/src/style.css',
+    ].map((file) => ({
+      path: file,
+      content: readFileSync(path.join(root, file), 'utf8'),
+    }))
+  }
   const chartFamily = [
     'gauge',
     'line',

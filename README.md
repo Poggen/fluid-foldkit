@@ -2,7 +2,8 @@
 
 Native [Foldkit](https://github.com/foldkit/foldkit) ports of
 [Fluid Functionalism](https://github.com/mickadesign/fluid-functionalism) by Micka Touillaud
-and [Bklit / TanStack Charts](https://github.com/toomingos/bklit-tanstack-charts-migration).
+[Bklit / TanStack Charts](https://github.com/toomingos/bklit-tanstack-charts-migration),
+and [Ramka](https://github.com/arturbien/ramka) by Artur Bień.
 The showcase is the documentation, with live examples, source, API references,
 and composition guides. Components use Blocks, Bindings, and Effect Layers.
 [Runtime and source contracts](ARCHITECTURE.md) describe the lifetime, motion,
@@ -44,7 +45,7 @@ original URL. The store credential belongs in the production build environment.
 ## Source
 
 - `app/` owns the SSR showcase, server, and browser tests.
-- `registry/fluid/` and `registry/charts/` own component source, unit tests, and live examples. Each family keeps its required Motion version.
+- `registry/fluid/`, `registry/charts/` and `registry/ramka/` own component source, unit tests, and live examples. Each family keeps its required Motion version.
 - `components/docs/` contains shared source and preview controls.
 - `lib/` contains the shared catalogue and showcase assets.
 - `scripts/` builds registries and runs repository checks.
@@ -94,7 +95,28 @@ Chromium from `app/` and runs with `CI=1`.
 The showcase carries one [temporary Foldkit runtime patch](patches/foldkit@0.170.0-canary.54f8bcd443b4.patch).
 It avoids unnecessary subscription publication and DOM work. Its exact contents
 and installed runtime hashes are enforced by the dependency-patch guard.
-Registry consumers use the unpatched public SDK.
+Fluid and chart consumers use the public SDK directly. Ramka installs the reviewed SDK patch as editable source and requires the explicit setup below.
 
 [MIT](LICENSE). Retained source and asset notices are consolidated in [NOTICE](NOTICE)
 and included in generated distributions.
+
+Ramka installs with `bunx shadcn@4.23.0 add @ramka-foldkit/lightbox` after adding
+`"@ramka-foldkit": "https://fluid-foldkit.vercel.app/r/ramka/0.1.0-preview.6/{name}.json"`
+to `components.json` registries. Import the installed `ramka/parts.css` once.
+The [live lightbox reference](https://fluid-foldkit.vercel.app/ramka/lightbox)
+includes the native parent Binding example. Provide `defaultEnvironmentLayer`
+at the application boundary; use a custom `environmentLayer` for document/CSP policy.
+Browser acceptance scope and SDK requirements are recorded in [Ramka parity](registry/ramka/PARITY.md).
+Source provenance is retained in `registry/ramka/upstream-manifest.json`, `LICENSE`
+and `THIRD-PARTY-NOTICES.md`, all included in the foundation registry item.
+
+After adding Ramka, run `bun scripts/install-ramka-sdk.mjs` from your Bun project.
+The foundation includes the exact reviewed SDK patch and its license. Setup
+verifies the patch SHA-256 and installed runtime/declaration hashes, merges only
+its Bun `patchedDependencies` entry, and preserves the SDK version and unrelated
+manifest fields. It supersedes the recognized original preview patch without
+deleting that file; conflicting custom patches stop setup for review. Repeating
+the command verifies the same state without rewriting the manifest or lockfile.
+Ramka's native View Transitions require this patch's public `Render.flushSync`
+capability. The independent consumer gate exercises the published setup and
+native transitions; a showcase-only patch is insufficient.

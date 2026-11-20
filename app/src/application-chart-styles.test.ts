@@ -115,7 +115,7 @@ it.effect(
         Story.message(Message.ChangedUrl({ url: url('/missing-route') })),
         Story.Command.resolveAllExact(
           ...Array.makeBy(
-            8,
+            10,
             () =>
               [hoverTest.ControlHover, HoverBlock.Message.CompletedControl()] satisfies [
                 typeof hoverTest.ControlHover,

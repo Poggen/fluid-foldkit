@@ -11,6 +11,15 @@ const patch = `patches/${dependency}.patch`
 const runtimeFiles = [
   'node_modules/foldkit/dist/runtime/compositionRuntime.js',
   'node_modules/foldkit/dist/runtime/subscriptionFibers.js',
+  'node_modules/foldkit/dist/render/commit.js',
+  'node_modules/foldkit/dist/render/commit.d.ts',
+  'node_modules/foldkit/dist/render/render.js',
+  'node_modules/foldkit/dist/render/render.d.ts',
+  'node_modules/foldkit/dist/render/public.js',
+  'node_modules/foldkit/dist/render/public.d.ts',
+  'node_modules/foldkit/dist/render/index.js',
+  'node_modules/foldkit/dist/render/index.d.ts',
+  'node_modules/foldkit/dist/runtime/renderer.js',
 ]
 const makeFixture = () => {
   const root = mkdtempSync(path.join(tmpdir(), 'foldkit-patch-policy-'))
@@ -120,7 +129,7 @@ const cases: readonly Case[] = [
           mutate: (root) => {
             rmSync(path.join(root, file))
           },
-          error: /ENOENT.*runtime/u,
+          error: /ENOENT.*foldkit/u,
         },
       ] satisfies readonly Case[],
   ),

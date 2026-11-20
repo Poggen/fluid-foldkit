@@ -28,6 +28,13 @@ describe('published registry archives', () => {
       restoreRegistryArchive(output, release, archive, sha256)
       expect(readFileSync(path.join(output, item), 'utf8')).toBe(source)
     }))
+  test('restores a published Ramka item through the shared family boundary', () =>
+    withinOutput((output) => {
+      const file = `r/ramka/${release}/lightbox.json`
+      const { archive, sha256 } = bundle({ [file]: source })
+      restoreRegistryArchive(output, release, archive, sha256)
+      expect(readFileSync(path.join(output, file), 'utf8')).toBe(source)
+    }))
   test('rejects changed archive bytes before writing any payload', () =>
     withinOutput((output) => {
       const original = bundle({ [item]: source })

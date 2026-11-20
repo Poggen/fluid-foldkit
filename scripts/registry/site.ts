@@ -22,4 +22,4 @@ const result = Bun.spawnSync(['bun', 'run', '--cwd', 'app', 'build'], {
   stderr: 'inherit',
 })
 if (result.exitCode !== 0) throw new Error('SSR showcase build failed')
-console.log(`SSR showcase and two registries ready at ${origin}`)
+console.log(`SSR showcase and ${families.length} registries ready at ${origin}`)

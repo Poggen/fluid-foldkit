@@ -13,7 +13,7 @@ import {
 import { Effect, Layer, Schema } from 'effect'
 import { Block, Update } from 'foldkit'
 import { defineInMessageUnion, defineMessageUnion } from 'foldkit/message'
-import { chartPages, fluidPages, guidePages, systemPages } from '../../lib/catalogue'
+import { chartPages, fluidPages, guidePages, systemPages, ramkaPages } from '../../lib/catalogue'
 import { SiteEnvironment } from './environment'
 import { highlight, motion } from './motion'
 import { Settings, presentation } from './settings'
@@ -61,6 +61,7 @@ export const NavigationBlock = Block.make('Navigation', {
     system: NavMenuBlock.Model,
     fluid: NavMenuBlock.Model,
     charts: NavMenuBlock.Model,
+    ramka: NavMenuBlock.Model,
   }),
   Message,
   InMessage,
@@ -169,6 +170,24 @@ const Charts = NavigationBlock.makeRequiredFieldBinding(NavMenuBlock, {
     Selected: NavigationBlock.makeNoopStep,
   }),
 })
+const Ramka = NavigationBlock.makeRequiredFieldBinding(NavMenuBlock, {
+  field: 'ramka',
+  init: {
+    contextToArgs: ({ path, id, settings }) => [
+      {
+        id: `${id}-ramka`,
+        items: navItems(ramkaPages),
+        activeSlug: path,
+        ariaLabel: 'Ramka media',
+        hoverMode: settings.hover,
+      },
+    ],
+  },
+}).withOutMessagePolicy({
+  fold: NavigationBlock.makeOutMessageFold(NavMenuBlock, {
+    Selected: NavigationBlock.makeNoopStep,
+  }),
+})
 const Scroll = NavigationBlock.makeRequiredFieldBinding(ScrollAreaBlock, {
   field: 'scroll',
   init: { contextToArgs: ({ id }) => [{ id: `${id}-scroll` }] },
@@ -178,7 +197,7 @@ const Scroll = NavigationBlock.makeRequiredFieldBinding(ScrollAreaBlock, {
   }),
 })
 const NavigationComposition = NavigationBlock.makeComposition({
-  bindings: [Search, Pages, System, Fluid, Charts, Scroll],
+  bindings: [Search, Pages, System, Fluid, Charts, Ramka, Scroll],
 })
 const plans = {
   init: NavigationComposition.makeInit((settings, path, id, occurrence) => ({
@@ -199,12 +218,16 @@ const plans = {
         : Update.combineSteps([
             NavigationBlock.makeFieldsStep(() => ({ path: () => path })),
             Pages.requestConfigure({ items: navItems(guidePages), activeSlug: path }),
-            System.requestConfigure({ items: navItems(systemPages), activeSlug: path }),
+            System.requestConfigure({
+              items: navItems(systemPages),
+              activeSlug: path,
+            }),
             Fluid.requestConfigure({
               items: navItems(fluidPages.toSorted((a, b) => a.name.localeCompare(b.name))),
               activeSlug: path,
             }),
             Charts.requestConfigure({ items: navItems(chartPages), activeSlug: path }),
+            Ramka.requestConfigure({ items: navItems(ramkaPages), activeSlug: path }),
           ]),
     ),
     InformedOfHoverMode: NavigationBlock.makeStep((model, { mode }) =>
@@ -214,6 +237,7 @@ const plans = {
         ...(hoverModeOf(model.system) === mode ? [] : [System.requestHoverMode({ mode })]),
         ...(hoverModeOf(model.fluid) === mode ? [] : [Fluid.requestHoverMode({ mode })]),
         ...(hoverModeOf(model.charts) === mode ? [] : [Charts.requestHoverMode({ mode })]),
+        ...(hoverModeOf(model.ramka) === mode ? [] : [Ramka.requestHoverMode({ mode })]),
       ]),
     ),
   }),
@@ -389,9 +413,40 @@ const plans = {
               ),
             ],
           ),
+          h.div(
+            [h.Class('relative flex w-full min-w-0 flex-col p-2 pt-4')],
+            [
+              SidebarGroupLabel(
+                {
+                  context,
+                  className: 'text-foreground',
+                  children: [
+                    'Ramka',
+                    h.span(
+                      [
+                        h.Class(
+                          'ml-auto flex h-5 min-w-5 items-center justify-center px-1 font-sans text-site-caption tabular-nums text-muted-foreground',
+                        ),
+                      ],
+                      [String(ramkaPages.length)],
+                    ),
+                  ],
+                },
+                h,
+              ),
+              h.div([h.AriaHidden(true), h.Class('mb-1 ml-2 mr-3 h-px shrink-0 bg-border')]),
+              h.block(
+                Ramka.embedView({
+                  slotId: 'navigation-ramka',
+                  model: model.ramka,
+                  viewInputs: inputs,
+                }),
+              ),
+            ],
+          ),
           h.p(
             [h.Class('pt-6 pr-2.5 pb-6 pl-2.5 text-[11px] text-muted-foreground leading-[1.8] ')],
-            ['Built with Foldkit. Designed by Micka & Bklit.'],
+            ['Built with Foldkit. Designed by Micka, Bklit & Artur Bień.'],
           ),
         ],
       },

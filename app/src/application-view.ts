@@ -266,7 +266,7 @@ export const makeRenderApplication = (bindings: typeof applicationViewBindings) 
                 ),
               ]
     return {
-      title: `${page?.name ?? article?.title ?? (landing ? 'Fluid × Bklit' : 'Page not found')} · Fluid Foldkit`,
+      title: `${page?.name ?? article?.title ?? (landing ? 'Fluid × Bklit × Ramka' : 'Page not found')} · Fluid Foldkit`,
       body: motion.root(
         h.div(
           [

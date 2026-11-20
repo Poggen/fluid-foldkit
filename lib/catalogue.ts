@@ -1,11 +1,13 @@
 import { systemPages } from './system'
 export { systemPages } from './system'
 /* @license Fluid descriptions derived from cc276ca0. MIT, copyright 2026 Micka Touillaud. */
+import type { Family } from './registry-families'
+
 export interface ComponentPage {
   readonly slug: string
   readonly name: string
   readonly description: string
-  readonly family: 'fluid' | 'charts'
+  readonly family: Family
   readonly isNew?: boolean
   readonly href: string
 }
@@ -499,7 +501,17 @@ export const chartPages: ReadonlyArray<ComponentPage> = [
     href: '/charts/bar-skeleton',
   },
 ]
-export const componentPages = [...fluidPages, ...chartPages]
+export const ramkaPages: ReadonlyArray<ComponentPage> = [
+  {
+    slug: 'lightbox',
+    name: 'Ramka Lightbox',
+    description:
+      'A media lightbox with native scroll snap, zoom, pinch, pan, pull-to-close and View Transition morphs.',
+    family: 'ramka',
+    href: '/ramka/lightbox',
+  },
+]
+export const componentPages = [...fluidPages, ...chartPages, ...ramkaPages]
 export const guidePages = [
   { href: '/', name: 'Showcase' },
   { href: '/introduction', name: 'Introduction' },
@@ -511,6 +523,7 @@ export const documentationPages = [
   ...systemPages,
   ...fluidPages.toSorted((a, b) => a.name.localeCompare(b.name)),
   ...chartPages,
+  ...ramkaPages,
 ]
 export const pages = [...guidePages, ...systemPages]
 export const pageAt = (path: string) => componentPages.find((page) => page.href === path)

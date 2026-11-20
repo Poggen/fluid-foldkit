@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "upstream": {
+    "repository": "https://github.com/arturbien/ramka",
+    "commit": "bf58a38a92f8905a7014f23da38db06f41479c34",
+    "package": "@ramka/react",
+    "version": "0.0.2",
+    "license": "MIT",
+    "licenseSha256": "672e6b3e20e456ef29c2c65fe1f7942fcb9d364676cc665aa74b7b1354a92e16"
+  },
+  "adaptation": {
+    "scope": "full native Foldkit lightbox/gallery API and browser resources",
+    "architectureReference": "Foldkit Block Composition Environment resources and Binding Steps",
+    "motion": "Upstream-derived WAAPI discrete/release visual projection with Model poseSample acknowledgement and committed target render state; exact View Transition compositor generation; consumer-animation observation on non-VT fallback",
+    "components": 23,
+    "domIdentityMarkers": 21,
+    "framework": "native Foldkit; no React runtime",
+    "apiEquivalents": {
+      "contexts": "explicit PartContext and read-only get*Context selectors",
+      "handles": "parent Binding Steps and model selectors",
+      "callbacks": "atomic Changed flags for open-at-index; separate lifecycle/navigation/zoom outputs",
+      "lazyChunks": "lazy native engine modules with idle/intent warmup and failure fallback",
+      "cjs": "async adapter loads native ESM graph"
+    },
+    "evidence": {
+      "contracts": "../../CONTRACTS.md",
+      "provenance": "../../provenance/",
+      "chromium": "../../evidence/browser-receipt.json",
+      "webkit": "../../evidence/browser-webkit.json",
+      "consumer": "../../evidence/consumer-receipt.json",
+      "verification": "../../VERIFICATION.md",
+      "morphComparison": "../../provenance/morph-comparison-summary.json",
+      "morphComparisonRows": "../../provenance/morph-comparison.json",
+      "numerical": "../../provenance/gesture-math-differential.json",
+      "guards": "../../provenance/browser-guards-receipt.json",
+      "hydration": "../../provenance/ssr-hydration-summary.json",
+      "gesture": "../../provenance/gesture-browser-comparisons.json",
+      "pull": "../../provenance/pull-browser-comparisons.json",
+      "sdkGuards": "../../provenance/sdk-flush-receipt.json",
+      "rootContracts": "../../provenance/root-contracts-receipt.json",
+      "frozenBuild": "../../provenance/browser-final-build.json"
+    },
+    "proofLimits": [
+      "806 named upstream cases assessed by family;96 original named numerical tests executed, not all806",
+      "84 actual3-engine VT normalized animation/geometry comparisons exact; wall-clock frame/device performance is not identical by implication",
+      "Physical iOS/Android and downstream SSR frameworks beyond tested Foldkit hydration matrix remain unmeasured",
+      "Final native/browser gate status comes from current VERIFICATION/receipts"
+    ],
+    "registryRelease": {
+      "namespace": "@ramka-foldkit",
+      "items": ["lightbox", "all"],
+      "status": "Native parity and clean installed-consumer checks verified; publication and production verification are recorded in the release receipt.",
+      "version": "0.1.0-preview.6",
+      "verificationReceipt": "https://github.com/Poggen/fluid-foldkit/releases/download/registry-0.1.0-preview.6/release-verification.json"
+    },
+    "frozenSourceEvidence": {
+      "unitTests": 206,
+      "browserScenarios": {
+        "chromium": 24,
+        "webkit": 19,
+        "firefox": 19
+      },
+      "ssrHandoffs": 16,
+      "rootCheckpoints": 17,
+      "morphComparisonsExact": 84,
+      "productionEntry": "index-BsVJuPNf.js",
+      "productionIndexSha256": "fba4b4a4756b9655373929027d9d23bdda24f0e4a0ac59812b28c1bd00b32525"
+    },
+    "evidenceContext": "Relative evidence paths below refer to the native project inside the source proof archive.",
+    "sourceProofArchive": "https://github.com/Poggen/fluid-foldkit/releases/download/registry-0.1.0-preview.6/ramka-foldkit-parity-proof.tar.gz"
+  },
+  "sdk": {
+    "foldkit": "0.170.0-canary.54f8bcd443b4",
+    "effect": "4.1.2",
+    "patchSha256": "24d36d7159e88ccca9cd0a9e4b4959e5043cccb976da741dec49dd230f8e1b0f",
+    "previousFoundationPatchSha256": "031056e7d30a370fe8860c3f519564bae60c9c949b5021e29398663808d06436",
+    "patchExtension": {
+      "publicAPI": "Render.flushSync",
+      "purpose": "synchronous complete Model-view commit inside native View Transition callback, including custom render hosts",
+      "preservesOriginalFixes": true,
+      "regressionReview": "4 real-runtime guard regressions pass;2 served-code mutations rejected",
+      "distribution": "Registry foundation carries the exact patch and explicit Bun setup; clean installed consumer verifies patch, public capability, idempotence and a real native image transition."
+    }
+  }
+}

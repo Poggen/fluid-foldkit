@@ -79,7 +79,12 @@ const enrolled: readonly Enrollment[] = [
   },
   {
     file: 'app/src/gallery/card.ts',
-    consumers: [`${fluid}composition.ts`, `${fluid}index.ts`, ...chartFiles],
+    consumers: [
+      `${fluid}composition.ts`,
+      `${fluid}index.ts`,
+      'app/src/gallery/block.ts',
+      ...chartFiles,
+    ],
   },
 ]
 

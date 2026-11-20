@@ -44,6 +44,40 @@ export const verifyBrowser = async (url: string) => {
       '--fn',
       "document.querySelector('[data-accordion-trigger=two]')?.getAttribute('aria-expanded')==='true'",
     ])
+    await command([
+      'wait',
+      '--fn',
+      "typeof document.startViewTransition==='function' && [...document.querySelectorAll('[data-ramka-trigger] img')].every(image=>image.complete && image.naturalWidth>0)",
+    ])
+    await command(['find', 'role', 'button', 'click', '--name', 'Open installed image 1'])
+    await command([
+      'wait',
+      '--fn',
+      "document.documentElement.hasAttribute('data-ramka-view-transition') && document.getAnimations().some(animation=>animation.effect?.pseudoElement?.startsWith('::view-transition'))",
+    ])
+    await command([
+      'wait',
+      '--fn',
+      "document.querySelector('[data-ramka-content]')?.hasAttribute('open')===true",
+    ])
+    await command([
+      'wait',
+      '--fn',
+      "!document.documentElement.hasAttribute('data-ramka-view-transition') && document.querySelector('[data-ramka-content]')?.getAttribute('aria-hidden')!=='true' && !document.querySelector('[data-ramka-content]')?.hasAttribute('inert')",
+    ])
+    await command(['find', 'role', 'button', 'click', '--name', 'Next', '--exact'])
+    await command([
+      'wait',
+      '--fn',
+      "document.querySelector('[data-ramka-content] [data-ramka-caption]')?.textContent==='Second installed image'",
+    ])
+    await command(['press', 'Escape'])
+    await command(['wait', '--fn', "document.querySelector('[data-ramka-content][open]')===null"])
+    await command([
+      'wait',
+      '--fn',
+      "!document.documentElement.hasAttribute('data-ramka-view-transition')",
+    ])
     await command(['screenshot', path.join(root, '.verification/consumer.png')])
     await command(['find', 'role', 'button', 'click', '--name', 'Unmount components'])
     await command([
@@ -62,6 +96,8 @@ export const verifyBrowser = async (url: string) => {
     if (!result.success || result.data.errors.length > 0)
       throw new Error(`Browser reported errors: ${errors}`)
     return {
+      ramkaNativeViewTransition: true,
+      ramkaOpenNavigateClose: true,
       pointerActivation: true,
       keyboardActivation: true,
       bindingCommands: true,

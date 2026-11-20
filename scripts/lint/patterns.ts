@@ -21,7 +21,7 @@ const workspacePath = (filename: string) =>
   path.relative(repoRoot, path.resolve(filename)).split(path.sep).join('/')
 
 const isRuntimeSource = (filename: string) =>
-  /^(?:app\/src|registry\/(?:fluid|charts)\/src|lib)\//u.test(filename)
+  /^(?:app\/src|registry\/(?:fluid|charts|ramka)\/src|lib)\//u.test(filename)
 
 const unwrapExpression: (node: ESTree.Expression) => ESTree.Expression = (
   node: ESTree.Expression,

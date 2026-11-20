@@ -55,7 +55,12 @@ it.effect(
       })
       expect(embedded.baseline).toEqual(home.baseline)
 
-      for (const pathname of ['/components/calendar', '/components/input', '/charts/bar']) {
+      for (const pathname of [
+        '/components/calendar',
+        '/components/input',
+        '/charts/bar',
+        '/ramka/lightbox',
+      ]) {
         const prepared = yield* prepareApplicationFlagsFor(`https://example.test${pathname}`)
         expect(prepared.baseline).toEqual(home.baseline)
       }

@@ -1,4 +1,5 @@
 import { Effect, Option, Schema } from 'effect'
+import { families } from '../../../lib/registry-families'
 import { AsyncData } from 'foldkit'
 import { Query } from 'foldkit/experimental'
 import { pageAt } from '../../../lib/catalogue'
@@ -6,7 +7,7 @@ import { ReferenceClient, ReferenceData } from './data'
 
 export const ReferenceQuery = Query.define({
   name: 'ComponentReferenceQuery',
-  args: { family: Schema.Literals(['fluid', 'charts']), slug: Schema.String },
+  args: { family: Schema.Literals(families), slug: Schema.String },
   data: ReferenceData,
   error: Schema.String,
   maxSettledEntries: 8,

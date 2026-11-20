@@ -1,3 +1,9 @@
+import {
+  RamkaExampleBlock,
+  layer as RamkaExampleLayer,
+} from '../../../registry/ramka/examples/src/lightbox-example'
+import { previewAdmitted, previewBody, previewCard } from './card'
+import { ramkaPages } from '../../../lib/catalogue'
 import { PreviewHeights, previewLayoutKey } from './geometry'
 import { reconcileEmbeddedLocation } from './embedded-configuration'
 import { acceptConfiguration } from '../playground/configuration-acceptance'
@@ -84,8 +90,9 @@ const ObservePreviews = GalleryBlock.makeMountStream('ObservePreviews', {
     }
   },
 })
+const Ramka = GalleryBlock.makeRequiredFieldBinding(RamkaExampleBlock, { field: 'ramka' })
 const GalleryComposition = GalleryBlock.makeComposition({
-  bindings: [Fluid, Cartesian, Polar, Flows, Companions, ComposerSamples],
+  bindings: [Fluid, Cartesian, Polar, Flows, Companions, ComposerSamples, Ramka],
   mounts: [ObservePreviews],
 })
 type GalleryHtml = Parameters<Parameters<typeof GalleryComposition.makeView.withInputs>[0]>[2]
@@ -207,6 +214,11 @@ const makeView = () => {
   const lazyFlows = createLazy()
   const lazyCompanions = createLazy()
   return GalleryComposition.makeView.withInputs((model, inputs, h) => {
+    const admission = {
+      ready: model.isReady,
+      admitted: model.admitted,
+      ...(inputs.only === undefined ? {} : { only: inputs.only }),
+    }
     const grid = h.keyed('div')(
       inputs.only ?? 'showcase',
       [
@@ -285,6 +297,23 @@ const makeView = () => {
           model.admitted,
           h,
         ]),
+        ...ramkaPages
+          .filter((page) => inputs.only === undefined || inputs.only === page.href)
+          .map((page) =>
+            previewCard(
+              page,
+              inputs.settings,
+              previewBody(
+                page,
+                admission,
+                () => h.block(Ramka.embedView({ slotId: 'ramka-example', model: model.ramka })),
+                h,
+              ),
+              h,
+              !previewAdmitted(page, admission),
+              inputs.only !== undefined,
+            ),
+          ),
       ],
     )
     return inputs.only === undefined
@@ -471,6 +500,7 @@ export const layer = GalleryBlock.makeLayer(plans).pipe(
       PolarLayer,
       FlowsLayer,
       CompanionsLayer,
+      RamkaExampleLayer,
     ),
   ),
 )

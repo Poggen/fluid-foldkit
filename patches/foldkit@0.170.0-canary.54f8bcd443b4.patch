@@ -93,3 +93,164 @@ index 77f59583e854ad27b3c4eb5df76279d970a6ed55..8dd0f71a39d3d1caa7218b6b69873e51
      // NOTE: Ref.set runs upstream of Stream.changesWith on
      // every model change, so readDependencies() returns
      // current values even when the equivalence filter
+diff --git a/dist/render/commit.js b/dist/render/commit.js
+--- a/dist/render/commit.js
++++ b/dist/render/commit.js
+@@ -32,8 +32,10 @@
+ export const createCommitNotifier = () => {
+     let isPending = false;
+     const callbacks = new Set();
++    let flushPending = () => {};
+     return {
+         service: {
++            flushSync: () => flushPending(),
+             isCommitPending: () => isPending,
+             onNextCommit: callback => {
+                 callbacks.add(callback);
+@@ -42,6 +44,7 @@
+                 };
+             },
+         },
++        setFlushSync: flush => { flushPending = flush; },
+         markCommitPending: () => {
+             isPending = true;
+         },
+diff --git a/dist/render/commit.d.ts b/dist/render/commit.d.ts
+--- a/dist/render/commit.d.ts
++++ b/dist/render/commit.d.ts
+@@ -1,5 +1,6 @@
+ import { Context } from 'effect';
+ declare const RenderCommit_base: Context.ServiceClass<RenderCommit, "@foldkit/RenderCommit", {
++    readonly flushSync: () => void;
+     readonly isCommitPending: () => boolean;
+     readonly onNextCommit: (callback: () => void) => () => void;
+ }>;
+@@ -25,6 +26,7 @@
+  *  provide, plus the two calls that drive it. */
+ export type CommitNotifier = Readonly<{
+     service: typeof RenderCommit.Service;
++    setFlushSync: (flush: () => void) => void;
+     markCommitPending: () => void;
+     notifyCommitted: () => void;
+ }>;
+diff --git a/dist/render/render.js b/dist/render/render.js
+--- a/dist/render/render.js
++++ b/dist/render/render.js
+@@ -74,3 +74,17 @@
+     yield* afterCommit;
+     yield* nextAnimationFrame;
+ });
++
++/**
++ * Commits a pending live Model to the DOM on the current stack. Use only at
++ * browser integration boundaries, such as an externally owned View Transition
++ * update callback, where the browser suppresses animation frames. This uses
++ * the normal view, patch, mount and commit-notification path. It never changes
++ * the Model, resumes paused DevTools, or wraps the commit in a nested transition.
++ * Requires a running Foldkit runtime; call after the Message has been accepted.
++ */
++export const flushSync = Effect.gen(function* () {
++    const maybeRenderCommit = yield* Effect.serviceOption(RenderCommit);
++    if (Option.isNone(maybeRenderCommit)) return yield* Effect.die(new Error('Render.flushSync requires a running Foldkit runtime'));
++    yield* Effect.sync(maybeRenderCommit.value.flushSync);
++});
+diff --git a/dist/render/render.d.ts b/dist/render/render.d.ts
+--- a/dist/render/render.d.ts
++++ b/dist/render/render.d.ts
+@@ -42,4 +42,13 @@
+  * ```
+  */
+ export declare const afterPaint: Effect.Effect<void>;
+-//# sourceMappingURL=render.d.ts.map
+\ No newline at end of file
++//# sourceMappingURL=render.d.ts.map
++/**
++ * Commits a pending live Model to the DOM on the current stack. Use only at
++ * browser integration boundaries, such as an externally owned View Transition
++ * update callback, where the browser suppresses animation frames. This uses
++ * the normal view, patch, mount and commit-notification path. It never changes
++ * the Model, resumes paused DevTools, or wraps the commit in a nested transition.
++ * Requires a running Foldkit runtime; call after the Message has been accepted.
++ */
++export declare const flushSync: Effect.Effect<void>;
+diff --git a/dist/render/public.js b/dist/render/public.js
+--- a/dist/render/public.js
++++ b/dist/render/public.js
+@@ -1 +1 @@
+-export { afterCommit, afterPaint } from './index.js';
++export { afterCommit, afterPaint, flushSync } from './index.js';
+diff --git a/dist/render/public.d.ts b/dist/render/public.d.ts
+--- a/dist/render/public.d.ts
++++ b/dist/render/public.d.ts
+@@ -1,2 +1,2 @@
+-export { afterCommit, afterPaint } from './index.js';
++export { afterCommit, afterPaint, flushSync } from './index.js';
+ //# sourceMappingURL=public.d.ts.map
+\ No newline at end of file
+diff --git a/dist/render/index.js b/dist/render/index.js
+--- a/dist/render/index.js
++++ b/dist/render/index.js
+@@ -1 +1 @@
+-export { afterCommit, afterPaint } from './render.js';
++export { afterCommit, afterPaint, flushSync } from './render.js';
+diff --git a/dist/render/index.d.ts b/dist/render/index.d.ts
+--- a/dist/render/index.d.ts
++++ b/dist/render/index.d.ts
+@@ -1,2 +1,2 @@
+-export { afterCommit, afterPaint } from './render.js';
++export { afterCommit, afterPaint, flushSync } from './render.js';
+ //# sourceMappingURL=index.d.ts.map
+\ No newline at end of file
+diff --git a/dist/runtime/renderer.js b/dist/runtime/renderer.js
+--- a/dist/runtime/renderer.js
++++ b/dist/runtime/renderer.js
+@@ -34,6 +34,8 @@
+     // `commitNotifier` tracks the patch itself, so `Render.afterCommit`
+     // waits for the commit rather than for the frame that scheduled it.
+     let isRenderFrameScheduled = false;
++    let renderFrameHandle;
++    let isFlushingSync = false;
+     // NOTE: resume clears the DevTools store's pause flag before its frame
+     // patches the live view. This distinguishes that intentional repaint
+     // from an ordinary frame that was already queued when jumpTo installed
+@@ -435,9 +437,10 @@
+     // would strand any `Render.afterCommit` registered against it, and
+     // the Dom helpers that gate on it would never run their DOM work.
+     const renderFramePlain = () => {
++        if (!isRenderFrameScheduled) return;
+         // NOTE: retain the scheduled frame's pending commit while the drain waits.
+         if (isLiveModelBehindQueue()) {
+-            requestAnimationFrame(renderFramePlain);
++            renderFrameHandle = requestAnimationFrame(renderFramePlain);
+             return;
+         }
+         isRenderFrameScheduled = false;
+@@ -474,7 +477,7 @@
+         // `startFrameViewTransition`, which decides per frame whether to
+         // wrap the render in `document.startViewTransition`. When it does,
+         // the render runs later, inside the transition's update callback.
+-        if (Option.isNone(maybeResolvedViewTransition)) {
++        if (isFlushingSync || Option.isNone(maybeResolvedViewTransition)) {
+             runRenderFrameBody();
+             return;
+         }
+@@ -495,8 +498,17 @@
+         }
+         isRenderFrameScheduled = true;
+         commitNotifier.markCommitPending();
+-        requestAnimationFrame(renderFramePlain);
+-    };
++        renderFrameHandle = requestAnimationFrame(renderFramePlain);
++    };
++    commitNotifier.setFlushSync(() => {
++        if (!commitNotifier.service.isCommitPending() || isFlushingSync || status.isRenderingFrame || status.isRuntimeDisposed || status.isCrashed || isPausedNow() || readViewState() === 'Paused') return;
++        skipPendingViewTransition();
++        isRenderFrameScheduled = true;
++        if (renderFrameHandle !== undefined) cancelAnimationFrame(renderFrameHandle);
++        isFlushingSync = true;
++        try { renderFramePlain(); } finally { isFlushingSync = false; }
++    });
++    yield* Effect.addFinalizer(() => Effect.sync(() => commitNotifier.setFlushSync(() => {})));
+     const devToolsRenderBridge = {
+         // NOTE: passes `noOpDispatch` so declarative handlers and Mounts
+         // acquired by the replay cannot reach the live Model. Their

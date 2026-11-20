@@ -42,7 +42,7 @@ const articles: Readonly<
       },
       {
         heading: 'Native foundations',
-        body: 'The original Fluid Functionalism components are built on shadcn/ui with Radix and Base UI variants. This port expresses their behavior through native Foldkit Blocks and Effect Layers. The two registries install editable Fluid components or Bklit charts with their dependencies; your theme, radius, and font tokens remain yours.',
+        body: 'The original Fluid Functionalism components are built on shadcn/ui with Radix and Base UI variants. This port expresses their behavior through native Foldkit Blocks and Effect Layers. The registries install editable Fluid components, Bklit charts or the Ramka media lightbox with their dependencies; your theme, radius, and font tokens remain yours.',
       },
       {
         heading: 'Customize using the right panel',
@@ -61,21 +61,21 @@ const articles: Readonly<
   },
   '/installation': {
     title: 'Make yourself at home.',
-    lead: 'Two registries. One native component stack.',
+    lead: 'Three registries. One native component stack.',
     sections: [
       {
         heading: 'Start with Foldkit',
-        body: 'Use the matching Blocks + Effect Layers preview: Foldkit and @foldkit/ui 0.170.0-canary.54f8bcd443b4 with Effect 4.1.2. The source needs Tailwind CSS v4 and its Fluid foundation stylesheet.',
+        body: 'Use the matching Blocks + Effect Layers preview: Foldkit and @foldkit/ui 0.170.0-canary.54f8bcd443b4 with Effect 4.1.2. Fluid and Bklit need Tailwind CSS v4 and their family stylesheet. Ramka requires its bundled exact SDK patch: run bun scripts/install-ramka-sdk.mjs after adding it. The verified setup preserves other manifest fields and existing known SDK fixes. Ramka provides structural CSS in parts.css; your application owns the visual skin.',
       },
       {
         heading: 'Configure the registries',
-        body: 'Add these two namespaces to the registries field of components.json.',
-        code: `"registries": {\n  "@fluid-foldkit": "https://fluid-foldkit.vercel.app/r/fluid/${release}/{name}.json",\n  "@bklit-foldkit": "https://fluid-foldkit.vercel.app/r/charts/${release}/{name}.json"\n}`,
+        body: 'Add these namespaces to the registries field of components.json.',
+        code: `"registries": {\n  "@fluid-foldkit": "https://fluid-foldkit.vercel.app/r/fluid/${release}/{name}.json",\n  "@bklit-foldkit": "https://fluid-foldkit.vercel.app/r/charts/${release}/{name}.json",\n  "@ramka-foldkit": "https://fluid-foldkit.vercel.app/r/ramka/${release}/{name}.json"\n}`,
       },
       {
         heading: 'Install a component',
         body: 'The CLI installs editable source and its dependency closure. You can install either family independently.',
-        code: 'bunx shadcn@4.23.0 add @fluid-foldkit/button\nbunx shadcn@4.23.0 add @bklit-foldkit/gauge',
+        code: 'bunx shadcn@4.23.0 add @fluid-foldkit/button\nbunx shadcn@4.23.0 add @bklit-foldkit/gauge\nbunx shadcn@4.23.0 add @ramka-foldkit/lightbox\nbun scripts/install-ramka-sdk.mjs',
       },
     ],
   },
@@ -97,7 +97,7 @@ const articles: Readonly<
       },
       {
         heading: 'A preview with clear limits',
-        body: 'The current preview has a nested OnUnmount server-rendering limitation. Live previews start in the browser while navigation, card frames and documentation render on the server. The local showcase carries one pinned runtime patch. Registry installs use the original public SDK.',
+        body: 'The current preview has a nested OnUnmount server-rendering limitation. Live previews start in the browser while navigation, card frames and documentation render on the server. The local showcase carries one pinned SDK patch. Ramka consumers install and verify the same reviewed patch with bun scripts/install-ramka-sdk.mjs; Fluid and chart consumers use the public SDK directly.',
       },
     ],
   },
