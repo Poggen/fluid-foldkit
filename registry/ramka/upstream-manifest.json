@@ -33,7 +33,12 @@
       "morphComparisonRows": "../../provenance/morph-comparison.json",
       "numerical": "../../provenance/gesture-math-differential.json",
       "guards": "../../provenance/browser-guards-receipt.json",
-      "hydration": "../../provenance/ssr-hydration-summary.json"
+      "hydration": "../../provenance/ssr-hydration-summary.json",
+      "gesture": "../../provenance/gesture-browser-comparisons.json",
+      "pull": "../../provenance/pull-browser-comparisons.json",
+      "sdkGuards": "../../provenance/sdk-flush-receipt.json",
+      "rootContracts": "../../provenance/root-contracts-receipt.json",
+      "frozenBuild": "../../provenance/browser-final-build.json"
     },
     "proofLimits": [
       "806 named upstream cases assessed by family;96 original named numerical tests executed, not all806",
@@ -44,9 +49,25 @@
     "registryRelease": {
       "namespace": "@ramka-foldkit",
       "items": ["lightbox", "all"],
-      "preparedVersion": "preview.6",
-      "status": "prepared; publication and live consumer proof pending root receipts"
-    }
+      "status": "Native parity and clean installed-consumer checks verified; publication and production verification are recorded in the release receipt.",
+      "version": "0.1.0-preview.6",
+      "verificationReceipt": "https://github.com/Poggen/fluid-foldkit/releases/download/registry-0.1.0-preview.6/release-verification.json"
+    },
+    "frozenSourceEvidence": {
+      "unitTests": 206,
+      "browserScenarios": {
+        "chromium": 24,
+        "webkit": 19,
+        "firefox": 19
+      },
+      "ssrHandoffs": 16,
+      "rootCheckpoints": 17,
+      "morphComparisonsExact": 84,
+      "productionEntry": "index-BsVJuPNf.js",
+      "productionIndexSha256": "fba4b4a4756b9655373929027d9d23bdda24f0e4a0ac59812b28c1bd00b32525"
+    },
+    "evidenceContext": "Relative evidence paths below refer to the native project inside the source proof archive.",
+    "sourceProofArchive": "https://github.com/Poggen/fluid-foldkit/releases/download/registry-0.1.0-preview.6/ramka-foldkit-parity-proof.tar.gz"
   },
   "sdk": {
     "foldkit": "0.170.0-canary.54f8bcd443b4",
@@ -57,8 +78,8 @@
       "publicAPI": "Render.flushSync",
       "purpose": "synchronous complete Model-view commit inside native View Transition callback, including custom render hosts",
       "preservesOriginalFixes": true,
-      "regressionReview": "pending",
-      "distribution": "registry foundation patch plus explicit Bun setup script; fresh default-VT consumer proof pending"
+      "regressionReview": "4 real-runtime guard regressions pass;2 served-code mutations rejected",
+      "distribution": "Registry foundation carries the exact patch and explicit Bun setup; clean installed consumer verifies patch, public capability, idempotence and a real native image transition."
     }
   }
 }

@@ -18,7 +18,7 @@ test('opens Ramka from its reference page and releases the dialog before navigat
   await page.keyboard.press('Escape')
   await expect(dialog).toBeHidden()
   await expect(page.locator('html')).not.toHaveAttribute('data-ramka-view-transition')
-  await expect(trigger).toBeFocused()
+  await expect(page.getByRole('button', { name: 'Open image 2', exact: true })).toBeFocused()
   await page
     .locator('#site-navigation')
     .getByRole('link', { name: 'Installation', exact: true })

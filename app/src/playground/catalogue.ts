@@ -285,6 +285,7 @@ const chartControls: Readonly<Record<string, ReadonlyArray<Control>>> = {
 export const controlsFor: (page: ComponentPage) => ReadonlyArray<Control> = (
   page: ComponentPage,
 ) => {
+  if (page.family === 'ramka') return []
   const specific = (page.family === 'fluid' ? controls : chartControls)[page.slug]
   if (specific === undefined) throw new Error(`Missing playground: ${page.family}/${page.slug}`)
   return specific

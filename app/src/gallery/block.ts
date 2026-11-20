@@ -2,7 +2,7 @@ import {
   RamkaExampleBlock,
   layer as RamkaExampleLayer,
 } from '../../../registry/ramka/examples/src/lightbox-example'
-import { previewCard } from './card'
+import { previewAdmitted, previewBody, previewCard } from './card'
 import { ramkaPages } from '../../../lib/catalogue'
 import { PreviewHeights, previewLayoutKey } from './geometry'
 import { reconcileEmbeddedLocation } from './embedded-configuration'
@@ -214,6 +214,11 @@ const makeView = () => {
   const lazyFlows = createLazy()
   const lazyCompanions = createLazy()
   return GalleryComposition.makeView.withInputs((model, inputs, h) => {
+    const admission = {
+      ready: model.isReady,
+      admitted: model.admitted,
+      ...(inputs.only === undefined ? {} : { only: inputs.only }),
+    }
     const grid = h.keyed('div')(
       inputs.only ?? 'showcase',
       [
@@ -293,14 +298,19 @@ const makeView = () => {
           h,
         ]),
         ...ramkaPages
-          .filter((page) => inputs.only === undefined || inputs.only === page.slug)
+          .filter((page) => inputs.only === undefined || inputs.only === page.href)
           .map((page) =>
             previewCard(
               page,
               inputs.settings,
-              h.block(Ramka.embedView({ slotId: 'ramka-example', model: model.ramka })),
+              previewBody(
+                page,
+                admission,
+                () => h.block(Ramka.embedView({ slotId: 'ramka-example', model: model.ramka })),
+                h,
+              ),
               h,
-              false,
+              !previewAdmitted(page, admission),
               inputs.only !== undefined,
             ),
           ),
