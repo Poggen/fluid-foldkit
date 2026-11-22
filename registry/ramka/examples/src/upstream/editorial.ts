@@ -481,7 +481,17 @@ export const layer = Root.makeLayer({
                                             attributes: childAttributes([
                                               h.Class('overflow-hidden rounded-xl'),
                                             ]),
-                                            children: [video],
+                                            children: [
+                                              video,
+                                              h.img([
+                                                h.Src(film.poster),
+                                                h.Alt(''),
+                                                h.AriaHidden(true),
+                                                h.Class(
+                                                  'pointer-events-none absolute inset-0 opacity-0',
+                                                ),
+                                              ]),
+                                            ],
                                           }),
                                         ],
                                       }),

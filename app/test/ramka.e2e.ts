@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import { expect, test } from '@playwright/test'
 
 test('opens Ramka from its reference page and releases the dialog before navigation', async ({
@@ -85,9 +86,13 @@ test('uses the upstream photo library, RTL navigation and progressive feed', asy
   )
 })
 
-test('opens the upstream attachment stack and a poster as independent galleries', async ({
-  page,
-}) => {
+test('opens the attachment stack and closes a playing film trailer', async ({ page }) => {
+  await page.route('**/trailer_iphone.m4v', (route) =>
+    route.fulfill({
+      path: fileURLToPath(new URL('./fixtures/ramka-playback.webm', import.meta.url)),
+      contentType: 'video/webm',
+    }),
+  )
   await page.goto('/ramka/lightbox')
   await page.locator('#text-message').getByRole('button', { name: 'Open 3 attachments' }).click()
   const attachments = page.getByRole('dialog', { name: 'Message attachments' })
@@ -100,9 +105,15 @@ test('opens the upstream attachment stack and a poster as independent galleries'
     .locator('[data-ramka-trigger]')
     .filter({ has: page.getByText('Big Buck Bunny', { exact: true }) })
     .click()
-  const video = page.getByRole('dialog', { name: 'Big Buck Bunny' }).locator('video[controls]')
+  const film = page.getByRole('dialog', { name: 'Big Buck Bunny' })
+  const video = film.locator('video[controls]')
   await expect(video).toBeVisible()
   await expect(video).toHaveAttribute('src', /trailer_iphone[.]m4v/)
+  await expect
+    .poll(() => video.evaluate((element: HTMLVideoElement) => element.currentTime))
+    .toBeGreaterThan(0)
+  await film.getByRole('button', { name: 'Close', exact: true }).click()
+  await expect(film).toBeHidden()
 })
 
 test('Ramka distinguishes URL-synced dialogs from intercepted photos on reload', async ({
