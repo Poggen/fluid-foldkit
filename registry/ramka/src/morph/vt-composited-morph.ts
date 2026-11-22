@@ -78,6 +78,7 @@ export function createCompositedMorph(document: Document, styles: MorphStyles) {
   function prewarmCompositedCssSheet() {
     if (disposed) return
     cssPath.activeOwner = owner
+    if (isWebKit()) ensureCompositedCssStaticRules()
     if (typeof document === 'undefined' || !styles.supportsConstructedSheets()) return
     if (cssPath.cleanupTimer != null) {
       clearTimeout(cssPath.cleanupTimer)

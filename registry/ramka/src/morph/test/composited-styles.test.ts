@@ -108,17 +108,20 @@ describe('document WebKit keyframes', () => {
         height: '75px',
       }
       const large = { transform: 'matrix(1, 0, 0, 1, 0, 0)', width: '800px', height: '600px' }
-      const rules = () =>
-        [...document.styleSheets, ...(document.adoptedStyleSheets ?? [])].flatMap((sheet) =>
-          Array.from(sheet.cssRules),
-        )
+      const sheets = () => [...document.styleSheets, ...(document.adoptedStyleSheets ?? [])]
+      const rules = () => sheets().flatMap((sheet) => Array.from(sheet.cssRules))
       const groups = () =>
         rules().filter(
           (rule): rule is CSSKeyframesRule =>
             rule instanceof CSSKeyframesRule && rule.name === 'ramka-vt-cm-group',
         )
 
+      first.compositor.prewarmCompositedCssSheet()
+      const prewarmed = sheets()
+      expect(document.documentElement.hasAttribute('data-ramka-vt-composited-css')).toBe(false)
       const firstOpen = await start(first, small, large)
+      if (delivery === 'constructed') expect(sheets()).toEqual(prewarmed)
+      else expect(sheets()).toHaveLength(prewarmed.length + 1)
       firstOpen.resolve()
       await flushTransition()
       const secondOpen = await start(second, other, large)
