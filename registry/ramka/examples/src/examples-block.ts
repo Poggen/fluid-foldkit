@@ -1,4 +1,4 @@
-import { Effect, Layer, Queue, Schema, Stream } from 'effect'
+import { Effect, Layer, Match, Queue, Schema, Stream } from 'effect'
 import { Block, Update } from 'foldkit'
 import { defineMessageUnion } from 'foldkit/message'
 import { LightboxBlock, Environment, layer as LightboxLayer } from '@foldkit-visuals/ramka/lightbox'
@@ -127,26 +127,19 @@ const Lightboxes = Root.makeKeyedArrayBinding(LightboxBlock, {
       const lightbox = model.lightboxes.find((entry) => entry.key === key)?.model
       if (lightbox === undefined) return { model }
       const selected = (index: number) => lightbox.items[index]?.id ?? null
-      switch (out._tag) {
-        case 'Changed':
-          return {
-            model,
-            commands: [WritePhotoLocation({ example, id: out.open ? selected(out.index) : null })],
-          }
-        case 'OpenChanged':
-          return {
-            model,
-            commands: [
-              WritePhotoLocation({ example, id: out.open ? selected(lightbox.index) : null }),
-            ],
-          }
-        case 'ValueChanged':
-          return lightbox.open
-            ? { model, commands: [WritePhotoLocation({ example, id: selected(out.index) })] }
-            : { model }
-        default:
-          return { model }
-      }
+      const id = Match.value(out).pipe(
+        Match.tagsExhaustive({
+          Changed: ({ open, index }) => (open ? selected(index) : null),
+          OpenChanged: ({ open }) => (open ? selected(lightbox.index) : null),
+          ValueChanged: ({ index }) => (lightbox.open ? selected(index) : undefined),
+          OpenChangeCompleted: () => undefined,
+          ZoomChanged: () => undefined,
+          Failed: () => undefined,
+        }),
+      )
+      return id === undefined
+        ? { model }
+        : { model, commands: [WritePhotoLocation({ example, id })] }
     }),
 })
 const Composition = Root.makeComposition({
