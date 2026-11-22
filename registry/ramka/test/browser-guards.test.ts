@@ -154,6 +154,8 @@ describe('mounted browser guards', () => {
       document.body.style.paddingInlineEnd = '10px'
       const outer = fixture().resource
       const inner = fixture().resource
+      outer.prepareScrollLock()
+      inner.prepareScrollLock()
       outer.applySelectionGuard()
       expect(document.documentElement.style.userSelect).toBe('text')
       outer.lockScroll()
@@ -182,6 +184,59 @@ describe('mounted browser guards', () => {
       last.lockScroll()
       last.applySelectionGuard()
       expect(document.documentElement.style.overflow).toBe('clip')
+    },
+  )
+  it('prepares compensation without writes and consumes it without measuring after modal reveal', () => {
+    // oxlint-disable-next-line landmines-testing/no-test-doubles -- Native keeper: measured WebKit modal reveal forces document layout; HappyDOM supplies a deterministic classic scrollbar gutter.
+    vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1020)
+    // oxlint-disable-next-line landmines-testing/no-test-doubles -- Native keeper: WebKit profiling verifies the avoided root geometry flush; this counts geometry reads across preparation and reveal.
+    const width = vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(1000)
+    document.body.style.paddingInlineEnd = '10px'
+    const { resource } = fixture()
+    const discard = resource.prepareScrollLock()
+    expect(document.documentElement.style.overflow).toBe('')
+    expect(document.body.style.paddingInlineEnd).toBe('10px')
+    document.documentElement.style.setProperty('overflow', 'clip', 'important')
+    resource.lockScroll()
+    discard?.()
+    expect(width).toHaveBeenCalledTimes(1)
+    expect(document.documentElement.style.overflow).toBe('hidden')
+    expect(document.body.style.paddingInlineEnd).toBe('30px')
+    resource.dispose()
+    expect(document.documentElement.style.overflow).toBe('clip')
+    expect(document.documentElement.style.getPropertyPriority('overflow')).toBe('important')
+    expect(document.body.style.paddingInlineEnd).toBe('10px')
+  })
+  it.each(['width', 'height', 'body', 'cancel'])(
+    'remeasures prepared compensation when its capture context changes (%s)',
+    (change) => {
+      // oxlint-disable-next-line landmines-testing/no-test-doubles -- Native keeper: real WebKit resize exercises scroll compensation; HappyDOM supplies the viewport size for cache invalidation.
+      const viewportWidth = vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(1020)
+      // oxlint-disable-next-line landmines-testing/no-test-doubles -- Native keeper: real WebKit resize exercises scroll compensation; height-only changes can introduce a document scrollbar.
+      const viewportHeight = vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(800)
+      // oxlint-disable-next-line landmines-testing/no-test-doubles -- Native keeper: WebKit profiling verifies root geometry work; HappyDOM supplies the changed scrollbar gutter.
+      const width = vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(1000)
+      document.body.style.paddingInlineEnd = '10px'
+      const { resource } = fixture()
+      const discard = resource.prepareScrollLock()
+      if (change === 'width') {
+        // oxlint-disable-next-line landmines-testing/no-test-doubles -- Native keeper: iOS Safari modal checks use real viewport geometry; HappyDOM needs this width change to invalidate a prepared measurement.
+        viewportWidth.mockReturnValue(1040)
+      } else if (change === 'height') {
+        // oxlint-disable-next-line landmines-testing/no-test-doubles -- Native keeper: iOS Safari modal checks use real viewport geometry; HappyDOM needs this height-only change to invalidate a prepared measurement.
+        viewportHeight.mockReturnValue(900)
+      } else if (change === 'body') {
+        const replacement = document.createElement('body')
+        replacement.style.paddingInlineEnd = '10px'
+        document.body.replaceWith(replacement)
+      } else discard?.()
+      // oxlint-disable-next-line landmines-testing/no-test-doubles -- Native keeper: iOS Safari modal checks measure the real document gutter; this supplies the changed native geometry absent from HappyDOM.
+      width.mockReturnValue(change === 'width' ? 1010 : 990)
+      resource.lockScroll()
+      expect(width).toHaveBeenCalledTimes(2)
+      expect(document.body.style.paddingInlineEnd).toBe('40px')
+      resource.dispose()
+      expect(document.body.style.paddingInlineEnd).toBe('10px')
     },
   )
   it('skips selection writes on a mouse-only device and restores absent styles exactly', () => {

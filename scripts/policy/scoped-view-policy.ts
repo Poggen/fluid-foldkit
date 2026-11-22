@@ -22,6 +22,8 @@ const enrolled: readonly Enrollment[] = [
   { file: 'registry/fluid/src/color-picker.ts' },
   { file: 'registry/fluid/src/color-picker-format-menu.ts' },
   { file: 'app/src/fonts/preference.ts' },
+  { file: 'registry/ramka/examples/src/examples-block.ts' },
+  { file: 'registry/ramka/examples/src/upstream/photos.ts' },
   {
     file: 'app/src/application-view.ts',
     consumers: ['app/src/application.ts'],

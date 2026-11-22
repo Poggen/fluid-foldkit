@@ -1,5 +1,6 @@
-import { Layer, Schema } from 'effect'
+import { Effect, Layer, Schema } from 'effect'
 import { Block } from 'foldkit'
+import { createKeyedLazy } from 'foldkit/html'
 import { defineMessageUnion } from 'foldkit/message'
 import { Environment } from '@foldkit-visuals/ramka/lightbox'
 import { PhotoExamplesBlock, layer as PhotosLayer } from './upstream/photos'
@@ -47,10 +48,24 @@ const RamkaDemosComposition = RamkaDemosBlock.makeComposition({
   bindings: [Photos, Routing, Editorial, Models],
 })
 
-export const layer = RamkaDemosBlock.makeLayer({
-  init: RamkaDemosComposition.makeInit((href) => ({ model: {}, childInitContext: href })),
-  update: RamkaDemosComposition.makeUpdate({}),
-  view: RamkaDemosComposition.makeView(({ photos, routing, editorial, models }, h) =>
+type DemosViewBuilder = Block.ViewBuilderFor<typeof RamkaDemosComposition>
+const renderPhotos = (model: (typeof RamkaDemosBlock.Model.Type)['photos'], h: DemosViewBuilder) =>
+  h.block(Photos.embedView({ slotId: 'photos', model }))
+const renderRouting = (
+  model: (typeof RamkaDemosBlock.Model.Type)['routing'],
+  h: DemosViewBuilder,
+) => h.block(Routing.embedView({ slotId: 'routing', model }))
+const renderEditorial = (
+  model: (typeof RamkaDemosBlock.Model.Type)['editorial'],
+  h: DemosViewBuilder,
+) => h.block(Editorial.embedView({ slotId: 'editorial', model }))
+const renderModels = (model: (typeof RamkaDemosBlock.Model.Type)['models'], h: DemosViewBuilder) =>
+  h.block(Models.embedView({ slotId: 'models', model }))
+
+const makeView = () => {
+  const body = createKeyedLazy()
+
+  return RamkaDemosComposition.makeView(({ photos, routing, editorial, models }, h) =>
     h.section(
       [h.Id('examples'), h.AriaLabel('Ramka examples'), h.Class('w-full space-y-16 py-6')],
       [
@@ -69,11 +84,25 @@ export const layer = RamkaDemosBlock.makeLayer({
             ),
           ],
         ),
-        h.block(Photos.embedView({ slotId: 'photos', model: photos })),
-        h.block(Routing.embedView({ slotId: 'routing', model: routing })),
-        h.block(Editorial.embedView({ slotId: 'editorial', model: editorial })),
-        h.block(Models.embedView({ slotId: 'models', model: models })),
+        body('photos', renderPhotos, [photos, h]),
+        body('routing', renderRouting, [routing, h]),
+        body('editorial', renderEditorial, [editorial, h]),
+        body('models', renderModels, [models, h]),
       ],
     ),
-  ),
-}).pipe(Layer.provide(Layer.mergeAll(PhotosLayer, RoutingLayer, EditorialLayer, ModelsLayer)))
+  )
+}
+
+const plans = Effect.gen(function* () {
+  const children = yield* RamkaDemosComposition.acquireChildren()
+
+  return {
+    children,
+    init: RamkaDemosComposition.makeInit((href) => ({ model: {}, childInitContext: href })),
+    update: RamkaDemosComposition.makeUpdate({}),
+    view: makeView(),
+  }
+})
+export const layer = RamkaDemosBlock.makeLayer(plans).pipe(
+  Layer.provide(Layer.mergeAll(PhotosLayer, RoutingLayer, EditorialLayer, ModelsLayer)),
+)

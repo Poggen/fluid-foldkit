@@ -1,4 +1,4 @@
-import { defaultEnvironmentLayer as RamkaEnvironmentLayer } from '@foldkit-visuals/ramka/lightbox'
+import { photoEnvironmentLayer as RamkaEnvironmentLayer } from '../../registry/ramka/examples/src/photo-environment'
 import { prepareDocumentation } from './documentation-runtime'
 import { inject } from '@vercel/analytics'
 import { releaseEarlyInput, cancelEarlyInput } from './early-input'

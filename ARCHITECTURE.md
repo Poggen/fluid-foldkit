@@ -13,6 +13,13 @@ the shared global Motion frame loop. Retire old physical views before a retained
 Binding reacquires a replacement. Completion and parent acknowledgements must
 refer to the final committed generation.
 
+Ramka shares static transition styles and the active WebKit keyframe sheet per
+document. Each lightbox retains its own resource lease; releasing one must not
+remove another lightbox's styles or transition markers. Scroll-lock measurement
+joins the pre-capture geometry reads and is discarded on cancellation. Demo
+view caches belong to their Layer construction and preserve live Binding and
+Mount ownership while skipping unchanged sibling galleries.
+
 Chart hover generally projects onto scoped host attributes or CSS custom
 properties. It must preserve the renderer definition and keyed mark identity.
 Sunburst paint order remains independent of zoom: removing and reinserting a

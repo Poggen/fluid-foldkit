@@ -51,8 +51,24 @@ test('uses the upstream photo library, RTL navigation and progressive feed', asy
     'grid-template-columns',
     /^(?:[\d.]+px ){3}[\d.]+px$/,
   )
-  await library.getByRole('button', { name: 'Photo 1', exact: true }).click()
+  const photo = library.getByRole('button', { name: 'Photo 1', exact: true })
+  await photo.scrollIntoViewIfNeeded()
+  await expect
+    .poll(() =>
+      photo
+        .locator('img')
+        .evaluate(
+          (image: HTMLImageElement) =>
+            image.complete && image.naturalWidth > 0 && image.naturalWidth < 1600,
+        ),
+    )
+    .toBe(true)
+  await photo.click()
   const dialog = page.getByRole('dialog', { name: 'Library photos' })
+  await expect(dialog.locator('[data-ramka-item][data-active] img')).toHaveJSProperty(
+    'naturalWidth',
+    1600,
+  )
   await dialog.focus()
   await page.keyboard.press('ArrowRight')
   await expect(dialog.locator('[data-ramka-item][data-active] img')).toHaveAttribute(

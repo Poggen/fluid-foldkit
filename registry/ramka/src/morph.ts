@@ -53,6 +53,8 @@ export interface MorphRequest {
   readonly panel: HTMLElement
   /** Resolve after the physical commit and its accepted view have rendered. */
   readonly commit: () => void | Promise<void>
+  /** Batch host measurements with endpoint geometry, before capture styling invalidates layout. */
+  readonly beforeCapture?: () => void | Stop
   readonly signal: AbortSignal
   readonly reducedMotion: boolean
   readonly options?: MorphOptions
@@ -274,6 +276,8 @@ export function createMorph(document: Document) {
       const canMorph = sizeResolvable(source) && sizeResolvable(destination)
       const fromRadius = canMorph ? resolveMorphBorderRadius(source) : null
       const toRadius = canMorph ? resolveMorphBorderRadius(destination) : null
+      const releaseCapturePreparation = request.beforeCapture?.()
+      if (releaseCapturePreparation) cleanups.push(releaseCapturePreparation)
       ensureVtStructuralStyles(styles)
       const root = document.documentElement
       const attrs = [
