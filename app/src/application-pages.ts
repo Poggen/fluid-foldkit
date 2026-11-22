@@ -40,6 +40,7 @@ export const informPageViewport = (columns: 1 | 2 | 3) =>
   )
 
 export const reconcilePageVisit = (
+  href: string,
   options: PreviewOptions,
   initial?: GalleryFlags,
   freshLanding = false,
@@ -123,7 +124,7 @@ export const reconcilePageVisit = (
                   ...flags,
                   preview: legacyOptions(initialized.model.configuration),
                   ...(page.family === 'fluid' ? { componentSlug: page.slug } : {}),
-                  ...(page.family === 'ramka' ? { ramkaExamples: true } : {}),
+                  ...(page.family === 'ramka' ? { ramkaExamplesHref: href } : {}),
                 },
               ],
             })

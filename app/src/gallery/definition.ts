@@ -77,6 +77,7 @@ export const GalleryBlock = Block.make('Gallery', {
     Inputs: Block.makeInputContract<{
       readonly settings: Settings
       readonly only?: string
+      readonly showRamkaExamples?: boolean
       readonly configuration?: PlaygroundConfiguration
     }>(),
   },

@@ -22,5 +22,6 @@ export default defineConfig({
     'app/src/styles/upstream-type-scale.css',
     'app/src/styles/upstream-heading-font.css',
     'app/src/styles/upstream-rail-fade.css',
+    'registry/ramka/examples/src/upstream/skin/*.css',
   ],
 })

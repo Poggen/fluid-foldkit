@@ -9,6 +9,7 @@
 @import '../../components/docs/code-block.css';
 @import '@foldkit-visuals/ramka/styles.css';
 @import '../../registry/ramka/examples/src/style.css';
+@import '../../registry/ramka/examples/src/upstream/skin/index.css';
 @reference '@foldkit-visuals/charts/styles.css';
 @font-face {
   font-family: 'Inter Variable';

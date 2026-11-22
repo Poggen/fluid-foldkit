@@ -1,0 +1,10 @@
+/* Docs-only lightbox skin/animation. Structural view-transition CSS is
+   injected by the library itself — skins only style their own chrome. */
+@import './motion.css';
+@import './open-close.css';
+@import './chrome-insets.css';
+@import './pull-progress.css';
+@import './snug-slides.css';
+@import './ssr-no-transitions.css';
+@import './thumbnail-strip-scroll-link.css';
+@import './masonry-grid.css';

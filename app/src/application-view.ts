@@ -217,12 +217,26 @@ export const makeRenderApplication = (bindings: typeof applicationViewBindings) 
       : page !== undefined && reference !== undefined
         ? [
             h.div(
-              [h.Class('py-20 sm:py-28 w-full max-w-[680px] mx-auto mt-12 lg:mt-0')],
+              [
+                h.Class(
+                  `py-20 sm:py-28 w-full ${page.family === 'ramka' ? 'max-w-6xl' : 'max-w-[680px]'} mx-auto mt-12 lg:mt-0`,
+                ),
+              ],
               [
                 h.div(
                   [h.Class('flex flex-col gap-8 px-6')],
                   [
                     hero(page, settings, model.copyFeedback.hero.complete, events.copyHero, h),
+                    page.family === 'ramka' && referenceGallery !== undefined
+                      ? h.block(
+                          ReferenceGallery.embedView({
+                            key: referenceGallery.key,
+                            slotId: 'ramka-examples',
+                            model: referenceGallery.model,
+                            viewInputs: { settings, only: page.href, showRamkaExamples: true },
+                          }),
+                        )
+                      : h.empty,
                     h.block(
                       Reference.embedView({
                         key: reference.key,

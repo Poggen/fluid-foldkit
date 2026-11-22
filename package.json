@@ -39,7 +39,8 @@
     "@foldkit/ui": "0.170.0-canary.54f8bcd443b4",
     "@tanstack/highlight": "1.2.12",
     "effect": "4.1.2",
-    "foldkit": "0.170.0-canary.54f8bcd443b4"
+    "foldkit": "0.170.0-canary.54f8bcd443b4",
+    "three": "0.185.1"
   },
   "devDependencies": {
     "@ai-sdk/openai": "4.0.114",
@@ -58,6 +59,7 @@
     "@tailwindcss/postcss": "4.1.18",
     "@types/bun": "1.4.4",
     "@types/node": "26.6.6",
+    "@types/three": "0.185.4",
     "@vercel/blob": "2.9.0",
     "@yielded/effect-tsrs": "0.2.3",
     "agent-browser": "0.41.2",

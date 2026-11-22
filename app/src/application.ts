@@ -277,14 +277,17 @@ const init = ApplicationComposition.makeInit((flags, url) => {
       settings,
     },
     commands: [Apply({ settings })],
-    steps: [reconcilePageVisit(previewOptionsFromUrl(href), flags.page), requestFont(settings)],
+    steps: [
+      reconcilePageVisit(href, previewOptionsFromUrl(href), flags.page),
+      requestFont(settings),
+    ],
   }
 })
 const acceptUrl = (url: typeof Url.Url.Type, freshLanding = false) => {
   const href = Url.toString(url)
   return Update.combineSteps([
     changeSettings(settingsFromLocation(href), 'none', pathFromUrl(url), new URL(href).hash),
-    reconcilePageVisit(previewOptionsFromUrl(href), undefined, freshLanding),
+    reconcilePageVisit(href, previewOptionsFromUrl(href), undefined, freshLanding),
   ])
 }
 const update = ApplicationComposition.makeUpdate.compose(

@@ -105,6 +105,35 @@ export default defineConfig({
       files: ['registry/*/examples/**/*.ts', 'app/src/**/*.ts'],
       rules: componentUseRules,
     },
+    {
+      files: ['registry/ramka/examples/src/upstream/*.ts'],
+      rules: {
+        'shadcn/no-raw-colors': [
+          'error',
+          {
+            allow: [
+              'bg-blue-500',
+              'bg-neutral-100',
+              'bg-neutral-800',
+              'bg-neutral-900',
+              'bg-neutral-900/45',
+              'border-neutral-400',
+              'outline-blue-500',
+              'text-neutral-300',
+              'text-neutral-400',
+              'text-neutral-50',
+              'text-neutral-500',
+              'text-neutral-600',
+              'text-neutral-900',
+            ],
+          },
+        ],
+        'shadcn/no-unknown-classes': [
+          'error',
+          { allow: ['lightbox-demo-*', 'mb-grid*', 'masonry-*'] },
+        ],
+      },
+    },
     ...foldkitOverrides,
     ...checkedScopedViewOverrides(),
     {

@@ -322,14 +322,8 @@ const makeView = () => {
           ),
       ],
     )
-    if (inputs.only === ramkaPages[0]?.href && Option.isSome(model.ramkaDemos))
-      return h.div(
-        [],
-        [
-          grid,
-          h.block(RamkaDemos.embedView({ slotId: 'ramka-demos', model: model.ramkaDemos.value })),
-        ],
-      )
+    if (inputs.showRamkaExamples && Option.isSome(model.ramkaDemos))
+      return h.block(RamkaDemos.embedView({ slotId: 'ramka-demos', model: model.ramkaDemos.value }))
     return inputs.only === undefined
       ? h.div([h.Class('w-full max-w-[1200px] mx-auto px-6 pb-16')], [grid])
       : grid
@@ -428,6 +422,7 @@ const implementation = {
   }),
   EffectsLayer: Layer.mergeAll(SignalReady.layer, ObservePreviews.layer),
   init: GalleryComposition.makeInit((flags) => {
+    const ramkaHref = flags.ramkaExamplesHref
     const legacyPage = fluidPages.find((page) => page.slug === flags.componentSlug)
     const embeddedConfiguration =
       flags.preview?.configuration === undefined
@@ -454,9 +449,13 @@ const implementation = {
       childInitContext: { ...flags, preview: {} },
       steps: [
         Cartesian.informOfPreview({ preview }),
-        ...(flags.ramkaExamples
-          ? [GalleryBlock.makeStep((model) => initAndSet(RamkaDemos, model, { args: [] }))]
-          : []),
+        ...(ramkaHref === undefined
+          ? []
+          : [
+              GalleryBlock.makeStep((model) =>
+                initAndSet(RamkaDemos, model, { args: [ramkaHref] }),
+              ),
+            ]),
       ],
       commands: [SignalReady()],
     }

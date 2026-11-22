@@ -41,89 +41,99 @@ test('wheel scrolling the desktop sidebar reveals the Ramka page', async ({ page
   await expect(page.getByRole('heading', { name: 'Ramka Lightbox', level: 1 })).toBeVisible()
 })
 
-test('Ramka examples exercise gallery, RTL, paging, attachments, video and orbit', async ({
+test('uses the upstream photo library, RTL navigation and progressive feed', async ({ page }) => {
+  await page.goto('/ramka/lightbox')
+  const library = page.getByRole('region', { name: 'Photos app', exact: true })
+  await expect(library.getByText('48 Photos · July 2024')).toBeVisible()
+  await library.getByRole('button', { name: 'Larger photos' }).click()
+  await expect(library.locator('.grid.gap-0\\.5')).toHaveCSS(
+    'grid-template-columns',
+    /^(?:[\d.]+px ){3}[\d.]+px$/,
+  )
+  await library.getByRole('button', { name: 'Photo 1', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Library photos' })
+  await dialog.focus()
+  await page.keyboard.press('ArrowRight')
+  await expect(dialog.locator('[data-ramka-item][data-active] img')).toHaveAttribute(
+    'alt',
+    'Photo 2',
+  )
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden()
+
+  const rtl = page.getByRole('region', { name: 'Photos app (RTL)', exact: true })
+  await rtl.getByRole('button', { name: 'Photo 1', exact: true }).click()
+  await expect(dialog).toHaveAttribute('dir', 'rtl')
+  await dialog.focus()
+  await page.keyboard.press('ArrowLeft')
+  await expect(dialog.locator('[data-ramka-item][data-active] img')).toHaveAttribute(
+    'alt',
+    'Photo 2',
+  )
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden()
+
+  const feed = page.getByRole('region', { name: 'Infinite scroll', exact: true })
+  const last = feed.getByRole('button', { name: 'Feed photo 12', exact: true })
+  await last.click()
+  const feedViewer = page.getByRole('dialog', { name: 'Feed photos' })
+  await expect(feedViewer.getByRole('button', { name: 'Next photo' })).toBeEnabled()
+  await feedViewer.getByRole('button', { name: 'Next photo' }).click()
+  await expect(feedViewer.locator('[data-ramka-item][data-active] img')).toHaveAttribute(
+    'alt',
+    'Feed photo 13',
+  )
+})
+
+test('opens the upstream attachment stack and a poster as independent galleries', async ({
   page,
 }) => {
   await page.goto('/ramka/lightbox')
-  const demo = (name: string) => page.getByRole('region', { name, exact: true })
-  const open = async (name: string, button: string, dialogName = name) => {
-    await demo(name).getByRole('button', { name: button, exact: true }).click()
-    const dialog = page.getByRole('dialog', { name: dialogName, exact: true })
-    await expect(dialog).toBeVisible()
-    return dialog
-  }
-  const close = async (dialog: ReturnType<typeof demo>) => {
-    await page.keyboard.press('Escape')
-    await expect(dialog).toBeHidden()
-  }
+  await page.locator('#text-message').getByRole('button', { name: 'Open 3 attachments' }).click()
+  const attachments = page.getByRole('dialog', { name: 'Message attachments' })
+  await expect(attachments.getByRole('tablist', { name: 'Photo thumbnails' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(attachments).toBeHidden()
 
-  const library = await open('Photos app', 'Rocky mountains')
-  await library.getByRole('button', { name: 'Next', exact: true }).click()
-  await expect(library.locator('[data-ramka-caption]')).toHaveText('Forest canopy')
-  await close(library)
-
-  const rtl = await open('Photos app (RTL)', 'جبال صخرية', 'مكتبة الصور')
-  await expect(rtl).toHaveAttribute('dir', 'rtl')
-  await rtl.focus()
-  await page.keyboard.press('ArrowLeft')
-  await expect(rtl.locator('[data-ramka-caption]')).toHaveText('أشجار الغابة')
-  await close(rtl)
-
-  const grid = demo('Infinite scroll').getByRole('region', { name: 'Scrollable photo grid' })
-  await grid.scrollIntoViewIfNeeded()
-  await expect(grid.getByRole('button')).toHaveCount(6)
-  await grid.hover()
-  await page.mouse.wheel(0, 400)
-  await expect(grid.getByRole('button', { name: 'Rocky mountains · 7' })).toBeVisible()
-  await grid.getByRole('button', { name: 'Rocky mountains · 7' }).click()
-  const paged = page.getByRole('dialog', { name: 'Infinite scroll' })
-  await expect(paged.locator('[data-ramka-caption]')).toHaveText('Rocky mountains · 7')
-  await close(paged)
-
-  const attachments = await open('Text message', 'Forest canopy')
-  await expect(attachments.locator('[data-ramka-caption]')).toHaveText('Forest canopy')
-  await close(attachments)
-
-  const trailer = await open('Film trailers', '2010 Sintel')
-  await expect(trailer.locator('video[controls]')).toBeVisible()
-  await trailer.getByRole('button', { name: 'Next', exact: true }).click()
-  await expect(trailer.locator('video')).toHaveAttribute('aria-label', 'Big Buck Bunny')
-  await close(trailer)
-
-  const stage = await open('3D models', 'Copper cube')
-  await stage.getByRole('slider', { name: 'Orbit angle' }).fill('140')
-  await expect(stage.getByRole('slider', { name: 'Orbit angle' })).toHaveValue('140')
-  await close(stage)
-  const cube = demo('3D models').getByRole('button', { name: 'Copper cube', exact: true })
-  await expect(cube.locator('[data-orbit-angle]')).toHaveAttribute('data-orbit-angle', '140')
+  await page
+    .locator('#film-trailers')
+    .locator('[data-ramka-trigger]')
+    .filter({ has: page.getByText('Big Buck Bunny', { exact: true }) })
+    .click()
+  const video = page.getByRole('dialog', { name: 'Big Buck Bunny' }).locator('video[controls]')
+  await expect(video).toBeVisible()
+  await expect(video).toHaveAttribute('src', /trailer_iphone[.]m4v/)
 })
 
-test('Ramka distinguishes URL-synced dialogs from standalone photo routes', async ({ page }) => {
+test('Ramka distinguishes URL-synced dialogs from intercepted photos on reload', async ({
+  page,
+}) => {
   await page.goto('/ramka/lightbox')
   const sync = page.getByRole('region', { name: 'URL-synced state', exact: true })
-  await sync.getByRole('button', { name: 'Rocky mountains', exact: true }).click()
-  const dialog = page.getByRole('dialog', { name: 'URL-synced state' })
-  await expect(page).toHaveURL(/ramka-photo=mountains/)
+  await sync.getByRole('button', { name: 'Foggy pine ridge at dawn', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Gallery photos' })
+  await expect(page).toHaveURL(/ramka-photo=1/)
   await expect(dialog).toBeVisible()
-  await dialog.getByRole('button', { name: 'Next', exact: true }).click()
-  await expect(page).toHaveURL(/ramka-photo=trees/)
+  await dialog.focus()
+  await page.keyboard.press('ArrowRight')
+  await expect(page).toHaveURL(/ramka-photo=2/)
   await page.goBack()
   await expect(dialog).toBeHidden()
   await page.goForward()
-  await expect(dialog.locator('[data-ramka-caption]')).toHaveText('Forest canopy')
+  await expect(dialog.locator('[data-ramka-caption]')).toHaveText('Open road')
   await page.keyboard.press('Escape')
   await expect(dialog).toBeHidden()
 
   const intercept = page.getByRole('region', { name: 'Intercepted routes', exact: true })
-  await intercept.getByRole('button', { name: 'Rocky mountains', exact: true }).click()
-  await expect(page).toHaveURL(/ramka-route=mountains/)
-  await expect(page.getByRole('dialog', { name: 'Intercepted routes' })).toBeVisible()
+  await intercept.getByRole('link', { name: 'Foggy pine ridge at dawn', exact: true }).click()
+  await expect(page).toHaveURL(/ramka-route=1/)
+  await expect(dialog).toBeVisible()
   await page.reload()
   await expect(intercept.getByRole('figure')).toBeInViewport()
-  await expect(intercept.getByRole('img', { name: 'Rocky mountains' })).toBeVisible()
-  await expect(page.getByRole('dialog', { name: 'Intercepted routes' })).toBeHidden()
-  await intercept.getByRole('link', { name: 'Back to gallery' }).click()
+  await expect(intercept.getByRole('img', { name: 'Foggy pine ridge at dawn' })).toBeVisible()
+  await expect(dialog).toBeHidden()
+  await intercept.getByRole('link', { name: '← Back to the gallery' }).click()
   await expect(
-    intercept.getByRole('button', { name: 'Rocky mountains', exact: true }),
+    intercept.getByRole('link', { name: 'Foggy pine ridge at dawn', exact: true }),
   ).toBeVisible()
 })

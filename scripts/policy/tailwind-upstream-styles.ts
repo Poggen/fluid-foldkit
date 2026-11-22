@@ -62,4 +62,67 @@ export const upstreamStylesheets: readonly PinnedStylesheet[] = [
     sha256: '3ffd3c54c01e68faa3c151ef2ea3b6d64764d272291666cdd65bb8ec85bb4b7c',
     source: 'registry/charts/source-styles.provenance.json#sourceTheme',
   },
+  {
+    kind: 'upstream',
+    file: 'registry/ramka/examples/src/upstream/skin/index.css',
+    sha256: 'c6ef1042b87cf279c98a941654d1b27ed2bad928fa7859b4378fc53e55098249',
+    source:
+      'https://github.com/arturbien/ramka/blob/9eaaab4d01532ec2cd362279ece65ac84d3e01a5/apps/docs/app/lightbox-demo/index.css',
+  },
+  {
+    kind: 'upstream',
+    file: 'registry/ramka/examples/src/upstream/skin/motion.css',
+    sha256: '8df33318a0f363a42dd92227c18f204ae350890cb7eaea66faea4ba7d0ce967c',
+    source:
+      'https://github.com/arturbien/ramka/blob/9eaaab4d01532ec2cd362279ece65ac84d3e01a5/apps/docs/app/lightbox-demo/motion.css',
+  },
+  {
+    kind: 'upstream',
+    file: 'registry/ramka/examples/src/upstream/skin/open-close.css',
+    sha256: 'b6b7d7765a95f17b99483a636ba40d3ba33ca1d63f418765e5d9e9c11fac7c2a',
+    source:
+      'https://github.com/arturbien/ramka/blob/9eaaab4d01532ec2cd362279ece65ac84d3e01a5/apps/docs/app/lightbox-demo/open-close.css',
+  },
+  {
+    kind: 'upstream',
+    file: 'registry/ramka/examples/src/upstream/skin/chrome-insets.css',
+    sha256: 'd0f5acb0c628b903e4c87adf96a34d6767ede66394aafebd705fb82b7988c9c7',
+    source:
+      'https://github.com/arturbien/ramka/blob/9eaaab4d01532ec2cd362279ece65ac84d3e01a5/apps/docs/app/lightbox-demo/chrome-insets.css',
+  },
+  {
+    kind: 'upstream',
+    file: 'registry/ramka/examples/src/upstream/skin/pull-progress.css',
+    sha256: '964a67effb4450affad6786fc89156cd12a3310fb5a72f8bbb7475d4edc1dad1',
+    source:
+      'https://github.com/arturbien/ramka/blob/9eaaab4d01532ec2cd362279ece65ac84d3e01a5/apps/docs/app/lightbox-demo/pull-progress.css',
+  },
+  {
+    kind: 'upstream',
+    file: 'registry/ramka/examples/src/upstream/skin/snug-slides.css',
+    sha256: '18df46b1be3b34d9d0fcda7e1103229b9f3666ba6ae6b66a87a9c904a1cc1c99',
+    source:
+      'https://github.com/arturbien/ramka/blob/9eaaab4d01532ec2cd362279ece65ac84d3e01a5/apps/docs/app/lightbox-demo/snug-slides.css',
+  },
+  {
+    kind: 'upstream',
+    file: 'registry/ramka/examples/src/upstream/skin/ssr-no-transitions.css',
+    sha256: '47c3eca969995300daba5b240313dcced236b73a1bb9c26b91af697258efee34',
+    source:
+      'https://github.com/arturbien/ramka/blob/9eaaab4d01532ec2cd362279ece65ac84d3e01a5/apps/docs/app/lightbox-demo/ssr-no-transitions.css',
+  },
+  {
+    kind: 'upstream',
+    file: 'registry/ramka/examples/src/upstream/skin/thumbnail-strip-scroll-link.css',
+    sha256: '23db59cc17cb1b8b4e27debc878dd6de658a243f3aa0085199e7690dda2f6c56',
+    source:
+      'https://github.com/arturbien/ramka/blob/9eaaab4d01532ec2cd362279ece65ac84d3e01a5/apps/docs/app/lightbox-demo/thumbnail-strip-scroll-link.css',
+  },
+  {
+    kind: 'upstream',
+    file: 'registry/ramka/examples/src/upstream/skin/masonry-grid.css',
+    sha256: 'c9548979d78b52d86d6f3716f7d414f22e14ba10e90bdbf9cae0fbc67b9a0a31',
+    source:
+      'https://github.com/arturbien/ramka/blob/9eaaab4d01532ec2cd362279ece65ac84d3e01a5/apps/docs/app/lightbox-demo/masonry-grid.css',
+  },
 ]
