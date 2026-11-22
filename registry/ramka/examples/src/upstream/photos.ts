@@ -164,6 +164,7 @@ export const layer = Root.makeLayer({
         const feed = example === 'infinite-scroll'
         const rtl = example === 'photos-app-rtl'
         const columns = rtl ? model.rtlColumns : model.columns
+        const libraryId = rtl ? 'ramka-photos-rtl' : 'ramka-photos-ltr'
         const items = feed ? feedMedia(instance.model.items.length) : photoMedia
         const name = feed ? 'Infinite scroll' : rtl ? 'Photos app (RTL)' : 'Photos app'
         return h.section(
@@ -183,6 +184,7 @@ export const layer = Root.makeLayer({
                     h.Class(
                       'pointer-events-auto sticky top-0 z-30 flex shrink-0 items-center gap-3 border-b border-black/[0.06] bg-background px-4 py-2.5 dark:border-white/[0.08]',
                     ),
+                    ...(feed ? [] : [h.Style({ viewTransitionName: `${libraryId}-toolbar` })]),
                   ],
                   [
                     h.div(
@@ -310,6 +312,7 @@ export const layer = Root.makeLayer({
                                   : [
                                       h.Style({
                                         gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+                                        viewTransitionName: `${libraryId}-grid`,
                                       }),
                                     ]),
                               ],

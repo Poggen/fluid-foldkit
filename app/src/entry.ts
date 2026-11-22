@@ -153,22 +153,40 @@ const environment = Layer.succeed(SiteEnvironment, {
       Effect.catchCause(() => Effect.succeed(false)),
     ),
 })
+const photoLibraries = (model: typeof application.block.Model.Type) => {
+  const reference = model.maybeReferenceGallery
+  if (reference._tag === 'None') return undefined
+  const demos = reference.value.model.ramkaDemos
+  return demos._tag === 'Some' ? demos.value.photos : undefined
+}
 const hydrate = (diagnostics?: ReturnType<typeof createBrowserDiagnostics>) =>
   Runtime.hydrate(
     Program.make({
       block: application.block,
       Flags: ApplicationFlags,
-      viewTransition: ({ previousModel, model, message }) =>
-        message._tag !== 'ObservedSystemTheme' &&
-        shouldTransitionTheme(
-          previousModel.settings,
-          model.settings,
-          previousModel.systemThemeKnown,
-          model.systemThemeKnown,
-          previousModel.systemTheme,
-          model.systemTheme,
-        ) &&
-        presentation.prepareNativeThemeTransition(),
+      viewTransition: ({ previousModel, model, message }) => {
+        if (
+          message._tag !== 'ObservedSystemTheme' &&
+          shouldTransitionTheme(
+            previousModel.settings,
+            model.settings,
+            previousModel.systemThemeKnown,
+            model.systemThemeKnown,
+            previousModel.systemTheme,
+            model.systemTheme,
+          ) &&
+          presentation.prepareNativeThemeTransition()
+        )
+          return true
+        const previous = photoLibraries(previousModel)
+        const next = photoLibraries(model)
+        return previous !== undefined &&
+          next !== undefined &&
+          (previous.columns !== next.columns || previous.rtlColumns !== next.rtlColumns) &&
+          !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+          ? { types: ['ramka-photo-density'] }
+          : false
+      },
       layer: application.layer,
       devTools: { dispatch: true },
       ...(diagnostics === undefined ? {} : { slow: diagnostics.slow }),
