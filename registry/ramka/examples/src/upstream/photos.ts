@@ -275,6 +275,13 @@ const renderExample = (
                             children: [
                               h.img([
                                 h.Src(item.thumb),
+                                h.Srcset(item.thumbSrcset),
+                                h.Sizes(
+                                  feed
+                                    ? '(min-width: 1024px) 20vw, (min-width: 768px) 25vw, 33vw'
+                                    : `${Math.round(100 / columns)}vw`,
+                                ),
+                                h.Decoding('async'),
                                 h.Alt(item.alt),
                                 h.Loading('lazy'),
                                 h.Width(String(item.width)),

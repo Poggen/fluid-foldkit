@@ -1,5 +1,5 @@
 import { Program, Runtime } from 'foldkit'
-import { defaultEnvironmentLayer } from '@foldkit-visuals/ramka/lightbox'
+import { photoEnvironmentLayer } from './photo-environment'
 import { RamkaExampleBlock, layer } from './lightbox-example'
 import '@foldkit-visuals/ramka/styles.css'
 import './style.css'
@@ -10,5 +10,5 @@ Runtime.run(
     block: RamkaExampleBlock,
     layer,
     container: document.querySelector<HTMLElement>('#root'),
-  }).provide(defaultEnvironmentLayer),
+  }).provide(photoEnvironmentLayer),
 )

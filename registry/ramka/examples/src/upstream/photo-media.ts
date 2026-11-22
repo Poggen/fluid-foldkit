@@ -1,5 +1,6 @@
 /* @license Photos from Ramka upstream (MIT), copyright (c) 2026 Artur Bień. */
 import type { GalleryItem } from './chrome'
+import { photoThumbnails } from './photo-thumbnails'
 import photo0 from './assets/photos/photo-0.webp?url'
 import photo1 from './assets/photos/photo-1.webp?url'
 import photo2 from './assets/photos/photo-2.webp?url'
@@ -49,11 +50,11 @@ import photo45 from './assets/photos/photo-45.webp?url'
 import photo46 from './assets/photos/photo-46.webp?url'
 import photo47 from './assets/photos/photo-47.webp?url'
 
-export const photoMedia: readonly GalleryItem[] = [
+export const photoMedia: readonly (GalleryItem & { readonly thumbSrcset: string })[] = [
   {
     id: 'photo-0',
     src: photo0,
-    thumb: photo0,
+    ...photoThumbnails[0],
     alt: 'Photo 1',
     width: 1600,
     height: 1067,
@@ -62,7 +63,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-1',
     src: photo1,
-    thumb: photo1,
+    ...photoThumbnails[1],
     alt: 'Photo 2',
     width: 1067,
     height: 1600,
@@ -71,7 +72,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-2',
     src: photo2,
-    thumb: photo2,
+    ...photoThumbnails[2],
     alt: 'Photo 3',
     width: 1600,
     height: 1600,
@@ -80,7 +81,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-3',
     src: photo3,
-    thumb: photo3,
+    ...photoThumbnails[3],
     alt: 'Photo 4',
     width: 1600,
     height: 900,
@@ -89,7 +90,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-4',
     src: photo4,
-    thumb: photo4,
+    ...photoThumbnails[4],
     alt: 'Photo 5',
     width: 1200,
     height: 1600,
@@ -98,7 +99,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-5',
     src: photo5,
-    thumb: photo5,
+    ...photoThumbnails[5],
     alt: 'Photo 6',
     width: 1600,
     height: 1200,
@@ -107,7 +108,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-6',
     src: photo6,
-    thumb: photo6,
+    ...photoThumbnails[6],
     alt: 'Photo 7',
     width: 1600,
     height: 1067,
@@ -116,7 +117,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-7',
     src: photo7,
-    thumb: photo7,
+    ...photoThumbnails[7],
     alt: 'Photo 8',
     width: 1067,
     height: 1600,
@@ -125,7 +126,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-8',
     src: photo8,
-    thumb: photo8,
+    ...photoThumbnails[8],
     alt: 'Photo 9',
     width: 1600,
     height: 1600,
@@ -134,7 +135,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-9',
     src: photo9,
-    thumb: photo9,
+    ...photoThumbnails[9],
     alt: 'Photo 10',
     width: 1600,
     height: 900,
@@ -143,7 +144,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-10',
     src: photo10,
-    thumb: photo10,
+    ...photoThumbnails[10],
     alt: 'Photo 11',
     width: 1200,
     height: 1600,
@@ -152,7 +153,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-11',
     src: photo11,
-    thumb: photo11,
+    ...photoThumbnails[11],
     alt: 'Photo 12',
     width: 1600,
     height: 1200,
@@ -161,7 +162,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-12',
     src: photo12,
-    thumb: photo12,
+    ...photoThumbnails[12],
     alt: 'Photo 13',
     width: 1600,
     height: 1067,
@@ -170,7 +171,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-13',
     src: photo13,
-    thumb: photo13,
+    ...photoThumbnails[13],
     alt: 'Photo 14',
     width: 1067,
     height: 1600,
@@ -179,7 +180,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-14',
     src: photo14,
-    thumb: photo14,
+    ...photoThumbnails[14],
     alt: 'Photo 15',
     width: 1600,
     height: 1600,
@@ -188,7 +189,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-15',
     src: photo15,
-    thumb: photo15,
+    ...photoThumbnails[15],
     alt: 'Photo 16',
     width: 1600,
     height: 900,
@@ -197,7 +198,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-16',
     src: photo16,
-    thumb: photo16,
+    ...photoThumbnails[16],
     alt: 'Photo 17',
     width: 1200,
     height: 1600,
@@ -206,7 +207,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-17',
     src: photo17,
-    thumb: photo17,
+    ...photoThumbnails[17],
     alt: 'Photo 18',
     width: 1600,
     height: 1200,
@@ -215,7 +216,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-18',
     src: photo18,
-    thumb: photo18,
+    ...photoThumbnails[18],
     alt: 'Photo 19',
     width: 1600,
     height: 1067,
@@ -224,7 +225,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-19',
     src: photo19,
-    thumb: photo19,
+    ...photoThumbnails[19],
     alt: 'Photo 20',
     width: 1067,
     height: 1600,
@@ -233,7 +234,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-20',
     src: photo20,
-    thumb: photo20,
+    ...photoThumbnails[20],
     alt: 'Photo 21',
     width: 1600,
     height: 1600,
@@ -242,7 +243,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-21',
     src: photo21,
-    thumb: photo21,
+    ...photoThumbnails[21],
     alt: 'Photo 22',
     width: 1600,
     height: 900,
@@ -251,7 +252,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-22',
     src: photo22,
-    thumb: photo22,
+    ...photoThumbnails[22],
     alt: 'Photo 23',
     width: 1200,
     height: 1600,
@@ -260,7 +261,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-23',
     src: photo23,
-    thumb: photo23,
+    ...photoThumbnails[23],
     alt: 'Photo 24',
     width: 1600,
     height: 1200,
@@ -269,7 +270,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-24',
     src: photo24,
-    thumb: photo24,
+    ...photoThumbnails[24],
     alt: 'Photo 25',
     width: 1600,
     height: 1067,
@@ -278,7 +279,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-25',
     src: photo25,
-    thumb: photo25,
+    ...photoThumbnails[25],
     alt: 'Photo 26',
     width: 1067,
     height: 1600,
@@ -287,7 +288,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-26',
     src: photo26,
-    thumb: photo26,
+    ...photoThumbnails[26],
     alt: 'Photo 27',
     width: 1600,
     height: 1600,
@@ -296,7 +297,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-27',
     src: photo27,
-    thumb: photo27,
+    ...photoThumbnails[27],
     alt: 'Photo 28',
     width: 1600,
     height: 900,
@@ -305,7 +306,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-28',
     src: photo28,
-    thumb: photo28,
+    ...photoThumbnails[28],
     alt: 'Photo 29',
     width: 1200,
     height: 1600,
@@ -314,7 +315,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-29',
     src: photo29,
-    thumb: photo29,
+    ...photoThumbnails[29],
     alt: 'Photo 30',
     width: 1600,
     height: 1200,
@@ -323,7 +324,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-30',
     src: photo30,
-    thumb: photo30,
+    ...photoThumbnails[30],
     alt: 'Photo 31',
     width: 1600,
     height: 1067,
@@ -332,7 +333,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-31',
     src: photo31,
-    thumb: photo31,
+    ...photoThumbnails[31],
     alt: 'Photo 32',
     width: 1067,
     height: 1600,
@@ -341,7 +342,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-32',
     src: photo32,
-    thumb: photo32,
+    ...photoThumbnails[32],
     alt: 'Photo 33',
     width: 1600,
     height: 1600,
@@ -350,7 +351,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-33',
     src: photo33,
-    thumb: photo33,
+    ...photoThumbnails[33],
     alt: 'Photo 34',
     width: 1600,
     height: 900,
@@ -359,7 +360,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-34',
     src: photo34,
-    thumb: photo34,
+    ...photoThumbnails[34],
     alt: 'Photo 35',
     width: 1200,
     height: 1600,
@@ -368,7 +369,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-35',
     src: photo35,
-    thumb: photo35,
+    ...photoThumbnails[35],
     alt: 'Photo 36',
     width: 1600,
     height: 1200,
@@ -377,7 +378,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-36',
     src: photo36,
-    thumb: photo36,
+    ...photoThumbnails[36],
     alt: 'Photo 37',
     width: 1600,
     height: 1067,
@@ -386,7 +387,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-37',
     src: photo37,
-    thumb: photo37,
+    ...photoThumbnails[37],
     alt: 'Photo 38',
     width: 1067,
     height: 1600,
@@ -395,7 +396,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-38',
     src: photo38,
-    thumb: photo38,
+    ...photoThumbnails[38],
     alt: 'Photo 39',
     width: 1600,
     height: 1600,
@@ -404,7 +405,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-39',
     src: photo39,
-    thumb: photo39,
+    ...photoThumbnails[39],
     alt: 'Photo 40',
     width: 1600,
     height: 900,
@@ -413,7 +414,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-40',
     src: photo40,
-    thumb: photo40,
+    ...photoThumbnails[40],
     alt: 'Photo 41',
     width: 1200,
     height: 1600,
@@ -422,7 +423,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-41',
     src: photo41,
-    thumb: photo41,
+    ...photoThumbnails[41],
     alt: 'Photo 42',
     width: 1600,
     height: 1200,
@@ -431,7 +432,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-42',
     src: photo42,
-    thumb: photo42,
+    ...photoThumbnails[42],
     alt: 'Photo 43',
     width: 1600,
     height: 1067,
@@ -440,7 +441,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-43',
     src: photo43,
-    thumb: photo43,
+    ...photoThumbnails[43],
     alt: 'Photo 44',
     width: 1067,
     height: 1600,
@@ -449,7 +450,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-44',
     src: photo44,
-    thumb: photo44,
+    ...photoThumbnails[44],
     alt: 'Photo 45',
     width: 1600,
     height: 1600,
@@ -458,7 +459,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-45',
     src: photo45,
-    thumb: photo45,
+    ...photoThumbnails[45],
     alt: 'Photo 46',
     width: 1600,
     height: 900,
@@ -467,7 +468,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-46',
     src: photo46,
-    thumb: photo46,
+    ...photoThumbnails[46],
     alt: 'Photo 47',
     width: 1200,
     height: 1600,
@@ -476,7 +477,7 @@ export const photoMedia: readonly GalleryItem[] = [
   {
     id: 'photo-47',
     src: photo47,
-    thumb: photo47,
+    ...photoThumbnails[47],
     alt: 'Photo 48',
     width: 1600,
     height: 1200,
