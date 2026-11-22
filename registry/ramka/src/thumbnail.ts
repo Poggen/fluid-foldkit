@@ -151,8 +151,9 @@ export function attachThumbnailStrip(
     const first = measured.widths[0] ?? 0
     const last = measured.widths.at(-1) ?? first
     if (!thumbs.length || first <= 0) return undefined
-    track.style.paddingInlineStart = `${Math.max(0, (root.clientWidth - first) / 2)}px`
-    track.style.paddingInlineEnd = `${Math.max(0, (root.clientWidth - last) / 2)}px`
+    const width = root.clientWidth
+    track.style.paddingInlineStart = `${Math.max(0, (width - first) / 2)}px`
+    track.style.paddingInlineEnd = `${Math.max(0, (width - last) / 2)}px`
     track.style.setProperty(
       '--lightbox-thumbnail-strip-travel',
       `${inlineTrackTranslateX(travels.at(-1) ?? 0, state.dir)}px`,

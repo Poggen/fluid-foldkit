@@ -26,6 +26,16 @@ interface MorphRadii {
   to: string | null
 }
 
+interface CompositedCssState {
+  owners: number
+  activeOwner: symbol | null
+  sheet: CSSStyleSheet | null
+  cleanupTimer: ReturnType<typeof setTimeout> | null
+  styleElement: LibrarySheet | null
+}
+
+const documentCompositedSheets = new WeakMap<Document, CompositedCssState>()
+
 export function createCompositedMorph(document: Document, styles: MorphStyles) {
   const window = document.defaultView
   const getComputedStyle = (element: Element, pseudo?: string) => {
@@ -36,6 +46,16 @@ export function createCompositedMorph(document: Document, styles: MorphStyles) {
   let disposed = false
   let generation = 0
   let releaseActive = () => {}
+  const owner = Symbol()
+  const cssPath: CompositedCssState = documentCompositedSheets.get(document) ?? {
+    owners: 0,
+    activeOwner: null,
+    sheet: null,
+    cleanupTimer: null,
+    styleElement: null,
+  }
+  cssPath.owners += 1
+  documentCompositedSheets.set(document, cssPath)
 
   const COMPOSITED_ATTR = 'data-ramka-vt-composited'
 
@@ -48,41 +68,37 @@ export function createCompositedMorph(document: Document, styles: MorphStyles) {
     new: 'ramka-vt-cm-new',
   } as const
 
-  let cssPathSheet: CSSStyleSheet | null = null
-
-  let cssPathCleanupTimer: ReturnType<typeof setTimeout> | null = null
-
-  let cssPathStyleEl: LibrarySheet | null = null
-
   function clearCssPathSheetRules() {
-    if (!cssPathSheet) return
-    while (cssPathSheet.cssRules.length > 0) {
-      cssPathSheet.deleteRule(cssPathSheet.cssRules.length - 1)
+    if (!cssPath.sheet) return
+    while (cssPath.sheet.cssRules.length > 0) {
+      cssPath.sheet.deleteRule(cssPath.sheet.cssRules.length - 1)
     }
   }
 
   function prewarmCompositedCssSheet() {
+    if (disposed) return
+    cssPath.activeOwner = owner
     if (typeof document === 'undefined' || !styles.supportsConstructedSheets()) return
-    if (cssPathCleanupTimer != null) {
-      clearTimeout(cssPathCleanupTimer)
-      cssPathCleanupTimer = null
+    if (cssPath.cleanupTimer != null) {
+      clearTimeout(cssPath.cleanupTimer)
+      cssPath.cleanupTimer = null
     }
-    if (!cssPathSheet) {
+    if (!cssPath.sheet) {
       if (!CSSStyleSheet) return
-      cssPathSheet = new CSSStyleSheet()
-      document.adoptedStyleSheets = [...document.adoptedStyleSheets, cssPathSheet]
+      cssPath.sheet = new CSSStyleSheet()
+      document.adoptedStyleSheets = [...document.adoptedStyleSheets, cssPath.sheet]
       return
     }
     clearCssPathSheetRules()
   }
 
   function scheduleCssPathSheetCleanup() {
-    if (!cssPathSheet || cssPathSheet.cssRules.length === 0) return
-    if (cssPathCleanupTimer != null) clearTimeout(cssPathCleanupTimer)
+    if (!cssPath.sheet || cssPath.sheet.cssRules.length === 0) return
+    if (cssPath.cleanupTimer != null) clearTimeout(cssPath.cleanupTimer)
     // oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
-    // @effect-diagnostics-next-line globalTimers:off -- Keep the native WebKit compositor stylesheet idle delay; the resource cancels this timer on disposal.
-    cssPathCleanupTimer = setTimeout(() => {
-      cssPathCleanupTimer = null
+    // @effect-diagnostics-next-line globalTimers:off -- Keep the native WebKit compositor stylesheet idle delay; the final document owner cancels this timer on disposal.
+    cssPath.cleanupTimer = setTimeout(() => {
+      cssPath.cleanupTimer = null
 
       if (
         document.documentElement.hasAttribute(COMPOSITED_CSS_ATTR) ||
@@ -96,16 +112,19 @@ export function createCompositedMorph(document: Document, styles: MorphStyles) {
 
   function insertCompositedKeyframes(rules: readonly string[]) {
     if (styles.supportsConstructedSheets()) {
-      if (!cssPathSheet) prewarmCompositedCssSheet()
-      const sheet = cssPathSheet
+      if (!cssPath.sheet) prewarmCompositedCssSheet()
+      const sheet = cssPath.sheet
       if (!sheet) return
       for (const rule of rules) {
         sheet.insertRule(rule, sheet.cssRules.length)
       }
       return
     }
-    cssPathStyleEl?.release()
-    cssPathStyleEl = styles.insertLibrarySheet(rules.join('\n'), 'data-ramka-vt-composited-css')
+    cssPath.styleElement?.release()
+    cssPath.styleElement = styles.insertLibrarySheet(
+      rules.join('\n'),
+      'data-ramka-vt-composited-css',
+    )
   }
 
   const SNAPSHOT_ANCHOR = 'inset: 0 auto auto 0 !important;'
@@ -296,7 +315,8 @@ export function createCompositedMorph(document: Document, styles: MorphStyles) {
     const token = ++generation
     transition.ready
       .then(() => {
-        if (!disposed && token === generation) upgrade(transition, radii, triggerTarget ?? null)
+        if (!disposed && token === generation && cssPath.activeOwner === owner)
+          upgrade(transition, radii, triggerTarget ?? null)
       })
       .catch(() => {})
   }
@@ -524,7 +544,7 @@ export function createCompositedMorph(document: Document, styles: MorphStyles) {
     const cleanup = () => {
       for (const a of created) a.cancel()
 
-      if (token === generation) {
+      if (token === generation && cssPath.activeOwner === owner) {
         docEl.removeAttribute(COMPOSITED_ATTR)
         docEl.removeAttribute(COMPOSITED_CSS_ATTR)
         if (!disposed) scheduleCssPathSheetCleanup()
@@ -543,16 +563,20 @@ export function createCompositedMorph(document: Document, styles: MorphStyles) {
       generation += 1
     },
     dispose() {
+      if (disposed) return
       releaseActive()
       generation += 1
       disposed = true
-      if (cssPathCleanupTimer != null) clearTimeout(cssPathCleanupTimer)
-      cssPathStyleEl?.release()
-      if (cssPathSheet)
-        document.adoptedStyleSheets = document.adoptedStyleSheets.filter(
-          (sheet) => sheet !== cssPathSheet,
-        )
-      cssPathSheet = null
+      cssPath.owners -= 1
+      if (cssPath.owners === 0) {
+        if (cssPath.cleanupTimer != null) clearTimeout(cssPath.cleanupTimer)
+        cssPath.styleElement?.release()
+        if (cssPath.sheet)
+          document.adoptedStyleSheets = document.adoptedStyleSheets.filter(
+            (sheet) => sheet !== cssPath.sheet,
+          )
+        documentCompositedSheets.delete(document)
+      }
     },
   }
 }

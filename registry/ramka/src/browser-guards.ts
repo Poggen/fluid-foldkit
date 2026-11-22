@@ -85,6 +85,15 @@ export function attachBrowserGuards(host: HTMLElement) {
   const view = document.defaultView
   let disposed = false
   let locked = false
+  let preparedScrollLock:
+    | {
+        body: HTMLElement
+        width: number
+        height: number
+        scrollbarWidth: number
+        padding: number
+      }
+    | undefined
   let pinchActive = false
   const touchStart = (event: TouchEvent) => {
     if (event.touches.length > 1) pinchActive = true
@@ -115,11 +124,31 @@ export function attachBrowserGuards(host: HTMLElement) {
   const releaseBackdrop =
     backdrop && !host.contains(backdrop) ? attachTouchContainment(backdrop) : undefined
 
+  const measureScrollLock = () => {
+    if (!view) return undefined
+    const body = document.body
+    const width = view.innerWidth
+    const height = view.innerHeight
+    const scrollbarWidth = Math.max(0, width - document.documentElement.clientWidth)
+    const padding =
+      scrollbarWidth > 0 ? Number.parseFloat(view.getComputedStyle(body).paddingInlineEnd) || 0 : 0
+    return { body, width, height, scrollbarWidth, padding }
+  }
+  const prepareScrollLock = () => {
+    preparedScrollLock = undefined
+    if (disposed || locked || documentLocks.has(document)) return undefined
+    const measurement = measureScrollLock()
+    preparedScrollLock = measurement
+    return () => {
+      if (preparedScrollLock === measurement) preparedScrollLock = undefined
+    }
+  }
   const lockScroll = () => {
     if (disposed || locked || !view) return
     locked = true
     const current = documentLocks.get(document)
     if (current) {
+      preparedScrollLock = undefined
       current.count += 1
       return
     }
@@ -127,9 +156,18 @@ export function attachBrowserGuards(host: HTMLElement) {
     const body = document.body
     const restoreOverflow = preserveStyle(html.style, 'overflow')
     const restorePadding = preserveStyle(body.style, 'padding-inline-end')
-    const scrollbarWidth = Math.max(0, view.innerWidth - html.clientWidth)
+    const prepared = preparedScrollLock
+    preparedScrollLock = undefined
+    const measurement =
+      prepared &&
+      prepared.body === body &&
+      prepared.width === view.innerWidth &&
+      prepared.height === view.innerHeight
+        ? prepared
+        : measureScrollLock()
+    if (!measurement) return
+    const { scrollbarWidth, padding } = measurement
     html.style.overflow = 'hidden'
-    const padding = Number.parseFloat(view.getComputedStyle(body).paddingInlineEnd) || 0
     if (scrollbarWidth > 0) body.style.paddingInlineEnd = `${padding + scrollbarWidth}px`
     documentLocks.set(document, {
       count: 1,
@@ -156,6 +194,7 @@ export function attachBrowserGuards(host: HTMLElement) {
   const dispose = () => {
     if (disposed) return
     disposed = true
+    preparedScrollLock = undefined
     document.removeEventListener('touchstart', touchStart)
     document.removeEventListener('touchmove', touchMove)
     document.removeEventListener('touchend', touchEnd)
@@ -174,5 +213,5 @@ export function attachBrowserGuards(host: HTMLElement) {
     lock.restoreScroll()
     documentLocks.delete(document)
   }
-  return { lockScroll, applySelectionGuard, dispose }
+  return { prepareScrollLock, lockScroll, applySelectionGuard, dispose }
 }

@@ -1029,6 +1029,7 @@ export function attachGallery(
             media: media(),
             panel,
             commit,
+            ...(open ? { beforeCapture: () => guards?.prepareScrollLock() } : {}),
             signal: transitionController.signal,
             reducedMotion: reduced.matches,
             options: {
