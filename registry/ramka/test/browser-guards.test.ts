@@ -219,13 +219,18 @@ describe('mounted browser guards', () => {
       document.body.style.paddingInlineEnd = '10px'
       const { resource } = fixture()
       const discard = resource.prepareScrollLock()
-      if (change === 'width') viewportWidth.mockReturnValue(1040)
-      else if (change === 'height') viewportHeight.mockReturnValue(900)
-      else if (change === 'body') {
+      if (change === 'width') {
+        // oxlint-disable-next-line landmines-testing/no-test-doubles -- Native keeper: iOS Safari modal checks use real viewport geometry; HappyDOM needs this width change to invalidate a prepared measurement.
+        viewportWidth.mockReturnValue(1040)
+      } else if (change === 'height') {
+        // oxlint-disable-next-line landmines-testing/no-test-doubles -- Native keeper: iOS Safari modal checks use real viewport geometry; HappyDOM needs this height-only change to invalidate a prepared measurement.
+        viewportHeight.mockReturnValue(900)
+      } else if (change === 'body') {
         const replacement = document.createElement('body')
         replacement.style.paddingInlineEnd = '10px'
         document.body.replaceWith(replacement)
       } else discard?.()
+      // oxlint-disable-next-line landmines-testing/no-test-doubles -- Native keeper: iOS Safari modal checks measure the real document gutter; this supplies the changed native geometry absent from HappyDOM.
       width.mockReturnValue(change === 'width' ? 1010 : 990)
       resource.lockScroll()
       expect(width).toHaveBeenCalledTimes(2)
