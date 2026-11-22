@@ -123,6 +123,7 @@ export const reconcilePageVisit = (
                   ...flags,
                   preview: legacyOptions(initialized.model.configuration),
                   ...(page.family === 'fluid' ? { componentSlug: page.slug } : {}),
+                  ...(page.family === 'ramka' ? { ramkaExamples: true } : {}),
                 },
               ],
             })

@@ -1,4 +1,5 @@
 import { RamkaExampleBlock } from '../../../registry/ramka/examples/src/lightbox-example'
+import { RamkaDemosBlock } from '../../../registry/ramka/examples/src/examples-block'
 import { PreviewHeights } from './geometry'
 import { Schema } from 'effect'
 import { Block } from 'foldkit'
@@ -58,6 +59,7 @@ export const GalleryBlock = Block.make('Gallery', {
     flows: FlowGalleryBlock.Model,
     companions: CompanionGalleryBlock.Model,
     ramka: RamkaExampleBlock.Model,
+    ramkaDemos: Schema.Option(RamkaDemosBlock.Model),
   }),
   Message,
   OutMessage: defineMessageUnion({

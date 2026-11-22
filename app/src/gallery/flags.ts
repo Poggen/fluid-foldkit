@@ -54,6 +54,7 @@ export const GalleryFlags = Schema.Struct({
   picker: PreparedPicker,
   preview: Schema.optionalKey(PreviewOptions),
   componentSlug: Schema.optionalKey(Schema.String),
+  ramkaExamples: Schema.optionalKey(Schema.Boolean),
 })
 export type GalleryFlags = typeof GalleryFlags.Type
 

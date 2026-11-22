@@ -22,6 +22,7 @@
 @source '../../registry/fluid/src';
 @source '../../registry/fluid/examples/src';
 @source '../../registry/charts/src';
+@source '../../registry/ramka/examples/src';
 @source '../../components/docs';
 @theme {
   --font-sans:

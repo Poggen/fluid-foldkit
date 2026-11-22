@@ -2,6 +2,11 @@ import {
   RamkaExampleBlock,
   layer as RamkaExampleLayer,
 } from '../../../registry/ramka/examples/src/lightbox-example'
+import {
+  RamkaDemosBlock,
+  layer as RamkaDemosLayer,
+} from '../../../registry/ramka/examples/src/examples-block'
+import { initAndSet } from 'foldkit/binding'
 import { previewAdmitted, previewBody, previewCard } from './card'
 import { ramkaPages } from '../../../lib/catalogue'
 import { PreviewHeights, previewLayoutKey } from './geometry'
@@ -91,8 +96,9 @@ const ObservePreviews = GalleryBlock.makeMountStream('ObservePreviews', {
   },
 })
 const Ramka = GalleryBlock.makeRequiredFieldBinding(RamkaExampleBlock, { field: 'ramka' })
+const RamkaDemos = GalleryBlock.makeOptionalFieldBinding(RamkaDemosBlock, { field: 'ramkaDemos' })
 const GalleryComposition = GalleryBlock.makeComposition({
-  bindings: [Fluid, Cartesian, Polar, Flows, Companions, ComposerSamples, Ramka],
+  bindings: [Fluid, Cartesian, Polar, Flows, Companions, ComposerSamples, Ramka, RamkaDemos],
   mounts: [ObservePreviews],
 })
 type GalleryHtml = Parameters<Parameters<typeof GalleryComposition.makeView.withInputs>[0]>[2]
@@ -316,6 +322,14 @@ const makeView = () => {
           ),
       ],
     )
+    if (inputs.only === ramkaPages[0]?.href && Option.isSome(model.ramkaDemos))
+      return h.div(
+        [],
+        [
+          grid,
+          h.block(RamkaDemos.embedView({ slotId: 'ramka-demos', model: model.ramkaDemos.value })),
+        ],
+      )
     return inputs.only === undefined
       ? h.div([h.Class('w-full max-w-[1200px] mx-auto px-6 pb-16')], [grid])
       : grid
@@ -427,6 +441,7 @@ const implementation = {
     return {
       model: {
         isReady: false,
+        ramkaDemos: Option.none(),
         previewHeights: flags.previewHeights ?? {},
         reservedPreviewHeights: flags.previewHeights ?? {},
         preview,
@@ -437,7 +452,12 @@ const implementation = {
         admissionRevision: flags.admissionRevision ?? 0,
       },
       childInitContext: { ...flags, preview: {} },
-      steps: [Cartesian.informOfPreview({ preview })],
+      steps: [
+        Cartesian.informOfPreview({ preview }),
+        ...(flags.ramkaExamples
+          ? [GalleryBlock.makeStep((model) => initAndSet(RamkaDemos, model, { args: [] }))]
+          : []),
+      ],
       commands: [SignalReady()],
     }
   }),
@@ -501,6 +521,7 @@ export const layer = GalleryBlock.makeLayer(plans).pipe(
       FlowsLayer,
       CompanionsLayer,
       RamkaExampleLayer,
+      RamkaDemosLayer,
     ),
   ),
 )
