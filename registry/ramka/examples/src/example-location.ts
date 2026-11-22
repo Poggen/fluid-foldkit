@@ -1,6 +1,7 @@
 import type { Example } from './example-data'
 
 export const examplePage = '/ramka/lightbox'
+export const interceptedHeadingId = 'ramka-intercepted-routes-heading'
 export const parameter = (example: Example) =>
   example === 'url-synced-state'
     ? 'ramka-photo'
@@ -33,7 +34,10 @@ export function writePhoto(example: Example, id: string | null) {
     return
   }
   if (id === null) url.searchParams.delete(key)
-  else url.searchParams.set(key, id)
+  else {
+    url.searchParams.set(key, id)
+    if (example === 'intercepted-routes') url.hash = interceptedHeadingId
+  }
   if (id !== null && !new URLSearchParams(window.location.search).has(key))
     window.history.pushState(
       {

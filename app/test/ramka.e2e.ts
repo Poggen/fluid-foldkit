@@ -119,7 +119,7 @@ test('Ramka distinguishes URL-synced dialogs from standalone photo routes', asyn
   await expect(page).toHaveURL(/ramka-route=mountains/)
   await expect(page.getByRole('dialog', { name: 'Intercepted routes' })).toBeVisible()
   await page.reload()
-  await expect(intercept.getByRole('figure')).toBeVisible()
+  await expect(intercept.getByRole('figure')).toBeInViewport()
   await expect(intercept.getByRole('img', { name: 'Rocky mountains' })).toBeVisible()
   await expect(page.getByRole('dialog', { name: 'Intercepted routes' })).toBeHidden()
   await intercept.getByRole('link', { name: 'Back to gallery' }).click()

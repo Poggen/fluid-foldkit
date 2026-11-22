@@ -1,7 +1,7 @@
 import type { Model, ViewInputs } from '@foldkit-visuals/ramka/lightbox'
 import type { Attribute, Html, HtmlBuilder } from 'foldkit/html'
 import { batch, examples, films, limit, objects, photo, photos, type Example } from './example-data'
-import { examplePage } from './example-location'
+import { examplePage, interceptedHeadingId } from './example-location'
 
 const rtlLabels = {
   label: 'مكتبة الصور',
@@ -107,7 +107,8 @@ export function renderRamkaExample<Message, Mounts>(
       h.Draggable(false),
     ])
   }
-  const headingId = `ramka-${example}-heading`
+  const headingId =
+    example === 'intercepted-routes' ? interceptedHeadingId : `ramka-${example}-heading`
   const attached = h.div(
     [h.Class('rounded-[var(--fluid-radius,8px)] border px-3 py-2 text-sm')],
     ['A few photos from the trip. Which one should we print?'],
@@ -223,13 +224,16 @@ export function renderRamkaExample<Message, Mounts>(
             [
               h.img([h.Src(routePhoto.src), h.Alt(routePhoto.name), h.Class('w-full rounded-xl')]),
               h.figcaption([], [routePhoto.name]),
-              h.a([h.Href(examplePage), h.Class('underline')], ['Back to gallery']),
+              h.a(
+                [h.Href(`${examplePage}#${headingId}`), h.Class('underline')],
+                ['Back to gallery'],
+              ),
             ],
           ),
       example === 'intercepted-routes' && routePhoto === undefined
         ? h.a(
             [
-              h.Href(`${examplePage}?ramka-route=mountains`),
+              h.Href(`${examplePage}?ramka-route=mountains#${interceptedHeadingId}`),
               h.Target('_blank'),
               h.Rel('noopener'),
               h.Class('text-sm underline'),
