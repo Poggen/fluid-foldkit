@@ -206,8 +206,9 @@ export function gallery<Message, Mounts>(
       ...items.map((item, index) => {
         const distance = Math.abs(context.index - index)
         const visible =
+          !(options.mode === 'photos' && context.parked) &&
           (context.loop ? Math.min(distance, items.length - distance) : distance) <=
-          (options.preload ?? (feed ? 2 : 3))
+            (options.preload ?? (feed ? 2 : 3))
         return parts.Slide({
           index,
           attributes: childAttributes([
@@ -222,44 +223,43 @@ export function gallery<Message, Mounts>(
               : []),
           ]),
           children: [
-            parts.Item({
-              index,
-              ...(strip
-                ? {}
-                : { label: `${index + 1} of ${items.length}`, roleDescription: 'slide' }),
-              children: () =>
-                visible
-                  ? [
-                      options.renderMedia?.(item, index) ??
-                        parts.Zoom({
-                          index,
-                          children: [
-                            parts.Media({
-                              index,
-                              width: item.width,
-                              height: item.height,
-                              attributes: button(
-                                feed || options.mode === 'photos'
-                                  ? 'overflow-hidden rounded-none md:rounded-lg'
-                                  : 'overflow-hidden rounded-none after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit] md:rounded-lg md:after:shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.1)] md:dark:after:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.12)]',
-                              ),
-                              children: [
-                                h.img([
-                                  h.Src(item.src),
-                                  h.Alt(item.alt),
-                                  h.Width(String(item.width)),
-                                  h.Height(String(item.height)),
-                                  h.Loading('eager'),
-                                  h.Draggable(false),
-                                  h.Class('select-none'),
-                                ]),
-                              ],
-                            }),
-                          ],
-                        }),
-                    ]
-                  : [],
-            }),
+            visible
+              ? parts.Item({
+                  index,
+                  ...(strip
+                    ? {}
+                    : { label: `${index + 1} of ${items.length}`, roleDescription: 'slide' }),
+                  children: () => [
+                    options.renderMedia?.(item, index) ??
+                      parts.Zoom({
+                        index,
+                        children: [
+                          parts.Media({
+                            index,
+                            width: item.width,
+                            height: item.height,
+                            attributes: button(
+                              feed || options.mode === 'photos'
+                                ? 'overflow-hidden rounded-none md:rounded-lg'
+                                : 'overflow-hidden rounded-none after:pointer-events-none after:absolute after:inset-0 after:z-10 after:rounded-[inherit] md:rounded-lg md:after:shadow-[inset_0_0_0_0.5px_rgba(0,0,0,0.1)] md:dark:after:shadow-[inset_0_0_0_0.5px_rgba(255,255,255,0.12)]',
+                            ),
+                            children: [
+                              h.img([
+                                h.Src(item.src),
+                                h.Alt(item.alt),
+                                h.Width(String(item.width)),
+                                h.Height(String(item.height)),
+                                h.Loading('eager'),
+                                h.Draggable(false),
+                                h.Class('select-none'),
+                              ]),
+                            ],
+                          }),
+                        ],
+                      }),
+                  ],
+                })
+              : h.empty,
           ],
         })
       }),

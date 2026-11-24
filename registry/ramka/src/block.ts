@@ -211,6 +211,7 @@ const Message = defineMessageUnion({
   VisibilityCommitted: {
     generation: Schema.Natural,
     open: Schema.Boolean,
+    morphTargetId: Schema.optionalKey(Schema.String),
     retainPortal: Schema.optionalKey(Schema.Boolean),
   },
   Settled: { generation: Schema.Natural, open: Schema.Boolean },

@@ -1,7 +1,7 @@
 /* @license Ramka Foldkit port. MIT. Copyright (c) 2026 Artur Bień. */
-import { Effect, Queue, Schema, Stream } from 'effect'
+import { Effect, Option, Queue, Schema, Stream } from 'effect'
 import { Render } from 'foldkit'
-import { LightboxBlock, RamkaLightboxNamespace } from './block.js'
+import { LightboxBlock, Model, RamkaLightboxNamespace, isOpenTarget } from './block.js'
 import { Environment } from './environment.js'
 import { attachGallery } from './runtime.js'
 
@@ -56,6 +56,23 @@ export const Observe = RamkaLightboxNamespace.makeMountStream('Observe', {
               )
             : Stream.never,
         ),
+        Stream.flatMap((message) => {
+          const intent = Stream.succeed(message)
+          if (message._tag !== 'Opened' && message._tag !== 'Dismissed') return intent
+          const model = Schema.decodeUnknownSync(Model)(
+            JSON.parse(element.getAttribute('data-ramka-model') ?? '{}'),
+          )
+          const changesTransition =
+            Option.isNone(model.controlledOpen) &&
+            (message._tag === 'Opened'
+              ? model.items.length > 0 && (!isOpenTarget(model) || model.phase === 'Preparing')
+              : isOpenTarget(model))
+          if (!changesTransition) return intent
+          return Stream.concat(
+            intent,
+            Stream.fromEffect(Effect.sync(flushRender)).pipe(Stream.drain),
+          )
+        }),
       )
   },
 })

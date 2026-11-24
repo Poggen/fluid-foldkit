@@ -25,7 +25,10 @@ export const PhotoExamplesBlock = Block.make('PhotoExamples', {
     ReceivedFeedPage: { count: Schema.Natural },
   }),
   effects: Block.makeEffectsContract<never, Environment>(),
-  view: { kind: 'Element' },
+  view: {
+    kind: 'Element',
+    Inputs: Block.makeInputContract<{ readonly only?: 'photos-app' }>(),
+  },
 })
 const Root = PhotoExamplesBlock
 const FetchPhotoPage = Root.makeCommand('FetchPhotoPage', {
@@ -116,7 +119,6 @@ const renderExample = (
 ) => {
   const feed = example === 'infinite-scroll'
   const rtl = example === 'photos-app-rtl'
-  const libraryId = rtl ? 'ramka-photos-rtl' : 'ramka-photos-ltr'
   const items = feed ? feedMedia(lightbox.items.length) : photoMedia
   const name = feed ? 'Infinite scroll' : rtl ? 'Photos app (RTL)' : 'Photos app'
   return h.section(
@@ -136,7 +138,6 @@ const renderExample = (
               h.Class(
                 'pointer-events-auto sticky top-0 z-30 flex shrink-0 items-center gap-3 border-b border-black/[0.06] bg-background px-4 py-2.5 dark:border-white/[0.08]',
               ),
-              ...(feed ? [] : [h.Style({ viewTransitionName: `${libraryId}-toolbar` })]),
             ],
             [
               h.div(
@@ -260,7 +261,6 @@ const renderExample = (
                             : [
                                 h.Style({
                                   gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
-                                  viewTransitionName: `${libraryId}-grid`,
                                 }),
                               ]),
                         ],
@@ -269,7 +269,7 @@ const renderExample = (
                             index,
                             attributes: childAttributes([
                               h.Class(
-                                'relative block aspect-square cursor-pointer overflow-hidden bg-transparent p-0 md:scroll-mt-16 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500',
+                                'relative block aspect-square cursor-pointer overflow-hidden rounded-none bg-transparent p-0 md:scroll-mt-16 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500',
                               ),
                             ]),
                             children: [
@@ -372,10 +372,10 @@ const renderExample = (
 const makeView = () => {
   const body = createKeyedLazy()
 
-  return Composition.makeView((model, h) =>
+  return Composition.makeView.withInputs((model, inputs, h) =>
     h.div(
       [h.Class('space-y-10')],
-      Example.literals.map((example) => {
+      (inputs.only === undefined ? Example.literals : [inputs.only]).map((example) => {
         const instance = model.lightboxes.find(({ key }) => key === example)
         return instance === undefined
           ? null
@@ -409,6 +409,7 @@ const implementation = {
                   id: `upstream-${example}`,
                   items: example === 'infinite-scroll' ? feedMedia(12) : photoMedia,
                   options: {
+                    ...(example === 'photos-app' ? { keepMounted: true } : {}),
                     loop: example !== 'infinite-scroll',
                     dir: example === 'photos-app-rtl' ? 'rtl' : 'ltr',
                     maxZoom: 6,

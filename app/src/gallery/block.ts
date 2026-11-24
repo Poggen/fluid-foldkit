@@ -220,6 +220,14 @@ const makeView = () => {
   const lazyFlows = createLazy()
   const lazyCompanions = createLazy()
   return GalleryComposition.makeView.withInputs((model, inputs, h) => {
+    if (inputs.showRamkaExamples && Option.isSome(model.ramkaDemos))
+      return h.block(
+        RamkaDemos.embedView({
+          slotId: 'ramka-demos',
+          model: model.ramkaDemos.value,
+          viewInputs: inputs.ramkaExample === undefined ? {} : { only: inputs.ramkaExample },
+        }),
+      )
     const admission = {
       ready: model.isReady,
       admitted: model.admitted,
@@ -322,8 +330,6 @@ const makeView = () => {
           ),
       ],
     )
-    if (inputs.showRamkaExamples && Option.isSome(model.ramkaDemos))
-      return h.block(RamkaDemos.embedView({ slotId: 'ramka-demos', model: model.ramkaDemos.value }))
     return inputs.only === undefined
       ? h.div([h.Class('w-full max-w-[1200px] mx-auto px-6 pb-16')], [grid])
       : grid

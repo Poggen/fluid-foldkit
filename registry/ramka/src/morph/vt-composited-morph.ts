@@ -9,7 +9,7 @@ import { LightboxDocumentDataAttributes } from './lightbox-data-attributes.js'
 import { compensatedMorphRadiusAt, parseMorphRadiusList } from './vt-morph-radius.js'
 import { morphTiming, VIEW_TRANSITION_PRESETS } from './vt-timing.js'
 import { LightboxDocumentCssVars } from './lightbox-css-vars.js'
-import type { MorphStyles, LibrarySheet } from './styles.js'
+import type { MorphStyles } from './styles.js'
 
 interface UpgradeableTransition {
   ready?: Promise<void>
@@ -17,7 +17,7 @@ interface UpgradeableTransition {
 }
 
 type MorphAnimationEffect = AnimationEffect &
-  Partial<Pick<KeyframeEffect, 'pseudoElement' | 'getKeyframes'>>
+  Partial<Pick<KeyframeEffect, 'pseudoElement' | 'getKeyframes' | 'setKeyframes'>>
 type MorphAnimation = Animation & Partial<Pick<CSSAnimation, 'animationName'>>
 type SampledKeyframe = Keyframe & { offset: number }
 
@@ -29,12 +29,15 @@ interface MorphRadii {
 interface CompositedCssState {
   owners: number
   activeOwner: symbol | null
-  sheet: CSSStyleSheet | null
-  cleanupTimer: ReturnType<typeof setTimeout> | null
-  styleElement: LibrarySheet | null
 }
 
 const documentCompositedSheets = new WeakMap<Document, CompositedCssState>()
+const CSS_KEYFRAMES = {
+  group: 'ramka-vt-cm-group',
+  radius: 'ramka-vt-cm-radius',
+  old: 'ramka-vt-cm-old',
+  new: 'ramka-vt-cm-new',
+} as const
 
 export function createCompositedMorph(document: Document, styles: MorphStyles) {
   const window = document.defaultView
@@ -42,7 +45,6 @@ export function createCompositedMorph(document: Document, styles: MorphStyles) {
     if (!window) throw new Error('A browsing context is required for morphing')
     return window.getComputedStyle(element, pseudo)
   }
-  const CSSStyleSheet = window?.CSSStyleSheet
   let disposed = false
   let generation = 0
   let releaseActive = () => {}
@@ -50,9 +52,6 @@ export function createCompositedMorph(document: Document, styles: MorphStyles) {
   const cssPath: CompositedCssState = documentCompositedSheets.get(document) ?? {
     owners: 0,
     activeOwner: null,
-    sheet: null,
-    cleanupTimer: null,
-    styleElement: null,
   }
   cssPath.owners += 1
   documentCompositedSheets.set(document, cssPath)
@@ -61,71 +60,14 @@ export function createCompositedMorph(document: Document, styles: MorphStyles) {
 
   const COMPOSITED_CSS_ATTR = 'data-ramka-vt-composited-css'
 
-  const CSS_KEYFRAMES = {
-    group: 'ramka-vt-cm-group',
-    radius: 'ramka-vt-cm-radius',
-    old: 'ramka-vt-cm-old',
-    new: 'ramka-vt-cm-new',
-  } as const
-
-  function clearCssPathSheetRules() {
-    if (!cssPath.sheet) return
-    while (cssPath.sheet.cssRules.length > 0) {
-      cssPath.sheet.deleteRule(cssPath.sheet.cssRules.length - 1)
-    }
+  function warmCompositedStyles() {
+    if (!disposed && isWebKit()) ensureCompositedCssStaticRules()
   }
 
   function prewarmCompositedCssSheet() {
     if (disposed) return
     cssPath.activeOwner = owner
-    if (isWebKit()) ensureCompositedCssStaticRules()
-    if (typeof document === 'undefined' || !styles.supportsConstructedSheets()) return
-    if (cssPath.cleanupTimer != null) {
-      clearTimeout(cssPath.cleanupTimer)
-      cssPath.cleanupTimer = null
-    }
-    if (!cssPath.sheet) {
-      if (!CSSStyleSheet) return
-      cssPath.sheet = new CSSStyleSheet()
-      document.adoptedStyleSheets = [...document.adoptedStyleSheets, cssPath.sheet]
-      return
-    }
-    clearCssPathSheetRules()
-  }
-
-  function scheduleCssPathSheetCleanup() {
-    if (!cssPath.sheet || cssPath.sheet.cssRules.length === 0) return
-    if (cssPath.cleanupTimer != null) clearTimeout(cssPath.cleanupTimer)
-    // oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
-    // @effect-diagnostics-next-line globalTimers:off -- Keep the native WebKit compositor stylesheet idle delay; the final document owner cancels this timer on disposal.
-    cssPath.cleanupTimer = setTimeout(() => {
-      cssPath.cleanupTimer = null
-
-      if (
-        document.documentElement.hasAttribute(COMPOSITED_CSS_ATTR) ||
-        document.documentElement.hasAttribute(LightboxDocumentDataAttributes.viewTransition)
-      ) {
-        return
-      }
-      clearCssPathSheetRules()
-    }, 1500)
-  }
-
-  function insertCompositedKeyframes(rules: readonly string[]) {
-    if (styles.supportsConstructedSheets()) {
-      if (!cssPath.sheet) prewarmCompositedCssSheet()
-      const sheet = cssPath.sheet
-      if (!sheet) return
-      for (const rule of rules) {
-        sheet.insertRule(rule, sheet.cssRules.length)
-      }
-      return
-    }
-    cssPath.styleElement?.release()
-    cssPath.styleElement = styles.insertLibrarySheet(
-      rules.join('\n'),
-      'data-ramka-vt-composited-css',
-    )
+    warmCompositedStyles()
   }
 
   const SNAPSHOT_ANCHOR = 'inset: 0 auto auto 0 !important;'
@@ -144,22 +86,16 @@ export function createCompositedMorph(document: Document, styles: MorphStyles) {
     return !!window && 'GestureEvent' in window
   }
 
-  function keyframesCss(
-    name: string,
-    frames: SampledKeyframe[],
-    prop: 'transform' | 'borderRadius',
-
-    endpointDecls?: string,
-  ) {
-    const cssProp = prop === 'borderRadius' ? 'border-radius' : 'transform'
-    const body = frames
-      .map((f, i) => {
-        const extra =
-          endpointDecls && (i === 0 || i === frames.length - 1) ? ` ${endpointDecls}` : ''
-        return `${(f.offset * 100).toFixed(3)}% { ${cssProp}: ${String(f[prop])};${extra} }`
-      })
-      .join('\n')
-    return `@keyframes ${name} {\n${body}\n}`
+  function cssKeyframes(frames: SampledKeyframe[], width?: number, height?: number) {
+    return frames.map((frame, index) => ({
+      ...frame,
+      offset: Number((frame.offset * 100).toFixed(3)) / 100,
+      ...(width !== undefined &&
+      height !== undefined &&
+      (index === 0 || index === frames.length - 1)
+        ? { width: `${fmt(width)}px`, height: `${fmt(height)}px` }
+        : {}),
+    }))
   }
 
   function ensureStyleInjected() {
@@ -193,18 +129,25 @@ export function createCompositedMorph(document: Document, styles: MorphStyles) {
       () => `
 :root[${COMPOSITED_CSS_ATTR}]${GROUP_PSEUDO} {
   transform-origin: 0 0 !important;
-  animation-name: ${CSS_KEYFRAMES.group}, ${CSS_KEYFRAMES.radius} !important;${timing}
+  animation-name: ${CSS_KEYFRAMES.group}, ${CSS_KEYFRAMES.radius} !important;
+  ${timing}
 }
-:root[${COMPOSITED_CSS_ATTR}]:not([${LightboxDocumentDataAttributes.crossfade}])${OLD_PSEUDO} {
-  ${SNAPSHOT_ANCHOR}
-  transform-origin: 0 0 !important;
-  animation-name: ${CSS_KEYFRAMES.old} !important;${timing}
-}
+:root[${COMPOSITED_CSS_ATTR}]:not([${LightboxDocumentDataAttributes.crossfade}])${OLD_PSEUDO},
 :root[${COMPOSITED_CSS_ATTR}]:not([${LightboxDocumentDataAttributes.crossfade}])${NEW_PSEUDO} {
   ${SNAPSHOT_ANCHOR}
   transform-origin: 0 0 !important;
-  animation-name: ${CSS_KEYFRAMES.new} !important;${timing}
+  ${timing}
 }
+:root[${COMPOSITED_CSS_ATTR}]:not([${LightboxDocumentDataAttributes.crossfade}])${OLD_PSEUDO} {
+  animation-name: ${CSS_KEYFRAMES.old} !important;
+}
+:root[${COMPOSITED_CSS_ATTR}]:not([${LightboxDocumentDataAttributes.crossfade}])${NEW_PSEUDO} {
+  animation-name: ${CSS_KEYFRAMES.new} !important;
+}
+@keyframes ${CSS_KEYFRAMES.group} { from { transform: none; } to { transform: none; } }
+@keyframes ${CSS_KEYFRAMES.radius} {}
+@keyframes ${CSS_KEYFRAMES.old} { from { transform: none; } to { transform: none; } }
+@keyframes ${CSS_KEYFRAMES.new} { from { transform: none; } to { transform: none; } }
 `,
     )
   }
@@ -490,28 +433,42 @@ export function createCompositedMorph(document: Document, styles: MorphStyles) {
 
     if (useCssAnimations) {
       ensureCompositedCssStaticRules()
-      const keyframeRules = [
-        keyframesCss(CSS_KEYFRAMES.group, groupFrames, 'transform'),
-        keyframesCss(CSS_KEYFRAMES.radius, hasRadius ? radiusFrames : [], 'borderRadius'),
-      ]
-      if (!isCrossfade) {
-        keyframeRules.push(
-          keyframesCss(
-            CSS_KEYFRAMES.old,
-            oldFrames,
-            'transform',
-            `width: ${fmt(w0)}px; height: ${fmt(h0)}px;`,
-          ),
-          keyframesCss(
-            CSS_KEYFRAMES.new,
-            newFrames,
-            'transform',
-            `width: ${fmt(w1)}px; height: ${fmt(h1)}px;`,
-          ),
-        )
-      }
-      insertCompositedKeyframes(keyframeRules)
       docEl.setAttribute(COMPOSITED_CSS_ATTR, '')
+      const animations: MorphAnimation[] = document.getAnimations()
+      const tracks = [
+        { name: CSS_KEYFRAMES.group, pseudo: GROUP_PSEUDO, frames: cssKeyframes(groupFrames) },
+        { name: CSS_KEYFRAMES.radius, pseudo: GROUP_PSEUDO, frames: cssKeyframes(radiusFrames) },
+        ...(!isCrossfade
+          ? [
+              {
+                name: CSS_KEYFRAMES.old,
+                pseudo: OLD_PSEUDO,
+                frames: cssKeyframes(oldFrames, w0, h0),
+              },
+              {
+                name: CSS_KEYFRAMES.new,
+                pseudo: NEW_PSEUDO,
+                frames: cssKeyframes(newFrames, w1, h1),
+              },
+            ]
+          : []),
+      ]
+      try {
+        for (const track of tracks) {
+          const animation = animations.find((animation) => {
+            const effect: MorphAnimationEffect | null = animation.effect
+            return animation.animationName === track.name && effect?.pseudoElement === track.pseudo
+          })
+          const effect: MorphAnimationEffect | null | undefined = animation?.effect
+          if (!effect?.setKeyframes) throw new Error('Missing CSS morph animation effect')
+          effect.setKeyframes(track.frames)
+        }
+      } catch {
+        docEl.removeAttribute(COMPOSITED_CSS_ATTR)
+        uaAnim.currentTime = 0
+        uaAnim.play()
+        return
+      }
     } else {
       try {
         created.push(docEl.animate(groupFrames, options(GROUP_PSEUDO)))
@@ -548,7 +505,6 @@ export function createCompositedMorph(document: Document, styles: MorphStyles) {
       if (token === generation && cssPath.activeOwner === owner) {
         docEl.removeAttribute(COMPOSITED_ATTR)
         docEl.removeAttribute(COMPOSITED_CSS_ATTR)
-        if (!disposed) scheduleCssPathSheetCleanup()
       }
     }
     releaseActive = cleanup
@@ -557,6 +513,7 @@ export function createCompositedMorph(document: Document, styles: MorphStyles) {
 
   return {
     maybeUpgradeToCompositedMorph,
+    warmCompositedStyles,
     prewarmCompositedCssSheet,
     cancel() {
       releaseActive()
@@ -570,12 +527,6 @@ export function createCompositedMorph(document: Document, styles: MorphStyles) {
       disposed = true
       cssPath.owners -= 1
       if (cssPath.owners === 0) {
-        if (cssPath.cleanupTimer != null) clearTimeout(cssPath.cleanupTimer)
-        cssPath.styleElement?.release()
-        if (cssPath.sheet)
-          document.adoptedStyleSheets = document.adoptedStyleSheets.filter(
-            (sheet) => sheet !== cssPath.sheet,
-          )
         documentCompositedSheets.delete(document)
       }
     },

@@ -17,7 +17,10 @@ function deferred() {
 const resources = new Set<ReturnType<typeof createMorph>>()
 function fixture() {
   const source = document.createElement('button')
-  const panel = document.createElement('dialog')
+  const panel = document.createElement('div')
+  panel.setAttribute('role', 'dialog')
+  panel.setAttribute('inert', '')
+  panel.style.visibility = 'hidden'
   const destination = document.createElement('div')
   panel.append(destination)
   document.body.append(source, panel)
@@ -30,7 +33,8 @@ function fixture() {
   const commits: boolean[] = []
   const commit = () => {
     commits.push(true)
-    panel.setAttribute('open', '')
+    panel.removeAttribute('inert')
+    panel.style.removeProperty('visibility')
   }
   const request: MorphRequest = {
     open: true,
@@ -148,7 +152,8 @@ describe('morph resource ownership', () => {
     const transitions = viewTransitions()
     const operation = resource.transition(request)
     await Promise.resolve()
-    expect(panel.hasAttribute('open')).toBe(true)
+    expect(panel.hasAttribute('open')).toBe(false)
+    expect(panel.hasAttribute('inert')).toBe(true)
     expect(panel.style.visibility).toBe('hidden')
     expect(commits).toHaveLength(0)
     expect(source.style.getPropertyValue('view-transition-name')).toBe('lightbox-morph')
@@ -221,7 +226,7 @@ describe('morph resource ownership', () => {
   })
   // oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
   // @effect-diagnostics-next-line asyncFunction:off -- Vitest awaits this native browser-resource callback as a Promise; preserving platform microtask order is part of the scenario.
-  it('a throwing readiness hook aborts preparation without revealing the dialog', async () => {
+  it('a throwing readiness hook leaves the prepared view for its owner to retire', async () => {
     const { resource, request, panel, commits } = fixture()
     viewTransitions()
     await expect(
@@ -235,8 +240,8 @@ describe('morph resource ownership', () => {
       }),
     ).rejects.toThrow('media failed')
     expect(commits).toHaveLength(0)
-    expect(panel.style.visibility).toBe('')
-    expect(panel.hasAttribute('inert')).toBe(false)
+    expect(panel.style.visibility).toBe('hidden')
+    expect(panel.hasAttribute('inert')).toBe(true)
     resource.dispose()
   })
   // oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
@@ -322,7 +327,8 @@ describe('morph resource ownership', () => {
     // @effect-diagnostics-next-line asyncFunction:off -- Vitest awaits this native browser-resource callback as a Promise; preserving platform microtask order is part of the scenario.
     async (outcome) => {
       const { resource, request, panel, commits } = fixture()
-      panel.setAttribute('open', '')
+      panel.removeAttribute('inert')
+      panel.style.removeProperty('visibility')
       let settle = () => {}
       // oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
       // @effect-diagnostics-next-line newPromise:off -- This finite native-platform clock resolves independently from Effect so the real resource can exercise late delivery, cancellation and readiness races.
@@ -793,7 +799,30 @@ function compositorFixture(
       startTime: number | null
     }
   }[] = []
-  Object.defineProperty(document, 'getAnimations', { configurable: true, value: () => [ua] })
+  const cssTracks: {
+    animationName: string
+    currentTime: number
+    startTime: number | null
+    effect: { pseudoElement: string; frames: Keyframe[]; setKeyframes(frames: Keyframe[]): void }
+  }[] = ['group', 'radius', 'old', 'new'].map<(typeof cssTracks)[number]>((track) => ({
+    animationName: `ramka-vt-cm-${track}`,
+    currentTime: 0,
+    startTime: null,
+    effect: {
+      pseudoElement: `::view-transition-${track === 'radius' ? 'group' : track}(lightbox-morph)`,
+      frames: [],
+      setKeyframes(frames: Keyframe[]) {
+        this.frames = frames
+      },
+    },
+  }))
+  Object.defineProperty(document, 'getAnimations', {
+    configurable: true,
+    value: () =>
+      args.webkit && document.documentElement.hasAttribute('data-ramka-vt-composited-css')
+        ? cssTracks
+        : [ua],
+  })
   Object.defineProperty(document, 'timeline', { configurable: true, value: { currentTime: 5000 } })
   Object.defineProperty(document.documentElement, 'animate', {
     configurable: true,
@@ -820,7 +849,7 @@ function compositorFixture(
     pseudo ? pseudoStyle : computed(element),
   )
   const transitions = viewTransitions()
-  return { ...result, ua, tracks, transitions, pseudoStyle }
+  return { ...result, ua, tracks, cssTracks, transitions, pseudoStyle }
 }
 describe('composited morph output', () => {
   it.each([false, true])(
@@ -911,14 +940,20 @@ describe('composited morph output', () => {
   })
   // oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
   // @effect-diagnostics-next-line asyncFunction:off -- Vitest awaits this native browser-resource callback as a Promise; preserving platform microtask order is part of the scenario.
-  it('uses WebKit CSS tracks and retains inert keyframes until idle cleanup', async () => {
+  it('uses WebKit CSS effects without mutating rules or their CSS clocks', async () => {
     vi.useFakeTimers()
-    const { resource, request, source, ua, tracks, transitions } = compositorFixture({
+    const { resource, request, source, ua, tracks, cssTracks, transitions } = compositorFixture({
       webkit: true,
     })
     source.getBoundingClientRect = () => new DOMRect(300, 40, 200, 150)
+    resource.prewarm()
+    const prewarmedSheets = [...document.adoptedStyleSheets]
     const operation = resource.transition(request)
     await required(transitions[0]).update()
+    expect(document.adoptedStyleSheets).toEqual(prewarmedSheets)
+    expect(document.documentElement.style.getPropertyValue('--lightbox-morph-radius-trigger')).toBe(
+      '',
+    )
     expect(ua.cancel).toHaveBeenCalled()
     expect(tracks).toHaveLength(0)
     const rules = () => document.adoptedStyleSheets.flatMap((sheet) => Array.from(sheet.cssRules))
@@ -926,7 +961,13 @@ describe('composited morph output', () => {
       (rule) => rule instanceof CSSKeyframesRule && rule.name === 'ramka-vt-cm-group',
     )
     expect(group).toBeDefined()
-    expect(required(group).cssText).toContain('translate(300px, 40px) scale(0.25, 0.25)')
+    expect(required(required(cssTracks[0]).effect.frames[0]).transform).toBe(
+      'translate(300px, 40px) scale(0.25, 0.25)',
+    )
+    expect(cssTracks.every((track) => track.currentTime === 0 && track.startTime === null)).toBe(
+      true,
+    )
+    const staticRules = rules()
     expect(document.documentElement.hasAttribute('data-ramka-vt-composited-css')).toBe(true)
     required(transitions[0]).finish()
     await operation
@@ -935,9 +976,7 @@ describe('composited morph output', () => {
       rules().some((rule) => rule instanceof CSSKeyframesRule && rule.name === 'ramka-vt-cm-group'),
     ).toBe(true)
     await vi.advanceTimersByTimeAsync(1500)
-    expect(
-      rules().some((rule) => rule instanceof CSSKeyframesRule && rule.name === 'ramka-vt-cm-group'),
-    ).toBe(false)
+    expect(rules()).toEqual(staticRules)
     resource.dispose()
     expect(document.adoptedStyleSheets).toHaveLength(0)
   })
@@ -1060,6 +1099,32 @@ describe('Foldkit physical commit acknowledgement', () => {
     required(transitions[0]).finish()
     await operation
     expect(commits).toHaveLength(1)
+  })
+  // oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
+  // @effect-diagnostics-next-line asyncFunction:off -- The accepted view may replace its native destination before acknowledging the browser capture callback.
+  it('captures the accepted reveal destination and restores both endpoint names', async () => {
+    const { resource, request, panel, destination } = fixture()
+    const transitions = viewTransitions()
+    const acknowledged = deferred()
+    const rendered = document.createElement('div')
+    destination.style.setProperty('view-transition-name', 'prepared-target', 'important')
+    rendered.style.setProperty('view-transition-name', 'rendered-target', 'important')
+    const operation = resource.transition({
+      ...request,
+      resolveDestination: () => panel.querySelector<HTMLElement>('div'),
+      commit: () => acknowledged.promise,
+    })
+    const update = required(transitions[0]).update()
+    destination.replaceWith(rendered)
+    acknowledged.resolve()
+    await update
+    expect(rendered.style.getPropertyValue('view-transition-name')).toBe('lightbox-morph')
+    required(transitions[0]).finish()
+    await operation
+    expect(destination.style.getPropertyValue('view-transition-name')).toBe('prepared-target')
+    expect(destination.style.getPropertyPriority('view-transition-name')).toBe('important')
+    expect(rendered.style.getPropertyValue('view-transition-name')).toBe('rendered-target')
+    expect(rendered.style.getPropertyPriority('view-transition-name')).toBe('important')
   })
   // oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.
   // @effect-diagnostics-next-line asyncFunction:off -- Vitest awaits this native browser-resource callback as a Promise; preserving platform microtask order is part of the scenario.

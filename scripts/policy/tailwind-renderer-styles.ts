@@ -4,8 +4,8 @@ export const rendererStylesheets: readonly PinnedStylesheet[] = [
   {
     kind: 'native-renderer',
     file: 'registry/ramka/src/parts.css',
-    sha256: '5b57348eb2842ba142dd256bab89e6a8e18f6f43ebd8c70885b6cf1872f489dc',
-    owner: 'Ramka structural part selectors and native scroll snap',
+    sha256: 'ed6869aad2e21387931a462719654d176c796012c29486603c544174298c7720',
+    owner: 'Ramka portaled dialog, structural part selectors and native scroll snap',
     provenance: 'registry/ramka/upstream-manifest.json#adaptation',
   },
   {

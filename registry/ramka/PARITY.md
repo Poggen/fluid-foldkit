@@ -29,6 +29,34 @@ source proof archive. These results describe the recorded scenarios and browser
 versions; they do not establish equality for every possible caller layout or
 future browser version.
 
+## Viewer lifecycle
+
+Ramka prepares the viewer in the portal before capture. It stays in layout
+but is hidden and inert while the active image and its geometry are prepared.
+Reveal changes the accepted view to open. By default a close removes the viewer in the
+capture callback, with the upstream hidden retention path for Android Blink.
+The scroll lock lasts through the close transition.
+
+Ramka suppresses the trigger fade on the active gallery's morph targets
+during capture. Triggers outside that capture keep their own transitions.
+
+The full gallery’s Photos app opts into Ramka’s `keepMounted` option. While closed,
+its viewer stays hidden and inert with the slide boxes in place. Preparing the
+viewer mounts the selected photo and its neighbours. Closing releases that media
+so the parked viewer does not request full-size photos on page load.
+
+The Photos examples keep square tiles when focus returns from the viewer.
+All 48 slide positions stay mounted. The viewer mounts the active photo and
+its three neighbors on either side, wrapping at the ends of the library.
+WebKit declares the group, corner-radius and snapshot animations once per
+document. On each open and close, it applies the upstream geometry samples
+to the active CSS animation effects. WebKit retains control of their timing.
+
+`Content` renders a fixed element with `role="dialog"` and exposes
+`[data-ramka-content][data-open]` while open. Custom Content renderers should
+use a normal HTML element and forward the supplied attributes. Use the Block's
+close operation or the Close part to dismiss it.
+
 ## Required SDK setup
 
 After installing `@ramka-foldkit/lightbox`, run:

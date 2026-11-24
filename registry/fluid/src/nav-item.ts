@@ -49,8 +49,8 @@ export const NavItem: <Message>(props: NavItemProps<Message>, h: HtmlBuilder<Mes
                 'transition-[padding] duration-80 pr-[var(--row-gutter)]',
               props.sidebarGutter !== undefined &&
                 (item.level > 0
-                  ? 'group-hover/menu-sub-item:pr-[var(--row-gutter-hover)] group-focus-within/menu-sub-item:pr-[var(--row-gutter-hover)] group-has-[[data-sidebar=menu-action]:is([data-state=open],[data-popup-open],[aria-expanded=true])]/menu-sub-item:pr-[var(--row-gutter-hover)]'
-                  : 'group-hover/menu-item:pr-[var(--row-gutter-hover)] group-focus-within/menu-item:pr-[var(--row-gutter-hover)] group-has-[[data-sidebar=menu-action]:is([data-state=open],[data-popup-open],[aria-expanded=true])]/menu-item:pr-[var(--row-gutter-hover)]'),
+                  ? 'group-hover/menu-sub-item:pr-[var(--row-gutter-hover)] group-focus-within/menu-sub-item:pr-[var(--row-gutter-hover)] [:where([data-sidebar=menu-sub-item]):has([data-sidebar=menu-action]:is([data-state=open],[data-popup-open],[aria-expanded=true]))_&]:pr-[var(--row-gutter-hover,var(--row-gutter))]'
+                  : 'group-hover/menu-item:pr-[var(--row-gutter-hover)] group-focus-within/menu-item:pr-[var(--row-gutter-hover)] [:where([data-sidebar=menu-item]):has([data-sidebar=menu-action]:is([data-state=open],[data-popup-open],[aria-expanded=true]))_&]:pr-[var(--row-gutter-hover)]'),
               props.variant === 'outline' && 'border border-border bg-background',
               item.disabled && 'opacity-50',
               item.disabled ? 'pointer-events-none' : '',

@@ -1,5 +1,10 @@
 export const applicationClasses = {
   root: 'group/sidebar-wrapper relative flex min-h-svh w-full min-h-screen [&:has([data-not-found])_[data-site-right-panel]]:hidden',
+  ramkaGalleryLayout: [
+    'flex flex-col gap-8 px-6',
+    '[@media_screen]:[&_.component-reference>section[aria-label="API_reference"]]:[contain-intrinsic-block-size:auto_none]',
+    '[@media_screen]:data-[gallery-layout=measured]:[&:not([data-gallery-measuring])_.component-reference>section[aria-label="API_reference"]:not(:focus-within)]:[content-visibility:auto]',
+  ].join(' '),
   pageHeading: 'w-full max-w-[680px] mx-auto py-20 sm:py-28 px-6',
   displayHeading: 'text-site-display text-foreground leading-none',
   skipLink:

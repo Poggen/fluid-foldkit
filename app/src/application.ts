@@ -38,6 +38,7 @@ import {
   completedCopyFeedback,
 } from './application-copy'
 import { makeRenderApplication } from './application-view'
+import { ObserveGalleryLayout } from './application-gallery-layout'
 import { ApplicationBlock, Message } from './application-contract'
 import { ComponentReferenceBlock } from './reference/block'
 import { layer as ReferenceLayer } from './reference/layer'
@@ -69,7 +70,7 @@ import { GoogleFontPickerBlock, googleFontPickerLayer } from './fonts/picker'
 import { PrepareFont, WaitForFont, FontDeadline } from './fonts/commands'
 import { fontWeights, nearestWeight } from './fonts/catalogue'
 import { shortcutSelection, shortcutAnnouncement } from './global-shortcuts'
-import { pathFromUrl } from './route'
+import { pathFromUrl, ramkaExampleFromUrl } from './route'
 import { SearchBlock, layer as SearchLayer } from './search'
 import { Match } from 'effect'
 import {
@@ -219,6 +220,7 @@ const CodeClipboard = ApplicationBlock.makeRequiredFieldBinding(CodeClipboardBlo
   field: 'codeClipboard',
 })
 export const ApplicationComposition = ApplicationBlock.makeComposition({
+  mounts: [ObserveGalleryLayout],
   bindings: [
     RightRailScroll,
     ReferenceQueryBinding,
@@ -249,6 +251,7 @@ const init = ApplicationComposition.makeInit((flags, url) => {
       documentation: path === '/' ? 'unloaded' : 'ready',
       hash: new URL(href).hash,
       isEmbed: embed,
+      ramkaExample: ramkaExampleFromUrl(href),
       chartStylesActive: false,
       initialGalleryFlags: flags.baseline,
       landingPreviewHeights: {},
@@ -286,6 +289,7 @@ const init = ApplicationComposition.makeInit((flags, url) => {
 const acceptUrl = (url: typeof Url.Url.Type, freshLanding = false) => {
   const href = Url.toString(url)
   return Update.combineSteps([
+    ApplicationBlock.makeFieldsStep(() => ({ ramkaExample: () => ramkaExampleFromUrl(href) })),
     changeSettings(settingsFromLocation(href), 'none', pathFromUrl(url), new URL(href).hash),
     reconcilePageVisit(href, previewOptionsFromUrl(href), undefined, freshLanding),
   ])
@@ -358,7 +362,13 @@ const update = ApplicationComposition.makeUpdate.compose(
               const target = new URL(Url.toString(url))
               const search = target.search || settingsQuery(model.settings)
               return [
-                Navigate({ href: `${target.pathname}${search}${target.hash}`, external: false }),
+                Navigate({
+                  href: `${target.pathname}${search}${target.hash}`,
+                  external: false,
+                  ...(target.pathname === model.path && target.hash !== ''
+                    ? { fragment: true }
+                    : {}),
+                }),
               ]
             },
             External: ({ href }) => [Navigate({ href, external: true })],
@@ -398,6 +408,7 @@ const update = ApplicationComposition.makeUpdate.compose(
     CompletedNavigate: ApplicationBlock.makeNoopStep(),
     ReleasedStartupInput: ApplicationBlock.makeNoopStep(),
     CompletedApply: ApplicationBlock.makeNoopStep(),
+    RefreshedGalleryLayout: ApplicationBlock.makeNoopStep(),
     CompletedShapeTransition: finishShapeTransition,
     ClickedCopyInstall: clickedCopyInstall,
     CompletedCopyInstall: completedCopyInstall,
@@ -459,6 +470,7 @@ const plans = Effect.gen(function* () {
     view: makeView(),
     subscriptions: viewportSubscriptions,
     EffectsLayer: Layer.mergeAll(
+      ObserveGalleryLayout.layer,
       Navigate.layer,
       PrepareRoute.layer,
       Apply.layer,

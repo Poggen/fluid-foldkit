@@ -3,6 +3,14 @@ import { Route } from 'foldkit'
 import { defineRouteUnion } from 'foldkit/route'
 import { componentPages, knownPath } from '../../lib/catalogue'
 import { systemPages } from '../../lib/system'
+
+export const ramkaExampleFromUrl = (href: string) => {
+  const url = new URL(href)
+  return url.pathname === '/ramka/lightbox' && url.searchParams.get('example') === 'photos-app'
+    ? 'photos-app'
+    : null
+}
+
 export const SiteRoute = defineRouteUnion({
   Showcase: {},
   Introduction: {},

@@ -32,7 +32,10 @@ export const RamkaDemosBlock = Block.make('RamkaDemos', {
   }),
   Message: defineMessageUnion({}),
   effects: Block.makeEffectsContract<never, Environment>(),
-  view: { kind: 'Element' },
+  view: {
+    kind: 'Element',
+    Inputs: Block.makeInputContract<{ readonly only?: 'photos-app' }>(),
+  },
 })
 
 const Photos = RamkaDemosBlock.makeRequiredFieldBinding(PhotoExamplesBlock, { field: 'photos' })
@@ -50,7 +53,7 @@ const RamkaDemosComposition = RamkaDemosBlock.makeComposition({
 
 type DemosViewBuilder = Block.ViewBuilderFor<typeof RamkaDemosComposition>
 const renderPhotos = (model: (typeof RamkaDemosBlock.Model.Type)['photos'], h: DemosViewBuilder) =>
-  h.block(Photos.embedView({ slotId: 'photos', model }))
+  h.block(Photos.embedView({ slotId: 'photos', model, viewInputs: {} }))
 const renderRouting = (
   model: (typeof RamkaDemosBlock.Model.Type)['routing'],
   h: DemosViewBuilder,
@@ -65,31 +68,40 @@ const renderModels = (model: (typeof RamkaDemosBlock.Model.Type)['models'], h: D
 const makeView = () => {
   const body = createKeyedLazy()
 
-  return RamkaDemosComposition.makeView(({ photos, routing, editorial, models }, h) =>
-    h.section(
-      [h.Id('examples'), h.AriaLabel('Ramka examples'), h.Class('w-full space-y-16 py-6')],
-      [
-        h.h2([h.Class('text-2xl font-semibold tracking-tight')], ['Examples']),
-        h.nav(
-          [h.AriaLabel('Ramka example index')],
-          [
-            h.ul(
-              [h.Class('flex flex-wrap gap-x-5 gap-y-2 border-b pb-3 text-sm')],
-              examples.map(([id, title]) =>
-                h.li(
-                  [],
-                  [h.a([h.Href(`#${id}`), h.Class('underline underline-offset-4')], [title])],
-                ),
+  return RamkaDemosComposition.makeView.withInputs(
+    ({ photos, routing, editorial, models }, inputs, h) =>
+      inputs.only === 'photos-app'
+        ? h.block(
+            Photos.embedView({
+              slotId: 'photos',
+              model: photos,
+              viewInputs: { only: inputs.only },
+            }),
+          )
+        : h.section(
+            [h.Id('examples'), h.AriaLabel('Ramka examples'), h.Class('w-full space-y-16 py-6')],
+            [
+              h.h2([h.Class('text-2xl font-semibold tracking-tight')], ['Examples']),
+              h.nav(
+                [h.AriaLabel('Ramka example index')],
+                [
+                  h.ul(
+                    [h.Class('flex flex-wrap gap-x-5 gap-y-2 border-b pb-3 text-sm')],
+                    examples.map(([id, title]) =>
+                      h.li(
+                        [],
+                        [h.a([h.Href(`#${id}`), h.Class('underline underline-offset-4')], [title])],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
-        body('photos', renderPhotos, [photos, h]),
-        body('routing', renderRouting, [routing, h]),
-        body('editorial', renderEditorial, [editorial, h]),
-        body('models', renderModels, [models, h]),
-      ],
-    ),
+              body('photos', renderPhotos, [photos, h]),
+              body('routing', renderRouting, [routing, h]),
+              body('editorial', renderEditorial, [editorial, h]),
+              body('models', renderModels, [models, h]),
+            ],
+          ),
   )
 }
 

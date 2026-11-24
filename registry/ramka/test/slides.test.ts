@@ -76,13 +76,24 @@ function fixture({
   document.body.append(viewport)
   let width = 100
   let height = 100
+  let dimensionReads = 0
   const widths = Array.from({ length: 8 }, () => 100)
   const lefts = Array.from({ length: 8 }, (_, i) => (dir === 'rtl' ? -i * 100 : i * 100))
   let physical = 0
   const writes: number[] = []
   Object.defineProperties(viewport, {
-    clientWidth: { get: () => width },
-    clientHeight: { get: () => height },
+    clientWidth: {
+      get: () => {
+        dimensionReads += 1
+        return width
+      },
+    },
+    clientHeight: {
+      get: () => {
+        dimensionReads += 1
+        return height
+      },
+    },
     scrollWidth: { get: () => widths.reduce((sum, item) => sum + item, 0) },
     scrollLeft: {
       get: () => physical,
@@ -139,6 +150,7 @@ function fixture({
     scroll,
     touch,
     state: () => state,
+    dimensionReads: () => dimensionReads,
     locked: () => scrolling,
     set: (patch: Partial<SlidesState>) => {
       state = { ...state, ...patch }
@@ -265,6 +277,35 @@ describe('native slides resource', () => {
       expect(f.viewport.scrollLeft).toBe(300)
     },
   )
+  it('uses the mount measurement without an immediate resize check', () => {
+    const f = fixture()
+    expect(f.dimensionReads()).toBe(3)
+    expect(f.viewport.scrollLeft).toBe(0)
+  })
+
+  it('leaves unchanged commits free of viewport measurement until resize delivery', () => {
+    const f = fixture({ index: 3 })
+    const reads = f.dimensionReads()
+    f.resource.reconcile()
+    f.set({ zoom: 2 })
+    f.layout(50)
+    f.resource.reconcile()
+    expect(f.dimensionReads()).toBe(reads)
+    expect(f.viewport.scrollLeft).toBe(300)
+    f.resize()
+    f.frames(4)
+    expect(f.viewport.scrollLeft).toBe(150)
+    expect(f.state().index).toBe(3)
+  })
+  it('remeasures a resize while closed on reopening before observer delivery', () => {
+    const f = fixture({ index: 3 })
+    f.set({ open: false })
+    f.layout(50)
+    f.set({ open: true })
+    f.frames(4)
+    expect(f.viewport.scrollLeft).toBe(150)
+    expect(f.state().index).toBe(3)
+  })
   it('retains a fling lock after height-only resize and no-op observer delivery', () => {
     const f = fixture()
     f.scroll(300)

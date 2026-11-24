@@ -23,9 +23,6 @@
   background: #17151de8;
   color: white;
 }
-[data-ramka-content]:not(.lightbox-demo-content):not([open]) {
-  display: none;
-}
 .ramka-toolbar {
   display: flex;
   gap: 8px;

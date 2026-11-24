@@ -2,7 +2,7 @@
 import { Option, Schema } from 'effect'
 import type { HtmlBuilder } from 'foldkit/html'
 import { childAttributes } from 'foldkit/html'
-import { LightboxBlock, Model } from './block.js'
+import { Model } from './block.js'
 import type { PartContext } from './parts-contracts.js'
 import * as Part from './parts.js'
 import { LightboxComposition } from './composition.js'
@@ -51,7 +51,6 @@ function makeParts<Message, Requirements>(
 export type Parts = ReturnType<typeof makeParts>
 
 export const view = LightboxComposition.makeView.withInputs((model, inputs, h) => {
-  const { Message } = LightboxBlock
   const timing = resolveViewTransitionTiming(model.options.viewTransition)
   const caption = model.items[model.index]?.caption
   const present =
@@ -62,7 +61,6 @@ export const view = LightboxComposition.makeView.withInputs((model, inputs, h) =
   const context: PartContext = {
     id: model.id,
     open: model.open,
-    nativeOpen: model.open || model.retainedPortal || model.phase === 'Preparing',
     index: model.index,
     count: model.items.length,
     dir: model.options.dir ?? 'ltr',
@@ -131,7 +129,6 @@ export const view = LightboxComposition.makeView.withInputs((model, inputs, h) =
       : {}),
     pullDismissing: model.phase === 'Closing' && model.pullActive,
     pullProgress: Option.isSome(model.pullAnimation) ? 0 : model.pullProgress,
-    contentAttributes: childAttributes([h.OnCancel(Message.Dismissed())]),
     openAt: (index, triggerId) =>
       childAttributes([
         h.DataAttribute('ramka-action', 'open'),

@@ -20,8 +20,6 @@ export type NavigationSource =
 export interface PartContext {
   readonly id: string
   readonly open: boolean
-  /** Physical dialog lifetime may outlast logical open during retained capture. */
-  readonly nativeOpen?: boolean
   /** Owning Block presence; omitted by standalone part adapters. */
   readonly mounted?: boolean
   readonly keepMounted?: boolean
@@ -95,7 +93,7 @@ export interface PartContext {
   readonly zoomIn: PartAttributes
   readonly zoomOut: PartAttributes
   readonly resetZoom: PartAttributes
-  /** Native keyboard/cancel events, published by the owning Block. */
+  /** Additional content attributes supplied by the owning Block. */
   readonly contentAttributes?: PartAttributes
   readonly stageAttributes?: PartAttributes
   readonly slidesAttributes?: PartAttributes
