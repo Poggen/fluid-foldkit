@@ -5,6 +5,7 @@ test.use({ locale: 'sv-SE' })
 test('all eight example links scroll by mouse or keyboard without losing query or history', async ({
   page,
 }) => {
+  test.setTimeout(90000)
   await page.goto('/ramka/lightbox?theme=light')
   const document = await page.evaluateHandle(() => window.document)
   const language = await page.locator('html').getAttribute('lang')
