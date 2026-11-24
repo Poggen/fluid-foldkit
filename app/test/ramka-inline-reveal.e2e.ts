@@ -26,8 +26,8 @@ for (const javaScriptEnabled of [false, true]) {
               y: rect.y,
               width: rect.width,
               height: rect.height,
-              viewportWidth: innerWidth,
-              viewportHeight: innerHeight,
+              viewportWidth: document.documentElement.clientWidth,
+              viewportHeight: document.documentElement.clientHeight,
               scrollY,
             }
           }
