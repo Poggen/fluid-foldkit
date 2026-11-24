@@ -18,6 +18,11 @@ for (const javaScriptEnabled of [false, true]) {
           '__inline__',
         )
         const frames = await dialog.evaluate(async (element, observeFrames) => {
+          // A viewport-fixed sibling accounts for the space Chromium reserves for a scrollbar.
+          const viewport = document.createElement('div')
+          viewport.style.cssText =
+            'position: fixed; inset: 0; visibility: hidden; pointer-events: none'
+          document.body.append(viewport)
           window.scrollTo(0, 1800)
           const sample = () => {
             const rect = element.getBoundingClientRect()
@@ -26,17 +31,17 @@ for (const javaScriptEnabled of [false, true]) {
               y: rect.y,
               width: rect.width,
               height: rect.height,
-              viewportWidth: document.documentElement.clientWidth,
-              viewportHeight: document.documentElement.clientHeight,
+              viewportWidth: viewport.getBoundingClientRect().width,
+              viewportHeight: innerHeight,
               scrollY,
             }
           }
-          if (!observeFrames) return [sample()]
-          const samples = []
-          for (let frame = 0; frame < 16; frame++) {
+          const samples = [sample()]
+          for (let frame = 0; observeFrames && frame < 16; frame++) {
             await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
             samples.push(sample())
           }
+          viewport.remove()
           return samples
         }, javaScriptEnabled)
         expect(frames.some((frame) => frame.scrollY >= 1000)).toBe(true)
