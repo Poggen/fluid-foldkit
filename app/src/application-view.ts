@@ -1,6 +1,8 @@
 import { readReference } from './reference/query'
 import chartStyles from '@foldkit-visuals/charts/styles.css?inline'
 import { applicationClasses } from './application-classes'
+import { ObserveGalleryLayout } from './application-gallery-layout'
+import { previewLayoutKey } from './gallery/geometry'
 import { makeRenderRightRail } from './application-right-rail'
 import { createLazy } from 'foldkit/html'
 import type { GalleryBlock } from './gallery/definition'
@@ -147,6 +149,7 @@ export const makeRenderApplication = (bindings: typeof applicationViewBindings) 
     )
     const context = presentation(settings)
     const page = pageAt(model.path)
+    const lightboxReference = page?.href === '/ramka/lightbox'
     const landing = model.path === '/'
     const article =
       !landing && page === undefined ? documentationRuntime().articleAt(model.path) : undefined
@@ -167,6 +170,32 @@ export const makeRenderApplication = (bindings: typeof applicationViewBindings) 
             reference.model.configuration,
             h,
           ])
+    if (model.ramkaExample !== null && referenceGallery !== undefined)
+      return {
+        title: 'Photos app · Ramka',
+        body: h.main(
+          [
+            h.Id('content'),
+            h.Class(
+              `min-h-svh bg-background ${themeClass(model.settings, model.systemTheme, model.systemThemeKnown)}`,
+            ),
+          ],
+          [
+            h.block(
+              ReferenceGallery.embedView({
+                key: referenceGallery.key,
+                slotId: 'ramka-examples',
+                model: referenceGallery.model,
+                viewInputs: {
+                  settings,
+                  showRamkaExamples: true,
+                  ramkaExample: model.ramkaExample,
+                },
+              }),
+            ),
+          ],
+        ),
+      }
     if (model.isEmbed && page !== undefined)
       return {
         title: `${page.name} preview`,
@@ -201,6 +230,10 @@ export const makeRenderApplication = (bindings: typeof applicationViewBindings) 
           settings.size,
         ),
       }
+    const referenceHero =
+      page === undefined
+        ? h.empty
+        : hero(page, settings, model.copyFeedback.hero.complete, events.copyHero, h)
     const main = landing
       ? [
           hero(undefined, settings, model.copyFeedback.hero.complete, events.copyHero, h),
@@ -224,9 +257,38 @@ export const makeRenderApplication = (bindings: typeof applicationViewBindings) 
               ],
               [
                 h.div(
-                  [h.Class('flex flex-col gap-8 px-6')],
                   [
-                    hero(page, settings, model.copyFeedback.hero.complete, events.copyHero, h),
+                    h.Class(
+                      page.href === '/ramka/lightbox'
+                        ? applicationClasses.ramkaGalleryLayout
+                        : 'flex flex-col gap-8 px-6',
+                    ),
+                    ...(page.href === '/ramka/lightbox'
+                      ? [
+                          h.OnMount(ObserveGalleryLayout()),
+                          h.DataAttribute('gallery-presentation', previewLayoutKey(settings)),
+                          h.DataAttribute(
+                            'gallery-layout',
+                            previewReady &&
+                              reference.model.apiScrolls.length > 0 &&
+                              reference.model.apiScrolls.every(({ model }) => model.ready)
+                              ? 'measured'
+                              : 'initial',
+                          ),
+                        ]
+                      : []),
+                  ],
+                  [
+                    lightboxReference
+                      ? Reveal(
+                          {
+                            preset: 'reveal-landing-subtle',
+                            className: 'contents',
+                            children: [referenceHero],
+                          },
+                          h,
+                        )
+                      : referenceHero,
                     page.family === 'ramka' && referenceGallery !== undefined
                       ? h.block(
                           ReferenceGallery.embedView({
@@ -360,7 +422,7 @@ export const makeRenderApplication = (bindings: typeof applicationViewBindings) 
                 ),
                 h.Tabindex(-1),
               ],
-              landing || page !== undefined
+              landing || (page !== undefined && !lightboxReference)
                 ? [
                     Reveal(
                       {

@@ -67,32 +67,23 @@ const context: PartContext = {
   resetZoom: [],
 }
 describe('parts through the Foldkit server boundary', () => {
-  it.effect(
-    'keeps the physical dialog open during retained closing capture without publishing logical open',
-    () =>
-      Effect.gen(function* () {
-        const root = yield* render((h) =>
-          Parts.Content(
-            {},
-            {
-              ...context,
-              open: false,
-              nativeOpen: true,
-              parked: false,
-            },
-            h,
-          ),
-        )
-        const content = root.querySelector('dialog')
-        expect(content?.hasAttribute('open')).toBe(true)
-        expect(content?.hasAttribute('data-closed')).toBe(true)
-        expect(content?.hasAttribute('data-open')).toBe(false)
-        expect(content?.hasAttribute('inert')).toBe(false)
-        const closed = yield* render((h) =>
-          Parts.Content({}, { ...context, open: false, nativeOpen: false }, h),
-        )
-        expect(closed.querySelector('dialog')?.hasAttribute('open')).toBe(false)
-      }),
+  it.effect('keeps the prepared and retained viewer mounted but hidden from interaction', () =>
+    Effect.gen(function* () {
+      const root = yield* render((h) =>
+        Parts.Content(
+          { label: 'Prepared viewer', children: ['Prepared image'] },
+          { ...context, open: false, preparing: true, parked: false },
+          h,
+        ),
+      )
+      const content = root.querySelector<HTMLElement>('[data-ramka-content][role="dialog"]')
+      expect(content?.textContent).toBe('Prepared image')
+      expect(content?.hasAttribute('data-open')).toBe(false)
+      expect(content?.getAttribute('aria-hidden')).toBe('true')
+      expect(content?.hasAttribute('inert')).toBe(true)
+      expect(content?.style.visibility).toBe('hidden')
+      expect(content?.style.display).not.toBe('none')
+    }),
   )
   it('removes pull snap timing declarations when the runtime stops supplying them', () => {
     Scene.scene(
@@ -115,14 +106,24 @@ describe('parts through the Foldkit server boundary', () => {
           ),
       },
       Scene.given(true),
-      Scene.expect(Scene.selector('dialog')).toHaveStyle('--lightbox-pull-snap-duration', '175ms'),
-      Scene.expect(Scene.selector('dialog')).toHaveStyle('--lightbox-pull-snap-easing', 'linear'),
+      Scene.expect(Scene.selector('[data-ramka-content]')).toHaveStyle(
+        '--lightbox-pull-snap-duration',
+        '175ms',
+      ),
+      Scene.expect(Scene.selector('[data-ramka-content]')).toHaveStyle(
+        '--lightbox-pull-snap-easing',
+        'linear',
+      ),
       Scene.click(Scene.role('button', { name: 'Finish snap' })),
-      Scene.expect(Scene.selector('dialog')).not.toHaveStyle('--lightbox-pull-snap-duration'),
-      Scene.expect(Scene.selector('dialog')).not.toHaveStyle('--lightbox-pull-snap-easing'),
+      Scene.expect(Scene.selector('[data-ramka-content]')).not.toHaveStyle(
+        '--lightbox-pull-snap-duration',
+      ),
+      Scene.expect(Scene.selector('[data-ramka-content]')).not.toHaveStyle(
+        '--lightbox-pull-snap-easing',
+      ),
     )
   })
-  it('retains native open and morph target across initial-paint retirement and clears both on close', () => {
+  it('keeps the viewer open and the morph target hidden through hydration, then clears both on close', () => {
     Scene.scene(
       {
         update: (phase: number, _message: Message) => ({ model: phase + 1 }),
@@ -139,13 +140,13 @@ describe('parts through the Foldkit server boundary', () => {
         },
       },
       Scene.given(0),
-      Scene.expect(Scene.selector('[data-ramka-content]')).toHaveAttr('open'),
+      Scene.expect(Scene.selector('[data-ramka-content]')).toHaveAttr('data-open'),
       Scene.expect(Scene.selector('[data-ramka-trigger]')).toHaveAttr('data-morph-target'),
       Scene.click(Scene.role('button', { name: 'Advance phase' })),
-      Scene.expect(Scene.selector('[data-ramka-content]')).toHaveAttr('open'),
+      Scene.expect(Scene.selector('[data-ramka-content]')).toHaveAttr('data-open'),
       Scene.expect(Scene.selector('[data-ramka-trigger]')).toHaveAttr('data-morph-target'),
       Scene.click(Scene.role('button', { name: 'Advance phase' })),
-      Scene.expect(Scene.selector('[data-ramka-content]')).toHaveAttr('open', 'false'),
+      Scene.expect(Scene.selector('[data-ramka-content]')).not.toHaveAttr('data-open'),
       Scene.expect(Scene.selector('[data-ramka-trigger]')).not.toHaveAttr('data-morph-target'),
     )
   })
@@ -261,12 +262,12 @@ describe('parts through the Foldkit server boundary', () => {
       const parked = root.querySelector<HTMLElement>('[data-phase="parked"]')
       expect(parked?.style.visibility).toBe('hidden')
       expect(parked?.style.pointerEvents).toBe('none')
-      expect(parked?.querySelector('dialog')?.hasAttribute('inert')).toBe(true)
+      expect(parked?.querySelector('[role="dialog"]')?.hasAttribute('inert')).toBe(true)
       expect(parked?.textContent).toBe('Retained child')
       const closing = root.querySelector<HTMLElement>('[data-phase="closing"]')
       expect(closing?.style.visibility).toBe('')
       expect(closing?.style.pointerEvents).toBe('')
-      expect(closing?.querySelector('dialog')?.hasAttribute('inert')).toBe(false)
+      expect(closing?.querySelector('[role="dialog"]')?.hasAttribute('inert')).toBe(false)
     }),
   )
   it.effect(
@@ -309,7 +310,7 @@ describe('parts through the Foldkit server boundary', () => {
             h,
           )
         })
-        expect(root.querySelector('dialog')?.hasAttribute('data-zoomed')).toBe(false)
+        expect(root.querySelector('[role="dialog"]')?.hasAttribute('data-zoomed')).toBe(false)
         expect(root.querySelector('section')?.getAttribute('data-pose')).toBe('1/0/0')
         expect(root.querySelector<HTMLElement>('[data-lightbox-transform]')?.style.transform).toBe(
           'scale(1) translate(10px, -5px)',
@@ -524,7 +525,7 @@ describe('parts through the Foldkit server boundary', () => {
         const track = root.querySelector('[data-ramka-thumbnail-strip-track]')
         expect(track?.hasAttribute('data-ramka-thumbnail-group')).toBe(true)
         expect(track?.getAttribute('role')).toBe('tablist')
-        expect(root.querySelector('dialog')?.hasAttribute('open')).toBe(true)
+        expect(root.querySelector('[role="dialog"]')?.hasAttribute('data-open')).toBe(true)
       }),
   )
   it.effect('inherits page direction unless an explicit direction is supplied', () =>
@@ -605,8 +606,8 @@ describe('parts through the Foldkit server boundary', () => {
             h,
           ),
         )
-        expect(root.querySelector('dialog')?.hasAttribute('open')).toBe(true)
-        expect(root.querySelector('dialog')?.hasAttribute('aria-hidden')).toBe(false)
+        expect(root.querySelector('[role="dialog"]')?.hasAttribute('data-open')).toBe(true)
+        expect(root.querySelector('[role="dialog"]')?.hasAttribute('aria-hidden')).toBe(false)
         const slides = root.querySelector<HTMLElement>('[data-ramka-slides]')
         expect(slides?.getAttribute('dir')).toBe(dir)
         expect(slides?.hasAttribute('data-ssr-shift')).toBe(true)
@@ -985,7 +986,7 @@ describe('parts through the Foldkit server boundary', () => {
             ],
           ),
         )
-        const content = root.querySelectorAll('dialog')
+        const content = root.querySelectorAll<HTMLElement>('[role="dialog"]')
         expect(content[0]?.getAttribute('aria-modal')).toBe('true')
         expect(content[0]?.hasAttribute('aria-hidden')).toBe(false)
         expect(content[0]?.getAttribute('tabindex')).toBe('-1')
@@ -1108,7 +1109,7 @@ describe('parts through the Foldkit server boundary', () => {
             ],
           ),
         )
-        const content = root.querySelectorAll('dialog')
+        const content = root.querySelectorAll<HTMLElement>('[role="dialog"]')
         expect(
           Array.from(content, (node) => node.style.getPropertyValue('--lightbox-zoom-progress')),
         ).toEqual(['0.5', '0', '0', ''])
@@ -1299,9 +1300,8 @@ describe('parts through the Foldkit server boundary', () => {
       }
       const prepared = root.querySelector('[data-phase="preparing"]')
       expect(prepared?.querySelector('[data-open]')).toBeNull()
-      expect(prepared?.querySelector('[data-ramka-content]')?.getAttribute('aria-modal')).toBe(
-        'true',
-      )
+      expect(prepared?.querySelector('[role="dialog"]')?.hasAttribute('inert')).toBe(true)
+      expect(prepared?.querySelector('[role="dialog"]')?.getAttribute('aria-hidden')).toBe('true')
       expect(prepared?.querySelector('[data-ramka-trigger]')?.getAttribute('aria-expanded')).toBe(
         'false',
       )
@@ -1310,6 +1310,7 @@ describe('parts through the Foldkit server boundary', () => {
       )
       const revealed = root.querySelector('[data-phase="revealed"]')
       expect(revealed?.querySelectorAll('[data-open]')).toHaveLength(2)
+      expect(revealed?.querySelector('[role="dialog"]')?.getAttribute('aria-modal')).toBe('true')
       expect(revealed?.querySelector('[data-ramka-trigger]')?.getAttribute('aria-expanded')).toBe(
         'true',
       )

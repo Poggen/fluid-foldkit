@@ -101,7 +101,7 @@ Fluid and chart consumers use the public SDK directly. Ramka installs the review
 and included in generated distributions.
 
 Ramka installs with `bunx shadcn@4.23.0 add @ramka-foldkit/lightbox` after adding
-`"@ramka-foldkit": "https://fluid-foldkit.vercel.app/r/ramka/0.1.0-preview.8/{name}.json"`
+`"@ramka-foldkit": "https://fluid-foldkit.vercel.app/r/ramka/0.1.0-preview.9/{name}.json"`
 to `components.json` registries. Import the installed `ramka/parts.css` once.
 The [live lightbox reference](https://fluid-foldkit.vercel.app/ramka/lightbox)
 includes the native parent Binding and eight interactive examples. Provide `defaultEnvironmentLayer`

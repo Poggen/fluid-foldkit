@@ -19,7 +19,6 @@ export const tailwindFoundations: readonly Foundation[] = [
       '.ramka-example [data-ramka-trigger]',
       '.ramka-example [data-ramka-trigger] img',
       '[data-ramka-content]:not(.lightbox-demo-content)',
-      '[data-ramka-content]:not(.lightbox-demo-content):not([open])',
       '.ramka-toolbar',
       '[data-ramka-content]:not(.lightbox-demo-content) [data-ramka-stage]',
       '[data-ramka-content]:not(.lightbox-demo-content) [data-ramka-counter]',

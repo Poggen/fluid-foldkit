@@ -14,6 +14,13 @@ test('opens Ramka from its reference page and releases the dialog before navigat
   await expect(dialog).toBeVisible()
   await expect(dialog.locator('[data-ramka-caption]')).toHaveText('Purple landscape')
   await expect(page.locator('html')).not.toHaveAttribute('data-ramka-view-transition')
+  await expect(dialog).toBeFocused()
+  const close = dialog.getByRole('button', { name: 'Close', exact: true })
+  await page.keyboard.press('Tab')
+  await expect(close).toBeFocused()
+  await page.keyboard.press('Shift+Tab')
+  await expect(dialog.locator(':focus')).toHaveCount(1)
+  await expect(close).not.toBeFocused()
   await dialog.getByRole('button', { name: 'Next', exact: true }).click()
   await expect(dialog.locator('[data-ramka-caption]')).toHaveText('Green landscape')
   await page.keyboard.press('Escape')
@@ -25,7 +32,7 @@ test('opens Ramka from its reference page and releases the dialog before navigat
     .getByRole('link', { name: 'Installation', exact: true })
     .click()
   await expect(page.getByRole('heading', { name: 'Make yourself at home.' })).toBeVisible()
-  await expect(page.locator('[data-ramka-content][open]')).toHaveCount(0)
+  await expect(page.locator('[data-ramka-content][data-open]')).toHaveCount(0)
   expect(errors).toEqual([])
 })
 
@@ -44,6 +51,16 @@ test('wheel scrolling the desktop sidebar reveals the Ramka page', async ({ page
 
 test('uses the upstream photo library, RTL navigation and progressive feed', async ({ page }) => {
   await page.goto('/ramka/lightbox')
+  const index = page.getByRole('navigation', { name: 'Ramka example index' })
+  await expect(index.getByRole('link')).toHaveCount(8)
+  const anchors = await index
+    .getByRole('link')
+    .evaluateAll((links) =>
+      links.flatMap((link) => (link instanceof HTMLAnchorElement ? [link.hash] : [])),
+    )
+  expect(anchors).toHaveLength(8)
+  expect(new Set(anchors).size).toBe(8)
+  for (const anchor of anchors) await expect(page.locator(anchor)).toBeAttached()
   const library = page.getByRole('region', { name: 'Photos app', exact: true })
   await expect(library.getByText('48 Photos · July 2024')).toBeVisible()
   await library.getByRole('button', { name: 'Larger photos' }).click()
@@ -65,18 +82,34 @@ test('uses the upstream photo library, RTL navigation and progressive feed', asy
     .toBe(true)
   await photo.click()
   const dialog = page.getByRole('dialog', { name: 'Library photos' })
+  await expect(dialog.locator('[data-ramka-slide]')).toHaveCount(48)
+  const loadedItems = dialog.locator('[data-ramka-item]')
+  await expect(loadedItems).toHaveCount(7)
+  await expect(dialog.locator('[data-ramka-item][data-index="45"]')).toHaveCount(1)
   await expect(dialog.locator('[data-ramka-item][data-active] img')).toHaveJSProperty(
     'naturalWidth',
     1600,
   )
+  await expect(library.locator('[data-ramka-trigger][data-popup-open][aria-controls]')).toHaveCount(
+    48,
+  )
+  await expect(photo).toHaveAttribute('data-morph-target', '')
   await dialog.focus()
   await page.keyboard.press('ArrowRight')
   await expect(dialog.locator('[data-ramka-item][data-active] img')).toHaveAttribute(
     'alt',
     'Photo 2',
   )
+  await expect(loadedItems).toHaveCount(7)
+  await expect(dialog.locator('[data-ramka-item][data-index="45"]')).toHaveCount(0)
+  await expect(dialog.locator('[data-ramka-item][data-index="4"]')).toHaveCount(1)
   await page.keyboard.press('Escape')
   await expect(dialog).toBeHidden()
+  await expect(
+    library.locator('[data-ramka-trigger]:is([data-popup-open],[aria-controls])'),
+  ).toHaveCount(0)
+  await expect(photo).not.toHaveAttribute('data-morph-target')
+  await expect(page.locator('[data-ramka-capture-trigger]')).toHaveCount(0)
 
   const rtl = page.getByRole('region', { name: 'Photos app (RTL)', exact: true })
   await rtl.getByRole('button', { name: 'Photo 1', exact: true }).click()

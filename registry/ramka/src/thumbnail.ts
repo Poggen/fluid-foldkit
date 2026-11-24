@@ -4,6 +4,7 @@ import {
   measureSlidesGeometry,
   slidesGeometryIsUniform,
   slidesScrollProgressAt,
+  type SlidesGeometry,
 } from './upstream/lightbox-slides-geometry.js'
 import {
   getScrollTimelineConstructor,
@@ -144,20 +145,6 @@ export function attachThumbnailStrip(
     const thumbs = [...track.querySelectorAll<HTMLElement>('[data-ramka-thumbnail]')].sort(
       (a, b) => Number(a.getAttribute('data-index')) - Number(b.getAttribute('data-index')),
     )
-    const state = options.read()
-    const measured = measureThumbTravels(thumbs, state.dir)
-    const changed = !thumbTravelsEqual(travels, measured.travels)
-    travels = measured.travels
-    const first = measured.widths[0] ?? 0
-    const last = measured.widths.at(-1) ?? first
-    if (!thumbs.length || first <= 0) return undefined
-    const width = root.clientWidth
-    track.style.paddingInlineStart = `${Math.max(0, (width - first) / 2)}px`
-    track.style.paddingInlineEnd = `${Math.max(0, (width - last) / 2)}px`
-    track.style.setProperty(
-      '--lightbox-thumbnail-strip-travel',
-      `${inlineTrackTranslateX(travels.at(-1) ?? 0, state.dir)}px`,
-    )
     const elements = new Set<Element>([
       root,
       slides,
@@ -177,22 +164,38 @@ export function attachThumbnailStrip(
         observed.add(element)
       }
     }
-    return { track, changed, state, geometry: measureSlidesGeometry(slides, state.dir) }
+    const state = options.read()
+    const measured = measureThumbTravels(thumbs, state.dir)
+    const changed = !thumbTravelsEqual(travels, measured.travels)
+    travels = measured.travels
+    const first = measured.widths[0] ?? 0
+    const last = measured.widths.at(-1) ?? first
+    if (!thumbs.length || first <= 0) return undefined
+    const width = root.clientWidth
+    const geometry = measureSlidesGeometry(slides, state.dir)
+    const paddingStart = `${Math.max(0, (width - first) / 2)}px`
+    const paddingEnd = `${Math.max(0, (width - last) / 2)}px`
+    const travel = `${inlineTrackTranslateX(travels.at(-1) ?? 0, state.dir)}px`
+    if (track.style.paddingInlineStart !== paddingStart)
+      track.style.paddingInlineStart = paddingStart
+    if (track.style.paddingInlineEnd !== paddingEnd) track.style.paddingInlineEnd = paddingEnd
+    if (track.style.getPropertyValue('--lightbox-thumbnail-strip-travel') !== travel)
+      track.style.setProperty('--lightbox-thumbnail-strip-travel', travel)
+    return { track, changed, state, geometry }
   }
 
-  const syncFromScroll = () => {
+  const syncFromScroll = (geometry?: SlidesGeometry) => {
     if (!track || selection?.scrub) return
     const state = options.read()
-    const geometry = measureSlidesGeometry(slides, state.dir)
-    const progress = slidesScrollProgressAt(readInlineScroll(slides, state.dir), geometry)
+    const currentGeometry = geometry ?? measureSlidesGeometry(slides, state.dir)
+    const progress = slidesScrollProgressAt(readInlineScroll(slides, state.dir), currentGeometry)
     track.style.transform = trackTransform(thumbTravelAtProgress(travels, progress), state.dir)
     lastX = readComputedTranslateX(track)
   }
 
-  const startLink = (force = false) => {
+  const startLink = (force: boolean, geometry: SlidesGeometry) => {
     const ScrollTimeline = getScrollTimelineConstructor()
     const state = options.read()
-    const geometry = measureSlidesGeometry(slides, state.dir)
 
     if (
       !track ||
@@ -228,9 +231,9 @@ export function attachThumbnailStrip(
     if (disposed || selection?.scrub || slides.hasAttribute('data-ssr-shift')) return
     const result = measure()
     if (!result) return
-    if (!startLink(force || result.changed)) {
+    if (!startLink(force || result.changed, result.geometry)) {
       stopLink()
-      syncFromScroll()
+      syncFromScroll(result.geometry)
     }
     root.setAttribute('data-positioned', '')
   }
@@ -249,7 +252,7 @@ export function attachThumbnailStrip(
 
     const result = measure()
     if (!result || selection !== current) return
-    const armed = startLink(true)
+    const armed = startLink(true, result.geometry)
     const liveLink = link
     const drop = () => {
       handoffFrame = 0

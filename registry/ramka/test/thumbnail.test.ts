@@ -107,6 +107,49 @@ function fixture(dir: 'ltr' | 'rtl' = 'ltr', uniform = false) {
   }
 }
 describe('thumbnail-strip resource', () => {
+  it('recovers initially zero-width thumbnails through the scheduled resize observer', () => {
+    const callbacks: FrameRequestCallback[] = []
+    // oxlint-disable-next-line landmines-testing/no-test-doubles -- Native keeper: real-iPhone gallery parity checks thumbnail positioning; this controls the browser frame clock to check resize coalescing.
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      callbacks.push(callback)
+      return callbacks.length
+    })
+    const observed = new Set<Element>()
+    let resized: (() => void) | undefined
+    // oxlint-disable-next-line landmines-testing/no-test-doubles -- Native keeper: real-iPhone gallery parity checks image loading; HappyDOM has no layout-driven ResizeObserver delivery.
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: () => void) {
+          resized = callback
+        }
+        observe(element: Element) {
+          observed.add(element)
+        }
+        unobserve(element: Element) {
+          observed.delete(element)
+        }
+        disconnect() {
+          observed.clear()
+        }
+      },
+    )
+    const { root, track, attach } = fixture()
+    const thumb = track.firstElementChild
+    if (!thumb) throw new Error('Missing thumbnail fixture')
+    Object.defineProperty(thumb, 'offsetWidth', { configurable: true, value: 0 })
+    attach()
+    expect(observed.has(thumb)).toBe(true)
+    expect(root.hasAttribute('data-positioned')).toBe(false)
+    Object.defineProperty(thumb, 'offsetWidth', { configurable: true, value: 40 })
+    resized?.()
+    resized?.()
+    expect(root.hasAttribute('data-positioned')).toBe(false)
+    expect(callbacks).toHaveLength(1)
+    callbacks[0]?.(0)
+    expect(root.hasAttribute('data-positioned')).toBe(true)
+    expect(track.style.paddingInlineStart).toBe('130px')
+  })
   it.each(['keyboard', 'button', 'thumbnail'] as const)(
     'wraps a %s selection with preserved source while suppressing the Stage transition',
     // oxlint-disable-next-line landmines-style/no-comments -- Required Effect compiler directive.

@@ -291,7 +291,7 @@ export function attachSlides(
   viewport.addEventListener('touchend', onTouchEnd, { passive: true, capture: true })
   viewport.addEventListener('touchcancel', onTouchEnd, { passive: true, capture: true })
 
-  const reconcile = () => {
+  const reconcile = (initial = false) => {
     if (disposed) return
     const state = read()
     if (!state.open) {
@@ -309,13 +309,13 @@ export function attachSlides(
       ssrHandoff
     reconciledIndex = state.index
     reconciledOpen = true
-    refitIfResized()
+    if (changed && !initial) refitIfResized()
     if (viewport.querySelectorAll(SLIDE_SELECTOR).length !== geometry.count) measure()
 
     if (changed && indexFromScroll() !== state.index) scrollToIndex(state.index)
     if (ssrHandoff) options.onScroll?.()
   }
-  reconcile()
+  reconcile(true)
   const resource: SlidesResource = {
     isScrolling: () => locked,
     reconcile,

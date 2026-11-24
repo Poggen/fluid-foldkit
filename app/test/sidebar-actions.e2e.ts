@@ -247,3 +247,72 @@ test('configured Sidebar scrolls its own navigation while retaining header and f
   )
   expect(errors).toEqual([])
 })
+
+test('Sidebar custom actions retain gutters and disclosure with only popup-open state', async ({
+  page,
+}) => {
+  await page.goto(
+    `/components/sidebar?props=${encodeURIComponent(
+      JSON.stringify({ ...sidebarDefaults, l1Primary: 'menu', l1Children: true, l2Actions: 1 }),
+    )}`,
+  )
+  const preview = page.getByRole('region', { name: 'Playground', exact: true })
+  await preview.getByRole('button', { name: 'Home', exact: true }).first().click()
+  await page.mouse.move(0, 0)
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
+  })
+
+  for (const kind of ['menu', 'menu-sub'] as const) {
+    const row =
+      kind === 'menu'
+        ? page
+            .getByRole('region', { name: 'Actions & badges', exact: true })
+            .locator('[data-sidebar="menu-item"]')
+            .filter({ has: page.getByRole('button', { name: 'Branch thread', exact: true }) })
+            .first()
+        : preview
+            .getByRole('navigation', { name: 'Threads', exact: true })
+            .locator('[data-sidebar="menu-sub-item"]')
+            .first()
+    const button = row.locator(`[data-sidebar="${kind}-button"]`).first()
+    const action = row.locator('[data-sidebar="menu-action"]').first()
+    // The configured submenu uses always-visible actions. Model a consumer's
+    // hover-only rest gutter without changing its renderer or state selectors.
+    if (kind === 'menu-sub')
+      await button.evaluate((element) =>
+        (element as HTMLElement).style.setProperty('--row-gutter', '8px'),
+      )
+    const gutter = await button.evaluate((element) => ({
+      rest: getComputedStyle(element).getPropertyValue('--row-gutter').trim(),
+      open: getComputedStyle(element).getPropertyValue('--row-gutter-hover').trim(),
+    }))
+    expect(gutter.open).not.toBe(gutter.rest)
+    await expect(button).toHaveCSS('padding-right', gutter.rest)
+    await action.evaluate((element) => {
+      element.removeAttribute('data-state')
+      element.removeAttribute('aria-expanded')
+      element.setAttribute('data-popup-open', '')
+    })
+    await expect(button).toHaveCSS('padding-right', gutter.open)
+    await action.evaluate((element) => element.removeAttribute('data-popup-open'))
+    await expect(button).toHaveCSS('padding-right', gutter.rest)
+  }
+
+  const group = preview.locator('[data-sidebar="group"]').first()
+  const disclosure = group.locator('button[data-sidebar="group-label"]').first()
+  const chevron = disclosure.locator(':scope > span').last()
+  const action = group.locator('[data-sidebar="group-action"]').first()
+  await expect(chevron).toHaveCSS('width', '0px')
+  await expect(chevron).toHaveCSS('opacity', '0')
+  await action.evaluate((element) => {
+    element.removeAttribute('data-state')
+    element.removeAttribute('aria-expanded')
+    element.setAttribute('data-popup-open', '')
+  })
+  await expect(chevron).toHaveCSS('width', '24px')
+  await expect(chevron).toHaveCSS('opacity', '1')
+  await action.evaluate((element) => element.removeAttribute('data-popup-open'))
+  await expect(chevron).toHaveCSS('width', '0px')
+  await expect(chevron).toHaveCSS('opacity', '0')
+})

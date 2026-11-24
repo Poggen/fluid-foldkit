@@ -25,6 +25,16 @@ export function attachGallery(
   const window = document.defaultView
   if (!window) return () => {}
   const { Message } = LightboxBlock
+  let captureCommit:
+    | {
+        generation: number
+        panel: HTMLElement
+        destination: HTMLElement | null
+        index: number
+        items: string
+        options: string
+      }
+    | undefined
   const commitAcknowledgements = new Set<{ generation: number; open: boolean; done: () => void }>()
   const awaitCommit = (generation: number, open: boolean, signal: AbortSignal) => {
     if (
@@ -54,7 +64,7 @@ export function attachGallery(
         flushRender()
         if (commitAcknowledgements.has(waiter)) timer = window.setTimeout(flush, 0)
       }
-      timer = window.setTimeout(flush, 0)
+      window.queueMicrotask(flush)
     })
   }
   const read = () =>
@@ -63,7 +73,7 @@ export function attachGallery(
   let initialHydration = model.initialPaint
   let previous = model
   let disposed = false
-  let dialog: HTMLDialogElement | null = null
+  let dialog: HTMLElement | null = null
   let portal: HTMLElement | null = null
   let stage: HTMLElement | null = null
   let slides: HTMLElement | null = null
@@ -85,6 +95,7 @@ export function attachGallery(
   let controller: AbortController | undefined
   let opener: HTMLElement | null = null
   let hiddenTriggers: HTMLElement[] = []
+  let captureTriggers: Set<HTMLElement> | undefined
   let closeFocusVisible: boolean | undefined
   let pressedOnScrim = false
   let settledGeneration = -1
@@ -116,7 +127,9 @@ export function attachGallery(
       typeof document.startViewTransition === 'function' &&
       !isLowEndDevice(document)
     )
-      void getMorph().catch(() => {})
+      void getMorph()
+        .then((resource) => resource.prewarm())
+        .catch(() => {})
   }
   const idleWarmup =
     typeof window.requestIdleCallback === 'function'
@@ -300,20 +313,37 @@ export function attachGallery(
     if (model.phase === 'Open') for (const bridge of bridges.values()) bridge.settle()
     publishPlaceholders()
   }
+  const suppressTriggerFade = (trigger: HTMLElement) => {
+    if (captureTriggers?.has(trigger)) return
+    captureTriggers?.add(trigger)
+    trigger.setAttribute('data-ramka-capture-trigger', '')
+  }
+  const reflectMorphTarget = (target: HTMLElement | null) => {
+    const registered = triggers()
+    const index = target ? actionIndex(target) : null
+    const selected = new Set(
+      index === null ? [] : registered.filter((trigger) => actionIndex(trigger) === index),
+    )
+    for (const trigger of new Set([...hiddenTriggers, ...registered]))
+      if (!selected.has(trigger) && trigger.hasAttribute('data-morph-target'))
+        trigger.removeAttribute('data-morph-target')
+    hiddenTriggers = [...selected]
+    for (const trigger of selected) {
+      if (captureTriggers) suppressTriggerFade(trigger)
+      if (!trigger.hasAttribute('data-morph-target')) trigger.setAttribute('data-morph-target', '')
+    }
+    return target?.id ?? ''
+  }
   const markMorphTarget = (target: HTMLElement | null) => {
-    for (const trigger of [...hiddenTriggers, ...triggers()])
-      trigger.removeAttribute('data-morph-target')
-    hiddenTriggers = target
-      ? triggers().filter((trigger) => actionIndex(trigger) === actionIndex(target))
-      : []
-    for (const trigger of hiddenTriggers) trigger.setAttribute('data-morph-target', '')
-    const id = target?.id ?? ''
+    const id = reflectMorphTarget(target)
     if (!disposed && id !== model.morphTargetId) emit(Message.MorphTargetChanged({ id }))
   }
   const triggerMedia = (target: HTMLElement | null) =>
     target?.querySelector<HTMLElement>('[data-ramka-morph]') ?? target
-  const scrollTrigger = (type: 'onChange' | 'onOpenComplete' | 'onClose') => {
-    const trigger = closingTrigger()
+  const scrollTrigger = (
+    type: 'onChange' | 'onOpenComplete' | 'onClose',
+    trigger = closingTrigger(),
+  ) => {
     if (!trigger) return
     const configured = model.options.scrollTriggerIntoView
     const rules = configured == null ? [] : Array.isArray(configured) ? configured : [configured]
@@ -419,7 +449,7 @@ export function attachGallery(
   }
   const isScrolling = () => model.scrolling || carousel?.isScrolling() === true
   const snapToModel = (instant: boolean) => {
-    if (!slides || !model.open || initialHydration) return
+    if (!slides || (!model.open && model.phase !== 'Preparing') || initialHydration) return
     slides.removeAttribute('data-ssr-shift')
     slides.style.removeProperty('--lightbox-ssr-index')
     slides.style.removeProperty('--lightbox-ssr-shift-sign')
@@ -507,7 +537,7 @@ export function attachGallery(
       : []
   const focusout = () => {
     window.queueMicrotask(() => {
-      if (disposed || !model.open || !dialog?.open) return
+      if (disposed || !model.open || !dialog?.isConnected) return
       const focused = document.activeElement
       if (!focused || focused === document.body || focused === document.documentElement)
         dialog.focus({ preventScroll: true })
@@ -548,7 +578,7 @@ export function attachGallery(
     if (event.key === 'Escape') {
       closeFocusVisible = true
       event.preventDefault()
-      dialog.dispatchEvent(new window.CustomEvent('cancel', { cancelable: true }))
+      emit(Message.Dismissed())
       return
     }
     if (event.key === 'Tab') {
@@ -619,12 +649,8 @@ export function attachGallery(
   const pointerDown = (event: PointerEvent) => {
     pressedOnScrim = event.button === 0 && event.target === dialog
   }
-  const nativeClosed = () => {
-    if (dialog && !dialog.open && model.open && isOpenTarget(model)) emit(Message.Dismissed())
-  }
   const loaded = () => {
     updateMaximum()
-    positionStrip()
   }
   const contentObserver = new window.MutationObserver(() => {
     if (!disposed) reconcile()
@@ -655,7 +681,6 @@ export function attachGallery(
       dialog.removeEventListener('focusin', publishThumbnailState)
       dialog.removeEventListener('focusout', thumbnailFocusOut)
       dialog.removeEventListener('pointerdown', pointerDown)
-      dialog.removeEventListener('close', nativeClosed)
       dialog.removeEventListener('load', loaded, true)
     }
     resize.disconnect()
@@ -685,7 +710,7 @@ export function attachGallery(
       findOwned(element, '[data-ramka-content]') ??
       (dialog && (dialog.isConnected || model.phase === 'Closing') ? dialog : null) ??
       (portal?.isConnected ? findOwned(portal, '[data-ramka-content]') : null)
-    if (!(next instanceof window.HTMLDialogElement)) {
+    if (!(next instanceof window.HTMLElement)) {
       if (dialog) releaseParts()
       return
     }
@@ -706,12 +731,11 @@ export function attachGallery(
     dialog.addEventListener('focusin', publishThumbnailState)
     dialog.addEventListener('focusout', thumbnailFocusOut)
     dialog.addEventListener('pointerdown', pointerDown)
-    dialog.addEventListener('close', nativeClosed)
     dialog.addEventListener('load', loaded, true)
     if (slides)
       carousel = attachSlides(slides, {
         read: () => ({
-          open: model.open,
+          open: model.open || model.phase === 'Preparing',
           index: model.index,
           dir: model.options.dir ?? 'ltr',
           zoom: model.zoom,
@@ -816,6 +840,13 @@ export function attachGallery(
         (model.open === waiter.open && model.phase !== 'Preparing')
       )
         waiter.done()
+    if (
+      model.phase === 'Closing' &&
+      !model.open &&
+      !model.retainedPortal &&
+      model.generation === activeGeneration
+    )
+      return
     const registered = triggers()
       .map((node) => ({ id: node.id, index: actionIndex(node) }))
       .filter((trigger) => trigger.id)
@@ -825,7 +856,6 @@ export function attachGallery(
       emit(Message.TriggerRegistryChanged({ triggers: registered }))
     }
     if (model.phase === 'Closed' && !model.options.keepMounted) {
-      if (dialog?.open) dialog.close()
       markMorphTarget(null)
       releaseParts()
       portal?.remove()
@@ -840,14 +870,21 @@ export function attachGallery(
     acquireParts()
     placePortal()
     if (!dialog) return
+    const preparedLayout =
+      captureCommit?.generation === model.generation &&
+      captureCommit.panel === dialog &&
+      captureCommit.destination === captureTarget() &&
+      captureCommit.index === model.index &&
+      captureCommit.items === JSON.stringify(model.items) &&
+      captureCommit.options === JSON.stringify(model.options)
     if (model.phase !== 'Closed' && !guards) guards = attachBrowserGuards(dialog)
     else if (model.phase === 'Closed') {
       guards?.dispose()
       guards = undefined
     }
-    carousel?.reconcile()
+    if (!preparedLayout) carousel?.reconcile()
     gesture?.reconcile()
-    syncMedia()
+    if (!preparedLayout) syncMedia()
     publishThumbnailState()
     const zoom =
       !!gesture &&
@@ -909,7 +946,7 @@ export function attachGallery(
         scrollTriggerTimer = window.setTimeout(() => {
           if (!disposed && model.open) scrollTrigger('onChange')
         }, 120)
-        if (dialog.matches(':modal')) markMorphTarget(closingTrigger())
+        markMorphTarget(closingTrigger())
       }
       updateMaximum()
     }
@@ -926,8 +963,6 @@ export function attachGallery(
             : `translate3d(${model.pullX}px,${model.pull}px,0) scale(${model.pullScale})`
     }
     if (model.phase === 'Closed' && !model.open) {
-      if (dialog.open) dialog.close()
-      if (portal) portal.style.visibility = 'hidden'
       return
     }
     if (activeGeneration === model.generation) return
@@ -955,33 +990,35 @@ export function attachGallery(
             document.activeElement !== document.body
           ? document.activeElement
           : sourceTrigger
-      if (portal) portal.style.visibility = model.phase === 'Preparing' ? 'hidden' : 'visible'
-    } else scrollTrigger('onClose')
+    }
     const target = closingTrigger()
     const crossfade = (open ? sourceTrigger : target)?.getAttribute('data-crossfade')
     const crossfadeOption =
       crossfade === 'open' || crossfade === 'close' || crossfade === 'both' ? { crossfade } : {}
     const commit = () => {
-      if (transitionController.signal.aborted || disposed) return
+      if (transitionController.signal.aborted || disposed || model.generation !== generation) return
+      const committedLayout =
+        vtEnabled && model.transitionSource === 'internal'
+          ? {
+              generation,
+              panel,
+              destination: captureTarget(),
+              index: model.index,
+              items: JSON.stringify(model.items),
+              options: JSON.stringify(model.options),
+            }
+          : undefined
+      captureCommit = committedLayout
       if (open) {
-        if (panel.open) panel.close()
-        if (portal) portal.style.visibility = 'visible'
-        panel.showModal()
         guards?.lockScroll()
         if (!vtEnabled || model.transitionSource === 'external') guards?.applySelectionGuard()
-        markMorphTarget(closingTrigger())
-        panel.focus({ preventScroll: true })
-        snapToModel(true)
-        updateMaximum()
-      } else {
-        markMorphTarget(null)
-        if (!isAndroidBlinkSnapshotRoot(document)) panel.close()
-        if (portal) portal.style.visibility = 'hidden'
       }
+      const morphTargetId = reflectMorphTarget(open ? closingTrigger() : null)
       emit(
         Message.VisibilityCommitted({
           generation,
           open,
+          morphTargetId,
           retainPortal:
             !open &&
             vtEnabled &&
@@ -989,17 +1026,21 @@ export function attachGallery(
             isAndroidBlinkSnapshotRoot(document),
         }),
       )
-      return awaitCommit(generation, open, transitionController.signal).then(() => {
-        if (open && !disposed && !transitionController.signal.aborted) {
-          if (!panel.matches(':modal')) {
-            if (panel.open) panel.close()
-            panel.showModal()
-          }
-          panel.focus({ preventScroll: true })
-          snapToModel(true)
-          updateMaximum()
-        }
-      })
+      return awaitCommit(generation, open, transitionController.signal)
+        .then(() => {
+          if (
+            disposed ||
+            transitionController.signal.aborted ||
+            model.generation !== generation ||
+            model.open !== open
+          )
+            return
+          if (open && dialog?.isConnected) dialog.focus({ preventScroll: true })
+          else if (!open) scrollTrigger('onClose', target)
+        })
+        .finally(() => {
+          if (captureCommit === committedLayout) captureCommit = undefined
+        })
     }
     // oxlint-disable-next-line landmines-style/no-comments -- Native browser boundary directive.
     // @effect-diagnostics-next-line asyncFunction:off -- The native View Transition fallback must await DOM commit and browser animation promises.
@@ -1026,10 +1067,23 @@ export function attachGallery(
             open,
             source: open ? triggerMedia(sourceTrigger) : captureTarget(),
             destination: open ? captureTarget() : triggerMedia(target),
+            ...(open ? { resolveDestination: captureTarget } : {}),
             media: media(),
             panel,
             commit,
-            ...(open ? { beforeCapture: () => guards?.prepareScrollLock() } : {}),
+            beforeCapture: () => {
+              const releaseScrollPreparation = open ? guards?.prepareScrollLock() : undefined
+              const captured = new Set<HTMLElement>()
+              captureTriggers = captured
+              for (const trigger of hiddenTriggers) suppressTriggerFade(trigger)
+              if (target) suppressTriggerFade(target)
+              return () => {
+                for (const trigger of captured)
+                  trigger.removeAttribute('data-ramka-capture-trigger')
+                if (captureTriggers === captured) captureTriggers = undefined
+                releaseScrollPreparation?.()
+              }
+            },
             signal: transitionController.signal,
             reducedMotion: reduced.matches,
             options: {
@@ -1060,7 +1114,6 @@ export function attachGallery(
           guards?.applySelectionGuard()
           scrollTrigger('onOpenComplete')
         } else {
-          panel.close()
           guards?.dispose()
           guards = undefined
           if (model.transitionSource === 'internal') restoreFocus()
@@ -1071,7 +1124,6 @@ export function attachGallery(
         if (disposed || transitionController.signal.aborted || model.generation !== generation)
           return
         markMorphTarget(null)
-        panel.close()
         guards?.dispose()
         guards = undefined
         emit(
@@ -1122,10 +1174,7 @@ export function attachGallery(
     document.removeEventListener('focusin', warmIntent)
     if (typeof window.cancelIdleCallback === 'function') window.cancelIdleCallback(idleWarmup)
     window.clearTimeout(idleWarmup)
-    if (dialog?.open) {
-      dialog.close()
-      restoreFocus()
-    }
+    if (model.open && dialog?.isConnected) restoreFocus()
     markMorphTarget(null)
     releaseParts()
     if (portal?.isConnected) {

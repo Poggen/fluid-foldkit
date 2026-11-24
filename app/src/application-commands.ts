@@ -33,13 +33,27 @@ export const Navigate = ApplicationBlock.makeCommand('Navigate', {
     href: Schema.String,
     external: Schema.Boolean,
     replace: Schema.optionalKey(Schema.Boolean),
+    fragment: Schema.optionalKey(Schema.Boolean),
   },
   messages: [Message.CompletedNavigate],
   *handler() {
-    return ({ href, external, replace }) =>
-      (external ? load(href) : replace ? replaceUrl(href) : pushUrl(href)).pipe(
-        Effect.as(Message.CompletedNavigate()),
-      )
+    return ({ href, external, replace, fragment }) =>
+      Effect.suspend(() => {
+        const current = fragment ? new URL(window.location.href) : undefined
+        const target = current === undefined ? undefined : new URL(href, current)
+        const sameDocumentFragment =
+          current !== undefined &&
+          target !== undefined &&
+          target.hash !== '' &&
+          target.origin === current.origin &&
+          target.pathname === current.pathname &&
+          target.search === current.search
+        return external || sameDocumentFragment
+          ? load(href)
+          : replace
+            ? replaceUrl(href)
+            : pushUrl(href)
+      }).pipe(Effect.as(Message.CompletedNavigate()))
   },
 })
 export const Apply = ApplicationBlock.makeCommand('Apply', {

@@ -78,6 +78,7 @@ export const GalleryBlock = Block.make('Gallery', {
       readonly settings: Settings
       readonly only?: string
       readonly showRamkaExamples?: boolean
+      readonly ramkaExample?: 'photos-app'
       readonly configuration?: PlaygroundConfiguration
     }>(),
   },

@@ -178,7 +178,7 @@ export function Portal<Message, Requirements>(
   )
 }
 
-/** The host owns showModal/close. Server paint uses nonmodal open until hydration promotes it. */
+/** The prepared surface stays measurable without entering the browser's top layer. */
 export function Content<Message, Requirements>(
   props: ContentProps,
   context: PartContext,
@@ -189,17 +189,16 @@ export function Content<Message, Requirements>(
   const zoomed =
     zoomProgress > 0 ||
     (context.zoomAnimationTarget !== undefined && (context.zoomAnimationChangesZoom ?? true))
+  const hidden = context.preparing || (context.parked ?? !context.open)
   return renderPart(
     props,
     [
       h.Id(`${context.id}-content`),
       h.Attribute(ContentData.content, ''),
-      h.Open(context.nativeOpen ?? context.open),
+      h.Role('dialog'),
       h.Attribute(context.open ? ContentData.open : ContentData.closed, ''),
       ...(context.dirAttribute === undefined ? [] : [h.Dir(context.dirAttribute)]),
-      ...((context.parked ?? !context.open)
-        ? [h.AriaHidden(true), h.Inert(true)]
-        : [h.AriaModal(true), h.Tabindex(-1)]),
+      ...(hidden ? [h.AriaHidden(true), h.Inert(true)] : [h.AriaModal(true), h.Tabindex(-1)]),
       ...(props.label === undefined ? [] : [h.AriaLabel(props.label)]),
       ...(context.pulling ? [h.Attribute(ContentData.pulling, '')] : []),
       ...(context.pullSnapping ? [h.Attribute(ContentData.pullSnapping, '')] : []),
@@ -218,12 +217,10 @@ export function Content<Message, Requirements>(
       }),
       ...(context.contentAttributes ?? []),
       ...(props.attributes ?? []),
-      ...(context.preparing || (context.parked ?? !context.open)
-        ? [h.Style({ visibility: 'hidden', 'pointer-events': 'none' })]
-        : []),
+      ...(hidden ? [h.Style({ visibility: 'hidden', 'pointer-events': 'none' })] : []),
     ],
     props.children ?? [],
-    h.dialog,
+    h.div,
     { open: context.open },
   )
 }

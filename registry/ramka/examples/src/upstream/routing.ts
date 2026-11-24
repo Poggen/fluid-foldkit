@@ -37,6 +37,7 @@ export const RoutingExamplesBlock = Block.make('RoutingExamples', {
   Model: Schema.Struct({
     lightboxes: Schema.Array(LightboxBlock.Instance),
     standalone: Schema.NullOr(Schema.String),
+    urlSyncedDeepLink: Schema.Boolean,
   }),
   Message: defineMessageUnion({
     ReadLocation: { href: Schema.String, intercepted: Schema.Boolean },
@@ -206,6 +207,7 @@ export const layer = Root.makeLayer({
     model: {
       lightboxes: [],
       standalone: interceptedPhotos[locationPhoto(href, 'intercepted-routes')]?.id ?? null,
+      urlSyncedDeepLink: locationPhoto(href, 'url-synced-state') >= 0,
     },
     steps: [
       Root.makeFieldsStep(() => ({
@@ -338,7 +340,9 @@ export const layer = Root.makeLayer({
                       carouselLabel: 'Gallery photos',
                       hasThumbnails: true,
                       hasZoom: true,
-                      portalContainerId: null,
+                      ...(example === 'url-synced-state' && model.urlSyncedDeepLink
+                        ? { portalContainerId: null }
+                        : {}),
                       item: (index) =>
                         h.img([h.Src(items[index]?.src ?? ''), h.Alt(items[index]?.alt ?? '')]),
                       render: (parts, context) =>

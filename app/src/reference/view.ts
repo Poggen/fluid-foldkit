@@ -77,7 +77,11 @@ const viewAuthored = (
     }),
   )
 
+const viewApiReference: typeof import('./view-implementation').renderApiReference = (...args) =>
+  documentationRuntime().renderApiReference(...args)
+
 export interface ReferenceViewParts {
+  readonly renderApiReference: typeof viewApiReference
   readonly renderAuthored: typeof viewAuthored
   readonly renderSidebarControls: typeof viewControls
   readonly renderInlineControls: typeof viewControls
@@ -89,7 +93,9 @@ export const view = Effect.sync(() => {
   const lazySidebarControls = createLazy()
   const lazyInlineControls = createLazy()
   const lazyToolbar = createLazy()
+  const lazyApiReference = createLazy()
   const parts: ReferenceViewParts = {
+    renderApiReference: (...args) => lazyApiReference(viewApiReference, args),
     renderAuthored: (...args) => lazyAuthored(viewAuthored, args),
     renderSidebarControls: (...args) => lazySidebarControls(viewControls, args),
     renderInlineControls: (...args) => lazyInlineControls(viewControls, args),

@@ -68,7 +68,9 @@ it.effect(
       const window = new Window()
       const root = window.document.createElement('div')
       root.innerHTML = result.html
-      expect(root.querySelector('dialog')?.hasAttribute('open')).toBe(true)
+      expect(
+        root.querySelector('[role="dialog"][aria-modal="true"]')?.hasAttribute('data-open'),
+      ).toBe(true)
       expect(root.querySelector('[data-ramka-counter]')?.textContent).toBe('3 / 3')
       expect(root.querySelector('[data-ramka-item][data-active]')?.getAttribute('data-index')).toBe(
         '2',

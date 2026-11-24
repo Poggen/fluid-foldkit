@@ -20,6 +20,31 @@ joins the pre-capture geometry reads and is discarded on cancellation. Demo
 view caches belong to their Layer construction and preserve live Binding and
 Mount ownership while skipping unchanged sibling galleries.
 
+The Ramka viewer follows upstream's three commits. Prepare mounts the viewer
+hidden for layout and media readiness. Reveal publishes the accepted open
+view inside the transition callback. Close removes the viewer from capture,
+with Android Blink retaining hidden content until the transition settles.
+The viewer's portaled surface has `role="dialog"`. Its host keeps keyboard
+focus inside and restores focus when the close settles. The host flushes the
+pending render after delivering an open or dismiss intent for an uncontrolled
+transition. The accepted Model still owns the prepare, reveal and close states.
+
+The Ramka reference page applies its entrance animation to the hero. This keeps
+initially open, server-rendered inline viewers positioned against the viewport.
+The browser handles clicks on same-document fragment links, including their
+scrolling, focus and history behavior. The showcase router handles other route
+and settings changes.
+
+WebKit inserts each morph's keyframes under fresh names from a bounded set.
+The active slot picks the animation names on the View Transition pseudo-elements.
+This lets a close capture reuse the document's computed styles when it follows
+an open immediately. Idle cleanup returns all slots to the pool.
+
+The visibility commit accepts the morph target with the open or closed state.
+The thumbnail strip positions on attachment and observed geometry changes. Image
+load events update automatic zoom. The showcase's API tables reuse their scoped
+view while unrelated demo Models change.
+
 Chart hover generally projects onto scoped host attributes or CSS custom
 properties. It must preserve the renderer definition and keyed mark identity.
 Sunburst paint order remains independent of zoom: removing and reinserting a

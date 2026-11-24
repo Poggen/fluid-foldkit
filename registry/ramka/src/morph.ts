@@ -48,6 +48,8 @@ export interface MorphRequest {
   /** Actual phase endpoints: trigger → media on open, media → trigger on close. */
   readonly source: HTMLElement | null
   readonly destination: HTMLElement | null
+  /** Resolve the accepted reveal destination after its view has rendered. */
+  readonly resolveDestination?: () => HTMLElement | null
   /** Active item media when a shared Stage owns the capture endpoint. */
   readonly media?: HTMLElement | null
   readonly panel: HTMLElement
@@ -106,23 +108,6 @@ function sizeResolvable(element: HTMLElement | null): element is HTMLElement {
   return width > 0 && height > 0
 }
 
-function prepare(panel: HTMLElement) {
-  const restore = [
-    attribute(panel, 'open'),
-    attribute(panel, 'inert'),
-    property(panel, 'visibility'),
-  ]
-  panel.style.setProperty('visibility', 'hidden', 'important')
-  panel.setAttribute('inert', '')
-  if (panel.tagName === 'DIALOG') panel.setAttribute('open', '')
-  let restored = false
-  return () => {
-    if (restored) return
-    restored = true
-    for (const undo of restore.reverse()) undo()
-  }
-}
-
 export function createMorph(document: Document) {
   const styles = createMorphStyles(document)
   const compositor = createCompositedMorph(document, styles)
@@ -141,7 +126,6 @@ export function createMorph(document: Document) {
     const controller = new AbortController()
     const signal = controller.signal
     const cleanups: Stop[] = []
-    let restorePrepare: Stop = () => {}
     let committed = false
     let commitSucceeded = false
     let commitResult: Promise<void> | undefined
@@ -154,7 +138,6 @@ export function createMorph(document: Document) {
     const commit = () => {
       if (committed) return commitResult
       committed = true
-      restorePrepare()
       const completion = request.commit()
       if (completion) {
         commitResult = completion.then(() => {
@@ -167,7 +150,6 @@ export function createMorph(document: Document) {
       return undefined
     }
     const cleanup = () => {
-      restorePrepare()
       for (const undo of cleanups.splice(0).reverse()) undo()
       request.signal.removeEventListener('abort', stop)
       if (activeDocuments.get(document) === stop) activeDocuments.delete(document)
@@ -223,7 +205,6 @@ export function createMorph(document: Document) {
       }
       cleanups.push(guardTouch(document))
       if (request.open) {
-        restorePrepare = prepare(request.panel)
         placeholder = createMediaPlaceholder({
           source: request.source,
           destination: request.media === undefined ? request.destination : request.media,
@@ -305,8 +286,10 @@ export function createMorph(document: Document) {
         ['--lightbox-morph-radius-item', request.open ? toRadius : fromRadius],
       ]) {
         if (!name) continue
-        if (root.style.getPropertyValue(name) !== (value ?? '0px'))
-          root.style.setProperty(name, value ?? '0px')
+        const radius = value ?? '0px'
+        const previous = root.style.getPropertyValue(name)
+        if (previous !== radius && (previous !== '' || radius !== '0px'))
+          root.style.setProperty(name, radius)
       }
       compositor.prewarmCompositedCssSheet()
       const restoreSource = source ? property(source, 'view-transition-name') : () => {}
@@ -331,9 +314,20 @@ export function createMorph(document: Document) {
           if (stopped || signal.aborted) return
           if (canMorph) {
             source.style.setProperty('view-transition-name', 'none', 'important')
-            destination.style.setProperty('view-transition-name', VIEW_TRANSITION_NAME, 'important')
-            if (request.open)
-              restoreInset = applyFirefoxFullBleedCaptureInset(destination) ?? (() => {})
+            const renderedDestination = request.resolveDestination
+              ? request.resolveDestination()
+              : destination
+            if (renderedDestination) {
+              if (renderedDestination !== destination)
+                cleanups.push(property(renderedDestination, 'view-transition-name'))
+              renderedDestination.style.setProperty(
+                'view-transition-name',
+                VIEW_TRANSITION_NAME,
+                'important',
+              )
+              if (request.open)
+                restoreInset = applyFirefoxFullBleedCaptureInset(renderedDestination) ?? (() => {})
+            }
           }
         }
         const completion = commit()
@@ -373,8 +367,13 @@ export function createMorph(document: Document) {
       }
     }
   }
-  const resource: { transition: (request: MorphRequest) => Promise<void>; dispose: () => void } = {
+  const resource = {
     transition,
+    prewarm() {
+      if (disposed || !styles.supportsConstructedSheets()) return
+      ensureVtStructuralStyles(styles)
+      compositor.warmCompositedStyles()
+    },
     dispose() {
       if (disposed) return
       disposed = true

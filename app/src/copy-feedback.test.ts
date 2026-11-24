@@ -15,7 +15,7 @@ describe('global customization behavior', () => {
   })
   it('copies a self-contained native install brief at the current origin', () => {
     const brief = buildInstallBrief('https://docs.example.test', undefined, defaults)
-    expect(brief).toContain('https://docs.example.test/r/fluid/0.1.0-preview.8/{name}.json')
+    expect(brief).toContain('https://docs.example.test/r/fluid/0.1.0-preview.9/{name}.json')
     expect(brief).toContain('https://docs.example.test/installation')
     expect(brief).toContain('0.170.0-canary.54f8bcd443b4')
     expect(brief).toContain('makeRequiredFieldBinding')

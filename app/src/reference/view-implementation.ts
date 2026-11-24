@@ -38,6 +38,75 @@ const sourcePlaygroundStage: Readonly<Record<string, string>> = {
 }
 const sourceDefaultStage =
   'relative flex outline-none items-center justify-center min-h-[120px] bg-background px-4 py-12 sm:px-8'
+export const renderApiReference = (
+  reference: Parameters<ReferenceViewRenderer>[1]['reference'],
+  path: string,
+  apiScrolls: typeof ComponentReferenceBlock.Model.Type.apiScrolls,
+  shape: Parameters<typeof presentation>[0]['shape'],
+  size: Parameters<typeof presentation>[0]['size'],
+  hover: Parameters<typeof presentation>[0]['hover'],
+  h: H,
+) => {
+  const context = presentation({ shape, size, hover })
+  const data = Option.getOrUndefined(AsyncData.getData(reference))
+  const referenceError = Option.getOrUndefined(AsyncData.getError(reference))
+  return h.section(
+    [h.Class(referenceSection), h.AriaLabel('API reference')],
+    [
+      h.h2([h.Class(referenceHeading)], ['API reference']),
+      ...(AsyncData.isPending(reference) ? [h.p([h.Role('status')], ['Loading native API…'])] : []),
+      ...(referenceError !== undefined
+        ? [
+            h.p([h.Role('alert')], [referenceError]),
+            Button(
+              {
+                context,
+                variant: 'secondary',
+                children: ['Retry reference'],
+                attributes: [h.OnClick(Message.RequestedRetry())],
+              },
+              h,
+            ),
+          ]
+        : []),
+      ...(data?.contracts ?? [])
+        .map((contract, index) => ({ contract, key: apiScrollKey(path, index) }))
+        .filter(({ contract }) => contract.props.length > 0)
+        .map(({ contract, key }) =>
+          h.section(
+            [h.Class('reference-contract')],
+            [
+              h.h3(
+                [h.Class(`pb-2 pt-6 text-left text-site-subtitle text-foreground`)],
+                [contract.name],
+              ),
+              ...(contract.props.length
+                ? apiScrolls
+                    .filter((scroll) => scroll.key === key)
+                    .map((scroll) =>
+                      h.block(
+                        ApiScrolls.embedView({
+                          key,
+                          slotId: scroll.model.id,
+                          model: scroll.model,
+                          viewInputs: {
+                            context,
+                            className: 'reference-table-scroll w-full',
+                            viewportClassName: 'scroll-fade-x',
+                            content: () => [apiTable(contract.props, context, h)],
+                            children: [],
+                          },
+                        }),
+                      ),
+                    )
+                : []),
+            ],
+          ),
+        ),
+    ],
+  )
+}
+
 export const renderReferenceView = (
   model: typeof ComponentReferenceBlock.Model.Type,
   inputs: Parameters<ReferenceViewRenderer>[1],
@@ -47,6 +116,7 @@ export const renderReferenceView = (
     renderSidebarControls,
     renderInlineControls,
     renderToolbar,
+    renderApiReference: renderApi,
   }: ReferenceViewParts,
 ) => {
   const page = pageAt(model.path)
@@ -66,7 +136,6 @@ export const renderReferenceView = (
   ]
   if (inputs.part === 'controls') return renderSidebarControls(...controlsArgs)
   const data = Option.getOrUndefined(AsyncData.getData(inputs.reference))
-  const referenceError = Option.getOrUndefined(AsyncData.getError(inputs.reference))
   const source =
     data?.files.find((file) => file.path === model.sourceFile) ??
     data?.files.find((file) => file.path === data.entry) ??
@@ -218,62 +287,14 @@ export const renderReferenceView = (
             : []),
         ],
       ),
-      h.section(
-        [h.Class(referenceSection), h.AriaLabel('API reference')],
-        [
-          h.h2([h.Class(referenceHeading)], ['API reference']),
-          ...(AsyncData.isPending(inputs.reference)
-            ? [h.p([h.Role('status')], ['Loading native API…'])]
-            : []),
-          ...(referenceError !== undefined
-            ? [
-                h.p([h.Role('alert')], [referenceError]),
-                Button(
-                  {
-                    context,
-                    variant: 'secondary',
-                    children: ['Retry reference'],
-                    attributes: [h.OnClick(Message.RequestedRetry())],
-                  },
-                  h,
-                ),
-              ]
-            : []),
-          ...(data?.contracts ?? [])
-            .map((contract, index) => ({ contract, key: apiScrollKey(model.path, index) }))
-            .filter(({ contract }) => contract.props.length > 0)
-            .map(({ contract, key }) =>
-              h.section(
-                [h.Class('reference-contract')],
-                [
-                  h.h3(
-                    [h.Class(`pb-2 pt-6 text-left text-site-subtitle text-foreground`)],
-                    [contract.name],
-                  ),
-                  ...(contract.props.length
-                    ? model.apiScrolls
-                        .filter((scroll) => scroll.key === key)
-                        .map((scroll) =>
-                          h.block(
-                            ApiScrolls.embedView({
-                              key,
-                              slotId: scroll.model.id,
-                              model: scroll.model,
-                              viewInputs: {
-                                context,
-                                className: 'reference-table-scroll w-full',
-                                viewportClassName: 'scroll-fade-x',
-                                content: () => [apiTable(contract.props, context, h)],
-                                children: [],
-                              },
-                            }),
-                          ),
-                        )
-                    : []),
-                ],
-              ),
-            ),
-        ],
+      renderApi(
+        inputs.reference,
+        model.path,
+        model.apiScrolls,
+        inputs.settings.shape,
+        inputs.settings.size,
+        inputs.settings.hover,
+        h,
       ),
       pageNavigation(model.path, h),
     ],

@@ -58,7 +58,7 @@ export const verifyBrowser = async (url: string) => {
     await command([
       'wait',
       '--fn',
-      "document.querySelector('[data-ramka-content]')?.hasAttribute('open')===true",
+      "document.querySelector('[data-ramka-content][data-open]')!==null",
     ])
     await command([
       'wait',
@@ -72,7 +72,11 @@ export const verifyBrowser = async (url: string) => {
       "document.querySelector('[data-ramka-content] [data-ramka-caption]')?.textContent==='Second installed image'",
     ])
     await command(['press', 'Escape'])
-    await command(['wait', '--fn', "document.querySelector('[data-ramka-content][open]')===null"])
+    await command([
+      'wait',
+      '--fn',
+      "document.querySelector('[data-ramka-content][data-open]')===null",
+    ])
     await command([
       'wait',
       '--fn',

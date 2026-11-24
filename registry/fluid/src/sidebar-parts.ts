@@ -234,7 +234,7 @@ export const SidebarGroup: <Message>(
     ],
     [
       h.div(
-        [h.Class('group/group-header w-full relative')],
+        [h.DataAttribute('sidebar', 'group-header'), h.Class('group/group-header w-full relative')],
         [
           h.button(
             [
@@ -255,7 +255,7 @@ export const SidebarGroup: <Message>(
                     cn(
                       'ml-auto flex h-6 shrink-0 items-center justify-center overflow-hidden',
                       props.open
-                        ? 'w-0 opacity-0 group-hover/group-header:w-6 group-hover/group-header:opacity-100 group-focus-within/group-header:w-6 group-focus-within/group-header:opacity-100 group-has-[[data-sidebar=group-action]:is([data-state=open],[data-popup-open],[aria-expanded=true])]/group-header:w-6 group-has-[[data-sidebar=group-action]:is([data-state=open],[data-popup-open],[aria-expanded=true])]/group-header:opacity-100 pointer-coarse:w-6 pointer-coarse:opacity-100'
+                        ? 'w-0 opacity-0 group-hover/group-header:w-6 group-hover/group-header:opacity-100 group-focus-within/group-header:w-6 group-focus-within/group-header:opacity-100 [:where([data-sidebar=group-header]):has([data-sidebar=group-action]:is([data-state=open],[data-popup-open],[aria-expanded=true]))_&]:w-6 [:where([data-sidebar=group-header]):has([data-sidebar=group-action]:is([data-state=open],[data-popup-open],[aria-expanded=true]))_&]:opacity-100 pointer-coarse:w-6 pointer-coarse:opacity-100'
                         : 'w-6 opacity-100',
                     ),
                   ),

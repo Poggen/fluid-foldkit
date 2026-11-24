@@ -123,13 +123,14 @@ export const layer = LightboxBlock.makeLayer({
     ScrollingChanged: (model, { scrolling }) => ({
       model: model.scrolling === scrolling ? model : { ...model, scrolling },
     }),
-    VisibilityCommitted: (model, { generation, open, retainPortal }) => ({
+    VisibilityCommitted: (model, { generation, open, morphTargetId, retainPortal }) => ({
       model:
         model.generation !== generation || isOpenTarget(model) !== open
           ? model
           : {
               ...model,
               open,
+              morphTargetId: morphTargetId ?? model.morphTargetId,
               retainedPortal: retainPortal ?? false,
               phase: open ? 'Opening' : 'Closing',
             },

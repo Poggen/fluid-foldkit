@@ -87,16 +87,29 @@ it.effect('loop, bounds, nonfinite zoom and empty item updates keep a usable sta
       }),
     ),
     Story.messageWith((model) =>
-      LightboxBlock.Message.VisibilityCommitted({ generation: model.generation, open: true }),
+      LightboxBlock.Message.VisibilityCommitted({
+        generation: model.generation,
+        open: true,
+        morphTargetId: 'loop-trigger-1',
+      }),
     ),
+    Story.model((model) => {
+      expect(model.open).toBe(true)
+      expect(model.morphTargetId).toBe('loop-trigger-1')
+    }),
     Story.message(LightboxBlock.Message.PoseRequested({ zoom: 999, x: 0, y: 0 })),
     Story.expectOutMessage(LightboxBlock.OutMessage.ZoomChanged({ zoom: 4 })),
     Story.inMessage(LightboxBlock.InMessage.InformedOfItems({ items: [] })),
     Story.messageWith((model) =>
-      LightboxBlock.Message.VisibilityCommitted({ generation: model.generation, open: false }),
+      LightboxBlock.Message.VisibilityCommitted({
+        generation: model.generation,
+        open: false,
+        morphTargetId: '',
+      }),
     ),
     Story.model((model) => {
       expect(model.open).toBe(false)
+      expect(model.morphTargetId).toBe('')
       expect(model.index).toBe(0)
       expect(model.zoom).toBe(1)
     }),
